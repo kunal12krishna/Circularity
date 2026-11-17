@@ -18,7 +18,7 @@ enum DragTest {
     private static func runChecks() async -> Bool {
         let defaults = UserDefaults(suiteName: "\(AppIdentity.bundleID).dragtest")!
         defaults.removePersistentDomain(forName: "\(AppIdentity.bundleID).dragtest")
-        let settings = SettingsStore(defaults: defaults)
+        let settings = SettingsStore(defaults: defaults, suiteName: "\(AppIdentity.bundleID).dragtest")
         settings.set(false, for: SettingsKeys.smartOrdering)
         settings.set(false, for: SettingsKeys.haptics)
         let wheel = WheelController(settings: settings)
@@ -26,6 +26,19 @@ enum DragTest {
         func check(_ ok: Bool, _ label: String) {
             print(ok ? "PASS  \(label)" : "FAIL  \(label)")
             if !ok { failures += 1 }
+        }
+
+        // Settings migration v1 → v2 on the real store: a Halo user's accent survives.
+        let v1Suite = "\(AppIdentity.bundleID).dragtest-v1"
+        if let v1 = UserDefaults(suiteName: v1Suite) {
+            v1.removePersistentDomain(forName: v1Suite)
+            v1.set(1, forKey: SettingsKeys.schemaVersionKey)
+            v1.set("halo", forKey: SettingsKeys.wheelLayout.name)
+            v1.set("#5CE1FF", forKey: SettingsKeys.haloAccentHex.name)
+            let migrated = SettingsStore(defaults: v1, suiteName: v1Suite)
+            check(migrated.value(SettingsKeys.accentHex) == "#5CE1FF" && v1.integer(forKey: SettingsKeys.schemaVersionKey) == 2,
+                  "settings v1 → v2 keeps the Halo accent (got \(migrated.value(SettingsKeys.accentHex)))")
+            v1.removePersistentDomain(forName: v1Suite)
         }
 
         guard let file = writeSampleHEIC() else {

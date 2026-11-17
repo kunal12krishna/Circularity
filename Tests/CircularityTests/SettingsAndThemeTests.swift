@@ -96,3 +96,49 @@ final class HotkeySpecTests: XCTestCase {
         XCTAssertEqual(HotkeySpec(keyCode: 122, modifiers: HotkeySpec.command | HotkeySpec.shift).display, "⇧⌘F1")
     }
 }
+
+final class SettingsMigrationTests: XCTestCase {
+    private func freshDefaults(_ name: String) -> UserDefaults {
+        let suite = "circularity.tests.\(name).\(UUID().uuidString)"
+        let d = UserDefaults(suiteName: suite)!
+        addTeardownBlock { d.removePersistentDomain(forName: suite) }
+        return d
+    }
+
+    /// The migration logic lives in the app target; this mirrors its rules on
+    /// raw defaults so the v1 → v2 mapping is pinned down.
+    private func migrate(_ d: UserDefaults) {
+        let stored = d.integer(forKey: SettingsKeys.schemaVersionKey)
+        if stored == 0, d.object(forKey: SettingsKeys.wheelLayout.name) == nil { d.set(2, forKey: SettingsKeys.schemaVersionKey); return }
+        if stored < 2, d.object(forKey: SettingsKeys.accentHex.name) == nil {
+            let layout = d.string(forKey: SettingsKeys.wheelLayout.name) ?? "halo"
+            d.set(layout == "halo" ? (d.string(forKey: SettingsKeys.haloAccentHex.name) ?? "#C6FF3D") : "#FF8A00",
+                  forKey: SettingsKeys.accentHex.name)
+        }
+        d.set(2, forKey: SettingsKeys.schemaVersionKey)
+    }
+
+    func testV1HaloUserKeepsTheirAccent() {
+        let d = freshDefaults("halo")
+        d.set(1, forKey: SettingsKeys.schemaVersionKey)
+        d.set("halo", forKey: SettingsKeys.wheelLayout.name)
+        d.set("#5CE1FF", forKey: SettingsKeys.haloAccentHex.name)
+        migrate(d)
+        XCTAssertEqual(d.string(forKey: SettingsKeys.accentHex.name), "#5CE1FF")
+    }
+
+    func testV1RingUserKeepsTangerine() {
+        let d = freshDefaults("ring")
+        d.set(1, forKey: SettingsKeys.schemaVersionKey)
+        d.set("ring", forKey: SettingsKeys.wheelLayout.name)
+        migrate(d)
+        XCTAssertEqual(d.string(forKey: SettingsKeys.accentHex.name), "#FF8A00")
+    }
+
+    func testFreshInstallGetsNeonDefault() {
+        let d = freshDefaults("fresh")
+        migrate(d)
+        XCTAssertNil(d.object(forKey: SettingsKeys.accentHex.name), "nothing stored: the registered default (neon) applies")
+        XCTAssertEqual(SettingsKeys.accentHex.defaultValue, "#C6FF3D")
+    }
+}

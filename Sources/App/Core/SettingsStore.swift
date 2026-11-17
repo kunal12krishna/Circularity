@@ -9,12 +9,19 @@ final class SettingsStore {
     /// The name of each key as it changes ("" after a bulk change).
     let changes = PassthroughSubject<String, Never>()
 
-    init(defaults: UserDefaults = .standard) {
+    /// What was actually stored (not registered defaults, which are shared by
+    /// every UserDefaults in the process).
+    private let storedDomain: () -> [String: Any]
+
+    /// `suiteName`: the suite `defaults` was made with (nil = the app's own domain).
+    init(defaults: UserDefaults = .standard, suiteName: String? = nil) {
         self.defaults = defaults
+        let domain = suiteName ?? Bundle.main.bundleIdentifier ?? AppIdentity.bundleID
+        storedDomain = { defaults.persistentDomain(forName: domain) ?? [:] }
+        migrate()
         var registered: [String: Any] = [:]
         for key in SettingsKeys.all { registered[key.name] = key.defaultValue }
         defaults.register(defaults: registered)
-        migrate()
     }
 
     func value<Value>(_ key: SettingsKey<Value>) -> Value {
@@ -42,21 +49,21 @@ final class SettingsStore {
     // MARK: Migrations
 
     private func migrate() {
-        let stored = defaults.integer(forKey: SettingsKeys.schemaVersionKey)
+        let domain = storedDomain()
+        let stored = domain[SettingsKeys.schemaVersionKey] as? Int ?? 0
         if stored == 0 {
             // A brand-new install, or a v1 install that never wrote the version.
-            let hadV1Values = defaults.object(forKey: SettingsKeys.wheelLayout.name) != nil
-            if !hadV1Values {
+            if domain[SettingsKeys.wheelLayout.name] == nil {
                 defaults.set(SettingsKeys.schemaVersion, forKey: SettingsKeys.schemaVersionKey)
                 return
             }
         }
         if stored < 2 {
             // v1 had a separate Halo accent; v2 has one accent for everything.
-            if defaults.object(forKey: SettingsKeys.accentHex.name) == nil {
-                let layout = defaults.string(forKey: SettingsKeys.wheelLayout.name) ?? "halo"
+            if domain[SettingsKeys.accentHex.name] == nil {
+                let layout = domain[SettingsKeys.wheelLayout.name] as? String ?? "halo"
                 if layout == "halo" {
-                    let neon = defaults.string(forKey: SettingsKeys.haloAccentHex.name) ?? "#C6FF3D"
+                    let neon = domain[SettingsKeys.haloAccentHex.name] as? String ?? "#C6FF3D"
                     defaults.set(neon, forKey: SettingsKeys.accentHex.name)
                     defaults.set(ThemeCatalog.theme(forAccent: neon)?.id ?? "custom", forKey: SettingsKeys.theme.name)
                 } else {
