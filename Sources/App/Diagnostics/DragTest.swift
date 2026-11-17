@@ -1,0 +1,139 @@
+import AppKit
+import CircularityEngine
+
+/// `--drag-test` level 1 (PLAN.md §3.9): shows the real wheel panel and calls
+/// its NSDraggingDestination methods with a simulated drag carrying a real
+/// file. Needs no permission. Level 2 (real synthetic mouse events) needs
+/// Accessibility for the test runner and is documented in docs/MANUAL-TESTS.md.
+enum DragTest {
+    static func run() {
+        Task { @MainActor in
+            let ok = await runChecks()
+            print(ok ? "DragTest: all checks passed" : "DragTest: FAILED")
+            exit(ok ? 0 : 1)
+        }
+    }
+
+    @MainActor
+    private static func runChecks() async -> Bool {
+        let defaults = UserDefaults(suiteName: "\(AppIdentity.bundleID).dragtest")!
+        defaults.removePersistentDomain(forName: "\(AppIdentity.bundleID).dragtest")
+        let settings = SettingsStore(defaults: defaults)
+        settings.set(false, for: SettingsKeys.smartOrdering)
+        settings.set(false, for: SettingsKeys.haptics)
+        let wheel = WheelController(settings: settings)
+        var failures = 0
+        func check(_ ok: Bool, _ label: String) {
+            print(ok ? "PASS  \(label)" : "FAIL  \(label)")
+            if !ok { failures += 1 }
+        }
+
+        guard let file = writeSampleHEIC() else {
+            print("FAIL  could not write a sample file")
+            return false
+        }
+        let screen = NSScreen.main?.visibleFrame ?? CGRect(x: 0, y: 0, width: 1440, height: 900)
+        let center = CGPoint(x: screen.midX, y: screen.midY)
+        let g = WheelGeometry.ring()
+        func point(_ offset: CGPoint) -> CGPoint { CGPoint(x: g.size / 2 + offset.x, y: g.size / 2 - offset.y) }
+        func segment(_ i: Int) -> CGPoint { point(WheelGeometry.offset(radius: 150, angle: WheelGeometry.midAngle(ofSlot: i))) }
+        let info = SimulatedDrag(file: file)
+
+        var finished: WheelChoice?
+        var dismissed = false
+        wheel.onFinished = { finished = $0 }
+        wheel.onDragDismissed = { dismissed = true }
+        func show() async {
+            finished = nil
+            dismissed = false
+            wheel.show(DraggedFiles(urls: [file]), at: center, mode: .drag)
+            try? await Task.sleep(nanoseconds: 350_000_000)
+        }
+
+        print("Memory before the first wheel: \(MemoryFootprint.megabytes)")
+        // 1. Drop on JPG (slot 1).
+        await show()
+        print("Memory with the wheel showing: \(MemoryFootprint.megabytes)")
+        check(wheel.isVisible, "wheel panel appears at the given point")
+        wheel.dragPointer(at: segment(1))
+        let dropped = wheel.performDrop(info, at: segment(1))
+        check(dropped, "drop on a segment is accepted")
+        check(finished?.action == .convert(.jpg), "drop on JPG chooses Convert to JPG (got \(finished?.label ?? "nothing"))")
+        check(finished?.files == [file], "the dropped file URL comes from the drag pasteboard")
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        check(!wheel.isVisible, "wheel hides after the drop")
+
+        // 2. Drop on the centre cancels.
+        await show()
+        wheel.dragPointer(at: point(.zero))
+        let cancelled = wheel.performDrop(info, at: point(.zero))
+        check(!cancelled, "drop on the centre is refused (nothing happens)")
+        check(finished?.action == nil && finished != nil, "centre reports Cancel")
+        try? await Task.sleep(nanoseconds: 400_000_000)
+
+        // 3. Rest on More, then drop on the first fan chip.
+        await show()
+        wheel.dragPointer(at: segment(3))
+        try? await Task.sleep(nanoseconds: 300_000_000) // More opens after 150 ms
+        let fanCount = SlotProvider.menu(for: [.heic], canWrite: { FormatSupport.current.canWrite($0) }).fan.count
+        let chip = point(g.fanOffsets(count: fanCount, flipped: false)[0])
+        wheel.dragPointer(at: chip)
+        _ = wheel.performDrop(info, at: chip)
+        check(finished?.action != nil && finished?.action != .more, "fan chip drop chooses a fan action (got \(finished?.label ?? "nothing"))")
+        try? await Task.sleep(nanoseconds: 400_000_000)
+
+        // 4. Moving well outside dismisses while the drag continues.
+        await show()
+        wheel.dragPointer(at: segment(0))
+        wheel.dragPointer(at: point(CGPoint(x: 0, y: -330)))
+        check(dismissed, "moving away dismisses the wheel")
+        check(finished == nil, "dismissing chooses nothing")
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        check(!wheel.isVisible, "wheel is hidden after dismissal")
+        try? await Task.sleep(nanoseconds: 1_000_000_000)
+        print("Memory after the wheel hid: \(MemoryFootprint.megabytes)")
+
+        try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
+        defaults.removePersistentDomain(forName: "\(AppIdentity.bundleID).dragtest")
+        return failures == 0
+    }
+
+    private static func writeSampleHEIC() -> URL? {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("\(AppIdentity.name)-DragTest-\(UUID().uuidString)")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = dir.appendingPathComponent("IMG_2041.heic")
+        guard let image = samplePicture(size: 256, scale: 1),
+              let dest = CGImageDestinationCreateWithURL(url as CFURL, "public.heic" as CFString, 1, nil) else { return nil }
+        CGImageDestinationAddImage(dest, image, nil)
+        return CGImageDestinationFinalize(dest) ? url : nil
+    }
+}
+
+/// A minimal NSDraggingInfo carrying one file URL on a private pasteboard.
+private final class SimulatedDrag: NSObject, NSDraggingInfo {
+    let draggingPasteboard: NSPasteboard
+
+    init(file: URL) {
+        draggingPasteboard = NSPasteboard(name: NSPasteboard.Name("\(AppIdentity.bundleID).dragtest.\(UUID().uuidString)"))
+        draggingPasteboard.clearContents()
+        draggingPasteboard.writeObjects([file as NSURL])
+        super.init()
+    }
+
+    var draggingDestinationWindow: NSWindow? { nil }
+    var draggingSourceOperationMask: NSDragOperation { [.copy, .move, .generic] }
+    var draggingLocation: NSPoint { .zero }
+    var draggedImageLocation: NSPoint { .zero }
+    var draggedImage: NSImage? { nil }
+    var draggingSource: Any? { nil }
+    var draggingSequenceNumber: Int { 1 }
+    func slideDraggedImage(to screenPoint: NSPoint) {}
+    var draggingFormation: NSDraggingFormation { get { .default } set {} }
+    var animatesToDestination: Bool { get { false } set {} }
+    var numberOfValidItemsForDrop: Int { get { 1 } set {} }
+    func enumerateDraggingItems(options: NSDraggingItemEnumerationOptions = [], for view: NSView?,
+                                classes: [AnyClass], searchOptions: [NSPasteboard.ReadingOptionKey: Any] = [:],
+                                using block: (NSDraggingItem, Int, UnsafeMutablePointer<ObjCBool>) -> Void) {}
+    var springLoadingHighlight: NSSpringLoadingHighlight { .none }
+    func resetSpringLoading() {}
+}

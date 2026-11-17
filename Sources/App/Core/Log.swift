@@ -7,4 +7,6 @@ nonisolated enum Log {
     static let menubar = Logger(subsystem: AppIdentity.bundleID, category: "menubar")
     static let platform = Logger(subsystem: AppIdentity.bundleID, category: "platform")
     static let perf = Logger(subsystem: AppIdentity.bundleID, category: "perf")
+    static let gesture = Logger(subsystem: AppIdentity.bundleID, category: "gesture")
+    static let wheel = Logger(subsystem: AppIdentity.bundleID, category: "wheel")
 }

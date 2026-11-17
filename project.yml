@@ -39,6 +39,7 @@ targets:
     platform: macOS
     sources:
       - Sources/App
+      - Sources/AppLogic
       - Sources/Shared
       - Resources/Assets.xcassets
     dependencies:
@@ -60,6 +61,26 @@ targets:
         NSSupportsSuddenTermination: true
         CircularityAppName: $(APP_NAME)
         CircularityAppBundleID: $(BUNDLE_ID)
+        # "Convert with Circularity" (Finder Quick Actions/Services). Its
+        # shortcut is the permission-free ⌃⌥C route to the Finder selection.
+        NSServices:
+          - NSMenuItem:
+              default: Convert with $(APP_NAME)
+            NSMessage: convertFiles
+            NSPortName: $(APP_NAME)
+            NSRequiredContext: {}
+            NSSendFileTypes:
+              - public.image
+              - com.adobe.pdf
+              - public.plain-text
+              - public.html
+              - net.daringfireball.markdown
+              - public.rtf
+              - org.openxmlformats.wordprocessingml.document
+              - com.microsoft.word.doc
+              - org.oasis-open.opendocument.text
+              - public.movie
+              - public.audio
     entitlements:
       path: Resources/Circularity.entitlements
       properties: {}
@@ -92,6 +113,7 @@ targets:
     platform: macOS
     sources:
       - Tests/CircularityTests
+      - Sources/AppLogic
       - Sources/Shared
     dependencies:
       - target: CircularityEngine

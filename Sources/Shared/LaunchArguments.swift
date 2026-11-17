@@ -5,16 +5,22 @@ import Foundation
 nonisolated struct LaunchArguments: Sendable {
     let files: [URL]
     let renderPreviewsDirectory: URL?
+    /// `--drag-test`: drive the real wheel panel with simulated drags (PLAN.md §3.9).
+    let dragTest: Bool
 
     init(_ arguments: [String], fileExists: (String) -> Bool = { FileManager.default.fileExists(atPath: $0) }) {
         var files: [URL] = []
         var previews: URL?
+        var dragTest = false
         var i = 1 // arguments[0] is the executable
         while i < arguments.count {
             let arg = arguments[i]
             if arg == "--render-previews", i + 1 < arguments.count {
                 previews = URL(fileURLWithPath: arguments[i + 1], isDirectory: true)
                 i += 2
+            } else if arg == "--drag-test" {
+                dragTest = true
+                i += 1
             } else if arg.hasPrefix("--") {
                 i += 1
             } else if arg.hasPrefix("-") {
@@ -29,5 +35,6 @@ nonisolated struct LaunchArguments: Sendable {
         }
         self.files = files
         self.renderPreviewsDirectory = previews
+        self.dragTest = dragTest
     }
 }

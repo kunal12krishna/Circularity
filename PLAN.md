@@ -341,6 +341,17 @@ Each milestone follows the same steps: implement it, run `xcodegen generate`, `x
 - `--render-previews` (wheel only).
 - **Verify:** preview PNGs are inspected against the spec numbers; the layer count stays constant across opens (built once); no animations remain after hiding.
 
+**Built (b) + (c) together — notes and deviations:**
+- Pure logic lives in `Sources/AppLogic` (gesture state machine, shake detector, wheel geometry, slot rules), compiled into the app and the host-less tests.
+- The developer menu on the status item (Show Test Wheel, Wheel Layout, Trigger Key, Shake to Open, ⌃⌥C, Pause) stands in for Settings and the panel until (h)/(i).
+- Choosing a segment records the choice ("Last choice: …"); conversion arrives in (d). Until the engine exists, the orb's detail line shows a short format hint instead of the live size estimate.
+- WebP cannot be written by ImageIO on macOS 27, so it is hidden and AVIF/HEIC move up (verified at runtime by `FormatSupport`).
+- Document menus have fewer than six actions: the unused segments are drawn but inert, rather than hidden, so the ring keeps its shape.
+- Orbit's buttons use translucent fills without a per-button behind-window blur (13 extra visual-effect views were not worth the cost); Ring keeps the real glass disc.
+- Ring and Orbit are drawn in their board colour schemes (dark and light); the light/dark/system choice per surface arrives with Appearance in (i).
+- Memory: soft shadows and glows are rendered at quarter resolution. Measured with `--drag-test`: 9.8 MB before the first wheel, 18.7 MB while showing, 17.7 MB after hiding (budget < 25 MB).
+- Manual checks for real drags, file promises, the ⌃⌥C Service shortcut and permissions: `docs/MANUAL-TESTS.md`.
+
 ### (d) Image engine
 - `FormatSupport`, `ImageIOBackend` (convert, resize, crop, compress by quality and by target size, metadata policies, orientation, transparency, SVG), atomic writer, collision naming, the Documents/Converted fallback and cancellation.
 - Wheel drops now run real jobs. Results get one notification per drop if notifications are enabled.

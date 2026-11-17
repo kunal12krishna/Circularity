@@ -11,7 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var filesOpenedBeforeLaunch: [URL] = []
 
     func applicationWillFinishLaunching(_ notification: Notification) {
-        guard launch.renderPreviewsDirectory == nil else { return }
+        guard launch.renderPreviewsDirectory == nil, !launch.dragTest else { return }
         primary = singleInstance.primaryInstance()
         if primary == nil {
             // Listen before launch finishes: a later copy waits for
@@ -34,6 +34,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if let directory = launch.renderPreviewsDirectory {
             exit(RenderPreviews.run(into: directory) ? 0 : 1)
+        }
+        if launch.dragTest {
+            DragTest.run()
+            return
         }
 
         let files = filesOpenedBeforeLaunch + launch.files

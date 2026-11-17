@@ -1,50 +1,65 @@
 import AppKit
 
-/// The menu bar item. Milestone (a): the static idle glyph and a placeholder
-/// menu. Milestone (h) replaces the menu with the custom glass panel, the
-/// animated icon states and drop-on-icon.
-final class StatusItemController: NSObject {
-    private let item: NSStatusItem
-    private let receivedItem = NSMenuItem(title: "No files received yet", action: nil, keyEquivalent: "")
+/// Menu items that run a closure (stored in `representedObject`).
+func ActionMenuItem(_ title: String, key: String = "", checked: Bool = false,
+                    handler: @escaping () -> Void) -> NSMenuItem {
+    let item = NSMenuItem(title: title, action: #selector(MenuActions.fire(_:)), keyEquivalent: key)
+    item.target = MenuActions.shared
+    item.representedObject = MenuActions.Handler(handler)
+    item.state = checked ? .on : .off
+    return item
+}
 
-    override init() {
+final class MenuActions: NSObject {
+    static let shared = MenuActions()
+
+    final class Handler: NSObject {
+        let run: () -> Void
+        init(_ run: @escaping () -> Void) { self.run = run }
+    }
+
+    @objc func fire(_ sender: NSMenuItem) {
+        (sender.representedObject as? Handler)?.run()
+    }
+}
+
+/// The menu bar item. Milestones (a–c): the idle glyph and a developer menu
+/// (built fresh each time it opens). Milestone (h) replaces the menu with the
+/// custom glass panel, the animated icon states and drop-on-icon.
+final class StatusItemController: NSObject, NSMenuDelegate {
+    private let item: NSStatusItem
+    private let menuBuilder: () -> [NSMenuItem]
+
+    init(menuBuilder: @escaping () -> [NSMenuItem]) {
+        self.menuBuilder = menuBuilder
         item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         super.init()
-
         if let button = item.button {
             button.image = StatusGlyph.image()
             button.setAccessibilityLabel(AppIdentity.name)
             button.toolTip = AppIdentity.name
         }
-        item.menu = makeMenu()
+        let menu = NSMenu()
+        menu.delegate = self
+        item.menu = menu
         Log.menubar.notice("Status item installed")
     }
 
-    func showReceived(_ urls: [URL]) {
-        let names = urls.prefix(3).map(\.lastPathComponent).joined(separator: ", ")
-        let more = urls.count > 3 ? " +\(urls.count - 3) more" : ""
-        let noun = urls.count == 1 ? "file" : "files"
-        receivedItem.title = "Received \(urls.count) \(noun): \(names)\(more)"
-    }
-
-    private func makeMenu() -> NSMenu {
-        let menu = NSMenu()
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        let title = NSMenuItem(title: "\(AppIdentity.name) \(version)", action: nil, keyEquivalent: "")
-        title.isEnabled = false
-        menu.addItem(title)
-        receivedItem.isEnabled = false
-        menu.addItem(receivedItem)
-        menu.addItem(.separator())
-        let quit = NSMenuItem(title: "Quit \(AppIdentity.name)",
-                              action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        quit.target = NSApp
-        menu.addItem(quit)
-        return menu
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+        for entry in menuBuilder() { menu.addItem(entry) }
     }
 
     /// Removes the icon from the menu bar ("Show in menu bar" off).
     func remove() {
         NSStatusBar.system.removeStatusItem(item)
+    }
+}
+
+extension NSMenuItem {
+    static func info(_ title: String) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.isEnabled = false
+        return item
     }
 }
