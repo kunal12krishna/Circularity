@@ -11,7 +11,7 @@ cd "$(dirname "$0")/.."
 
 echo
 if [ -z "${DEVELOPER_ID_APP:-}" ] || [ -z "${NOTARY_PROFILE:-}" ]; then
-    echo "release.sh: made an ad-hoc DMG. The first launch needs the one-time steps in README → "The first launch"."
+    echo "release.sh: made an ad-hoc DMG. The first launch needs the one-time steps in README → 'The first launch'."
 else
     echo "release.sh: signed, notarised and stapled."
 fi
