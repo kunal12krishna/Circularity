@@ -104,10 +104,13 @@ final class SlotProviderTests: XCTestCase {
         XCTAssertEqual(labels(menu.ring), ["GIF", "TIFF", "PNG", "More", "Compress", "Resize"])
     }
 
-    func testImageBatchCombinesIntoAPDF() {
+    func testImageBatchPutsCombineOnTheRing() {
         let menu = SlotProvider.menu(for: [.jpeg, .png], canWrite: everything)
-        XCTAssertEqual(menu.fan.first { $0.label == "PDF" }?.action, .combinePDF)
+        XCTAssertEqual(menu.ring[2]?.action, .combinePDF, "board B: Combine sits on the ring for batches")
+        XCTAssertEqual(menu.ring[2]?.verb, "Combine into one PDF")
         XCTAssertEqual(menu.ring[0]?.verb, "Convert 2 to PNG")
+        XCTAssertTrue(menu.fan.contains { $0.action == .convert(.pdf) }, "one PDF per image stays in the fan")
+        XCTAssertTrue(menu.fan.contains { $0.action == .convert(.webp) }, "the displaced format moves to the fan")
     }
 
     func testPDFMenu() {

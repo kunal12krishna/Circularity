@@ -166,17 +166,19 @@ nonisolated enum SlotProvider {
                 return ua != ub ? ua > ub : a.offset < b.offset
             }.map(\.element)
         }
-        let ringFormats = Array(ordered.prefix(3))
+        // A batch puts "Combine into one PDF" on the ring (board B, slot 2).
+        let ringFormats = Array(ordered.prefix(count > 1 ? 2 : 3))
         // Fan: the rest in canonical order, at most 4 image formats; BMP only fills a gap.
         var rest = ringImageCandidates.filter { available.contains($0) && !ringFormats.contains($0) }
         if rest.filter({ $0 != .bmp }).count >= 4 { rest.removeAll { $0 == .bmp } }
         let fanFormats = Array(rest.prefix(4))
 
         var fan = fanFormats.map { formatSlot($0, count: count) }
-        fan.append(count > 1 ? combine(count: count) : formatSlot(.pdf, count: count))
+        fan.append(formatSlot(.pdf, count: count))
         fan.append(cropSlot(count: count))
 
         var ring: [WheelSlot?] = ringFormats.map { formatSlot($0, count: count) }
+        if count > 1 { ring.append(combine(count: count)) }
         while ring.count < 3 { ring.append(nil) }
         ring += [moreSlot(fanCount: fan.count), compressSlot(count: count, pdf: false), resizeSlot(count: count, pdf: false)]
         return WheelMenu(ring: ring, fan: fan, notice: nil)
@@ -220,7 +222,7 @@ nonisolated enum SlotProvider {
         case .tiff: ("PRINT", "lossless, for print")
         case .gif: ("256 COLOURS", "256 colours")
         case .bmp: ("BITMAP", "uncompressed")
-        case .pdf: ("DOCUMENT", count > 1 ? "one page per file" : "a one-page PDF")
+        case .pdf: ("DOCUMENT", count > 1 ? "one PDF per image" : "a one-page PDF")
         case .txt: ("TEXT", "plain text only")
         case .html: ("WEB", "a web page")
         case .docx: ("WORD", "a Word document")
@@ -244,7 +246,7 @@ nonisolated enum SlotProvider {
     }
 
     static func combine(count: Int) -> WheelSlot {
-        WheelSlot(action: .combinePDF, category: .format, label: "PDF", monoLabel: "PDF", caption: "COMBINE",
+        WheelSlot(action: .combinePDF, category: .format, label: "Combine", monoLabel: "PDF", caption: "COMBINE",
                   symbol: "doc.on.doc", kicker: "COMBINE INTO", big: "PDF", hint: "\(count) files, in drop order",
                   verb: "Combine into one PDF")
     }

@@ -102,10 +102,14 @@ enum DragTest {
         check(finished?.action == nil && finished != nil, "centre reports Cancel")
         try? await Task.sleep(nanoseconds: 400_000_000)
 
-        // 3. Rest on More, then drop on the first fan chip.
+        // 3. Rest on More while the pointer reports ~60×/s (like a real drag),
+        //    then drop on the first fan chip.
         await show()
-        wheel.dragPointer(at: segment(3))
-        try? await Task.sleep(nanoseconds: 300_000_000) // More opens after 150 ms
+        for _ in 0..<25 {
+            wheel.dragPointer(at: segment(3))
+            try? await Task.sleep(nanoseconds: 16_000_000)
+        }
+        check(wheel.isFanOpen, "resting on More with continuous pointer updates opens the fan")
         let fanCount = SlotProvider.menu(for: [.heic], canWrite: { FormatSupport.current.canWrite($0) }).fan.count
         let chip = point(g.fanOffsets(count: fanCount, flipped: false)[0])
         wheel.dragPointer(at: chip)

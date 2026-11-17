@@ -388,13 +388,16 @@ final class WheelController {
         let moreIndex = menu.moreIndex
         switch newTarget {
         case let .segment(i) where i == moreIndex:
-            if !state.fanOpen { scheduleFanOpen() }
+            // Start the rest-on-More timer once; pointer updates arrive ~60×/s
+            // and must not keep restarting it.
+            if !state.fanOpen, state.hover != newTarget || moreTimer == nil { scheduleFanOpen() }
         case .fanChip:
             break
         case .none:
             break // travelling between More and the fan: keep it as it is
         default:
             moreTimer?.cancel()
+            moreTimer = nil
             next.fanOpen = false
         }
         guard next != state else { return }
@@ -407,11 +410,15 @@ final class WheelController {
         if changedTarget, let host { NSAccessibility.post(element: host, notification: .layoutChanged) }
     }
 
+    /// For tests: whether the More fan is open.
+    var isFanOpen: Bool { state.fanOpen }
+
     private func scheduleFanOpen() {
         moreTimer?.cancel()
         let delay = Double(settings.value(SettingsKeys.moreHoverDelayMs)) / 1000
         let work = DispatchWorkItem { [weak self] in
             MainActor.assumeIsolated {
+                self?.moreTimer = nil
                 guard let self, self.isVisible, self.state.hover == .segment(self.menu.moreIndex ?? -1) else { return }
                 self.state.fanOpen = true
                 self.renderer?.apply(self.state, animated: true)
