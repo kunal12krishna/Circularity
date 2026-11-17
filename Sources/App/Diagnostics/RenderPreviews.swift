@@ -12,6 +12,8 @@ enum RenderPreviews {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try renderWheels(into: directory)
             try renderDialogs(into: directory)
+            try renderPanels(into: directory)
+            try renderIcons(into: directory)
             let variants: [(name: String, bar: NSColor, glyph: NSColor)] = [
                 ("light-mono", NSColor(hex: 0xE4E0DA), NSColor(hex: 0x1D1B18)),
                 ("dark-mono", NSColor(hex: 0x26272C), NSColor(hex: 0xF2F2F2)),
@@ -35,6 +37,100 @@ enum RenderPreviews {
     }
 
     private struct RenderError: Error {}
+
+    /// The three panel layouts with sample history, stats and a running job.
+    private static func renderPanels(into directory: URL) throws {
+        let suite = "\(AppIdentity.bundleID).previews"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = SettingsStore(defaults: defaults)
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("circularity-panel-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let history = HistoryStore(file: "preview-history-\(UUID().uuidString).json")
+        let stats = StatsStore(file: "preview-stats-\(UUID().uuidString).json")
+        let names = [("beach.png", "HEIC → PNG", 3_200_000, 9_800_000), ("portfolio (compressed).pdf", "Compressed", 18_400_000, 4_100_000),
+                     ("hero (resized).jpg", "Resized", 2_400_000, 640_000)]
+        for (i, (name, label, before, after)) in names.enumerated() {
+            let url = dir.appendingPathComponent(name)
+            if name.hasSuffix(".pdf") { try Data("%PDF-1.4".utf8).write(to: url) } else if let image = samplePicture(size: 120, scale: 1),
+               let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) { try data.write(to: url) }
+            history.add(HistoryItem(id: UUID().uuidString, date: Date().addingTimeInterval(-Double([3600, 720, 120][i])),
+                                    inputs: [url.path], outputs: [url.path], bytesIn: Int64(before), bytesOut: Int64(after),
+                                    label: label, format: url.pathExtension.uppercased()))
+        }
+        stats.record(files: 18, bytesIn: 160_000_000, bytesOut: 18_000_000, format: "JPG")
+        let jobs = JobCenter(settings: settings, history: history, stats: stats)
+        let watch = WatchFolderService(settings: settings, jobs: jobs)
+        let model = PanelModel(jobs: jobs, watch: watch, settings: settings)
+        defer {
+            history.clear(); stats.reset()
+            try? FileManager.default.removeItem(at: AppSupport.folder.appendingPathComponent("preview-history.json"))
+        }
+        for (layout, name, busy) in [("stackPlus", "panel-stackplus", false), ("stackPlus", "panel-stackplus-busy", true),
+                                     ("tabs", "panel-tabs", true), ("mini", "panel-mini", true)] {
+            settings.set(layout, for: SettingsKeys.panelLayout)
+            settings.set(layout == "tabs" ? "ring" : "halo", for: SettingsKeys.wheelLayout)
+            if busy, jobs.active.isEmpty {
+                jobs.injectPreviewJob(ActiveJob(id: UUID(), title: "Lease scan.pdf → Compress · balanced", firstInput: nil, isPDF: true,
+                                                started: Date().addingTimeInterval(-20), fraction: 0.71, detail: "Page 31 of 44"))
+            }
+            let width: CGFloat = layout == "mini" ? 340 : 380
+            try snapshot(PanelRoot(model: model, width: width), background: layout == "tabs" ? 0xDCD6CC : 0x1E2E36,
+                         to: directory.appendingPathComponent("\(name)@2x.png"))
+        }
+        try snapshot(StatsWindowView(model: model).frame(width: 540, height: 560), background: 0x0D0F14,
+                     to: directory.appendingPathComponent("window-stats@2x.png"))
+    }
+
+    private static func snapshot<V: View>(_ view: V, background: UInt32, to url: URL) throws {
+        let host = NSHostingView(rootView: view.padding(20).background(Color(hex: background)))
+        host.frame = CGRect(origin: .zero, size: host.fittingSize)
+        let window = NSWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
+        window.contentView = host
+        host.layoutSubtreeIfNeeded()
+        RunLoop.main.run(until: Date().addingTimeInterval(0.8))
+        host.layoutSubtreeIfNeeded()
+        guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { throw RenderError() }
+        host.cacheDisplay(in: host.bounds, to: rep)
+        guard let data = rep.representation(using: .png, properties: [:]) else { throw RenderError() }
+        try data.write(to: url)
+        print(url.path)
+        window.contentView = nil
+    }
+
+    /// Board H: every icon state on light and dark bars, monochrome and colour.
+    private static func renderIcons(into directory: URL) throws {
+        let states: [StatusIconState] = [.idle, .dragOver, .converting(0.4), .converting(0.85), .done, .error, .paused]
+        let rows: [(String, NSAppearance.Name, StatusIconStyle, UInt32)] = [
+            ("light-mono", .aqua, .monochrome, 0xE4E0DA), ("dark-mono", .darkAqua, .monochrome, 0x26272C), ("dark-colour", .darkAqua, .colour, 0x26272C),
+        ]
+        let cell = CGSize(width: 60, height: 36)
+        let size = CGSize(width: cell.width * CGFloat(states.count), height: cell.height * CGFloat(rows.count))
+        guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width * 2), pixelsHigh: Int(size.height * 2),
+                                         bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                         colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { throw RenderError() }
+        rep.size = size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        for (r, row) in rows.enumerated() {
+            let y = size.height - cell.height * CGFloat(r + 1)
+            NSColor(hex: row.3).setFill()
+            CGRect(x: 0, y: y, width: size.width, height: cell.height).fill()
+            NSAppearance(named: row.1)?.performAsCurrentDrawingAppearance {
+                for (c, state) in states.enumerated() {
+                    let image = StatusIcon.image(state, style: row.2, accent: NSColor(hex: 0xFF8A00))
+                    image.draw(in: CGRect(x: CGFloat(c) * cell.width + (cell.width - 26) / 2, y: y + (cell.height - 22) / 2, width: 26, height: 22))
+                }
+            }
+        }
+        NSGraphicsContext.restoreGraphicsState()
+        guard let data = rep.representation(using: .png, properties: [:]) else { throw RenderError() }
+        let url = directory.appendingPathComponent("status-icon-states@2x.png")
+        try data.write(to: url)
+        print(url.path)
+    }
 
     /// The tool dialogs, hosted in an offscreen window so AppKit-backed
     /// controls (fields, sliders, switches) draw too.

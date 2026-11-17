@@ -64,7 +64,7 @@ enum DragTest {
         check(!wheel.isVisible, "wheel hides after the drop")
 
         // End to end: the choice runs through the engine and a JPG lands next to the original.
-        let jobs = JobCenter(settings: settings)
+        let jobs = JobCenter(settings: settings, history: HistoryStore(file: "dragtest-history.json"), stats: StatsStore(file: "dragtest-stats.json"))
         if let choice = finished, let action = choice.action {
             check(jobs.run(action, files: choice.files) == nil, "the job starts")
             for _ in 0..<50 where jobs.lastSummary == nil { try? await Task.sleep(nanoseconds: 100_000_000) }
@@ -92,6 +92,60 @@ enum DragTest {
             check(compressed != nil || (jobs.lastSummary ?? "").hasPrefix("Kept"),
                   "the saved button runs (\(jobs.lastSummary ?? "no result"))")
             jobs.removePreset(id: button.id)
+
+            // Panel: a preset tile dropped-on with a file, and a ⌘K command.
+            let watch = WatchFolderService(settings: settings, jobs: jobs)
+            let panelModel = PanelModel(jobs: jobs, watch: watch, settings: settings)
+            panelModel.run(PanelModel.builtins[0], files: [file]) // → JPG
+            let tileResult = await waitForResult()
+            check(tileResult?.pathExtension == "jpg", "panel tile → JPG converts a dropped file (\(tileResult?.lastPathComponent ?? "none"))")
+            jobs.run(.resizeWidth(64), files: [file])
+            let commandResult = await waitForResult()
+            check(commandResult?.lastPathComponent.contains("(resized)") == true, "⌘K “64w” resizes (\(commandResult?.lastPathComponent ?? "none"))")
+            check(jobs.history.items.count >= 3 && jobs.stats.today.files >= 3, "history and stats record conversions")
+            check(!watch.isStreaming, "no watch folders: no FSEvents stream runs")
+
+            // Watch folder, for real: FSEvents → stable size → convert.
+            let watched = file.deletingLastPathComponent().appendingPathComponent("watched", isDirectory: true)
+            try? FileManager.default.createDirectory(at: watched, withIntermediateDirectories: true)
+            watch.add(WatchRule(folder: watched.path, match: .images, format: .jpg))
+            check(watch.isStreaming, "a watch folder starts the FSEvents stream")
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            try? FileManager.default.copyItem(at: file, to: watched.appendingPathComponent("Screenshot.heic"))
+            var watchedOutput: URL?
+            for _ in 0..<80 where watchedOutput == nil {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                watchedOutput = (try? FileManager.default.contentsOfDirectory(at: watched, includingPropertiesForKeys: nil))?
+                    .first { $0.pathExtension == "jpg" }
+            }
+            check(watchedOutput?.lastPathComponent == "Screenshot.jpg", "a file dropped into a watched folder becomes Screenshot.jpg")
+            for rule in watch.rules { watch.remove(rule.id) }
+
+            // The real panel: open (SwiftUI built), close (released).
+            MemoryFootprint.relieve()
+            let beforePanel = MemoryFootprint.current()
+            let menuPanel = MenuPanelController(model: panelModel, settings: settings)
+            menuPanel.open()
+            try? await Task.sleep(nanoseconds: 800_000_000)
+            check(menuPanel.isOpen, "the panel opens (frame \(menuPanel.frameForTesting.map { "\($0)" } ?? "none"))")
+            let openMB = Double(MemoryFootprint.current()) / 1_048_576
+            menuPanel.close()
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            MemoryFootprint.relieve()
+            check(!menuPanel.isOpen, "the panel closes")
+            print(String(format: "Memory: before panel %.1f MB, panel open %.1f MB, after close %.1f MB",
+                         Double(beforePanel) / 1_048_576, openMB, Double(MemoryFootprint.current()) / 1_048_576))
+            for round in 2...4 {
+                menuPanel.open()
+                try? await Task.sleep(nanoseconds: 600_000_000)
+                menuPanel.close()
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                MemoryFootprint.relieve()
+                print(String(format: "Memory after panel open/close #%d: %.1f MB", round, Double(MemoryFootprint.current()) / 1_048_576))
+            }
+            check(!watch.isStreaming, "removing the last rule stops the stream")
+            jobs.history.clear()
+            jobs.stats.reset()
         }
 
         // 2. Drop on the centre cancels.

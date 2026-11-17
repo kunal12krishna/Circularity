@@ -88,3 +88,22 @@ an iPhone photo (HEIC), a PNG screenshot, a multi-page PDF, a `.md`, a `.docx` a
 | 38 | Drop a **PDF** on Compress, Resize (Scale / Paper) and Crop. | PDF versions of each dialog; results are `name (compressed).pdf` (or "Kept the original …"), `name (resized).pdf`, `name (cropped).pdf`. |
 | 39 | Menu → **⌃⌥C for Finder Selection** (ticked) → click it. | It turns off and offers to relaunch Finder. Click it again to turn it back on. |
 | 40 | Menu → **Halo Accent** → Cyan / Pink / Tangerine / Neon Lime. | The Halo wheel and the dialogs use that colour. |
+
+## Milestones (h) + (h2): menu bar panel and extras
+
+| # | Do this | Expect |
+|---|---|---|
+| 41 | Click the menu bar icon. | The panel springs open under it (board I, in your accent). Click elsewhere or press Esc: it fades away. |
+| 42 | Right-click the icon. | The settings menu (layouts, accents, icon style, panel width, recents, grid, ⌃⌥C, Pause…). |
+| 43 | Convert something, watch the icon. | A progress ring while converting; a short pulse and a tick when done; back to the ring glyph after 3 s. A failed job shows a red badge until you open the panel. |
+| 44 | Drag a file over the icon and hold. | The panel opens with the drop zone ready. Drag down onto the drop zone: it turns into a mini wheel. Drop on a segment: that conversion runs. Drop on the icon itself: the full wheel opens. |
+| 45 | Drop a file on a preset tile (→ JPG, < 2 MB, 1920w, No GPS). | It runs on that file. Click a tile: it runs on the last files you used, or asks you to choose. |
+| 46 | Press ⌃⌥Space, type `webp`, `< 1mb`, `1280w` or `no gps`, press ↩. | It runs on the last files. Typing part of a recent file's name lists it; ↩ opens it, ⌘↩ reveals it. |
+| 47 | Copy an image (e.g. ⌘⇧⌃4 screenshot to clipboard), press ⌃⌥V. | The clipboard now holds a PNG; paste it anywhere. The panel shows a note. |
+| 48 | Recent: hover a row. | Reveal, Quick Look, Convert again, Undo (moves the result to the Trash). Drag a row into Finder or Mail: the real file goes. Right-click for more. |
+| 49 | Click **Show all**, **TODAY** and **WATCHING**. | History (searchable), Stats (30-day chart, by format, reset), Watch Folders. |
+| 50 | Watch Folders → **Screenshots → JPG**, take a screenshot. | A JPG of it appears next to it a couple of seconds later. Desktop is protected: macOS asks once (the app explains first). |
+| 51 | Click **Edit** in Presets. | Drag tiles to reorder, ✕ to remove, the palette to recolour; Restore brings the built-ins back. |
+| 52 | Click the **pin** in the footer. | The panel becomes a floating window in a corner. Drag it near another corner: it snaps there and remembers it for that display. Unpin from its footer. Right-click the icon → Pinned Panel Size / Ignores Clicks. |
+| 53 | Right-click the icon → **Panel Layout → Tabs**, then **Mini**. | Tabs: light, Now / Recent / Presets (⌘1 ⌘2 ⌘3). Mini: dark Halo panel with a big Halo drop wheel and a recent strip. Same behaviour in all three. |
+| 54 | Drag two photos, tap Shift. | "Combine" (PDF) is on the ring. Rest on **More**: the fan opens. |

@@ -55,6 +55,16 @@ nonisolated enum SettingsKeys {
     static let wheelUsage = SettingsKey("wheel.usage", [String: Int]())          // smart-ordering counts
     static let haloAccentHex = SettingsKey("wheel.halo.accentHex", "#C6FF3D")    // board C neon
     static let presetsJSON = SettingsKey("presets.list", "[]")                   // [Preset] as JSON
+    static let watchRulesJSON = SettingsKey("watch.rules", "[]")                 // [WatchRule] as JSON
+    static let panelTiles = SettingsKey("menubar.tiles", "")                     // tile ids in order ("" = default)
+    static let panelTileColors = SettingsKey("menubar.tileColors", [String: Int]())
+    static let recentsCount = SettingsKey("menubar.recentsCount", 5)             // 5 | 10 | 25
+    static let presetGrid = SettingsKey("menubar.grid", "3x2")                   // 3x1 | 3x2 | 4x2
+    static let showPercent = SettingsKey("menubar.showPercent", false)
+    static let pinned = SettingsKey("menubar.pinned", false)
+    static let pinnedSize = SettingsKey("menubar.pinnedSize", "m")
+    static let pinnedClickThrough = SettingsKey("menubar.pinnedClickThrough", false)
+    static let pinnedCorners = SettingsKey("menubar.pinnedCorners", [String: String]()) // display id → corner
     static let theme = SettingsKey("appearance.theme", "tangerine")
     static let accentHex = SettingsKey("appearance.accentHex", "#FF8A00")
 
@@ -80,7 +90,9 @@ nonisolated enum SettingsKeys {
         triggerKey.erased, triggerMode.erased, triggerDelayMs.erased, shakeEnabled.erased,
         shakeSensitivity.erased, skipFullScreen.erased, serviceShortcutInstalled.erased, excludedApps.erased,
         wheelLayout.erased, wheelScale.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased,
-        wheelUsage.erased, haloAccentHex.erased, presetsJSON.erased, theme.erased, accentHex.erased,
+        wheelUsage.erased, haloAccentHex.erased, presetsJSON.erased, watchRulesJSON.erased, panelTiles.erased,
+        panelTileColors.erased, recentsCount.erased, presetGrid.erased, showPercent.erased, pinned.erased, pinnedSize.erased,
+        pinnedClickThrough.erased, pinnedCorners.erased, theme.erased, accentHex.erased,
         panelLayout.erased, panelWidth.erased, iconStyle.erased,
         mediaPackEnabled.erased, mediaBundleMode.erased, updatesChannel.erased, updatesAutomatic.erased,
         cliInstalled.erased, urlSchemeEnabled.erased, shortcutsEnabled.erased, officeAutomation.erased,

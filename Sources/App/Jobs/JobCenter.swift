@@ -1,23 +1,54 @@
 import AppKit
 import CircularityEngine
+import Combine
 import UniformTypeIdentifiers
 
-/// Runs conversions through the engine and remembers the latest result for
-/// the menu (the panel's In progress / Recent sections arrive in milestone h).
-final class JobCenter {
+/// One running job, for the panel's In progress cards and the icon's ring.
+struct ActiveJob: Identifiable, Equatable {
+    let id: UUID
+    let title: String
+    let firstInput: URL?
+    let isPDF: Bool
+    let started: Date
+    var fraction: Double
+    var detail: String
+
+    /// "71 % · Page 31 of 44 · about 9 s left"
+    var meta: String {
+        var parts = ["\(Int((fraction * 100).rounded())) %"]
+        if !detail.isEmpty { parts.append(detail) }
+        let elapsed = Date().timeIntervalSince(started)
+        if fraction > 0.05, elapsed > 1 {
+            let left = elapsed * (1 - fraction) / fraction
+            parts.append(left < 60 ? "about \(max(1, Int(left))) s left" : "about \(Int(left / 60) + 1) min left")
+        }
+        return parts.joined(separator: " · ")
+    }
+}
+
+/// Runs conversions, tracks progress, and records results in History and Stats.
+final class JobCenter: ObservableObject {
     private let engine = ConversionEngine()
     private let settings: SettingsStore
+    let history: HistoryStore
+    let stats: StatsStore
     private var tasks: [UUID: Task<Void, Never>] = [:]
 
-    /// Called whenever running jobs or the last result change.
-    var onChange: (() -> Void)?
+    @Published private(set) var active: [ActiveJob] = []
+    @Published private(set) var lastSummary: String?
+    @Published private(set) var lastOutputs: [URL] = []
+    /// Set by a failure; cleared when the panel is opened (icon error badge).
+    @Published var lastError: String?
+    /// Fires when a job finishes successfully (icon "done" pulse).
+    let finished = PassthroughSubject<Void, Never>()
 
-    private(set) var runningCount = 0
-    private(set) var lastSummary: String?
-    private(set) var lastOutputs: [URL] = []
+    var runningCount: Int { active.count }
+    var overallProgress: Double? { active.isEmpty ? nil : active.map(\.fraction).reduce(0, +) / Double(active.count) }
 
-    init(settings: SettingsStore) {
+    init(settings: SettingsStore, history: HistoryStore = HistoryStore(), stats: StatsStore = StatsStore()) {
         self.settings = settings
+        self.history = history
+        self.stats = stats
     }
 
     /// Wheel actions that run straight away (formats, pages, text, combine,
@@ -29,45 +60,96 @@ final class JobCenter {
         return nil
     }
 
-    func run(_ operation: CircularityEngine.Operation, files: [URL], label: String) {
+    func run(_ operation: CircularityEngine.Operation, files: [URL], label: String, policy: OutputPolicy = OutputPolicy(),
+             completion: ((Result<JobResult, Error>) -> Void)? = nil) {
         guard !files.isEmpty else { return }
-        let request = JobRequest(inputs: files, operation: operation, output: OutputPolicy())
-        runningCount += 1
-        onChange?()
+        let request = JobRequest(inputs: files, operation: operation, output: policy)
         let id = request.id
+        let job = ActiveJob(id: id, title: Self.title(operation, files: files), firstInput: files.first,
+                            isPDF: files.first.map { DraggedFiles.type(of: $0).conforms(to: .pdf) } ?? false,
+                            started: Date(), fraction: 0, detail: "")
+        active.append(job)
         Log.app.notice("Job \(id.uuidString.prefix(8), privacy: .public): \(label, privacy: .public) on \(files.count, privacy: .public) file(s)")
         tasks[id] = Task { [engine] in
             let result: Result<JobResult, Error>
-            do { result = .success(try await engine.run(request)) } catch { result = .failure(error) }
-            self.finish(id, result)
+            do {
+                result = .success(try await engine.run(request) { progress in
+                    Task { @MainActor in self.update(id, progress) }
+                })
+            } catch { result = .failure(error) }
+            self.finish(id, operation: operation, result)
+            completion?(result)
         }
     }
 
-    func cancelAll() {
-        for task in tasks.values { task.cancel() }
-    }
+    func cancel(_ id: UUID) { tasks[id]?.cancel() }
+
+    /// For --render-previews: show a job card without running anything.
+    func injectPreviewJob(_ job: ActiveJob) { active.append(job) }
+    func cancelAll() { for task in tasks.values { task.cancel() } }
 
     func revealLast() {
         guard !lastOutputs.isEmpty else { return }
         NSWorkspace.shared.activateFileViewerSelecting(lastOutputs)
     }
 
-    private func finish(_ id: UUID, _ result: Result<JobResult, Error>) {
+    private func update(_ id: UUID, _ progress: JobProgress) {
+        guard let i = active.firstIndex(where: { $0.id == id }) else { return }
+        active[i].fraction = progress.fraction
+        if !progress.detail.isEmpty { active[i].detail = progress.detail }
+    }
+
+    private func finish(_ id: UUID, operation: CircularityEngine.Operation, _ result: Result<JobResult, Error>) {
         tasks[id] = nil
-        runningCount -= 1
+        active.removeAll { $0.id == id }
         switch result {
         case let .success(r):
             lastOutputs = r.outputs
             lastSummary = Self.summary(r)
+            record(r, operation: operation)
+            if !r.outputs.isEmpty { finished.send() }
             Log.app.notice("Job \(id.uuidString.prefix(8), privacy: .public) done: \(r.outputs.count, privacy: .public) output(s), \(r.bytesIn, privacy: .public) → \(r.bytesOut, privacy: .public) bytes")
         case let .failure(error) where error is CancellationError:
             lastSummary = "Cancelled (nothing was written)"
         case let .failure(error):
             lastSummary = "Failed: \(error.localizedDescription)"
+            lastError = error.localizedDescription
             Log.app.error("Job \(id.uuidString.prefix(8), privacy: .public) failed: \(error.localizedDescription, privacy: .public)")
         }
-        onChange?()
-        if runningCount == 0 { MemoryFootprint.relieve() }
+        if active.isEmpty { MemoryFootprint.relieve() }
+    }
+
+    private func record(_ r: JobResult, operation: CircularityEngine.Operation) {
+        for outcome in r.outcomes where !outcome.outputs.isEmpty {
+            let from = outcome.inputs.first?.pathExtension.uppercased() ?? ""
+            let to = outcome.outputs.first?.pathExtension.uppercased() ?? ""
+            let label: String = switch operation.kind {
+            case .convert, .pdfToImages, .extractText, .renderDocument: "\(from) → \(to.isEmpty ? "folder" : to)"
+            case .resize: "Resized"
+            case .compress: "Compressed"
+            case .crop: "Cropped"
+            case .combine: "Combined \(outcome.inputs.count) files"
+            }
+            history.add(HistoryItem(id: UUID().uuidString, date: Date(), inputs: outcome.inputs.map(\.path),
+                                    outputs: outcome.outputs.map(\.path), bytesIn: outcome.bytesIn, bytesOut: outcome.bytesOut,
+                                    label: label, format: to.isEmpty ? "PNG" : to))
+            stats.record(files: outcome.inputs.count, bytesIn: outcome.bytesIn, bytesOut: outcome.bytesOut, format: to.isEmpty ? "PNG" : to)
+        }
+    }
+
+    static func title(_ operation: CircularityEngine.Operation, files: [URL]) -> String {
+        let name = files.count == 1 ? files[0].lastPathComponent : "\(files.count) files"
+        let target: String = switch operation {
+        case let .convert(f): f.displayName
+        case let .pdfPages(f, _): "\(f.displayName) pages"
+        case .extractText: "TXT"
+        case .combinePDF: "PDF (combined)"
+        case .resize, .resizePDF: "Resize"
+        case .compressImage: "Compress"
+        case let .compressPDF(level): "Compress · \(level.rawValue)"
+        case .cropImage, .cropPDF: "Crop"
+        }
+        return "\(name) → \(target)"
     }
 
     static func summary(_ r: JobResult) -> String {
@@ -89,11 +171,13 @@ final class JobCenter {
         list.removeAll { $0.name == preset.name && $0.applies == preset.applies }
         list.insert(preset, at: 0)
         settings.set(Preset.encodeList(list), for: SettingsKeys.presetsJSON)
+        objectWillChange.send()
         Log.app.notice("Saved a wheel button: \(preset.name, privacy: .public)")
     }
 
     func removePreset(id: String) {
         settings.set(Preset.encodeList(presets.filter { $0.id != id }), for: SettingsKeys.presetsJSON)
+        objectWillChange.send()
     }
 
     // MARK: Mapping
@@ -106,6 +190,24 @@ final class JobCenter {
         case .combinePDF: .combinePDF
         case let .preset(id): presets.first { $0.id == id }?.operation
         case .compress, .resize, .crop, .more: nil
+        }
+    }
+
+    /// Runs a ⌘K command on files.
+    func run(_ command: Command, files: [URL]) {
+        switch command {
+        case let .convert(f): run(.convert(f), files: files, label: "command.convert")
+        case let .compressUnder(bytes): run(.compressImage(.targetBytes(bytes)), files: files, label: "command.compress")
+        case let .resizeWidth(w): run(.resize(ResizeSpec(width: w, height: nil)), files: files, label: "command.resize")
+        case .combine: run(.combinePDF, files: files, label: "command.combine")
+        case .stripGPS:
+            // Same format, location removed.
+            var policy = OutputPolicy()
+            policy.metadata = .stripGPS
+            for file in files {
+                run(.convert(ConversionEngine.sameFormat(for: file)), files: [file], label: "command.nogps", policy: policy)
+            }
+        default: break
         }
     }
 }
