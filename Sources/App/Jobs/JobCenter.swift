@@ -2,7 +2,7 @@ import AppKit
 import CircularityEngine
 import UniformTypeIdentifiers
 
-/// Runs wheel choices through the engine and remembers the latest result for
+/// Runs conversions through the engine and remembers the latest result for
 /// the menu (the panel's In progress / Recent sections arrive in milestone h).
 final class JobCenter {
     private let engine = ConversionEngine()
@@ -20,24 +20,27 @@ final class JobCenter {
         self.settings = settings
     }
 
-    /// Starts a job for a wheel action, or returns why it can't run yet.
+    /// Wheel actions that run straight away (formats, pages, text, combine,
+    /// saved buttons). Tools with dialogs are opened by the coordinator.
     @discardableResult
     func run(_ action: WheelAction, files: [URL]) -> String? {
-        guard !files.isEmpty else { return "No files to convert" }
-        guard let operation = operation(for: action, files: files) else {
-            return "\(action.title) opens a dialog in the next milestone (g)"
-        }
+        guard let operation = operation(for: action) else { return "\(action.usageKey) needs a dialog" }
+        run(operation, files: files, label: action.usageKey)
+        return nil
+    }
+
+    func run(_ operation: CircularityEngine.Operation, files: [URL], label: String) {
+        guard !files.isEmpty else { return }
         let request = JobRequest(inputs: files, operation: operation, output: OutputPolicy())
         runningCount += 1
         onChange?()
         let id = request.id
-        Log.app.notice("Job \(id.uuidString.prefix(8), privacy: .public): \(action.usageKey, privacy: .public) on \(files.count, privacy: .public) file(s)")
+        Log.app.notice("Job \(id.uuidString.prefix(8), privacy: .public): \(label, privacy: .public) on \(files.count, privacy: .public) file(s)")
         tasks[id] = Task { [engine] in
             let result: Result<JobResult, Error>
             do { result = .success(try await engine.run(request)) } catch { result = .failure(error) }
             self.finish(id, result)
         }
-        return nil
     }
 
     func cancelAll() {
@@ -68,45 +71,41 @@ final class JobCenter {
     }
 
     static func summary(_ r: JobResult) -> String {
-        let f = ByteCountFormatter()
-        f.countStyle = .file
         if r.outputs.isEmpty { return r.notes.first ?? "Nothing was written" }
-        let where_ = r.outcomes.contains(where: \.usedFallbackFolder) ? " (in Documents › Converted)" : ""
+        let folder = r.outputs.first?.deletingLastPathComponent().lastPathComponent ?? "Converted"
+        let where_ = r.outcomes.contains(where: \.usedFallbackFolder) ? " (saved in \(folder): the original folder was off-limits)" : ""
         let name = r.outputs.count == 1 ? r.outputs[0].lastPathComponent : "\(r.outputs.count) files"
-        var line = "\(name) · \(f.string(fromByteCount: r.bytesOut))"
-        if r.bytesIn > 0, r.outputs.count == r.outcomes.count {
-            let change = Double(r.bytesOut - r.bytesIn) / Double(r.bytesIn) * 100
-            line += String(format: " (%@%.0f%%)", change >= 0 ? "+" : "−", abs(change))
-        }
+        var line = "\(name) · \(Bytes.text(r.bytesOut))"
+        if r.bytesIn > 0, r.outputs.count == r.outcomes.count { line += " (\(Bytes.change(from: r.bytesIn, to: r.bytesOut)))" }
         return line + where_
     }
 
-    // MARK: Mapping wheel actions to engine operations
+    // MARK: Presets ("Also add this as a button")
 
-    private func operation(for action: WheelAction, files: [URL]) -> CircularityEngine.Operation? {
-        switch action {
-        case let .convert(format): return .convert(format)
-        case let .pdfPages(format): return .pdfPages(format, scale: 2)
-        case .extractText: return .extractText
-        case .combinePDF: return .combinePDF
-        case .compress:
-            // Until the Compress dialog (g): Balanced for PDFs, quality 0.7 for images.
-            let allPDF = files.allSatisfy { DraggedFiles.type(of: $0).conforms(to: .pdf) }
-            return allPDF ? .compressPDF(.balanced) : .compressImage(.quality(0.7))
-        case .resize, .crop, .more:
-            return nil
-        }
+    var presets: [Preset] { Preset.decodeList(settings.value(SettingsKeys.presetsJSON)) }
+
+    func addPreset(_ preset: Preset) {
+        var list = presets
+        list.removeAll { $0.name == preset.name && $0.applies == preset.applies }
+        list.insert(preset, at: 0)
+        settings.set(Preset.encodeList(list), for: SettingsKeys.presetsJSON)
+        Log.app.notice("Saved a wheel button: \(preset.name, privacy: .public)")
     }
-}
 
-extension WheelAction {
-    var title: String {
-        switch self {
-        case .resize: "Resize"
-        case .crop: "Crop"
-        case .compress: "Compress"
-        case .more: "More"
-        default: "This action"
+    func removePreset(id: String) {
+        settings.set(Preset.encodeList(presets.filter { $0.id != id }), for: SettingsKeys.presetsJSON)
+    }
+
+    // MARK: Mapping
+
+    private func operation(for action: WheelAction) -> CircularityEngine.Operation? {
+        switch action {
+        case let .convert(format): .convert(format)
+        case let .pdfPages(format): .pdfPages(format, scale: 2)
+        case .extractText: .extractText
+        case .combinePDF: .combinePDF
+        case let .preset(id): presets.first { $0.id == id }?.operation
+        case .compress, .resize, .crop, .more: nil
         }
     }
 }

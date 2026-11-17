@@ -2,11 +2,11 @@ import CircularityEngine
 import Foundation
 import UniformTypeIdentifiers
 
-nonisolated enum FileKind: Sendable, Equatable {
+nonisolated enum FileKind: Sendable, Hashable {
     case image, pdf, document(DocumentFlavor), video, audio, other
 }
 
-nonisolated enum DocumentFlavor: Sendable, Equatable {
+nonisolated enum DocumentFlavor: Sendable, Hashable {
     case markdown, html, plainText, rich(OutputFormat?) // rich: rtf/doc/docx/odt (docx → .docx)
 }
 
@@ -18,6 +18,8 @@ nonisolated enum WheelAction: Sendable, Hashable {
     case combinePDF
     case compress, resize, crop
     case more
+    /// A saved one-click button (id of a `Preset`).
+    case preset(String)
 
     /// Stable key for smart-ordering usage counts.
     var usageKey: String {
@@ -30,6 +32,7 @@ nonisolated enum WheelAction: Sendable, Hashable {
         case .resize: "resize"
         case .crop: "crop"
         case .more: "more"
+        case let .preset(id): "preset.\(id)"
         }
     }
 }
@@ -97,6 +100,26 @@ nonisolated enum SlotProvider {
     }
 
     static let ringImageCandidates: [OutputFormat] = [.png, .jpg, .webp, .heic, .avif, .tiff, .gif, .bmp]
+
+    /// Adds matching saved buttons to the front of the More fan (at most three).
+    static func menu(for types: [UTType], canWrite: (OutputFormat) -> Bool, usage: [String: Int] = [:],
+                     smartOrdering: Bool = false, presets: [Preset]) -> WheelMenu {
+        var menu = menu(for: types, canWrite: canWrite, usage: usage, smartOrdering: smartOrdering)
+        let kinds = Set(types.map { kind(of: $0) })
+        let applies: Preset.Applies? = kinds == [.image] ? .images : (kinds == [.pdf] ? .pdfs : nil)
+        guard let applies, let moreIndex = menu.ring.firstIndex(where: { $0?.action == .more }) else { return menu }
+        let slots = presets.filter { $0.applies == applies }.prefix(3).map { presetSlot($0, count: types.count) }
+        guard !slots.isEmpty else { return menu }
+        menu.fan.insert(contentsOf: slots, at: 0)
+        menu.ring[moreIndex] = moreSlot(fanCount: menu.fan.count)
+        return menu
+    }
+
+    static func presetSlot(_ preset: Preset, count: Int) -> WheelSlot {
+        WheelSlot(action: .preset(preset.id), category: .tool, label: preset.name, monoLabel: preset.name.uppercased(),
+                  caption: "BUTTON", symbol: "bolt", kicker: "ONE CLICK", big: preset.name,
+                  hint: "your saved button", verb: "\(preset.name)\(count > 1 ? " for \(count) files" : "")")
+    }
 
     static func menu(for types: [UTType], canWrite: (OutputFormat) -> Bool,
                      usage: [String: Int] = [:], smartOrdering: Bool = false) -> WheelMenu {

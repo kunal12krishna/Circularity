@@ -7,9 +7,16 @@ final class WheelPanel: NSPanel {
     var allowsKey = false
 
     init() {
+        // Created up front (not deferred) so the window server knows it accepts drags.
         super.init(contentRect: CGRect(x: 0, y: 0, width: 720, height: 720),
-                   styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: true)
-        level = NSWindow.Level(rawValue: NSWindow.Level.popUpMenu.rawValue + 1)
+                   styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
+        // Status-bar level: above normal windows and the Dock, and a level the
+        // drag system delivers to (menu bar items accept drops there).
+        level = .statusBar
+        // A transparent window lets clicks and drags fall through to whatever is
+        // underneath unless this is set explicitly.
+        ignoresMouseEvents = false
+        registerForDraggedTypes(WheelHostView.dragTypes)
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle, .transient]
         isOpaque = false
         backgroundColor = .clear
@@ -35,8 +42,12 @@ final class WheelHostView: NSView {
         super.init(frame: frame)
         wantsLayer = true
         layer?.backgroundColor = .clear
-        registerForDraggedTypes([.fileURL] + NSFilePromiseReceiver.readableDraggedTypes.map { NSPasteboard.PasteboardType($0) })
+        registerForDraggedTypes(Self.dragTypes)
     }
+
+    static let dragTypes: [NSPasteboard.PasteboardType] =
+        [.fileURL, NSPasteboard.PasteboardType("NSFilenamesPboardType")]
+        + NSFilePromiseReceiver.readableDraggedTypes.map { NSPasteboard.PasteboardType($0) }
 
     required init?(coder: NSCoder) { fatalError("not used") }
 

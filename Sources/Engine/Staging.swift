@@ -16,7 +16,7 @@ struct Staging {
         }
         var fallback = false
         if !fm.isWritableFile(atPath: dir.path) {
-            dir = policy.fallbackFolder
+            dir = Self.firstWritable(policy.fallbackFolders) ?? policy.fallbackFolder
             fallback = true
         }
         try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
@@ -44,17 +44,41 @@ struct Staging {
     }
 
     /// Moves a finished file (or folder) into the destination under a free name.
+    /// If macOS refuses the folder (for example Desktop/Downloads access was
+    /// declined), the result goes to the first fallback folder that accepts it.
     func publish(_ staged: URL, planner: OutputPlanner, template: NamingTemplate, context: NamingContext,
-                 fileExtension: String? = nil) async throws -> URL {
-        let final = await planner.reserve(in: destination, template: template, context: context,
-                                          fileExtensionOverride: fileExtension)
-        defer { Task { await planner.release(final) } }
-        do {
-            try FileManager.default.moveItem(at: staged, to: final)
-        } catch {
-            throw JobError.writeFailed(error.localizedDescription)
+                 fileExtension: String? = nil, fallbacks: [URL] = []) async throws -> URL {
+        var lastError: Error?
+        for folder in [destination] + fallbacks.filter({ $0 != destination }) {
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            let final = await planner.reserve(in: folder, template: template, context: context,
+                                              fileExtensionOverride: fileExtension)
+            do {
+                try FileManager.default.moveItem(at: staged, to: final)
+                await planner.release(final)
+                return final
+            } catch {
+                await planner.release(final)
+                lastError = error
+                guard Self.isPermissionError(error) else { break }
+            }
         }
-        return final
+        throw JobError.writeFailed(lastError?.localizedDescription ?? "unknown error")
+    }
+
+    static func firstWritable(_ folders: [URL]) -> URL? {
+        let fm = FileManager.default
+        return folders.first { folder in
+            try? fm.createDirectory(at: folder, withIntermediateDirectories: true)
+            return fm.isWritableFile(atPath: folder.path)
+        }
+    }
+
+    static func isPermissionError(_ error: Error) -> Bool {
+        let ns = error as NSError
+        if ns.domain == NSCocoaErrorDomain, [NSFileWriteNoPermissionError, NSFileWriteVolumeReadOnlyError].contains(ns.code) { return true }
+        let posix = (ns.userInfo[NSUnderlyingErrorKey] as? NSError) ?? ns
+        return posix.domain == NSPOSIXErrorDomain && [Int(EPERM), Int(EACCES), Int(EROFS)].contains(posix.code)
     }
 
     func cleanup() {

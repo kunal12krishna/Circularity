@@ -1,5 +1,6 @@
 import AppKit
 import CircularityEngine
+import SwiftUI
 import UniformTypeIdentifiers
 
 /// `--render-previews <dir>` (PLAN.md §3.9): renders UI to PNG offscreen.
@@ -10,6 +11,7 @@ enum RenderPreviews {
         do {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
             try renderWheels(into: directory)
+            try renderDialogs(into: directory)
             let variants: [(name: String, bar: NSColor, glyph: NSColor)] = [
                 ("light-mono", NSColor(hex: 0xE4E0DA), NSColor(hex: 0x1D1B18)),
                 ("dark-mono", NSColor(hex: 0x26272C), NSColor(hex: 0xF2F2F2)),
@@ -33,6 +35,54 @@ enum RenderPreviews {
     }
 
     private struct RenderError: Error {}
+
+    /// The tool dialogs, hosted in an offscreen window so AppKit-backed
+    /// controls (fields, sliders, switches) draw too.
+    private static func renderDialogs(into directory: URL) throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("circularity-previews-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let photo = dir.appendingPathComponent("IMG_2041.HEIC")
+        if let image = samplePicture(size: 1200, scale: 1),
+           let dest = CGImageDestinationCreateWithURL(photo as CFURL, "public.heic" as CFString, 1, nil) {
+            CGImageDestinationAddImage(dest, image, nil)
+            CGImageDestinationFinalize(dest)
+        }
+        let pdf = dir.appendingPathComponent("Report.pdf")
+        var box = CGRect(x: 0, y: 0, width: 612, height: 792)
+        if let ctx = CGContext(pdf as CFURL, mediaBox: &box, nil) {
+            ctx.beginPage(mediaBox: &box)
+            if let image = samplePicture(size: 400, scale: 1) { ctx.draw(image, in: CGRect(x: 106, y: 300, width: 400, height: 400)) }
+            ctx.endPage()
+            ctx.closePDF()
+        }
+        let accent = SwiftUI.Color(hex: 0xC6FF3D)
+        let none: (CircularityEngine.Operation, Preset?) -> Void = { _, _ in }
+        let views: [(String, AnyView)] = [
+            ("dialog-compress-image", AnyView(CompressDialog(files: [photo], isPDF: false, accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-compress-pdf", AnyView(CompressDialog(files: [pdf], isPDF: true, accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-resize-image", AnyView(ResizeDialog(files: [photo], isPDF: false, accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-resize-pdf", AnyView(ResizeDialog(files: [pdf], isPDF: true, accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-crop-image", AnyView(CropDialog(files: [photo], isPDF: false, accent: accent, onRun: none, onCancel: {}))),
+        ]
+        for (name, view) in views {
+            let host = NSHostingView(rootView: view)
+            host.frame = CGRect(origin: .zero, size: host.fittingSize)
+            let window = NSWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
+            window.appearance = NSAppearance(named: .darkAqua)
+            window.contentView = host
+            host.layoutSubtreeIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.6)) // let onAppear work and estimates land
+            host.layoutSubtreeIfNeeded()
+            guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { throw RenderError() }
+            host.cacheDisplay(in: host.bounds, to: rep)
+            guard let data = rep.representation(using: .png, properties: [:]) else { throw RenderError() }
+            let url = directory.appendingPathComponent("\(name)@2x.png")
+            try data.write(to: url)
+            print(url.path)
+            window.contentView = nil
+        }
+    }
 
     /// Wheel states matching the board screenshots (D: hover JPG, More fan,
     /// Cancel, Compress), for each layout and a few file kinds.

@@ -56,6 +56,20 @@ enum ServiceShortcut {
         return ok
     }
 
+    /// Removes the shortcut again (the Service stays in the right-click menu).
+    @discardableResult
+    static func uninstall() -> Bool {
+        var status = (CFPreferencesCopyAppValue(statusKey, domain) as? [String: Any]) ?? [:]
+        guard var entry = status[entryKey] as? [String: Any] else { return true }
+        entry["key_equivalent"] = ""
+        status[entryKey] = entry
+        CFPreferencesSetAppValue(statusKey, status as CFDictionary, domain)
+        let synced = CFPreferencesAppSynchronize(domain)
+        refreshServices()
+        Log.platform.notice("Service shortcut ⌃⌥C removed")
+        return synced && !isInstalled
+    }
+
     static func refreshServices() {
         NSUpdateDynamicServices()
         let pbs = Process()
@@ -66,11 +80,11 @@ enum ServiceShortcut {
 
     /// Finder reads Services shortcuts when it starts, so a new shortcut only
     /// works after Finder relaunches. Offers to do that (it reopens by itself).
-    static func offerFinderRelaunch() {
+    static func offerFinderRelaunch(turnedOn: Bool = true) {
         NSApp.activate(ignoringOtherApps: true)
         let alert = NSAlert()
-        alert.messageText = "⌃⌥C is ready"
-        alert.informativeText = "Finder picks up new keyboard shortcuts when it restarts. Relaunch Finder now? Its windows reopen by themselves."
+        alert.messageText = turnedOn ? "⌃⌥C is ready" : "⌃⌥C is turned off"
+        alert.informativeText = "Finder picks up keyboard shortcut changes when it restarts. Relaunch Finder now? Its windows reopen by themselves."
         alert.addButton(withTitle: "Relaunch Finder")
         alert.addButton(withTitle: "Later")
         guard alert.runModal() == .alertFirstButtonReturn else { return }

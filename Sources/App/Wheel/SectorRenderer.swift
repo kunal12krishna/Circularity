@@ -256,6 +256,13 @@ final class SectorRenderer: WheelRenderer {
         transact(0.12, animated: animated) {
             c.shape.fillColor = hot ? accent : tokens.chipFill
             c.shape.strokeColor = tokens.chipBorder
+            if style == .halo {
+                c.shape.shadowPath = c.shape.path
+                c.shape.shadowColor = accent
+                c.shape.shadowRadius = 10 * geometry.scale
+                c.shape.shadowOffset = .zero
+                c.shape.shadowOpacity = hot ? 0.5 : 0
+            }
         }
         chips[k].hot = hot
     }
@@ -352,6 +359,13 @@ final class SectorRenderer: WheelRenderer {
         let empty = menu.ring[i] == nil
         let dwc = Motion.differentiateWithoutColor && hot
         transact(0.12, animated: animated) {
+            if style == .halo {
+                // A soft neon glow under the lit segment.
+                seg.shape.shadowColor = accent
+                seg.shape.shadowRadius = 14 * geometry.scale
+                seg.shape.shadowOffset = .zero
+                seg.shape.shadowOpacity = hot ? 0.55 : 0
+            }
             seg.shape.fillColor = empty ? tokens.segEmpty : (hot ? accent : tokens.segRest)
             seg.shape.strokeColor = dwc ? .white(0.9) : (hot ? tokens.segHotStroke : tokens.segStroke)
             seg.shape.lineWidth = dwc ? 2.5 : 1

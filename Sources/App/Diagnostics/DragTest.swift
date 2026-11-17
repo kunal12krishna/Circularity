@@ -72,6 +72,26 @@ enum DragTest {
             check(out?.pathExtension == "jpg" && out?.deletingLastPathComponent() == file.deletingLastPathComponent(),
                   "the JPG is written next to the original (\(jobs.lastSummary ?? "no result"))")
             check(FileManager.default.fileExists(atPath: file.path), "the original is untouched")
+
+            // What the Resize dialog submits, then a saved button from it.
+            func waitForResult() async -> URL? {
+                let before = jobs.lastOutputs
+                for _ in 0..<60 where jobs.runningCount > 0 || jobs.lastOutputs == before {
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                }
+                return jobs.lastOutputs.first
+            }
+            jobs.run(.resize(ResizeSpec(width: 128, height: nil)), files: [file], label: "resize")
+            let resized = await waitForResult()
+            check(resized?.lastPathComponent == "IMG_2041 (resized).heic", "Resize dialog result: \(resized?.lastPathComponent ?? "none")")
+            let button = Preset(applies: .images, action: .compressQuality(0.5))
+            jobs.addPreset(button)
+            check(jobs.presets.first?.name == "Q50", "“Also add this as a button” saves Q50")
+            jobs.run(.preset(button.id), files: [file])
+            let compressed = await waitForResult()
+            check(compressed != nil || (jobs.lastSummary ?? "").hasPrefix("Kept"),
+                  "the saved button runs (\(jobs.lastSummary ?? "no result"))")
+            jobs.removePreset(id: button.id)
         }
 
         // 2. Drop on the centre cancels.
@@ -106,6 +126,28 @@ enum DragTest {
         try? await Task.sleep(nanoseconds: 3_000_000_000)
         MemoryFootprint.relieve()
         print("Memory settled (idle again): \(MemoryFootprint.megabytes)")
+
+        // 5. If the system never delivers the drop: the sampler's pointer
+        //    positions plus mouse-up still choose the hovered segment.
+        await show()
+        func screenPoint(_ i: Int) -> CGPoint {
+            let o = WheelGeometry.offset(radius: 150, angle: WheelGeometry.midAngle(ofSlot: i))
+            return CGPoint(x: center.x + o.x, y: center.y - o.y)
+        }
+        wheel.trackDrag(screenPoint: screenPoint(0))
+        wheel.dragEnded(screenPoint: screenPoint(0))
+        try? await Task.sleep(nanoseconds: 700_000_000)
+        check(finished?.action == .convert(.png) && finished?.files == [file],
+              "release over PNG without a delivered drop still converts to PNG (got \(finished?.label ?? "nothing"))")
+
+        // 6. Click mode (⌃⌥C, Open With): hover then click a segment.
+        finished = nil
+        wheel.show(DraggedFiles(urls: [file]), at: center, mode: .click)
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        wheel.clickPointer(at: segment(1))
+        wheel.click(at: segment(1))
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        check(finished?.action == .convert(.jpg), "click mode: clicking JPG chooses JPG (got \(finished?.label ?? "nothing"))")
 
         try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
         defaults.removePersistentDomain(forName: "\(AppIdentity.bundleID).dragtest")

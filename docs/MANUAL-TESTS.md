@@ -74,4 +74,17 @@ an iPhone photo (HEIC), a PNG screenshot, a multi-page PDF, a `.md`, a `.docx` a
 | 29 | Select two images and a PDF, drag them together, More → **PDF** (Combine). | `firstname (combined).pdf` with every page, in the order you dragged. |
 | 30 | Drag the `.md` → **PDF**, **HTML** and **TXT**; the `.docx` → **PDF** and **TXT**; the `.txt` → **PDF**. | Each result opens correctly. PDFs are A4 (Letter in the US/Canada) with margins and real, selectable text. No network activity. |
 | 31 | Drag a file from a folder you can't write to (e.g. a mounted disk image or a read-only share). | The result goes to **Documents › Converted**; the menu says so. |
-| 32 | Drop on **Resize** or **Crop**. | The menu says the dialog arrives in the next milestone (g). Nothing is written. |
+| 32 | The first time you convert something on the **Desktop**, in **Documents** or in **Downloads**. | macOS asks once whether Circularity may access that folder. Allow it. If you don't, results go to Documents › Converted (or ~/Converted) and the menu says so. A new build may ask again (ad-hoc signing). |
+
+## Milestone (g): dialogs and saved buttons
+
+| # | Do this | Expect |
+|---|---|---|
+| 33 | Drag a photo, tap Shift, drop on **SQZ / Compress**. | A dark Halo-style dialog opens. Move the quality slider: "about 1.2 MB (−58%)" updates. **Compress** writes `name (compressed).jpg` (or .heic). |
+| 34 | Compress again, switch to **TARGET SIZE**, pick **500 KB**. | The result is at most 500 KB. |
+| 35 | Drop a photo on **SIZE / Resize**, click **1920w**. | Height follows the aspect; the line shows "1920 × 1440 px · about …". Click the link icon to unlock and type both numbers to stretch. **Resize** writes `name (resized).<same format>`. |
+| 36 | More → **Crop**. Drag the box, its corners and edges; try **1:1** and **16:9**. | The box stays inside the image and keeps the ratio; the subtitle shows the pixel size. **Crop** writes `name (cropped).…`. |
+| 37 | In Compress or Resize, turn on **Also add this as a button on the wheel** and run it. Then open the wheel on another image and rest on More. | Your button (e.g. "Q70", "1920w", "<2 MB") is the first chip; dropping on it runs it with no dialog. PDF buttons only appear for PDFs. Remove buttons from the menu → **Saved Wheel Buttons**. |
+| 38 | Drop a **PDF** on Compress, Resize (Scale / Paper) and Crop. | PDF versions of each dialog; results are `name (compressed).pdf` (or "Kept the original …"), `name (resized).pdf`, `name (cropped).pdf`. |
+| 39 | Menu → **⌃⌥C for Finder Selection** (ticked) → click it. | It turns off and offers to relaunch Finder. Click it again to turn it back on. |
+| 40 | Menu → **Halo Accent** → Cyan / Pink / Tangerine / Neon Lime. | The Halo wheel and the dialogs use that colour. |

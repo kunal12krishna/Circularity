@@ -115,6 +115,12 @@ public struct OutputPolicy: Sendable {
         self.quality = quality
     }
 
+    /// Where results go if the destination can't be written: the chosen
+    /// fallback, then ~/Converted (outside the folders macOS asks about).
+    public var fallbackFolders: [URL] {
+        [fallbackFolder, FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Converted", isDirectory: true)]
+    }
+
     public static var documentsConverted: URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Converted", isDirectory: true)

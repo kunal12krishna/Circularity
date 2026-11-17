@@ -47,13 +47,14 @@ nonisolated enum SettingsKeys {
     static let excludedApps = SettingsKey("gesture.excludedApps", [String]())     // bundle IDs
 
     // MARK: Looks
-    static let wheelLayout = SettingsKey("wheel.layout", "ring")                // ring | orbit | halo
+    static let wheelLayout = SettingsKey("wheel.layout", "halo")                // ring | orbit | halo (Halo: the user's favourite)
     static let wheelScale = SettingsKey("wheel.scale", 1.0)                      // 0.7 … 1.4
     static let moreHoverDelayMs = SettingsKey("wheel.moreHoverDelayMs", 150)
     static let smartOrdering = SettingsKey("wheel.smartOrdering", true)
     static let haptics = SettingsKey("wheel.haptics", true)
     static let wheelUsage = SettingsKey("wheel.usage", [String: Int]())          // smart-ordering counts
     static let haloAccentHex = SettingsKey("wheel.halo.accentHex", "#C6FF3D")    // board C neon
+    static let presetsJSON = SettingsKey("presets.list", "[]")                   // [Preset] as JSON
     static let theme = SettingsKey("appearance.theme", "tangerine")
     static let accentHex = SettingsKey("appearance.accentHex", "#FF8A00")
 
@@ -79,7 +80,7 @@ nonisolated enum SettingsKeys {
         triggerKey.erased, triggerMode.erased, triggerDelayMs.erased, shakeEnabled.erased,
         shakeSensitivity.erased, skipFullScreen.erased, serviceShortcutInstalled.erased, excludedApps.erased,
         wheelLayout.erased, wheelScale.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased,
-        wheelUsage.erased, haloAccentHex.erased, theme.erased, accentHex.erased,
+        wheelUsage.erased, haloAccentHex.erased, presetsJSON.erased, theme.erased, accentHex.erased,
         panelLayout.erased, panelWidth.erased, iconStyle.erased,
         mediaPackEnabled.erased, mediaBundleMode.erased, updatesChannel.erased, updatesAutomatic.erased,
         cliInstalled.erased, urlSchemeEnabled.erased, shortcutsEnabled.erased, officeAutomation.erased,

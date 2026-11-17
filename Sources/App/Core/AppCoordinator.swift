@@ -1,4 +1,6 @@
 import AppKit
+import CircularityEngine
+import SwiftUI
 
 /// Where files handed to the app came from.
 enum FileSource: String {
@@ -14,6 +16,7 @@ final class AppCoordinator {
     private let gesture: GestureController
     private let services = ServicesProvider()
     private let jobs: JobCenter
+    private let dialogs = DialogPresenter()
 
     /// The most recent files handed to the app: the target for ⌃⌥C fallbacks,
     /// ⌘K and preset tiles in later milestones (PLAN.md A3).
@@ -31,6 +34,7 @@ final class AppCoordinator {
     func start() {
         if settings.value(SettingsKeys.showInMenuBar) { installStatusItem() }
 
+        wheel.prepare()
         wheel.onFinished = { [weak self] choice in self?.handle(choice) }
         gesture.onDragReport = { [weak self] report in
             let how = report.opened.map { $0 == .shake ? "opened by shake" : "opened by \(self?.triggerName ?? "Shift")" } ?? "not opened"
@@ -69,10 +73,47 @@ final class AppCoordinator {
             let names = choice.files.prefix(2).map(\.lastPathComponent).joined(separator: ", ")
             let what = names.isEmpty ? "\(choice.count) item(s)" : names
             lastChoice = "Last choice: \(choice.label) — \(what)"
-            if let notYet = jobs.run(action, files: choice.files) { lastChoice = notYet }
+            switch action {
+            case .compress, .resize, .crop:
+                openDialog(action, files: choice.files)
+            default:
+                jobs.run(action, files: choice.files)
+            }
         } else {
             lastChoice = "Last choice: Cancel (nothing changed)"
         }
+    }
+
+    // MARK: Tool dialogs (milestone g)
+
+    private func openDialog(_ action: WheelAction, files: [URL]) {
+        guard !files.isEmpty else { return }
+        let isPDF = files.allSatisfy { DraggedFiles.type(of: $0).conforms(to: .pdf) }
+        let accent = SwiftUI.Color(nsColor: NSColor(cgColor: wheelAccent) ?? .orange)
+        let run: (CircularityEngine.Operation, Preset?) -> Void = { [weak self] operation, preset in
+            guard let self else { return }
+            dialogs.close()
+            if let preset { jobs.addPreset(preset) }
+            jobs.run(operation, files: files, label: action.usageKey)
+        }
+        let cancel: () -> Void = { [weak self] in self?.dialogs.close() }
+        switch action {
+        case .compress:
+            dialogs.present(CompressDialog(files: files, isPDF: isPDF, accent: accent, onRun: run, onCancel: cancel), title: "Compress")
+        case .resize:
+            dialogs.present(ResizeDialog(files: files, isPDF: isPDF, accent: accent, onRun: run, onCancel: cancel), title: "Resize")
+        case .crop:
+            dialogs.present(CropDialog(files: files, isPDF: isPDF, accent: accent, onRun: run, onCancel: cancel), title: "Crop")
+        default:
+            break
+        }
+    }
+
+    /// The accent the wheel is using (Halo's neon, or the theme accent).
+    private var wheelAccent: CGColor {
+        let layout = settings.value(SettingsKeys.wheelLayout)
+        let hex = layout == "halo" ? settings.value(SettingsKeys.haloAccentHex) : settings.value(SettingsKeys.accentHex)
+        return CGColor.hexString(hex) ?? .hex(0xC6FF3D)
     }
 
     // MARK: Menu (temporary until the panel in milestone h)
@@ -122,6 +163,16 @@ final class AppCoordinator {
         layout.submenu = layouts
         items.append(layout)
 
+        let accent = NSMenuItem(title: "Halo Accent", action: nil, keyEquivalent: "")
+        let accents = NSMenu()
+        for (hex, name) in [("#C6FF3D", "Neon Lime"), ("#FF8A00", "Tangerine"), ("#5CE1FF", "Cyan"), ("#FF5CA8", "Pink")] {
+            accents.addItem(ActionMenuItem(name, checked: settings.value(SettingsKeys.haloAccentHex) == hex) { [weak self] in
+                self?.settings.set(hex, for: SettingsKeys.haloAccentHex)
+            })
+        }
+        accent.submenu = accents
+        items.append(accent)
+
         let trigger = NSMenuItem(title: "Trigger Key", action: nil, keyEquivalent: "")
         let triggers = NSMenu()
         for (id, name) in [("shift", "Shift"), ("option", "Option"), ("control", "Control")] {
@@ -132,14 +183,28 @@ final class AppCoordinator {
         trigger.submenu = triggers
         items.append(trigger)
 
+        let saved = jobs.presets
+        if !saved.isEmpty {
+            let buttons = NSMenuItem(title: "Saved Wheel Buttons", action: nil, keyEquivalent: "")
+            let list = NSMenu()
+            for preset in saved {
+                list.addItem(ActionMenuItem("Remove “\(preset.name)” (\(preset.applies == .pdfs ? "PDFs" : "images"))") { [weak self] in
+                    self?.jobs.removePreset(id: preset.id)
+                })
+            }
+            buttons.submenu = list
+            items.append(buttons)
+        }
         items.append(ActionMenuItem("Shake to Open", checked: settings.value(SettingsKeys.shakeEnabled)) { [weak self] in
             guard let self else { return }
             settings.set(!settings.value(SettingsKeys.shakeEnabled), for: SettingsKeys.shakeEnabled)
         })
         let installed = ServiceShortcut.isInstalled
-        items.append(ActionMenuItem(installed ? "⌃⌥C Opens the Wheel for Finder Selection" : "Use ⌃⌥C for Finder Selection…",
-                                    checked: installed) {
-            if ServiceShortcut.install() {
+        items.append(ActionMenuItem("⌃⌥C for Finder Selection", checked: installed) {
+            if installed {
+                ServiceShortcut.uninstall()
+                ServiceShortcut.offerFinderRelaunch(turnedOn: false)
+            } else if ServiceShortcut.install() {
                 ServiceShortcut.offerFinderRelaunch()
             } else {
                 ServiceShortcut.openKeyboardSettings()

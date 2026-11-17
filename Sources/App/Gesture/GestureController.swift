@@ -129,7 +129,9 @@ final class GestureController {
             send(.mouseUp(time: t))
             return
         }
-        send(.mouseMoved(NSEvent.mouseLocation, time: t))
+        let location = NSEvent.mouseLocation
+        send(.mouseMoved(location, time: t))
+        if wheel.isVisible { wheel.trackDrag(screenPoint: location) }
         checkPasteboard()
         send(.triggerChanged(isDown: triggerIsDown, time: t))
         send(.tick(time: t))
@@ -162,7 +164,8 @@ final class GestureController {
             Log.gesture.notice("Opening wheel by \(reason.rawValue, privacy: .public) with \(files.count, privacy: .public) item(s)")
             wheel.show(files, at: point, mode: .drag)
         case .hideWheel:
-            wheel.hideUnlessFinishing()
+            // Mouse up: let a real drop arrive, else choose from the pointer.
+            wheel.dragEnded(screenPoint: NSEvent.mouseLocation)
         }
     }
 

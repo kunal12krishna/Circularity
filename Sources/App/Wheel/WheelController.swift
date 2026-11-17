@@ -37,10 +37,17 @@ final class WheelController {
     private var moreTimer: DispatchWorkItem?
     private var outsideClickMonitor: Any?
     private var finishing = false
+    private var lastDragPoint: CGPoint?
     private(set) var isVisible = false
 
     init(settings: SettingsStore) {
         self.settings = settings
+    }
+
+    /// Creates the (hidden, empty) panel at launch so it is a known drop target
+    /// before the first drag. The renderer is still built lazily.
+    func prepare() {
+        if panel == nil { buildPanel() }
     }
 
     // MARK: Show / hide
@@ -50,6 +57,7 @@ final class WheelController {
         self.files = files
         self.mode = mode
         finishing = false
+        lastDragPoint = nil
         state = WheelVisualState()
 
         let screen = NSScreen.screens.first { NSMouseInRect(screenPoint, $0.frame, false) } ?? NSScreen.main
@@ -59,7 +67,8 @@ final class WheelController {
 
         menu = SlotProvider.menu(for: files.types, canWrite: { FormatSupport.current.canWrite($0) },
                                  usage: settings.value(SettingsKeys.wheelUsage),
-                                 smartOrdering: settings.value(SettingsKeys.smartOrdering))
+                                 smartOrdering: settings.value(SettingsKeys.smartOrdering),
+                                 presets: Preset.decodeList(settings.value(SettingsKeys.presetsJSON)))
 
         var center = screenPoint
         if mode == .click, let visible = screen?.visibleFrame {
@@ -167,7 +176,7 @@ final class WheelController {
     // MARK: Building
 
     private func prepareRenderer() -> (WheelRenderer, WheelLayoutKind) {
-        var kind = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .ring
+        var kind = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .halo
         // Reduce Transparency: Ring falls back to Halo's solid disc (BRIEF.md).
         if kind == .ring, Motion.reduceTransparency { kind = .halo }
         let key = kind.rawValue
@@ -208,7 +217,7 @@ final class WheelController {
     }
 
     private func accentColor(for kind: WheelLayoutKind) -> CGColor {
-        let chosen = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .ring
+        let chosen = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .halo
         // Halo chosen as a layout uses its neon accent; as the Reduce
         // Transparency fallback it keeps the user's accent.
         if kind == .halo, chosen == .halo, let c = CGColor.hexString(settings.value(SettingsKeys.haloAccentHex)) { return c }
@@ -317,6 +326,43 @@ final class WheelController {
             return
         }
         updateHover(target(at: point), cursor: o)
+    }
+
+    /// The gesture sampler's view of the pointer during a drag. Works even if
+    /// the window server never delivers drag events to the panel.
+    func trackDrag(screenPoint: CGPoint) {
+        guard isVisible, !finishing, mode == .drag, let point = hostPoint(fromScreen: screenPoint) else { return }
+        lastDragPoint = point
+        dragPointer(at: point)
+    }
+
+    /// The mouse button went up during a drag with the wheel showing. A normal
+    /// drop arrives through performDrop; if it hasn't within a moment, choose
+    /// from the pointer position with the files read when the wheel opened.
+    func dragEnded(screenPoint: CGPoint) {
+        guard isVisible, mode == .drag else { return }
+        let point = hostPoint(fromScreen: screenPoint) ?? lastDragPoint
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.isVisible, !self.finishing, self.mode == .drag else { return }
+                guard let point else { self.hide(animated: true); return }
+                let t = self.target(at: point)
+                guard let slot = self.menu.slot(for: t), slot.action != .more, !self.files.urls.isEmpty else {
+                    Log.wheel.notice("Released without a choice (target \(String(describing: t), privacy: .public))")
+                    self.finish(WheelChoice(action: nil, label: "Cancel", files: [], count: self.files.count), target: t, cursor: nil)
+                    return
+                }
+                Log.wheel.notice("Drop not delivered by the system; choosing from the pointer instead")
+                self.finish(WheelChoice(action: slot.action, label: slot.verb, files: self.files.urls, count: self.files.urls.count),
+                            target: t, cursor: self.offset(of: point))
+            }
+        }
+    }
+
+    private func hostPoint(fromScreen screenPoint: CGPoint) -> CGPoint? {
+        guard let panel, let host else { return nil }
+        let inWindow = panel.convertPoint(fromScreen: screenPoint)
+        return host.convert(inWindow, from: nil)
     }
 
     func dragExited() {
@@ -509,10 +555,28 @@ final class WheelController {
 
     // MARK: Outside clicks (click mode)
 
+    /// Clicks and moves that reach other apps: outside the wheel they cancel;
+    /// on the wheel (if the system ever lets one through) they act on it.
     private func installOutsideClickMonitor() {
         removeOutsideClickMonitor()
-        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            MainActor.assumeIsolated { self?.cancelFromKeyboard() }
+        outsideClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown, .mouseMoved]) { [weak self] event in
+            let type = event.type
+            let location = NSEvent.mouseLocation
+            MainActor.assumeIsolated { self?.handleGlobal(type, at: location) }
+        }
+    }
+
+    private func handleGlobal(_ type: NSEvent.EventType, at screenPoint: CGPoint) {
+        guard isVisible, mode == .click else { return }
+        let point = hostPoint(fromScreen: screenPoint)
+        let onWheel = point.map { target(at: $0) != .none } ?? false
+        switch type {
+        case .mouseMoved:
+            if let point { clickPointer(at: point) }
+        case .leftMouseDown where onWheel:
+            if let point { click(at: point) }
+        default:
+            cancelFromKeyboard()
         }
     }
 
