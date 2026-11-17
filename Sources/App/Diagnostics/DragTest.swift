@@ -207,6 +207,45 @@ enum DragTest {
                 settings.remove(key)
             }
 
+            // Review fixes, checked for real.
+            // a) "Move the original to the Trash" never fires for a PDF split into a folder of pages.
+            let pdfURL = file.deletingLastPathComponent().appendingPathComponent("Two pages.pdf")
+            if let ctx = CGContext(pdfURL as CFURL, mediaBox: nil, nil) {
+                for _ in 0..<2 { ctx.beginPDFPage(nil); ctx.setFillColor(.white); ctx.fill(CGRect(x: 0, y: 0, width: 200, height: 200)); ctx.endPDFPage() }
+                ctx.closePDF()
+            }
+            settings.set(true, for: SettingsKeys.replaceOriginal)
+            jobs.run(.pdfPages(.png, scale: 1), files: [pdfURL], label: "pages")
+            let pages = await waitForResult()
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            check(pages != nil && FileManager.default.fileExists(atPath: pdfURL.path),
+                  "a PDF split into page images keeps its original even with “Move the original to the Trash” on")
+            settings.remove(SettingsKeys.replaceOriginal.name)
+
+            // b) Practice pictures ignore Output settings and aren't recorded.
+            settings.set("folder", for: SettingsKeys.destination)
+            settings.set(results.path, for: SettingsKeys.outputFolder)
+            let historyBefore = jobs.history.items.count
+            if let practice = TutorialModel.freshPractice() {
+                jobs.run(.convert(.jpg), files: [practice], label: "practice")
+                let out = await waitForResult()
+                check(same(out?.deletingLastPathComponent(), practice.deletingLastPathComponent()) && jobs.history.items.count == historyBefore,
+                      "a practice conversion stays next to the practice picture and isn't recorded")
+            }
+            settings.remove(SettingsKeys.destination.name)
+            settings.remove(SettingsKeys.outputFolder.name)
+
+            // c) A hostile settings file: bad values are skipped, huge numbers don't crash.
+            let hostile = ##"{"app":"x","schemaVersion":2,"values":{"menubar.recentsCount":1e30,"wheel.usage":{"png":1e300},"wheel.layout":"triangle","general.hotkey.panel":"0:512","appearance.accentHex":"#5CE1FF","wheel.scale":9}}"##
+            if let imported = try? settings.importJSON(Data(hostile.utf8)) {
+                check(imported.applied == 2 && settings.value(SettingsKeys.wheelLayout) != "triangle"
+                      && settings.value(SettingsKeys.recentsCount) == 5 && settings.value(SettingsKeys.accentHex) == "#5CE1FF",
+                      "importing bad values skips them (applied \(imported.applied), skipped \(imported.skipped))")
+            } else {
+                check(false, "importing a settings file with bad values")
+            }
+            for name in ["appearance.accentHex", "wheel.usage"] { settings.remove(name) }
+
             // The tutorial follows a real conversion of its practice picture.
             let tutorial = TutorialModel(settings: settings)
             tutorial.wheelShown()
@@ -250,6 +289,19 @@ enum DragTest {
         try? await Task.sleep(nanoseconds: 300_000_000)
         check(NSApp.windows.contains { $0.identifier?.rawValue == "welcome" && $0.isVisible }, "the welcome window opens")
         presenter.close("welcome")
+        // Closing and reopening at once gives a new window, not the old one.
+        let firstTutorial = TutorialModel(settings: settings)
+        presenter.show("tutorial", title: "Tutorial", size: CGSize(width: 520, height: 250), floating: true) { TutorialView(model: firstTutorial) }
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        let oldWindow = NSApp.windows.first { $0.identifier?.rawValue == "tutorial" && $0.isVisible }
+        presenter.close("tutorial")
+        let secondTutorial = TutorialModel(settings: settings)
+        presenter.show("tutorial", title: "Tutorial", size: CGSize(width: 520, height: 250), floating: true) { TutorialView(model: secondTutorial) }
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        let newWindow = NSApp.windows.first { $0.identifier?.rawValue == "tutorial" && $0.isVisible }
+        check(newWindow != nil && newWindow !== oldWindow && newWindow?.contentViewController != nil,
+              "reopening the tutorial shows a fresh window that stays filled")
+        presenter.close("tutorial")
         settings.remove(SettingsKeys.wheelLayout.name)
 
         // 2. Drop on the centre cancels.

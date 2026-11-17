@@ -33,7 +33,11 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.makeKeyAndOrderFront(nil)
     }
 
-    func close(_ id: String) { windows[id]?.close() }
+    /// Closes and forgets the window now, so a show() right after makes a new one.
+    func close(_ id: String) {
+        guard let window = windows.removeValue(forKey: id) else { return }
+        window.close()
+    }
 
     func windowWillClose(_ notification: Notification) {
         guard let window = notification.object as? NSWindow, let id = window.identifier?.rawValue else { return }
@@ -41,7 +45,7 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         DispatchQueue.main.async { [weak self] in
             MainActor.assumeIsolated {
                 window.contentViewController = nil
-                self?.windows[id] = nil
+                if self?.windows[id] === window { self?.windows[id] = nil }
                 MemoryFootprint.relieve()
             }
         }

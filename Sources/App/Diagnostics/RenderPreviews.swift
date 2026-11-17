@@ -45,7 +45,7 @@ enum RenderPreviews {
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
-        let settings = SettingsStore(defaults: defaults)
+        let settings = SettingsStore(defaults: defaults, suiteName: suite)
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("circularity-panel-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: dir) }
@@ -91,7 +91,7 @@ enum RenderPreviews {
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         defer { defaults.removePersistentDomain(forName: suite) }
-        let settings = SettingsStore(defaults: defaults)
+        let settings = SettingsStore(defaults: defaults, suiteName: suite)
         let jobs = JobCenter(settings: settings, history: HistoryStore(file: "preview-h-\(UUID().uuidString).json"),
                              stats: StatsStore(file: "preview-s-\(UUID().uuidString).json"))
         let watch = WatchFolderService(settings: settings, jobs: jobs)
@@ -137,6 +137,7 @@ enum RenderPreviews {
         let settingsJobs: JobCenter
         init(watch: WatchFolderService, jobs: JobCenter) { settingsWatch = watch; settingsJobs = jobs }
         func settingsApplyHotkeys() -> Set<UInt32> { [] }
+        func settingsApplyStored(includingLoginItem: Bool) -> Set<UInt32> { [] }
         func settingsSuspendHotkeys() {}
         func settingsShowMenuBarIcon(_ visible: Bool) {}
         func settingsPracticeWheel() {}

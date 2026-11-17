@@ -4,7 +4,7 @@ import SwiftUI
 
 /// What the welcome and tutorial ask of the rest of the app.
 protocol OnboardingHost: AnyObject {
-    func onboardingFinished(launchAtLogin: Bool, startTutorial: Bool)
+    func onboardingFinished(launchAtLogin: Bool, finderShortcutTurnedOn: Bool, startTutorial: Bool)
     func onboardingPracticeWheel()
     func tutorialClose()
 }
@@ -15,14 +15,19 @@ final class OnboardingModel: ObservableObject {
     weak var host: OnboardingHost?
     let settings: SettingsStore
     @Published var step = 0
-    @Published var launchAtLogin = true
+    @Published var launchAtLogin: Bool
     @Published var notifications: Bool
     @Published var finderShortcut = ServiceShortcut.isInstalled
+    private let finderShortcutAtStart = ServiceShortcut.isInstalled
 
     init(settings: SettingsStore) {
         self.settings = settings
         notifications = settings.value(SettingsKeys.notifyEnabled)
+        // First run: suggest on. Shown again later: show what is true now.
+        launchAtLogin = settings.value(SettingsKeys.onboardingCompleted) ? (LoginItem.isEnabled || LoginItem.needsApproval) : true
     }
+
+    var finderShortcutTurnedOn: Bool { finderShortcut && !finderShortcutAtStart }
 
     var accent: Color { Color(nsColor: Appearance.accentNS(settings)) }
 
@@ -71,10 +76,12 @@ struct OnboardingView: View {
                         .keyboardShortcut(.defaultAction)
                 } else {
                     HaloButton(title: "Skip the tutorial", accent: a) {
-                        model.host?.onboardingFinished(launchAtLogin: model.launchAtLogin, startTutorial: false)
+                        model.host?.onboardingFinished(launchAtLogin: model.launchAtLogin,
+                                                       finderShortcutTurnedOn: model.finderShortcutTurnedOn, startTutorial: false)
                     }
                     HaloButton(title: "Show me how", primary: true, accent: a) {
-                        model.host?.onboardingFinished(launchAtLogin: model.launchAtLogin, startTutorial: true)
+                        model.host?.onboardingFinished(launchAtLogin: model.launchAtLogin,
+                                                       finderShortcutTurnedOn: model.finderShortcutTurnedOn, startTutorial: true)
                     }
                     .keyboardShortcut(.defaultAction)
                 }

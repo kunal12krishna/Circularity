@@ -32,6 +32,8 @@ final class AppCoordinator: PanelHost {
     /// target for ⌘K and preset tiles (PLAN.md A3).
     private(set) var recentFiles: [URL] = []
     private var lastDrag = "No file drag yet"
+    /// When hover opened the panel: a click soon after shouldn't close it again.
+    private var hoverOpenedAt: Date?
 
     init(settings: SettingsStore = SettingsStore()) {
         self.settings = settings
@@ -164,7 +166,15 @@ final class AppCoordinator: PanelHost {
 
     private func installStatusItem() {
         let item = StatusItemController()
-        item.onClick = { [weak self] in self?.panel.toggle() }
+        item.onClick = { [weak self] in
+            guard let self else { return }
+            if let t = hoverOpenedAt, Date().timeIntervalSince(t) < 1.5, panel.isOpen {
+                hoverOpenedAt = nil
+                return
+            }
+            hoverOpenedAt = nil
+            panel.toggle()
+        }
         item.menuBuilder = { [weak self] in self?.menuItems() ?? [] }
         item.onDragEntered = { [weak self] in
             guard let self, !panel.isOpen, settings.value(SettingsKeys.openOnDragOver) else { return }
@@ -172,6 +182,7 @@ final class AppCoordinator: PanelHost {
         }
         item.onHover = { [weak self] in
             guard let self, !panel.isOpen, settings.value(SettingsKeys.openOnHover) else { return }
+            hoverOpenedAt = Date()
             panel.open()
         }
         item.onFilesDropped = { [weak self] urls in self?.receive(urls, from: .statusIcon) }
@@ -360,6 +371,25 @@ final class AppCoordinator: PanelHost {
 extension AppCoordinator: SettingsHost {
     func settingsApplyHotkeys() -> Set<UInt32> { applyHotkeys() }
 
+    func settingsApplyStored(includingLoginItem: Bool) -> Set<UInt32> {
+        settingsShowMenuBarIcon(settings.value(SettingsKeys.showInMenuBar))
+        settingsSetDevHUD(settings.value(SettingsKeys.devHUD))
+        if settings.value(SettingsKeys.pinned) != pinned.isPinned {
+            if settings.value(SettingsKeys.pinned) {
+                panel.close(animated: false)
+                pinned.pin()
+            } else {
+                pinned.unpin()
+            }
+        }
+        if includingLoginItem {
+            let want = settings.value(SettingsKeys.launchAtLogin)
+            if want != (LoginItem.isEnabled || LoginItem.needsApproval) { LoginItem.set(want) }
+        }
+        refreshIcon()
+        return applyHotkeys()
+    }
+
     func settingsSuspendHotkeys() {
         HotkeyCenter.shared.unregister(id: 1)
         HotkeyCenter.shared.unregister(id: 2)
@@ -439,11 +469,11 @@ extension AppCoordinator: SettingsHost {
 // MARK: - Welcome and tutorial host
 
 extension AppCoordinator: OnboardingHost {
-    func onboardingFinished(launchAtLogin: Bool, startTutorial: Bool) {
+    func onboardingFinished(launchAtLogin: Bool, finderShortcutTurnedOn: Bool, startTutorial: Bool) {
         settings.set(true, for: SettingsKeys.onboardingCompleted)
         settings.set(launchAtLogin, for: SettingsKeys.launchAtLogin)
-        LoginItem.set(launchAtLogin)
-        if ServiceShortcut.isInstalled { ServiceShortcut.offerFinderRelaunch() }
+        if launchAtLogin != (LoginItem.isEnabled || LoginItem.needsApproval) { LoginItem.set(launchAtLogin) }
+        if finderShortcutTurnedOn { ServiceShortcut.offerFinderRelaunch() }
         windows.close("welcome")
         if startTutorial { settingsShowTutorial() }
     }

@@ -8,6 +8,10 @@ import UniformTypeIdentifiers
 protocol SettingsHost: AnyObject {
     /// Re-registers both global shortcuts; returns ids that could not be registered.
     func settingsApplyHotkeys() -> Set<UInt32>
+    /// After an import or reset: applies settings that need an action (icon,
+    /// HUD, pinned panel, shortcuts; the login item only for an import).
+    /// Returns the shortcut ids that could not be registered.
+    func settingsApplyStored(includingLoginItem: Bool) -> Set<UInt32>
     func settingsSuspendHotkeys()
     func settingsShowMenuBarIcon(_ visible: Bool)
     func settingsPracticeWheel()
@@ -115,9 +119,7 @@ final class SettingsModel: ObservableObject {
 
     func resetAll() {
         store.resetAll()
-        applyHotkeys()
-        host?.settingsShowMenuBarIcon(true)
-        host?.settingsSetDevHUD(false)
+        hotkeyFailures = host?.settingsApplyStored(includingLoginItem: false) ?? []
         flash("Settings reset to the defaults.")
     }
 
@@ -219,10 +221,10 @@ final class SettingsModel: ObservableObject {
         guard open.runModal() == .OK, let url = open.url else { return }
         do {
             let result = try store.importJSON(Data(contentsOf: url))
-            applyHotkeys()
-            host?.settingsShowMenuBarIcon(store.value(SettingsKeys.showInMenuBar))
+            hotkeyFailures = host?.settingsApplyStored(includingLoginItem: true) ?? []
+            loginError = nil
             flash("Imported \(result.applied) setting\(result.applied == 1 ? "" : "s")"
-                  + (result.skipped.isEmpty ? "." : " (skipped \(result.skipped.count) unknown)."))
+                  + (result.skipped.isEmpty ? "." : " (skipped \(result.skipped.count) unknown or invalid)."))
         } catch {
             flash("That file isn't a \(AppIdentity.name) settings file.")
         }

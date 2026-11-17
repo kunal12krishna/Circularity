@@ -28,6 +28,9 @@ final class SettingsStore {
         defaults.object(forKey: key.name) as? Value ?? key.defaultValue
     }
 
+    /// The stored or default value of a key by name, untyped (preview cache keys).
+    func raw(_ name: String) -> Any? { defaults.object(forKey: name) }
+
     func set<Value>(_ value: Value, for key: SettingsKey<Value>) {
         defaults.set(value, forKey: key.name)
         changes.send(key.name)
@@ -103,7 +106,9 @@ final class SettingsStore {
         var applied = 0
         var skipped: [String] = []
         for (name, value) in snapshot.values {
-            guard let key = SettingsKeys.all.first(where: { $0.name == name }), let object = value.matching(key.defaultValue) else {
+            guard let key = SettingsKeys.all.first(where: { $0.name == name }), !key.reserved,
+                  !SettingsValidation.notImported.contains(name),
+                  let object = value.matching(key.defaultValue), SettingsValidation.isValid(name, object) else {
                 skipped.append(name)
                 continue
             }
@@ -112,6 +117,68 @@ final class SettingsStore {
         }
         changes.send("")
         return (applied, skipped.sorted())
+    }
+}
+
+/// What an imported settings file may contain (a typo or a hand-edited file
+/// must not leave the app in a state its own controls can't produce).
+enum SettingsValidation {
+    /// State that lives outside our defaults (the Finder service, onboarding).
+    static let notImported: Set<String> = [SettingsKeys.serviceShortcutInstalled.name, SettingsKeys.onboardingCompleted.name,
+                                           SettingsKeys.schemaVersionKey]
+
+    static let choices: [String: Set<String>] = [
+        SettingsKeys.triggerKey.name: ["shift", "option", "control"],
+        SettingsKeys.triggerMode.name: ["tap", "hold"],
+        SettingsKeys.shakeSensitivity.name: ["low", "medium", "high"],
+        SettingsKeys.wheelLayout.name: ["ring", "orbit", "halo"],
+        SettingsKeys.soundPack.name: ["off", "soft", "click", "glass"],
+        SettingsKeys.animationStyle.name: ["bloom", "pop", "fade", "instant"],
+        SettingsKeys.destination.name: ["original", "folder"],
+        SettingsKeys.collisionStyle.name: ["number", "time"],
+        SettingsKeys.metadata.name: ["keep", "stripGPS", "stripAll"],
+        SettingsKeys.theme.name: Set(ThemeCatalog.all.map(\.id) + ["custom"]),
+        SettingsKeys.wheelScheme.name: ["auto", "system", "light", "dark"],
+        SettingsKeys.panelScheme.name: ["auto", "system", "light", "dark"],
+        SettingsKeys.fontStyle.name: ["rounded", "default", "mono"],
+        SettingsKeys.labelCase.name: ["title", "upper"],
+        SettingsKeys.panelLayout.name: ["stackPlus", "tabs", "mini"],
+        SettingsKeys.panelWidth.name: ["s", "m", "l"],
+        SettingsKeys.pinnedSize.name: ["s", "m", "l"],
+        SettingsKeys.panelDensity.name: ["comfortable", "compact"],
+        SettingsKeys.iconStyle.name: ["monochrome", "colour", "minimal"],
+        SettingsKeys.presetGrid.name: ["3x1", "3x2", "4x2"],
+    ]
+
+    static let ranges: [String: ClosedRange<Double>] = [
+        SettingsKeys.triggerDelayMs.name: 0...2000, SettingsKeys.moreHoverDelayMs.name: 0...2000,
+        SettingsKeys.animationSpeed.name: 0.5...2, SettingsKeys.glassStrength.name: 0...1,
+        SettingsKeys.wheelScale.name: 0.7...1.4, SettingsKeys.ringThickness.name: 0.8...1.2, SettingsKeys.segmentGap.name: 1...8,
+        SettingsKeys.orbScale.name: 0.85...1.15, SettingsKeys.labelScale.name: 0.85...1.3,
+        SettingsKeys.qualityJPG.name: 0.1...1, SettingsKeys.qualityHEIC.name: 0.1...1,
+        SettingsKeys.qualityAVIF.name: 0.1...1, SettingsKeys.qualityWebP.name: 0.1...1,
+    ]
+
+    static func isValid(_ name: String, _ value: Any) -> Bool {
+        if let allowed = choices[name] { return (value as? String).map(allowed.contains) ?? false }
+        if let range = ranges[name] {
+            let n = (value as? Double) ?? (value as? Int).map(Double.init)
+            return n.map(range.contains) ?? false
+        }
+        switch name {
+        case SettingsKeys.recentsCount.name:
+            return [5, 10, 25].contains(value as? Int ?? 0)
+        case SettingsKeys.hotkeyPanel.name, SettingsKeys.hotkeyClipboard.name:
+            guard let s = value as? String else { return false }
+            return s.isEmpty || HotkeySpec(s)?.isAllowed == true
+        case SettingsKeys.accentHex.name:
+            return (value as? String).flatMap(RGB.init(hexString:)) != nil
+        case SettingsKeys.tintImages.name, SettingsKeys.tintDocuments.name, SettingsKeys.tintTools.name:
+            guard let s = value as? String else { return false }
+            return s.isEmpty || RGB(hexString: s) != nil
+        default:
+            return true
+        }
     }
 }
 
@@ -153,15 +220,21 @@ enum JSONValue: Codable, Equatable {
         }
     }
 
+    /// A whole number that fits comfortably in an Int, else nil (never traps).
+    static func int(_ n: Double) -> Int? {
+        guard n.isFinite, abs(n) < 1e12 else { return nil }
+        return Int(n.rounded())
+    }
+
     /// Converts to a plist object of the same type as `prototype`, or nil.
     func matching(_ prototype: Any) -> Any? {
         switch (self, prototype) {
         case let (.bool(b), _ as Bool): return b
-        case let (.number(n), _ as Int): return Int(n)
-        case let (.number(n), _ as Double): return n
+        case let (.number(n), _ as Int): return Self.int(n)
+        case let (.number(n), _ as Double): return n.isFinite ? n : nil
         case let (.string(s), _ as String): return s
         case let (.array(a), _ as [String]): return a.compactMap { if case let .string(s) = $0 { return s }; return nil }
-        case let (.object(o), _ as [String: Int]): return o.compactMapValues { if case let .number(n) = $0 { return Int(n) }; return nil }
+        case let (.object(o), _ as [String: Int]): return o.compactMapValues { if case let .number(n) = $0 { return Self.int(n) }; return nil }
         case let (.object(o), _ as [String: String]): return o.compactMapValues { if case let .string(s) = $0 { return s }; return nil }
         default: return nil
         }

@@ -548,7 +548,7 @@ final class WheelController {
     private func finish(_ choice: WheelChoice?, target: WheelTarget, cursor: CGPoint?) {
         finishing = true
         moreTimer?.cancel()
-        if let choice { usage(choice.action) }
+        if let choice, !PracticeFiles.all(choice.files) { usage(choice.action) }
         if choice != nil || target != .centre, target != .none {
             WheelSounds.play(target == .centre ? .cancel : .choose, pack: settings.value(SettingsKeys.soundPack))
         }

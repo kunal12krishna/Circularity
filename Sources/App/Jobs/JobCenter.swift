@@ -68,7 +68,11 @@ final class JobCenter: ObservableObject {
     func run(_ operation: CircularityEngine.Operation, files: [URL], label: String, policy: OutputPolicy? = nil,
              interactive: Bool = true, completion: ((Result<JobResult, Error>) -> Void)? = nil) {
         guard !files.isEmpty else { return }
-        let request = JobRequest(inputs: files, operation: operation, output: policy ?? outputPolicy(for: operation))
+        // Practice pictures: results next to them, no after-actions.
+        let practice = PracticeFiles.all(files)
+        let interactive = interactive && !practice
+        let request = JobRequest(inputs: files, operation: operation,
+                                 output: policy ?? (practice ? OutputPolicy() : outputPolicy(for: operation)))
         let id = request.id
         let job = ActiveJob(id: id, title: Self.title(operation, files: files), firstInput: files.first,
                             isPDF: files.first.map { DraggedFiles.type(of: $0).conforms(to: .pdf) } ?? false,
@@ -82,7 +86,7 @@ final class JobCenter: ObservableObject {
                     Task { @MainActor in self.update(id, progress) }
                 })
             } catch { result = .failure(error) }
-            self.finish(id, operation: operation, result)
+            self.finish(id, operation: operation, result, record: !practice)
             if interactive, case let .success(r) = result { self.afterConversion(r) }
             self.completed.send((Self.title(operation, files: files), result))
             completion?(result)
@@ -106,14 +110,14 @@ final class JobCenter: ObservableObject {
         if !progress.detail.isEmpty { active[i].detail = progress.detail }
     }
 
-    private func finish(_ id: UUID, operation: CircularityEngine.Operation, _ result: Result<JobResult, Error>) {
+    private func finish(_ id: UUID, operation: CircularityEngine.Operation, _ result: Result<JobResult, Error>, record shouldRecord: Bool) {
         tasks[id] = nil
         active.removeAll { $0.id == id }
         switch result {
         case let .success(r):
             lastOutputs = r.outputs
             lastSummary = Self.summary(r)
-            record(r, operation: operation)
+            if shouldRecord { record(r, operation: operation) }
             if !r.outputs.isEmpty { finished.send() }
             Log.app.notice("Job \(id.uuidString.prefix(8), privacy: .public) done: \(r.outputs.count, privacy: .public) output(s), \(r.bytesIn, privacy: .public) → \(r.bytesOut, privacy: .public) bytes")
         case let .failure(error) where error is CancellationError:
@@ -213,9 +217,12 @@ final class JobCenter: ObservableObject {
         guard !r.outputs.isEmpty else { return }
         if settings.value(SettingsKeys.replaceOriginal) {
             // Only one-to-one results; a combined PDF never trashes its inputs.
-            for outcome in r.outcomes where outcome.inputs.count == 1 && !outcome.outputs.isEmpty {
-                let input = outcome.inputs[0]
-                guard !outcome.outputs.contains(input), FileManager.default.fileExists(atPath: input.path) else { continue }
+            for outcome in r.outcomes where outcome.inputs.count == 1 && outcome.outputs.count == 1 {
+                let input = outcome.inputs[0], output = outcome.outputs[0]
+                // A PDF split into a folder of pages is not "one new file": keep the original.
+                let isFile = (try? output.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
+                guard isFile, output.standardizedFileURL != input.standardizedFileURL,
+                      FileManager.default.fileExists(atPath: input.path) else { continue }
                 do {
                     try FileManager.default.trashItem(at: input, resultingItemURL: nil)
                 } catch {

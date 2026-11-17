@@ -253,8 +253,22 @@ struct HotkeyRecorder: View {
 final class WheelPreviewRenderer {
     private var renderers: [WheelLayoutKind: WheelRenderer] = [:]
     private var thumbnail: CGImage? = samplePicture(size: 240, scale: 1)
+    private var cache: (key: String, image: NSImage?)?
+
+    /// Everything the preview depends on; other settings changes reuse the last image.
+    private static let keys: [AnySettingsKey] = SettingsModel.appearanceKeys + [
+        SettingsKeys.wheelLayout.erased, SettingsKeys.imageFormatOrder.erased, SettingsKeys.presetsJSON.erased,
+    ]
 
     func image(store: SettingsStore, hover: WheelTarget, fanOpen: Bool) -> NSImage? {
+        let key = Self.keys.map { "\(store.raw($0.name) ?? "-")" }.joined(separator: "|") + "|\(hover)|\(fanOpen)|\(Appearance.systemIsDark)"
+        if let cache, cache.key == key { return cache.image }
+        let image = draw(store: store, hover: hover, fanOpen: fanOpen)
+        cache = (key, image)
+        return image
+    }
+
+    private func draw(store: SettingsStore, hover: WheelTarget, fanOpen: Bool) -> NSImage? {
         let layout = WheelLayoutKind(rawValue: store.value(SettingsKeys.wheelLayout)) ?? .halo
         let renderer = renderers[layout] ?? {
             let made: WheelRenderer = switch layout {

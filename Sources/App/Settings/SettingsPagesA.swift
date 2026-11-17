@@ -143,7 +143,7 @@ struct GesturePage: View {
 
 /// A picture you can drag out of Settings to try the gesture.
 struct PracticePicture: View {
-    static let url: URL? = {
+    static var url: URL? {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("\(AppIdentity.name)-Practice", isDirectory: true)
         let url = dir.appendingPathComponent("Practice photo.png")
         if FileManager.default.fileExists(atPath: url.path) { return url }
@@ -151,7 +151,7 @@ struct PracticePicture: View {
               let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { return nil }
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return (try? data.write(to: url)) != nil ? url : nil
-    }()
+    }
 
     var body: some View {
         Group {

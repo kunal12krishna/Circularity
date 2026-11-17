@@ -80,10 +80,7 @@ final class PanelModel: ObservableObject {
 
     // MARK: Appearance
 
-    var accentNS: NSColor {
-        let hex = settings.value(SettingsKeys.accentHex)
-        return NSColor(cgColor: CGColor.hexString(hex) ?? .hex(0xFF8A00)) ?? .orange
-    }
+    var accentNS: NSColor { Appearance.accentNS(settings) }
     var accent: Color { Color(nsColor: accentNS) }
     /// Text links: the accent mixed 40 % toward white (board I's #FFB366 for tangerine).
     var link: Color { Color(nsColor: accentNS.blended(withFraction: 0.4, of: .white) ?? accentNS) }
