@@ -440,6 +440,12 @@ Each milestone follows the same steps: implement it, run `xcodegen generate`, `x
 - README section on first launch: right-click → Open, or System Settings → Privacy & Security → Open Anyway.
 - **Verify:** `codesign -dv --verbose=4` shows adhoc + runtime; `lipo -archs` shows `x86_64 arm64`; the DMG mounts and its layout is correct; the DMG size is recorded.
 
+**Built (j) — notes and measured results:**
+- `scripts/build.sh` (Release with warnings as errors plus a log check for warnings, universal or `ARCHS=arm64`, `ditto` to `dist/`, `codesign --force --sign - --options runtime`, verify), `sign.sh` / `notarize.sh` (print why and exit 0 without `DEVELOPER_ID_APP` / `NOTARY_PROFILE`; with them: Developer ID + secure timestamp, `notarytool submit --wait`, staple, `spctl` checks), `release.sh` (build → sign → DMG → notarise), `dmg.sh` (create-dmg: Halo background drawn by `scripts/make-dmg-art.swift` at 1× and 2× combined into a HiDPI TIFF, the app icon as volume icon, app at (180, 200), Applications link at (480, 200), APFS + ULFO, `hdiutil verify`), `dmg-arm64.sh`.
+- **Measured:** universal app 5.8 MB, `flags=0x10002(adhoc,runtime)`, `lipo -archs` → `x86_64 arm64`; `Circularity-0.1.0.dmg` 3.2 MB; the arm64-only app 3.1 MB and its DMG 2.1 MB. The DMG mounts with the background, `.DS_Store` layout, volume icon and Applications link, and the app inside passes `codesign --verify --strict`.
+- **Deviation from the brief:** "right-click → Open" only bypasses Gatekeeper on macOS 13–14. On macOS 15 and later Apple removed it, so the README and the DMG background give **System Settings → Privacy & Security → Open Anyway** (and right-click → Open for 13–14).
+- README, LICENSE (MIT), THIRD-PARTY-NOTICES.md and docs/RELEASE-CHECKLIST.md (ad-hoc now; Developer ID, notarisation, widget, Sparkle and Homebrew later).
+
 ### (k) Tests, perf report, polish
 - Complete the unit tests (gesture state machine, ring and More-arc layout, output naming, fuzzy matcher, watch rules, settings migration, theme contrast, slot ordering), finish `EngineSmokeTest` (every conversion, resize, crop and compress through the real queue; batches; cancellation; unsupported formats), real-event `--drag-test` level 2 documented, and `--perf-report` + `docs/PERF-REPORT.md` with measured numbers.
 - Fix anything that misses budget. Write `docs/INSTRUMENTS.md`, `docs/MANUAL-TESTS.md`, README (with a GIF-recording checklist), LICENSE (MIT), THIRD-PARTY-NOTICES and `docs/RELEASE-CHECKLIST.md` (ad-hoc DMG now; later Developer ID, notarise, staple, appcast and Homebrew cask).

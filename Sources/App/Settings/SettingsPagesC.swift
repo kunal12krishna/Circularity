@@ -172,7 +172,7 @@ struct AboutPage: View {
                     .font(Halo.rounded(12)).foregroundStyle(Halo.text).fixedSize(horizontal: false, vertical: true)
             }
             SettingsCard(title: "Licences") {
-                Text("\(AppIdentity.name) is released under the MIT licence. It bundles no third-party code; it uses only frameworks that come with macOS. See LICENSE and THIRD-PARTY-NOTICES in the download.")
+                Text("\(AppIdentity.name) is released under the MIT licence. It bundles no third-party code; it uses only frameworks that come with macOS. LICENSE and THIRD-PARTY-NOTICES are in the source.")
                     .font(Halo.rounded(12)).foregroundStyle(Halo.text).fixedSize(horizontal: false, vertical: true)
             }
         }
