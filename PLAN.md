@@ -1,7 +1,7 @@
 # Circularity for macOS — PLAN
 
 Source brief: `BRIEF.md` (the "DECISIONS ALREADY MADE" block wins over everything else in it).
-Design source of truth: `design/circularity-design/*.html`. The exact values are transcribed in **§9**, which wins over the brief's prose wherever the two differ (each conflict is listed in §9.5).
+Design source of truth: the HTML sources in `design/circularity-design-v2/` (exact values), checked against the 2× PNG renders in the same folder (`D-wheel-chosen_*.png`, `I-panel-chosen*.png`, `H-icon-states.png`). The exact values are transcribed in **§9**, which wins over the brief's prose wherever the two differ (each conflict is listed in §9.5).
 Status: planning only. No code exists yet.
 
 ---
@@ -400,7 +400,7 @@ Each milestone follows the same steps: implement it, run `xcodegen generate`, `x
 ## 6. Assumptions (decisions made autonomously)
 
 - **A1. The brief file.** `circularity-brief-v3.md` was renamed to `BRIEF.md`.
-- **A2. Mockups.** The board sources are in `design/circularity-design/` (HTML in the canvas template format, see its README). No PNG renders were supplied. Values for D (wheel), I (panel) and H (icons) are transcribed in §9.
+- **A2. Mockups.** The board sources and 2× PNG renders are in `design/circularity-design-v2/` (HTML in the canvas template format, see its README). Values for D (wheel), I (panel) and H (icons) are transcribed in §9 and were checked against `D-wheel-chosen_{hover-JPG,more-fan-open,cancel,compress}.png`, `I-panel-chosen{,_drop-zone-mini-wheel,_paused}.png` and `H-icon-states.png`.
   - B (Orbit), C (Halo), F (Tabs) and G (Mini) are read and transcribed when their milestones start: B and C in (c), F and G in (h2).
   - A is reference only.
   - Fake wallpaper, fake menu bar and placeholder data in the boards are ignored.
@@ -459,7 +459,9 @@ Each milestone follows the same steps: implement it, run `xcodegen generate`, `x
 
 ## 9. Design spec: exact values from the boards
 
-The values below come from `design/circularity-design/`. They are at 100 % scale, in points.
+The values below come from the HTML sources in `design/circularity-design-v2/`, checked against the PNG renders there. They are at 100 % scale, in points; the PNGs are 2×, so divide pixel positions by 2.
+
+**About the PNGs:** they render text in Inter, not SF Pro Rounded (see the folder's README), so text widths, wraps and clipping in them are not authoritative. Geometry, colours and states are.
 
 **How CSS maps to AppKit**
 - **Fonts:** `ui-rounded` is SF Pro Rounded. CSS weights 600, 700 and 800 map to `.semibold`, `.bold` and `.heavy`.
@@ -558,7 +560,7 @@ The values below come from `design/circularity-design/`. They are at 100 % scale
   | Line | Size and weight | Kern | Colour |
   |---|---|---|---|
   | 1. Kicker | 10 pt bold | 0.8 | `#C9C3B9` |
-  | 2. Big label | 32 pt heavy | 0.64 | accent, or `#FF8A80` when Cancel is hovered |
+  | 2. Big label | 32 pt heavy, one line, **shrinks to fit 160 pt** (minimum scale 0.75), never wraps or truncates | 0.64 | accent, or `#FF8A80` when Cancel is hovered |
   | 3. Detail | 12 pt semibold | — | `#E6E1D8` |
   | 4. File line (after a 6 pt top margin) | 11 pt regular | — | `#C9C3B9`; format `NAME.EXT · 3.2 MB` |
 
@@ -590,7 +592,7 @@ When nothing is hovered, the big "Cancel" stays in the accent colour. The red co
 **Header** (a row with a gap of 10)
 - App tile: 34 × 34, radius 10, accent fill. It holds the §9.3 glyph at 20 pt in `#1A1206`, stroke 2.4.
 - Title "Circularity": 15 pt heavy.
-- Status line: 12 pt, `#C9C3B9`, after a 7 pt dot with a gap of 6.
+- Status line: 12 pt, `#C9C3B9`, after a 7 pt dot with a gap of 6. It may wrap to **2 lines** (the PNGs show it wrapping beside the Pause control), then truncates at the tail. The dot aligns with the first line.
   - The dot is accent while active and `#9C968D` while paused.
   - Copy uses " · " separators, for example "Converting 1 file · Shift-drag ready" and "Paused · the wheel will not appear".
 - Pause control: the label "Pause" (12 pt semibold, `#C9C3B9`), a gap of 8, then a switch.
@@ -601,7 +603,7 @@ When nothing is hovered, the big "Cancel" stays in the accent colour. The red co
 - Height 38, radius 10, horizontal padding 12, gap 8.
 - Fill `rgba(255,255,255,0.07)`, border `rgba(255,255,255,0.08)`.
 - Prompt glyph: 14 pt, colour `#A9A39A`. It is drawn from the board's own path, `M4 17l6-6-6-6M12 19h8` (a `>_` prompt) in a 24 box, stroke 2.4, round caps and joins, because no SF Symbol matches it.
-- Input: 12 pt. The placeholder `Search recents, or type “webp”, “< 2mb”, “clipboard”…` is `#9C968D`.
+- Input: 12 pt. The placeholder `Search recents, or type “webp”, “< 2mb”, “clipboard”…` is `#9C968D`, one line, **truncated at the tail with an ellipsis**. The PNG clips it mid-word, which would look broken.
 - Key chip "⌘K": 10 pt bold, padding 2 × 6, radius 5, fill `rgba(255,255,255,0.10)`, text `#D9D3CA`.
 
 **Stats strip**
@@ -670,7 +672,7 @@ When nothing is hovered, the big "Cancel" stays in the accent colour. The red co
 
 **Glyph**
 - Defined in a 24 × 24 box, stroke width 2.4, round caps.
-- Drawn at **16 pt** in the menu bar. That size is board I's in-bar icon; the board-H cells show it at 32 pt.
+- Drawn at **16 pt** in the menu bar (the standard status-item glyph size); the board-H cells show it at 32 pt. Board I's menu-bar strip is backdrop only, per the design README. Its in-bar icon (segment 1 lit, the others at 35 %) is **not** a state to build. Converting always uses board H's progress ring.
 - Paths (copied verbatim into `StatusGlyph.swift` and the app-icon script):
   - Segment 1: `M12 3 a9 9 0 0 1 8.5 6` (about 0° → 70.6°)
   - Segment 2: `M20.8 13.5 A9 9 0 0 1 12 21` (about 99.7° → 180°)
@@ -701,7 +703,7 @@ When nothing is hovered, the big "Cancel" stays in the accent colour. The red co
 - The board's mono colours stand for the menu bar's template tint. Because the error badge must stay red, which a template image cannot do, the icon is drawn in a custom view. Mono `fg` is taken from the status button's effective appearance (`labelColor`), so it still follows the menu bar exactly like a template.
 - The "minimal" style (dot only) comes from the brief and has no board. It is the centre dot at r 2.2 plus the badge and progress behaviour scaled to it.
 
-**Status item while the panel is open:** a highlight chip of 26 × 22, radius 5, `rgba(255,255,255,0.20)` (board I).
+**Status item while the panel is open:** the system's own status-button highlight (`button.highlight(true)`), not a custom chip, because the board-I strip it resembles is backdrop only. The **drag-over** chip above is custom, because it is a board-H state.
 
 ### 9.4 Motion values
 

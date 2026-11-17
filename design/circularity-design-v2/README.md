@@ -20,3 +20,10 @@ Ignore the fake desktop/wallpaper shapes and the fake macOS menu bar strip: they
 Ignore `{{…}}`, <sc-for>, <sc-if>, <x-dc>: template syntax of the canvas tool.
 Sample numbers (file names, sizes, "18 files") are placeholder data.
 Screenshots (*.png), if present, show how each board renders.
+
+SCREENSHOTS (rendered at 2x):
+- D-wheel-chosen_*.png      default wheel: hovering JPG, More fan open, Cancel, Compress
+- I-panel-chosen*.png       default menu bar panel: normal, drop zone turned mini wheel, paused
+- H-icon-states.png         status item icon states
+- alt-*.png                 alternative layouts (A, B, C wheels; E, F, G panels)
+Fonts in the PNGs fall back to Inter; the real app uses SF Pro Rounded.
