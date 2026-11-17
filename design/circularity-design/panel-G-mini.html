@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menu bar G · Halo Mini</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#C6FF3D}a:hover{color:#E2FF9E}
+input::placeholder{color:#8A91A0}
+</style>
+</helmet>
+<div style="width: 420px; height: 860px; position: relative; overflow: hidden; background: #0D0F14; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: #ECEEF2">
+<div aria-hidden="true" style="position: absolute; left: 220px; top: 420px; width: 260px; height: 260px; border-radius: 50%; background: #1B2233"></div>
+<div style="position: absolute; left: 0; top: 0; width: 420px; height: 28px; background: rgba(0, 0, 0, 0.5); display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 14px; box-sizing: border-box; font-size: 12px; font-weight: 600">
+<span style="width: 26px; height: 22px; border-radius: 5px; background: rgba(255, 255, 255, 0.16); display: flex; align-items: center; justify-content: center">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ECEEF2" stroke-width="2.4" stroke-linecap="round" role="img" aria-label="Circularity"><path d="M12 3a9 9 0 0 1 8.5 6"></path><path d="M20.8 13.5A9 9 0 0 1 12 21"></path><path d="M8.5 20.3A9 9 0 0 1 3.4 9.5"></path><circle cx="12" cy="12" r="2.2" fill="#ECEEF2" stroke="none"></circle></svg>
+</span>
+<span>Tue 18:55</span>
+</div>
+<div style="position: absolute; left: 40px; top: 36px; width: 340px; border-radius: 18px; background: #15171C; border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 30px 70px rgba(0, 0, 0, 0.7); padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.1em; flex-grow: 1">CIRCULARITY</span>
+<span style="font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; background: rgba(198, 255, 61, 0.12); color: {{accent}}">ACTIVE</span>
+<button type="button" aria-label="Pause Circularity" style="width: 28px; height: 28px; border-radius: 8px; border: 0; background: #1F222A; color: #ECEEF2; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.5"></rect><rect x="14" y="4" width="5" height="16" rx="1.5"></rect></svg></button>
+</div>
+<div style="position: relative; width: 312px; height: 236px; border-radius: 14px; background: #101216; border: 1px solid rgba(255, 255, 255, 0.06)">
+<svg width="312" height="236" viewBox="0 0 312 236" aria-hidden="true" style="position: absolute; left: 0; top: 0; pointer-events: none"><circle cx="156" cy="118" r="108" fill="none" stroke="{{accent}}" stroke-opacity="0.2"></circle></svg>
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="6">
+<svg width="312" height="236" viewBox="0 0 312 236" aria-hidden="true" style="position: absolute; left: 0; top: 0; pointer-events: none">
+<path d="{{s.d}}" fill="{{s.fill}}" style="pointer-events: auto; cursor: pointer" onMouseEnter="{{s.pick}}"></path>
+</svg>
+</sc-for>
+<sc-for list="{{segs}}" as="s" hint-placeholder-count="6">
+<button type="button" aria-label="{{s.aria}}" onMouseEnter="{{s.pick}}" onFocus="{{s.pick}}" style="position: absolute; left: {{s.lx}}px; top: {{s.ly}}px; transform: translate(-50%, -50%); background: none; border: 0; padding: 4px; color: {{s.fg}}; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 11px; font-weight: 800; letter-spacing: 0.06em; cursor: pointer">{{s.label}}</button>
+</sc-for>
+<div style="position: absolute; left: 106px; top: 68px; width: 100px; height: 100px; border-radius: 50%; background: #1A1D24; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; pointer-events: none">
+<span style="font-size: 9px; font-weight: 700; letter-spacing: 0.08em; color: #8A91A0">{{kicker}}</span>
+<span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 20px; font-weight: 800; color: {{accent}}">{{big}}</span>
+<span style="font-size: 9px; color: #A9AFBC">drop a file here</span>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; background: #1B1D23">
+<svg width="34" height="34" viewBox="0 0 40 40" role="img" aria-label="71 percent"><circle cx="20" cy="20" r="16" fill="none" stroke="#2A2E38" stroke-width="4"></circle><circle cx="20" cy="20" r="16" fill="none" stroke="{{accent}}" stroke-width="4" stroke-linecap="round" stroke-dasharray="71.4 100.5" transform="rotate(-90 20 20)"></circle></svg>
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0">
+<span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; font-weight: 700">lease.pdf → SQZ</span>
+<span style="font-size: 11px; color: #A9AFBC">71% · 31/44 pages · 9 s</span>
+</div>
+<button type="button" aria-label="Cancel lease.pdf" style="width: 26px; height: 26px; border-radius: 7px; border: 0; background: #262A33; color: #ECEEF2; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<span style="font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #8A91A0">RECENT · DRAG OUT TO USE</span>
+<button type="button" style="background: none; border: 0; color: {{accent}}; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; padding: 2px">All</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{strip}}" as="t" hint-placeholder-count="5">
+<button type="button" aria-label="{{t.aria}}" style="display: flex; flex-direction: column; gap: 4px; align-items: center; background: none; border: 0; padding: 0; color: #ECEEF2; font: inherit; cursor: grab">
+<span style="width: 54px; height: 54px; border-radius: 10px; background: {{t.bg}}; border: 1px solid rgba(255, 255, 255, 0.08); display: block"></span>
+<span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 9px; font-weight: 700; color: #A9AFBC">{{t.fmt}}</span>
+</button>
+</sc-for>
+</div>
+</div>
+<label style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-radius: 10px; background: #1B1D23; border: 1px solid rgba(255, 255, 255, 0.08); color: #8A91A0">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 17l6-6-6-6M12 19h8"></path></svg>
+<input type="text" aria-label="Command bar" placeholder="Search recents, or type “webp”, “< 2mb”…" style="flex-grow: 1; min-width: 0; background: none; border: 0; outline: none; color: #ECEEF2; font: inherit; font-size: 12px">
+<span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 5px; background: #262A33; color: #C9CED8">⌘K</span>
+</label>
+<div style="display: flex; gap: 6px; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 10px; color: #8A91A0; flex-wrap: wrap">
+<span>↑↓ select</span><span>·</span><span>␣ preview</span><span>·</span><span>⌘R reveal</span><span>·</span><span>⌘⌫ undo</span><span>·</span><span>⌘, settings</span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C6FF3D","options":["#C6FF3D","#FF8A00","#5CE1FF","#FF5CA8"]},"$preview":{"width":420,"height":860}}'>
+var SEGS_G = [
+  { id: 'png', label: 'PNG', k: 'CONVERT', big: 'PNG' },
+  { id: 'jpg', label: 'JPG', k: 'CONVERT', big: 'JPG' },
+  { id: 'pdf', label: 'PDF', k: 'CONVERT', big: 'PDF' },
+  { id: 'more', label: '•••', k: 'REST FOR', big: 'MORE' },
+  { id: 'sqz', label: 'SQZ', k: 'OPEN', big: 'SQZ' },
+  { id: 'size', label: 'SIZE', k: 'OPEN', big: 'SIZE' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hovered: 'jpg' };
+  }
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent ?? '#C6FF3D';
+    var h = this.state.hovered;
+    var C = [156, 118];
+    var pt = function (r, a) { var t = (a - 90) * Math.PI / 180; return [C[0] + r * Math.cos(t), C[1] + r * Math.sin(t)]; };
+    var f = function (n) { return n.toFixed(1); };
+    var arc = function (r1, r2, a0, a1) {
+      var p0 = pt(r2, a0), p1 = pt(r2, a1), p2 = pt(r1, a1), p3 = pt(r1, a0);
+      return 'M' + f(p0[0]) + ' ' + f(p0[1]) + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + f(p1[0]) + ' ' + f(p1[1]) +
+        ' L' + f(p2[0]) + ' ' + f(p2[1]) + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + f(p3[0]) + ' ' + f(p3[1]) + ' Z';
+    };
+    var info = SEGS_G[1];
+    var segs = SEGS_G.map(function (s, i) {
+      var on = h === s.id, mid = i * 60;
+      var r1 = on ? 52 : 54, r2 = on ? 104 : 98;
+      var lp = pt((r1 + r2) / 2, mid);
+      if (on) { info = s; }
+      return Object.assign({}, s, {
+        d: arc(r1, r2, mid - 28.5, mid + 28.5), fill: on ? accent : '#1F222A',
+        lx: f(lp[0]), ly: f(lp[1]), fg: on ? '#0D0F14' : '#ECEEF2',
+        aria: s.k.toLowerCase() + ' ' + s.big,
+        pick: function () { self.setState({ hovered: s.id }); }
+      });
+    });
+    return {
+      accent: accent, segs: segs, kicker: info.k, big: info.big,
+      strip: [
+        { fmt: 'PNG', bg: '#C98A55', aria: 'beach.png, drag out' },
+        { fmt: 'PDF', bg: '#D9D4CC', aria: 'portfolio (compressed).pdf, drag out' },
+        { fmt: 'JPG', bg: '#4F7EA8', aria: 'hero (resized).jpg, drag out' },
+        { fmt: 'PDF', bg: '#B8C9AE', aria: 'scan (combined).pdf, drag out' },
+        { fmt: 'TXT', bg: '#3A3F4B', aria: 'notes.txt, drag out' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

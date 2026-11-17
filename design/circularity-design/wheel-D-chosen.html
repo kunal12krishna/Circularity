@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wheel D · Tangerine Glass with Halo centre</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#FFB366}a:hover{color:#FFD2A3}
+</style>
+</helmet>
+<div style="width: 720px; height: 720px; position: relative; overflow: hidden; background: #1F2228; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: #F4F1EC">
+<div aria-hidden="true" style="position: absolute; left: 40px; top: 56px; width: 420px; height: 300px; border-radius: 12px; background: #2E3239; border: 1px solid #3A3F47"></div>
+<div aria-hidden="true" style="position: absolute; left: 40px; top: 56px; width: 420px; height: 30px; border-radius: 12px 12px 0 0; background: #353A42"></div>
+<div aria-hidden="true" style="position: absolute; left: 520px; top: 110px; width: 120px; height: 90px; border-radius: 10px; background: #3B6FD8"></div>
+<div aria-hidden="true" style="position: absolute; left: 470px; top: 470px; width: 180px; height: 150px; border-radius: 14px; background: #2F7D5B"></div>
+<div aria-hidden="true" style="position: absolute; left: 70px; top: 500px; width: 150px; height: 110px; border-radius: 12px; background: #8E3B5E"></div>
+<div aria-hidden="true" style="position: absolute; left: 142px; top: 142px; width: 436px; height: 436px; border-radius: 50%; background: rgba(24, 24, 28, 0.55); backdrop-filter: blur(28px) saturate(1.6); -webkit-backdrop-filter: blur(28px) saturate(1.6); box-shadow: 0 40px 90px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 2px 34px rgba(255, 255, 255, 0.07)"></div>
+<sc-for list="{{segs}}" as="seg" hint-placeholder-count="6">
+<svg width="720" height="720" viewBox="0 0 720 720" aria-hidden="true" style="position: absolute; left: 0; top: 0; pointer-events: none">
+<path d="{{seg.d}}" fill="{{seg.fill}}" stroke="{{seg.stroke}}" stroke-width="1" opacity="{{seg.op}}" style="pointer-events: auto; cursor: pointer" onMouseEnter="{{seg.pick}}"></path>
+</svg>
+</sc-for>
+<sc-for list="{{segs}}" as="seg" hint-placeholder-count="6">
+<button type="button" aria-label="{{seg.verb}}" onMouseEnter="{{seg.pick}}" onFocus="{{seg.pick}}" style="position: absolute; left: {{seg.lx}}px; top: {{seg.ly}}px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 6px; color: {{seg.fg}}; opacity: {{seg.op}}; font: inherit; cursor: pointer">
+<sc-if value="{{seg.isImg}}" hint-placeholder-val="{{ true }}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="2"></circle><path d="M4 18l5-5 4 4 3-3 4 4"></path></svg>
+</sc-if>
+<sc-if value="{{seg.isMore}}" hint-placeholder-val="{{ false }}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>
+</sc-if>
+<sc-if value="{{seg.isCompress}}" hint-placeholder-val="{{ false }}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"></path></svg>
+</sc-if>
+<sc-if value="{{seg.isResize}}" hint-placeholder-val="{{ false }}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+</sc-if>
+<span style="font-size: 15px; font-weight: 700; letter-spacing: 0.02em">{{seg.label}}</span>
+</button>
+</sc-for>
+<sc-if value="{{moreOpen}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{fan}}" as="m" hint-placeholder-count="6">
+<button type="button" aria-label="{{m.verb}}" onMouseEnter="{{m.pick}}" onFocus="{{m.pick}}" style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: 56px; height: 56px; border-radius: 50%; background: {{m.bg}}; color: {{m.fg}}; transform: scale({{m.scale}}); border: 1px solid rgba(255, 255, 255, 0.16); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; padding: 0">{{m.label}}</button>
+</sc-for>
+</sc-if>
+<button type="button" aria-label="Cancel" onMouseEnter="{{hoverCancel}}" onFocus="{{hoverCancel}}" style="position: absolute; left: 270px; top: 270px; width: 180px; height: 180px; border-radius: 50%; overflow: hidden; background: rgba(14, 14, 16, 0.78); border: 1.5px solid {{orbBorder}}; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 10px 30px rgba(0, 0, 0, 0.35); padding: 0; font: inherit; color: #F4F1EC; cursor: pointer">
+<svg width="180" height="180" viewBox="0 0 84 84" aria-hidden="true" style="position: absolute; left: 0; top: 0; opacity: 0.22"><rect width="84" height="84" fill="#F6C79B"></rect><circle cx="56" cy="32" r="11" fill="#FF8A00"></circle><path d="M0 60 L26 38 L46 56 L62 44 L84 62 V84 H0Z" fill="#3E6B5A"></path></svg>
+<span style="position: absolute; left: 0; top: 0; width: 180px; height: 180px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px">
+<span style="font-size: 10px; font-weight: 700; letter-spacing: 0.08em; color: #C9C3B9">{{kicker}}</span>
+<span style="font-size: 32px; font-weight: 800; letter-spacing: 0.02em; color: {{bigColor}}">{{big}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #E6E1D8">{{detail}}</span>
+<span style="margin-top: 6px; font-size: 11px; color: #C9C3B9">IMG_2041.HEIC · 3.2 MB</span>
+</span>
+</button>
+<div aria-hidden="true" style="position: absolute; left: {{cx}}px; top: {{cy}}px; width: 48px; height: 52px; pointer-events: none">
+<svg width="20" height="26" viewBox="0 0 20 26" style="position: absolute; left: 0; top: 0"><path d="M2 2v19l5-5 3.5 7.5 3-1.3L10 15h7z" fill="#FFFFFF" stroke="#000000" stroke-width="1.3" stroke-linejoin="round"></path></svg>
+<div style="position: absolute; left: 14px; top: 18px; width: 30px; height: 30px; border-radius: 7px; overflow: hidden; opacity: 0.9; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4); background: #F6C79B">
+<svg width="30" height="30" viewBox="0 0 84 84"><circle cx="56" cy="32" r="11" fill="#FF8A00"></circle><path d="M0 60 L26 38 L46 56 L62 44 L84 62 V84 H0Z" fill="#3E6B5A"></path></svg>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF8A00","options":["#FF8A00","#FF5E3A","#FFB020","#7C8CFF"]},"$preview":{"width":720,"height":720}}'>
+var SEGS_D = [
+  { id: 'png', label: 'PNG', verb: 'Convert to PNG', icon: 'img', kicker: 'CONVERT TO', big: 'PNG', detail: 'about 9.8 MB' },
+  { id: 'jpg', label: 'JPG', verb: 'Convert to JPG', icon: 'img', kicker: 'CONVERT TO', big: 'JPG', detail: 'about 2.9 MB' },
+  { id: 'webp', label: 'WebP', verb: 'Convert to WebP', icon: 'img', kicker: 'CONVERT TO', big: 'WebP', detail: 'about 1.6 MB' },
+  { id: 'more', label: 'More', verb: 'More formats', icon: 'more', kicker: 'REST HERE FOR', big: 'More', detail: '6 more options' },
+  { id: 'compress', label: 'Compress', verb: 'Compress…', icon: 'compress', kicker: 'OPEN', big: 'Compress', detail: 'quality or target size' },
+  { id: 'resize', label: 'Resize', verb: 'Resize…', icon: 'resize', kicker: 'OPEN', big: 'Resize', detail: 'width × height' }
+];
+var MORE_D = [
+  { id: 'heic', label: 'HEIC', verb: 'Convert to HEIC', kicker: 'CONVERT TO', big: 'HEIC', detail: 'about 2.1 MB' },
+  { id: 'avif', label: 'AVIF', verb: 'Convert to AVIF', kicker: 'CONVERT TO', big: 'AVIF', detail: 'about 1.2 MB' },
+  { id: 'tiff', label: 'TIFF', verb: 'Convert to TIFF', kicker: 'CONVERT TO', big: 'TIFF', detail: 'about 36 MB' },
+  { id: 'gif', label: 'GIF', verb: 'Convert to GIF', kicker: 'CONVERT TO', big: 'GIF', detail: 'about 4.4 MB' },
+  { id: 'pdf', label: 'PDF', verb: 'Convert to PDF', kicker: 'CONVERT TO', big: 'PDF', detail: 'about 3.0 MB' },
+  { id: 'crop', label: 'Crop', verb: 'Crop…', kicker: 'OPEN', big: 'Crop', detail: '1:1 · 4:3 · 16:9' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hovered: 'jpg' };
+  }
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent ?? '#FF8A00';
+    var h = this.state.hovered;
+    var C = 360;
+    var pt = function (r, a) { var t = (a - 90) * Math.PI / 180; return [C + r * Math.cos(t), C + r * Math.sin(t)]; };
+    var f = function (n) { return n.toFixed(1); };
+    var arc = function (r1, r2, a0, a1) {
+      var p0 = pt(r2, a0), p1 = pt(r2, a1), p2 = pt(r1, a1), p3 = pt(r1, a0);
+      return 'M' + f(p0[0]) + ' ' + f(p0[1]) + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + f(p1[0]) + ' ' + f(p1[1]) +
+        ' L' + f(p2[0]) + ' ' + f(p2[1]) + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + f(p3[0]) + ' ' + f(p3[1]) + ' Z';
+    };
+    var set = function (id) { return function () { self.setState({ hovered: id }); }; };
+    var moreOpen = h === 'more' || MORE_D.some(function (m) { return m.id === h; });
+    var cursor = [C + 18, C + 18];
+    var info = { kicker: 'DROP HERE TO', big: 'Cancel', detail: 'nothing is changed' };
+    var segs = SEGS_D.map(function (s, i) {
+      var on = h === s.id || (s.id === 'more' && moreOpen);
+      var mid = i * 60;
+      var r1 = on ? 92 : 98, r2 = on ? 216 : 204;
+      var lp = pt((r1 + r2) / 2, mid);
+      if (h === s.id) { cursor = [lp[0] + 20, lp[1] + 20]; info = s; }
+      var dim = h && !on && h !== 'cancel';
+      return Object.assign({}, s, {
+        d: arc(r1, r2, mid - 28.5, mid + 28.5),
+        fill: on ? accent : 'rgba(255,255,255,0.07)',
+        stroke: on ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.10)',
+        op: dim ? 0.55 : 1,
+        lx: f(lp[0]), ly: f(lp[1]),
+        fg: on ? '#1A1206' : '#F4F1EC',
+        isImg: s.icon === 'img', isMore: s.icon === 'more', isCompress: s.icon === 'compress', isResize: s.icon === 'resize',
+        pick: set(s.id)
+      });
+    });
+    var fan = MORE_D.map(function (m, k) {
+      var a = 180 + (k - (MORE_D.length - 1) / 2) * 21;
+      var p = pt(270, a);
+      var on = h === m.id;
+      if (on) { cursor = [p[0] + 12, p[1] + 10]; info = m; }
+      return Object.assign({}, m, {
+        x: f(p[0] - 28), y: f(p[1] - 28),
+        bg: on ? accent : 'rgba(28,28,32,0.72)', fg: on ? '#1A1206' : '#F4F1EC',
+        scale: on ? 1.14 : 1, pick: set(m.id)
+      });
+    });
+    return {
+      segs: segs, fan: fan, moreOpen: moreOpen,
+      cx: f(cursor[0]), cy: f(cursor[1]),
+      kicker: info.kicker, big: info.big, detail: info.detail,
+      bigColor: h === 'cancel' ? '#FF8A80' : accent,
+      orbBorder: h === 'cancel' ? '#FF7A6E' : 'rgba(255,255,255,0.18)',
+      hoverCancel: set('cancel')
+    };
+  }
+}
+</script>
+</body>
+</html>

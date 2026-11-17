@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wheel B · Orbit</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#B85600}a:hover{color:#8A4000}
+</style>
+</helmet>
+<div style="width: 720px; height: 720px; position: relative; overflow: hidden; background: #E9E5DF; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: #1D1B18">
+<div aria-hidden="true" style="position: absolute; left: 60px; top: 70px; width: 440px; height: 320px; border-radius: 12px; background: #FFFFFF; border: 1px solid #D6D0C7; box-shadow: 0 20px 50px rgba(60, 40, 20, 0.12)"></div>
+<div aria-hidden="true" style="position: absolute; left: 60px; top: 70px; width: 160px; height: 320px; border-radius: 12px 0 0 12px; background: #F2EEE8"></div>
+<div aria-hidden="true" style="position: absolute; left: 250px; top: 120px; width: 70px; height: 56px; border-radius: 8px; background: #F4B46A"></div>
+<div aria-hidden="true" style="position: absolute; left: 340px; top: 120px; width: 70px; height: 56px; border-radius: 8px; background: #7FB3E8"></div>
+<div aria-hidden="true" style="position: absolute; left: 520px; top: 430px; width: 150px; height: 190px; border-radius: 14px; background: #C9DCC4"></div>
+<div aria-hidden="true" style="position: absolute; left: 195px; top: 195px; width: 330px; height: 330px; border-radius: 50%; border: 1.5px dashed rgba(60, 40, 20, 0.16)"></div>
+<sc-for list="{{segs}}" as="seg" hint-placeholder-count="6">
+<button type="button" aria-label="{{seg.verb}}" onMouseEnter="{{seg.pick}}" onFocus="{{seg.pick}}" style="position: absolute; left: {{seg.x}}px; top: {{seg.y}}px; width: 88px; height: 88px; border-radius: 50%; transform: scale({{seg.scale}}); opacity: {{seg.op}}; background: {{seg.bg}}; border: 1px solid {{seg.border}}; backdrop-filter: blur(24px) saturate(1.8); -webkit-backdrop-filter: blur(24px) saturate(1.8); box-shadow: {{seg.shadow}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; padding: 0; font: inherit; color: #1D1B18; cursor: pointer">
+<span style="width: 32px; height: 32px; border-radius: 50%; background: {{seg.tint}}; color: {{seg.iconFg}}; display: flex; align-items: center; justify-content: center">
+<sc-if value="{{seg.isImg}}" hint-placeholder-val="{{ true }}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="2"></circle><path d="M4 18l5-5 4 4 3-3 4 4"></path></svg>
+</sc-if>
+<sc-if value="{{seg.isDoc}}" hint-placeholder-val="{{ false }}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg>
+</sc-if>
+<sc-if value="{{seg.isMore}}" hint-placeholder-val="{{ false }}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>
+</sc-if>
+<sc-if value="{{seg.isCompress}}" hint-placeholder-val="{{ false }}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"></path></svg>
+</sc-if>
+<sc-if value="{{seg.isResize}}" hint-placeholder-val="{{ false }}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+</sc-if>
+</span>
+<span style="font-size: 12px; font-weight: 700">{{seg.label}}</span>
+</button>
+</sc-for>
+<sc-if value="{{moreOpen}}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{fan}}" as="m" hint-placeholder-count="6">
+<button type="button" aria-label="{{m.verb}}" onMouseEnter="{{m.pick}}" onFocus="{{m.pick}}" style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; height: 36px; padding: 0 14px; border-radius: 999px; transform: scale({{m.scale}}); background: {{m.bg}}; color: #1D1B18; border: 1px solid rgba(60, 40, 20, 0.14); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 8px 20px rgba(60, 40, 20, 0.16); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap">{{m.label}}</button>
+</sc-for>
+</sc-if>
+<button type="button" aria-label="Cancel" onMouseEnter="{{hoverCancel}}" onFocus="{{hoverCancel}}" style="position: absolute; left: 290px; top: 290px; width: 140px; height: 140px; border-radius: 50%; background: rgba(255, 255, 255, 0.78); border: 1.5px solid {{orbBorder}}; backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); box-shadow: 0 18px 40px rgba(60, 40, 20, 0.18); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 0; font: inherit; color: #1D1B18; cursor: pointer">
+<span style="position: relative; width: 70px; height: 56px; display: block">
+<span style="position: absolute; left: 14px; top: 0; width: 46px; height: 46px; border-radius: 9px; background: #7FB3E8; transform: rotate(10deg); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15)"></span>
+<span style="position: absolute; left: 4px; top: 4px; width: 46px; height: 46px; border-radius: 9px; background: #C9DCC4; transform: rotate(-8deg); box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15)"></span>
+<span style="position: absolute; left: 10px; top: 8px; width: 46px; height: 46px; border-radius: 9px; overflow: hidden; background: #F6C79B; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2)">
+<svg width="46" height="46" viewBox="0 0 84 84" aria-hidden="true"><circle cx="56" cy="32" r="11" fill="#FF8A00"></circle><path d="M0 60 L26 38 L46 56 L62 44 L84 62 V84 H0Z" fill="#3E6B5A"></path></svg>
+</span>
+<span style="position: absolute; right: -6px; top: -6px; min-width: 22px; height: 22px; border-radius: 11px; background: {{accent}}; color: #2A1700; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center">3</span>
+</span>
+<span style="font-size: 12px; font-weight: 700">{{orbTitle}}</span>
+<span style="font-size: 11px; color: #5E574D">8.7 MB total</span>
+</button>
+<div aria-hidden="true" style="position: absolute; left: {{cx}}px; top: {{cy}}px; pointer-events: none">
+<svg width="20" height="26" viewBox="0 0 20 26"><path d="M2 2v19l5-5 3.5 7.5 3-1.3L10 15h7z" fill="#FFFFFF" stroke="#000000" stroke-width="1.3" stroke-linejoin="round"></path></svg>
+</div>
+<div aria-hidden="true" style="position: absolute; left: {{px}}px; top: {{py}}px; padding: 7px 12px; border-radius: 999px; background: #1D1B18; color: #FFFFFF; font-size: 13px; font-weight: 600; white-space: nowrap; pointer-events: none; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22)">{{verb}}</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF8A00","options":["#FF8A00","#FF5E3A","#FFB020","#7C8CFF"]},"$preview":{"width":720,"height":720}}'>
+var SEGS_B = [
+  { id: 'png', label: 'PNG', verb: 'Convert 3 to PNG', icon: 'img', tint: '#FFE2C2', iconFg: '#8A4300' },
+  { id: 'jpg', label: 'JPG', verb: 'Convert 3 to JPG', icon: 'img', tint: '#FFE2C2', iconFg: '#8A4300' },
+  { id: 'pdf', label: 'PDF', verb: 'Combine into one PDF', icon: 'doc', tint: '#FAD4D0', iconFg: '#8E2A1F' },
+  { id: 'more', label: 'More', verb: 'More formats', icon: 'more', tint: '#E4E0DA', iconFg: '#3D3831' },
+  { id: 'compress', label: 'Compress', verb: 'Compress 3…', icon: 'compress', tint: '#D7E5F5', iconFg: '#1F4D80' },
+  { id: 'resize', label: 'Resize', verb: 'Resize 3…', icon: 'resize', tint: '#D7E5F5', iconFg: '#1F4D80' }
+];
+var MORE_B = [
+  { id: 'heic', label: 'HEIC', verb: 'Convert 3 to HEIC' },
+  { id: 'webp', label: 'WebP', verb: 'Convert 3 to WebP' },
+  { id: 'avif', label: 'AVIF', verb: 'Convert 3 to AVIF' },
+  { id: 'tiff', label: 'TIFF', verb: 'Convert 3 to TIFF' },
+  { id: 'gif', label: 'GIF', verb: 'Convert 3 to GIF' },
+  { id: 'crop', label: 'Crop…', verb: 'Crop 3…' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hovered: 'webp' };
+  }
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent ?? '#FF8A00';
+    var h = this.state.hovered;
+    var C = 360;
+    var pt = function (r, a) { var t = (a - 90) * Math.PI / 180; return [C + r * Math.cos(t), C + r * Math.sin(t)]; };
+    var f = function (n) { return n.toFixed(1); };
+    var set = function (id) { return function () { self.setState({ hovered: id }); }; };
+    var moreOpen = h === 'more' || MORE_B.some(function (m) { return m.id === h; });
+    var cursor = [C + 20, C + 30];
+    var verb = 'Cancel';
+    var segs = SEGS_B.map(function (s, i) {
+      var on = h === s.id || (s.id === 'more' && moreOpen);
+      var p = pt(165, i * 60);
+      if (h === s.id) { cursor = [p[0] + 16, p[1] + 18]; verb = s.verb; }
+      var dim = h && !on && h !== 'cancel';
+      return Object.assign({}, s, {
+        x: f(p[0] - 44), y: f(p[1] - 44),
+        scale: on ? 1.16 : 1, op: dim ? 0.6 : 1,
+        bg: on ? accent : 'rgba(255,255,255,0.72)',
+        border: on ? 'rgba(255,255,255,0.9)' : 'rgba(60,40,20,0.12)',
+        shadow: on ? '0 16px 34px rgba(160,80,0,0.35)' : '0 10px 26px rgba(60,40,20,0.14)',
+        tint: on ? 'rgba(255,255,255,0.85)' : s.tint,
+        isImg: s.icon === 'img', isDoc: s.icon === 'doc', isMore: s.icon === 'more', isCompress: s.icon === 'compress', isResize: s.icon === 'resize',
+        pick: set(s.id)
+      });
+    });
+    var fan = MORE_B.map(function (m, k) {
+      var a = 180 + (k - (MORE_B.length - 1) / 2) * 24;
+      var p = pt(262, a);
+      var on = h === m.id;
+      if (on) { cursor = [p[0] + 8, p[1] + 6]; verb = m.verb; }
+      return Object.assign({}, m, {
+        x: f(p[0] - 30), y: f(p[1] - 18),
+        bg: on ? accent : 'rgba(255,255,255,0.82)', scale: on ? 1.12 : 1, pick: set(m.id)
+      });
+    });
+    var px = Math.min(cursor[0] - 4, 540);
+    var py = cursor[1] + 30 > 676 ? cursor[1] - 44 : cursor[1] + 30;
+    return {
+      accent: accent, segs: segs, fan: fan, moreOpen: moreOpen,
+      cx: f(cursor[0]), cy: f(cursor[1]), px: f(px), py: f(py), verb: verb,
+      orbTitle: h === 'cancel' ? 'Cancel' : '3 images',
+      orbBorder: h === 'cancel' ? '#D9443A' : 'rgba(60,40,20,0.12)',
+      hoverCancel: set('cancel')
+    };
+  }
+}
+</script>
+</body>
+</html>

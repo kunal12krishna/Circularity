@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Menu bar F · Tabs</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#A84F00}a:hover{color:#7A3900}
+</style>
+</helmet>
+<div style="width: 460px; height: 860px; position: relative; overflow: hidden; background: #DCD6CC; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: #1D1B18">
+<div aria-hidden="true" style="position: absolute; left: -80px; top: 300px; width: 340px; height: 340px; border-radius: 50%; background: #E9B98A"></div>
+<div aria-hidden="true" style="position: absolute; left: 280px; top: 90px; width: 280px; height: 280px; border-radius: 50%; background: #A9C7E0"></div>
+<div aria-hidden="true" style="position: absolute; left: 240px; top: 620px; width: 260px; height: 260px; border-radius: 48px; background: #B9D0AE"></div>
+<div style="position: absolute; left: 0; top: 0; width: 460px; height: 28px; background: rgba(255, 255, 255, 0.55); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: flex-end; gap: 14px; padding: 0 14px; box-sizing: border-box; font-size: 12px; font-weight: 600">
+<span style="width: 26px; height: 22px; border-radius: 5px; background: rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: center">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1D1B18" stroke-width="2.4" stroke-linecap="round" role="img" aria-label="Circularity"><path d="M12 3a9 9 0 0 1 8.5 6"></path><path d="M20.8 13.5A9 9 0 0 1 12 21"></path><path d="M8.5 20.3A9 9 0 0 1 3.4 9.5"></path><circle cx="12" cy="12" r="2.2" fill="#1D1B18" stroke="none"></circle></svg>
+</span>
+<span>Tue 18:55</span>
+</div>
+<div style="position: absolute; left: 40px; top: 36px; width: 380px; border-radius: 18px; background: rgba(248, 246, 242, 0.82); backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 30px 70px rgba(60, 40, 20, 0.25); padding: 14px; box-sizing: border-box; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 16px; font-weight: 800; flex-grow: 1">Circularity</span>
+<span style="font-size: 12px; color: #5E574D; display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border-radius: 50%; background: #2E9E5B"></span>Ready</span>
+<button type="button" aria-label="Pause Circularity" style="width: 30px; height: 30px; border-radius: 50%; border: 0; background: rgba(0, 0, 0, 0.06); color: #1D1B18; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.5"></rect><rect x="14" y="4" width="5" height="16" rx="1.5"></rect></svg></button>
+</div>
+<div role="tablist" aria-label="Panel sections" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; padding: 3px; border-radius: 10px; background: rgba(0, 0, 0, 0.07)">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+<button type="button" role="tab" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="height: 30px; border-radius: 8px; border: 0; background: {{t.bg}}; box-shadow: {{t.shadow}}; color: #1D1B18; font: inherit; font-size: 13px; font-weight: {{t.weight}}; cursor: pointer">{{t.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{isNow}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 12px">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="padding: 12px; border-radius: 14px; background: #FFFFFF; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 11px; font-weight: 700; color: #6B645A">TODAY</span>
+<span style="font-size: 26px; font-weight: 800">18 files</span>
+<span style="font-size: 11px; color: #6B645A">12 images · 6 PDFs</span>
+</div>
+<div style="padding: 12px; border-radius: 14px; background: #FFFFFF; display: flex; flex-direction: column; gap: 2px">
+<span style="font-size: 11px; font-weight: 700; color: #6B645A">SPACE SAVED</span>
+<span style="font-size: 26px; font-weight: 800; color: #A84F00">142 MB</span>
+<span style="font-size: 11px; color: #6B645A">this week</span>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 14px; background: #FFFFFF">
+<svg width="40" height="40" viewBox="0 0 40 40" role="img" aria-label="62 percent"><circle cx="20" cy="20" r="16" fill="none" stroke="#EDE8E1" stroke-width="4"></circle><circle cx="20" cy="20" r="16" fill="none" stroke="{{accent}}" stroke-width="4" stroke-linecap="round" stroke-dasharray="62.3 100.5" transform="rotate(-90 20 20)"></circle></svg>
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1">
+<span style="font-size: 13px; font-weight: 700">3 photos → PDF (combined)</span>
+<span style="font-size: 11px; color: #6B645A">62% · about 2 s left</span>
+</div>
+<button type="button" style="height: 28px; padding: 0 10px; border-radius: 8px; border: 0; background: rgba(0, 0, 0, 0.06); color: #1D1B18; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Cancel</button>
+</div>
+<div style="display: flex; align-items: center; justify-content: space-between">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #6B645A">QUICK PRESETS · DROP ON ONE</span>
+<button type="button" style="background: none; border: 0; color: #A84F00; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; padding: 4px">Edit</button>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{presets}}" as="p" hint-placeholder-count="6">
+<button type="button" style="height: 74px; border-radius: 14px; border: 1px solid {{p.border}}; background: {{p.bg}}; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #1D1B18; font: inherit; cursor: pointer; padding: 0">
+<span style="font-size: 14px; font-weight: 800">{{p.big}}</span>
+<span style="font-size: 10px; font-weight: 600; color: #6B645A">{{p.small}}</span>
+</button>
+</sc-for>
+</div>
+<div style="height: 64px; border-radius: 14px; border: 1.5px dashed rgba(0, 0, 0, 0.2); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 600; color: #4A443B">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5"></path><path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2"></path></svg>
+Drop here for the full wheel
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isRecent}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<label style="display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border-radius: 9px; background: #FFFFFF; color: #6B645A">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" aria-label="Search recent conversions" placeholder="Search name, format or folder" style="flex-grow: 1; min-width: 0; background: none; border: 0; outline: none; color: #1D1B18; font: inherit; font-size: 12px">
+</label>
+<div style="display: flex; gap: 6px; flex-wrap: wrap">
+<button type="button" style="height: 26px; padding: 0 10px; border-radius: 13px; border: 0; background: #1D1B18; color: #FFFFFF; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">All</button>
+<button type="button" style="height: 26px; padding: 0 10px; border-radius: 13px; border: 0; background: rgba(0, 0, 0, 0.07); color: #1D1B18; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">Images</button>
+<button type="button" style="height: 26px; padding: 0 10px; border-radius: 13px; border: 0; background: rgba(0, 0, 0, 0.07); color: #1D1B18; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">PDFs</button>
+<button type="button" style="height: 26px; padding: 0 10px; border-radius: 13px; border: 0; background: rgba(0, 0, 0, 0.07); color: #1D1B18; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">Docs</button>
+<button type="button" style="height: 26px; padding: 0 10px; border-radius: 13px; border: 0; background: rgba(0, 0, 0, 0.07); color: #1D1B18; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer">Failed</button>
+</div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #6B645A; margin-top: 6px">{{g.label}}</span>
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; background: #FFFFFF">
+<span style="width: 36px; height: 36px; border-radius: 8px; background: {{r.thumb}}; flex-shrink: 0"></span>
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0">
+<span style="font-size: 13px; font-weight: 700">{{r.name}}</span>
+<span style="font-size: 11px; color: #6B645A">{{r.meta}}</span>
+</div>
+<span style="font-size: 11px; font-weight: 700; color: {{r.deltaColor}}">{{r.delta}}</span>
+</div>
+</sc-for>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isPresets}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<span style="font-size: 12px; color: #5E574D">Drag to reorder. Switch on to show the preset as a wheel button for matching files.</span>
+<sc-for list="{{presetRows}}" as="p" hint-placeholder-count="6">
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #FFFFFF">
+<svg width="14" height="14" viewBox="0 0 24 24" fill="#9C968D" aria-hidden="true"><circle cx="9" cy="6" r="1.6"></circle><circle cx="15" cy="6" r="1.6"></circle><circle cx="9" cy="12" r="1.6"></circle><circle cx="15" cy="12" r="1.6"></circle><circle cx="9" cy="18" r="1.6"></circle><circle cx="15" cy="18" r="1.6"></circle></svg>
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1">
+<span style="font-size: 13px; font-weight: 700">{{p.name}}</span>
+<span style="font-size: 11px; color: #6B645A">{{p.applies}}</span>
+</div>
+<button type="button" aria-pressed="{{p.pressed}}" aria-label="{{p.toggleLabel}}" onClick="{{p.toggle}}" style="width: 38px; height: 22px; border-radius: 11px; border: 0; background: {{p.switchBg}}; position: relative; cursor: pointer; padding: 0"><span style="position: absolute; top: 3px; left: {{p.knob}}px; width: 16px; height: 16px; border-radius: 50%; background: #FFFFFF; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3)"></span></button>
+</div>
+</sc-for>
+<button type="button" style="height: 40px; border-radius: 12px; border: 1.5px dashed rgba(0, 0, 0, 0.2); background: none; color: #1D1B18; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer">+ New preset</button>
+</div>
+</sc-if>
+<div style="display: flex; align-items: center; gap: 4px; border-top: 1px solid rgba(0, 0, 0, 0.08); padding-top: 10px">
+<button type="button" style="height: 30px; padding: 0 10px; border-radius: 8px; border: 0; background: none; color: #1D1B18; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Settings</button>
+<button type="button" style="height: 30px; padding: 0 10px; border-radius: 8px; border: 0; background: none; color: #1D1B18; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Tutorial</button>
+<span style="margin-left: auto; font-size: 11px; color: #6B645A">⌘1 ⌘2 ⌘3 switch tabs</span>
+<button type="button" style="height: 30px; padding: 0 10px; border-radius: 8px; border: 0; background: none; color: #1D1B18; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer">Quit</button>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#FF8A00","options":["#FF8A00","#FF5E3A","#FFB020","#7C8CFF"]},"$preview":{"width":460,"height":860}}'>
+var PRESETS_F = [
+  { big: '→ JPG', small: 'images', hot: true },
+  { big: '< 2 MB', small: 'compress', hot: false },
+  { big: '1920w', small: 'resize', hot: false },
+  { big: '→ PDF', small: 'combine', hot: false },
+  { big: 'No GPS', small: 'strip metadata', hot: false },
+  { big: '1:1', small: 'square crop', hot: false }
+];
+var PRESET_ROWS_F = [
+  { name: 'Under 2 MB', applies: 'Images · compress to target size', on: true },
+  { name: '1920 × 1080', applies: 'Images · fit, keep format', on: true },
+  { name: 'Square 1:1', applies: 'Images · centre crop', on: false },
+  { name: 'Email-ready PDF', applies: 'PDFs · balanced compression', on: true },
+  { name: 'Strip location', applies: 'Images · remove EXIF and GPS', on: false }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { tab: 'now', presetOn: PRESET_ROWS_F.map(function (p) { return p.on; }) };
+  }
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent ?? '#FF8A00';
+    var tab = this.state.tab;
+    var on = this.state.presetOn;
+    var tabs = [['now', 'Now'], ['recent', 'Recent'], ['presets', 'Presets']].map(function (t) {
+      var sel = tab === t[0];
+      return { label: t[1], sel: sel ? 'true' : 'false', bg: sel ? '#FFFFFF' : 'transparent', shadow: sel ? '0 1px 3px rgba(0,0,0,0.12)' : 'none', weight: sel ? 800 : 600, pick: function () { self.setState({ tab: t[0] }); } };
+    });
+    return {
+      accent: accent, tabs: tabs,
+      isNow: tab === 'now', isRecent: tab === 'recent', isPresets: tab === 'presets',
+      presets: PRESETS_F.map(function (p) { return Object.assign({}, p, { bg: p.hot ? '#FFE8CF' : '#FFFFFF', border: p.hot ? accent : 'rgba(0,0,0,0.06)' }); }),
+      groups: [
+        { label: 'TODAY', rows: [
+          { name: 'beach.png', meta: 'HEIC → PNG · Desktop', delta: '+206%', deltaColor: '#6B645A', thumb: '#F6C79B' },
+          { name: 'portfolio (compressed).pdf', meta: '18.4 MB → 4.1 MB · Documents', delta: '−78%', deltaColor: '#1E7A45', thumb: '#EDE8E1' },
+          { name: 'hero (resized).jpg', meta: '1920 × 1080 · Downloads', delta: '−73%', deltaColor: '#1E7A45', thumb: '#A9C7E0' }
+        ] },
+        { label: 'YESTERDAY', rows: [
+          { name: 'notes.pdf', meta: 'Markdown → PDF · Notes', delta: 'new', deltaColor: '#6B645A', thumb: '#EDE8E1' },
+          { name: 'scan (combined).pdf', meta: '7 images → PDF · Desktop', delta: '7 pages', deltaColor: '#6B645A', thumb: '#B9D0AE' }
+        ] }
+      ],
+      presetRows: PRESET_ROWS_F.map(function (p, i) {
+        var o = on[i];
+        return Object.assign({}, p, {
+          pressed: o ? 'true' : 'false', toggleLabel: 'Show ' + p.name + ' in the wheel',
+          switchBg: o ? accent : 'rgba(0,0,0,0.18)', knob: o ? 19 : 3,
+          toggle: function () { var n = on.slice(); n[i] = !n[i]; self.setState({ presetOn: n }); }
+        });
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>

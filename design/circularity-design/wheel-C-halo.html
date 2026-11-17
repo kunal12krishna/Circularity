@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Wheel C · Halo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#C6FF3D}a:hover{color:#E2FF9E}
+</style>
+</helmet>
+<div style="width: 720px; height: 720px; position: relative; overflow: hidden; background: #0D0F14; font-family: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; color: #ECEEF2">
+<div aria-hidden="true" style="position: absolute; left: 30px; top: 40px; width: 380px; height: 250px; border-radius: 12px; background: #171A21; border: 1px solid #242833"></div>
+<div aria-hidden="true" style="position: absolute; left: 440px; top: 460px; width: 240px; height: 200px; border-radius: 12px; background: #171A21; border: 1px solid #242833"></div>
+<div aria-hidden="true" style="position: absolute; left: 148px; top: 148px; width: 424px; height: 424px; border-radius: 50%; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), 0 30px 80px rgba(0, 0, 0, 0.7)"></div>
+<svg width="720" height="720" viewBox="0 0 720 720" aria-hidden="true" style="position: absolute; left: 0; top: 0; pointer-events: none">
+<circle cx="360" cy="360" r="208" fill="none" stroke="{{accent}}" stroke-opacity="0.22" stroke-width="1"></circle>
+<circle cx="360" cy="360" r="154" fill="none" stroke="#141519" stroke-width="72"></circle>
+</svg>
+<sc-for list="{{segs}}" as="seg" hint-placeholder-count="6">
+<svg width="720" height="720" viewBox="0 0 720 720" aria-hidden="true" style="position: absolute; left: 0; top: 0; pointer-events: none">
+<path d="{{seg.d}}" fill="{{seg.fill}}" style="pointer-events: auto; cursor: pointer" onMouseEnter="{{seg.pick}}"></path>
+</svg>
+</sc-for>
+<sc-for list="{{segs}}" as="seg" hint-placeholder-count="6">
+<button type="button" aria-label="{{seg.verb}}" onMouseEnter="{{seg.pick}}" onFocus="{{seg.pick}}" style="position: absolute; left: {{seg.lx}}px; top: {{seg.ly}}px; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 6px; color: {{seg.fg}}; font: inherit; cursor: pointer">
+<span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 15px; font-weight: 700; letter-spacing: 0.08em">{{seg.label}}</span>
+<span style="font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: {{seg.sub}}">{{seg.caption}}</span>
+</button>
+</sc-for>
+<sc-if value="{{moreOpen}}" hint-placeholder-val="{{ false }}">
+<sc-for list="{{fan}}" as="m" hint-placeholder-count="4">
+<button type="button" aria-label="{{m.verb}}" onMouseEnter="{{m.pick}}" onFocus="{{m.pick}}" style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: 72px; height: 32px; border-radius: 8px; background: {{m.bg}}; color: {{m.fg}}; border: 1px solid rgba(255, 255, 255, 0.10); font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; cursor: pointer; padding: 0">{{m.label}}</button>
+</sc-for>
+</sc-if>
+<button type="button" aria-label="Cancel" onMouseEnter="{{hoverCancel}}" onFocus="{{hoverCancel}}" style="position: absolute; left: 245px; top: 245px; width: 230px; height: 230px; border-radius: 50%; overflow: hidden; background: #1A1D24; border: 1px solid rgba(255, 255, 255, 0.08); padding: 0; font: inherit; color: #ECEEF2; cursor: pointer">
+<svg width="230" height="230" viewBox="0 0 230 230" aria-hidden="true" style="position: absolute; left: 0; top: 0; opacity: 0.35"><rect width="230" height="230" fill="#22324A"></rect><circle cx="160" cy="70" r="26" fill="#E9B44C"></circle><path d="M0 150 L70 100 L130 140 L180 110 L230 140 V230 H0Z" fill="#14202F"></path></svg>
+<span style="position: absolute; left: 0; top: 0; width: 230px; height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+<span style="font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: #A9AFBC">{{kicker}}</span>
+<span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 38px; font-weight: 800; letter-spacing: 0.04em; color: {{bigColor}}">{{big}}</span>
+<span style="font-size: 12px; font-weight: 600; color: #D5D9E1">{{detail}}</span>
+<span style="margin-top: 6px; font-size: 11px; color: #A9AFBC">clip.mov · 48 MB · 0:42</span>
+</span>
+</button>
+<div aria-hidden="true" style="position: absolute; left: {{cx}}px; top: {{cy}}px; pointer-events: none">
+<svg width="20" height="26" viewBox="0 0 20 26"><path d="M2 2v19l5-5 3.5 7.5 3-1.3L10 15h7z" fill="#FFFFFF" stroke="#000000" stroke-width="1.3" stroke-linejoin="round"></path></svg>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#C6FF3D","options":["#C6FF3D","#FF8A00","#5CE1FF","#FF5CA8"]},"$preview":{"width":720,"height":720}}'>
+var SEGS_C = [
+  { id: 'mp4', label: 'MP4', caption: 'H.264', verb: 'Convert to MP4', kicker: 'CONVERT TO', big: 'MP4', detail: 'about 31 MB' },
+  { id: 'webm', label: 'WEBM', caption: 'VP9', verb: 'Convert to WebM', kicker: 'CONVERT TO', big: 'WEBM', detail: 'about 24 MB' },
+  { id: 'gif', label: 'GIF', caption: 'LOOP', verb: 'Convert to GIF', kicker: 'CONVERT TO', big: 'GIF', detail: 'about 68 MB' },
+  { id: 'more', label: '•••', caption: 'MORE', verb: 'More formats', kicker: 'REST HERE FOR', big: 'MORE', detail: 'MOV · MP3 · Resize · Crop' },
+  { id: 'compress', label: 'SQZ', caption: 'COMPRESS', verb: 'Compress…', kicker: 'OPEN', big: 'SQZ', detail: 'target size or preset' },
+  { id: 'trim', label: 'TRIM', caption: 'CUT', verb: 'Trim…', kicker: 'OPEN', big: 'TRIM', detail: 'pick a range' }
+];
+var MORE_C = [
+  { id: 'mov', label: 'MOV', verb: 'Convert to MOV', kicker: 'CONVERT TO', big: 'MOV', detail: 'about 48 MB' },
+  { id: 'mp3', label: 'MP3', verb: 'Extract MP3 audio', kicker: 'EXTRACT', big: 'MP3', detail: 'about 1 MB' },
+  { id: 'resize', label: 'RESIZE', verb: 'Resize…', kicker: 'OPEN', big: 'SIZE', detail: 'width × height' },
+  { id: 'crop', label: 'CROP', verb: 'Crop…', kicker: 'OPEN', big: 'CROP', detail: '1:1 · 16:9 · 9:16' }
+];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { hovered: 'mp4' };
+  }
+  renderVals() {
+    var self = this;
+    var accent = this.props.accent ?? '#C6FF3D';
+    var h = this.state.hovered;
+    var C = 360;
+    var pt = function (r, a) { var t = (a - 90) * Math.PI / 180; return [C + r * Math.cos(t), C + r * Math.sin(t)]; };
+    var f = function (n) { return n.toFixed(1); };
+    var arc = function (r1, r2, a0, a1) {
+      var p0 = pt(r2, a0), p1 = pt(r2, a1), p2 = pt(r1, a1), p3 = pt(r1, a0);
+      return 'M' + f(p0[0]) + ' ' + f(p0[1]) + ' A' + r2 + ' ' + r2 + ' 0 0 1 ' + f(p1[0]) + ' ' + f(p1[1]) +
+        ' L' + f(p2[0]) + ' ' + f(p2[1]) + ' A' + r1 + ' ' + r1 + ' 0 0 0 ' + f(p3[0]) + ' ' + f(p3[1]) + ' Z';
+    };
+    var set = function (id) { return function () { self.setState({ hovered: id }); }; };
+    var moreOpen = h === 'more' || MORE_C.some(function (m) { return m.id === h; });
+    var cursor = [C + 30, C + 40];
+    var info = { kicker: 'DROP HERE TO', big: 'CANCEL', detail: 'nothing is changed' };
+    var segs = SEGS_C.map(function (s, i) {
+      var on = h === s.id || (s.id === 'more' && moreOpen);
+      var mid = i * 60;
+      var r1 = on ? 116 : 120, r2 = on ? 198 : 188;
+      var lp = pt((r1 + r2) / 2, mid);
+      if (h === s.id) { cursor = [lp[0] + 22, lp[1] + 12]; info = s; }
+      return Object.assign({}, s, {
+        d: arc(r1, r2, mid - 29, mid + 29),
+        fill: on ? accent : '#1B1D23',
+        lx: f(lp[0]), ly: f(lp[1]),
+        fg: on ? '#0D0F14' : '#ECEEF2', sub: on ? '#2A3300' : '#9097A6',
+        pick: set(s.id)
+      });
+    });
+    var fan = MORE_C.map(function (m, k) {
+      var a = 180 + (k - (MORE_C.length - 1) / 2) * 20;
+      var p = pt(240, a);
+      var on = h === m.id;
+      if (on) { cursor = [p[0] + 14, p[1] + 6]; info = m; }
+      return Object.assign({}, m, {
+        x: f(p[0] - 36), y: f(p[1] - 16),
+        bg: on ? accent : '#1B1D23', fg: on ? '#0D0F14' : '#ECEEF2', pick: set(m.id)
+      });
+    });
+    return {
+      accent: accent, segs: segs, fan: fan, moreOpen: moreOpen,
+      cx: f(cursor[0]), cy: f(cursor[1]),
+      kicker: info.kicker, big: info.big, detail: info.detail,
+      bigColor: h === 'cancel' ? '#FF8A80' : accent,
+      hoverCancel: set('cancel')
+    };
+  }
+}
+</script>
+</body>
+</html>
