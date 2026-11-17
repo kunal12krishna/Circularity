@@ -101,7 +101,7 @@ final class SettingsMigrationTests: XCTestCase {
     private func freshDefaults(_ name: String) -> UserDefaults {
         let suite = "circularity.tests.\(name).\(UUID().uuidString)"
         let d = UserDefaults(suiteName: suite)!
-        addTeardownBlock { d.removePersistentDomain(forName: suite) }
+        addTeardownBlock { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
         return d
     }
 
