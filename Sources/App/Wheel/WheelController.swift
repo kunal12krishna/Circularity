@@ -77,6 +77,7 @@ final class WheelController {
                            contentsScale: contentsScale)
         renderer.apply(state, animated: false)
         requestThumbnail(size: geometry.orbDiameter * geometry.scale, scale: contentsScale)
+        requestEstimates()
 
         guard let panel, let host else { return }
         let size = geometry.size
@@ -128,6 +129,7 @@ final class WheelController {
                 panel.allowsKey = false
                 self.renderer?.setThumbnail(nil)
                 self.files = DraggedFiles()
+                MemoryFootprint.relieve()
             }
         })
     }
@@ -238,6 +240,18 @@ final class WheelController {
 
     private func requestThumbnail(size: CGFloat, scale: CGFloat) {
         guard let url = files.urls.first else { return }
+        // Images: a tiny ImageIO decode. QuickLook (heavier) only for documents.
+        if DraggedFiles.type(of: url).conforms(to: .image) {
+            let maxPixel = Int(size * scale)
+            Task.detached(priority: .userInitiated) {
+                let image = UncheckedSendable(Thumbnails.image(url, maxPixel: maxPixel))
+                await MainActor.run { [weak self] in
+                    guard let self, self.isVisible, self.files.urls.first == url else { return }
+                    self.renderer?.setThumbnail(image.value)
+                }
+            }
+            return
+        }
         let request = QLThumbnailGenerator.Request(fileAt: url, size: CGSize(width: size, height: size),
                                                    scale: scale, representationTypes: .thumbnail)
         QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { [weak self] rep, _ in
@@ -245,6 +259,30 @@ final class WheelController {
             Task { @MainActor in
                 guard let self, self.isVisible, self.files.urls.first == url else { return }
                 self.renderer?.setThumbnail(image.value)
+            }
+        }
+    }
+
+    /// "about 2.9 MB" for each format slot, computed off the main thread.
+    private func requestEstimates() {
+        guard files.urls.count == 1, let url = files.urls.first,
+              DraggedFiles.type(of: url).conforms(to: .image) else { return }
+        let formats = (menu.ring.compactMap { $0 } + menu.fan).compactMap { slot -> OutputFormat? in
+            if case let .convert(f) = slot.action { return f }
+            return nil
+        }
+        Task.detached(priority: .utility) {
+            let estimates = SizeEstimator.estimate(url, formats: formats)
+            await MainActor.run { [weak self] in
+                guard let self, self.isVisible, self.files.urls.first == url, !estimates.isEmpty else { return }
+                func hinted(_ slot: WheelSlot) -> WheelSlot {
+                    var slot = slot
+                    if case let .convert(f) = slot.action, let bytes = estimates[f] { slot.hint = SizeEstimator.describe(bytes) }
+                    return slot
+                }
+                self.menu.ring = self.menu.ring.map { $0.map(hinted) }
+                self.menu.fan = self.menu.fan.map(hinted)
+                self.renderer?.updateHints(self.menu)
             }
         }
     }

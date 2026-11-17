@@ -152,6 +152,11 @@ final class SectorRenderer: WheelRenderer {
         }
     }
 
+    func updateHints(_ newMenu: WheelMenu) {
+        menu = newMenu
+        orb.show(OrbText.make(menu: menu, state: state, clickMode: clickMode), animated: false)
+    }
+
     func setThumbnail(_ image: CGImage?) {
         thumbnail = image
         orb.setThumbnail(image)

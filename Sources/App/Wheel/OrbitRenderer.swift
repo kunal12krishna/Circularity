@@ -258,6 +258,8 @@ final class OrbitRenderer: WheelRenderer {
         pill.opacity = 0
     }
 
+    func updateHints(_ newMenu: WheelMenu) { menu = newMenu }
+
     func setThumbnail(_ image: CGImage?) {
         transact(0.15, animated: true) { cards[2].contents = image ?? samplePicture(size: 46 * geometry.scale, scale: contentsScale) }
     }

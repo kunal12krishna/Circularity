@@ -14,9 +14,11 @@ public actor OutputPlanner {
 
     /// Reserves and returns a free URL in `directory`. Call `release(_:)` once
     /// the file has been moved into place (or the job failed).
-    public func reserve(in directory: URL, template: NamingTemplate = .default, context: NamingContext) -> URL {
+    public func reserve(in directory: URL, template: NamingTemplate = .default, context: NamingContext,
+                        fileExtensionOverride: String? = nil) -> URL {
         let base = OutputNaming.baseName(template: template, context: context)
-        let name = OutputNaming.uniqueFileName(base: base, fileExtension: context.format.fileExtension) { candidate in
+        let ext = fileExtensionOverride ?? context.format.fileExtension
+        let name = OutputNaming.uniqueFileName(base: base, fileExtension: ext) { candidate in
             let path = directory.appendingPathComponent(candidate).path
             return reserved.contains(path) || fileExists(path)
         }

@@ -30,6 +30,8 @@ protocol WheelRenderer: AnyObject {
     var allowsTilt: Bool { get set }
     func configure(menu: WheelMenu, orb: OrbContent, accent: CGColor, geometry: WheelGeometry, contentsScale: CGFloat)
     func setThumbnail(_ image: CGImage?)
+    /// Same buttons, new detail lines (live size estimates).
+    func updateHints(_ menu: WheelMenu)
     func apply(_ state: WheelVisualState, animated: Bool)
     func popIn()
     func release(to target: WheelTarget, from offset: CGPoint?)

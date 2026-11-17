@@ -13,5 +13,11 @@ enum MemoryFootprint {
         return result == KERN_SUCCESS ? info.phys_footprint : 0
     }
 
+    /// Returns freed-but-held allocator pages to the system, so the footprint
+    /// drops back after a conversion or a wheel (idle budget, PLAN.md §5).
+    static func relieve() {
+        malloc_zone_pressure_relief(nil, 0)
+    }
+
     static var megabytes: String { String(format: "%.1f MB", Double(current()) / 1_048_576) }
 }

@@ -8,6 +8,17 @@ public enum OutputFormat: String, Sendable, CaseIterable, Codable {
 
     public var fileExtension: String { rawValue }
 
+    /// Formats that can keep transparency.
+    public var supportsAlpha: Bool {
+        switch self {
+        case .jpg, .bmp: false
+        default: true
+        }
+    }
+
+    /// Lossy formats take a quality setting.
+    public var isLossy: Bool { self == .jpg || self == .heic || self == .avif || self == .webp }
+
     /// The label shown on the wheel and in the centre orb.
     public var displayName: String {
         switch self {
@@ -30,7 +41,8 @@ public enum OperationKind: String, Sendable, CaseIterable, Codable {
         case .compress: "compressed"
         case .crop: "cropped"
         case .combine: "combined"
-        case .convert, .pdfToImages, .extractText, .renderDocument: nil
+        case .pdfToImages: "pages"
+        case .convert, .extractText, .renderDocument: nil
         }
     }
 }

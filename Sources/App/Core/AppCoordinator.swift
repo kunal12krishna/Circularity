@@ -13,6 +13,7 @@ final class AppCoordinator {
     private let wheel: WheelController
     private let gesture: GestureController
     private let services = ServicesProvider()
+    private let jobs: JobCenter
 
     /// The most recent files handed to the app: the target for ⌃⌥C fallbacks,
     /// ⌘K and preset tiles in later milestones (PLAN.md A3).
@@ -24,6 +25,7 @@ final class AppCoordinator {
         self.settings = settings
         wheel = WheelController(settings: settings)
         gesture = GestureController(settings: settings, wheel: wheel)
+        jobs = JobCenter(settings: settings)
     }
 
     func start() {
@@ -67,8 +69,7 @@ final class AppCoordinator {
             let names = choice.files.prefix(2).map(\.lastPathComponent).joined(separator: ", ")
             let what = names.isEmpty ? "\(choice.count) item(s)" : names
             lastChoice = "Last choice: \(choice.label) — \(what)"
-            // Milestone (d) runs the engine here.
-            Log.app.notice("Chosen \(action.usageKey, privacy: .public) for \(choice.files.count, privacy: .public) file(s) (conversion arrives in milestone d)")
+            if let notYet = jobs.run(action, files: choice.files) { lastChoice = notYet }
         } else {
             lastChoice = "Last choice: Cancel (nothing changed)"
         }
@@ -95,6 +96,18 @@ final class AppCoordinator {
             .info(settings.value(SettingsKeys.paused) ? "Paused · the wheel will not appear" : "Ready · drag a file, then tap \(triggerName) or shake"),
             .info(lastDrag),
             .info(lastChoice),
+        ]
+        if jobs.runningCount > 0 {
+            items.append(.info("Converting \(jobs.runningCount) job\(jobs.runningCount == 1 ? "" : "s")…"))
+            items.append(ActionMenuItem("Cancel All") { [weak self] in self?.jobs.cancelAll() })
+        }
+        if let summary = jobs.lastSummary {
+            items.append(.info("Last result: \(summary)"))
+        }
+        if !jobs.lastOutputs.isEmpty {
+            items.append(ActionMenuItem("Reveal Last Result in Finder") { [weak self] in self?.jobs.revealLast() })
+        }
+        items += [
             .separator(),
             ActionMenuItem("Show Test Wheel") { [weak self] in self?.showTestWheel() },
         ]
@@ -126,7 +139,11 @@ final class AppCoordinator {
         let installed = ServiceShortcut.isInstalled
         items.append(ActionMenuItem(installed ? "⌃⌥C Opens the Wheel for Finder Selection" : "Use ⌃⌥C for Finder Selection…",
                                     checked: installed) {
-            if !ServiceShortcut.install() { ServiceShortcut.openKeyboardSettings() }
+            if ServiceShortcut.install() {
+                ServiceShortcut.offerFinderRelaunch()
+            } else {
+                ServiceShortcut.openKeyboardSettings()
+            }
         })
         items.append(ActionMenuItem("Pause", checked: settings.value(SettingsKeys.paused)) { [weak self] in
             guard let self else { return }

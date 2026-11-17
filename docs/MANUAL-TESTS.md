@@ -49,7 +49,7 @@ Optional live log in a second Terminal window (use the full path: zsh has its ow
 
 | # | Do this | Expect |
 |---|---|---|
-| 19 | Menu → **Use ⌃⌥C for Finder Selection…** | The item becomes "⌃⌥C Opens the Wheel for Finder Selection" with a tick. If macOS refused the change, Keyboard Shortcuts settings open instead: go to **Services → Files and Folders → Convert with Circularity** and set ⌃⌥C yourself. |
+| 19 | Menu → **Use ⌃⌥C for Finder Selection…** | A dialog says "⌃⌥C is ready" and offers **Relaunch Finder** (Finder only reads new shortcuts when it starts; its windows reopen by themselves). Afterwards the menu item shows a tick. If macOS refused the change, Keyboard Shortcuts settings open instead: go to **Services → Files and Folders → Convert with Circularity** and set ⌃⌥C yourself. |
 | 20 | Select an image in Finder and press **⌃⌥C**. | The wheel opens at the pointer in click mode, with no prompt. Hover and click a segment, or use the arrow keys and Return; Esc or a click outside cancels. |
 | 21 | Right-click an image in Finder → **Quick Actions** (or **Services**) → **Convert with Circularity**. | Same click-mode wheel. If the entry is missing, run `/System/Library/CoreServices/pbs -update` once and try again. |
 | 22 | `open -a "$APP" ~/Desktop/<file>` | Same click-mode wheel. |
@@ -57,3 +57,21 @@ Optional live log in a second Terminal window (use the full path: zsh has its ow
 **Please report back:** which of 1, 8, 10, 19 and 20 worked, and the line
 `Gesture self-check: …` from the log (or the menu's "Last file drag" line).
 These are the parts no automated test on this Mac can exercise.
+
+## Milestones (d) + (f): conversion
+
+Make a test folder with a few files first (copies — though originals are never changed):
+an iPhone photo (HEIC), a PNG screenshot, a multi-page PDF, a `.md`, a `.docx` and a `.txt`.
+
+| # | Do this | Expect |
+|---|---|---|
+| 23 | Shift-drag the HEIC photo and hover each format. | The centre's third line shows a live estimate, e.g. "about 2.9 MB", a moment after the wheel appears. |
+| 24 | Drop it on **JPG**. | Within a second or two `IMG_xxxx.jpg` appears next to the original, upright. Menu: "Last result: IMG_xxxx.jpg · 2.1 MB (−34%)". **Reveal Last Result in Finder** selects it. |
+| 25 | Do 24 again. | The second file is `IMG_xxxx (1).jpg`; nothing is overwritten. |
+| 26 | Drag the PNG, More → **PDF**; then **Compress**. | A one-page PDF; then `name (compressed).jpg` (or `.heic` if the PNG has transparency) — or "Kept the original: it is already as small as it gets". |
+| 27 | Drag the PDF → **PNG**. | A folder `name (pages)` with `name page 01.png`, `page 02` … |
+| 28 | Drag the PDF → **TXT**; then → **Compress**. | The text file; then either `name (compressed).pdf` or "Kept the original: the PDF is already compact" (text-only PDFs rarely shrink). |
+| 29 | Select two images and a PDF, drag them together, More → **PDF** (Combine). | `firstname (combined).pdf` with every page, in the order you dragged. |
+| 30 | Drag the `.md` → **PDF**, **HTML** and **TXT**; the `.docx` → **PDF** and **TXT**; the `.txt` → **PDF**. | Each result opens correctly. PDFs are A4 (Letter in the US/Canada) with margins and real, selectable text. No network activity. |
+| 31 | Drag a file from a folder you can't write to (e.g. a mounted disk image or a read-only share). | The result goes to **Documents › Converted**; the menu says so. |
+| 32 | Drop on **Resize** or **Crop**. | The menu says the dialog arrives in the next milestone (g). Nothing is written. |

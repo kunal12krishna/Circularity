@@ -364,6 +364,18 @@ Each milestone follows the same steps: implement it, run `xcodegen generate`, `x
 - Smoke tests: 200-page generated PDF, Markdown/HTML/TXT/RTF/DOCX fixtures (DOCX created with `textutil` itself), a combine in drop order, and an HTML page whose remote image request is checked as blocked.
 - **Verify:** smoke tests; page counts; text equality; the compress-verification path is exercised in both directions (it keeps the original when the output isn't smaller).
 
+**Built (d) + (f) together — notes and deviations:**
+- Engine API: `ConversionEngine.run(JobRequest) async throws -> JobResult`; cancel by cancelling the calling Task. Batches run through the 2-slot queue; Combine is one job.
+- Staging: work folder from `.itemReplacementDirectory` on the destination volume; only finished files are moved in under a reserved name. Unwritable destinations fall back to `~/Documents/Converted`.
+- Images are always written upright (EXIF orientation applied, tag reset to 1); JPG/BMP flatten transparency onto white; animated GIF → GIF keeps frames; image → PDF embeds opaque images as JPEG.
+- SVG uses AppKit's own renderer (`NSImage`, verified on macOS 27). The WebKit snapshot fallback for older macOS versions is not built; to be checked on macOS 13 in (k).
+- PDF compression uses a generated Quartz filter in the same format as macOS's "Reduce File Size" filter, written via PDFKit, then verified page by page (size, text, 64 px raster diff ≤ 6 %); otherwise the original is kept.
+- HTML → PDF: offscreen WKWebView (window never shown), network blocked by a content rule list (one rule per scheme: WebKit's url-filter has no alternation), paginated by `NSPrintOperation.runModal(for:)` — the synchronous `run()` deadlocks WebKit, and the completion arrives on a background thread. The engine therefore links AppKit and WebKit for this renderer.
+- Live estimates encode a ≤ 1600 px decode per format and scale linearly (a 512 px sample was 4.5× low on grainy images). Orb thumbnails for images come from ImageIO; QuickLook is used for documents only.
+- Until the dialogs in (g): **Compress runs a default** (quality 0.7 for images, Balanced for PDFs); Resize and Crop say they arrive with (g). In (g) Compress opens its dialog.
+- Measured: settled idle 21 MB after wheels and a conversion (allocator pages released after jobs and wheel hide); 100 MP PNG → JPG 4.5 s; 200-page PDF compress 7.6 s (smoke-test process peak 526 MB, including generating the 100 MP fixture). In-app figures go in the (k) report.
+- ⌃⌥C: the Service is verified end to end (`NSPerformService` → app → wheel). Finder only reads new Service shortcuts when it starts, so turning ⌃⌥C on now offers to relaunch Finder.
+
 ### (g) Resize / Compress / Crop dialogs (images + PDFs)
 - SwiftUI dialogs with live estimates, "Also add this as a button" → `PresetStore`, and the crop editor with ratio locks.
 - The wheel and More fan open the dialogs; presets appear on the wheel for matching types.

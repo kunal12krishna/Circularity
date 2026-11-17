@@ -63,6 +63,17 @@ enum DragTest {
         try? await Task.sleep(nanoseconds: 400_000_000)
         check(!wheel.isVisible, "wheel hides after the drop")
 
+        // End to end: the choice runs through the engine and a JPG lands next to the original.
+        let jobs = JobCenter(settings: settings)
+        if let choice = finished, let action = choice.action {
+            check(jobs.run(action, files: choice.files) == nil, "the job starts")
+            for _ in 0..<50 where jobs.lastSummary == nil { try? await Task.sleep(nanoseconds: 100_000_000) }
+            let out = jobs.lastOutputs.first
+            check(out?.pathExtension == "jpg" && out?.deletingLastPathComponent() == file.deletingLastPathComponent(),
+                  "the JPG is written next to the original (\(jobs.lastSummary ?? "no result"))")
+            check(FileManager.default.fileExists(atPath: file.path), "the original is untouched")
+        }
+
         // 2. Drop on the centre cancels.
         await show()
         wheel.dragPointer(at: point(.zero))
@@ -91,7 +102,10 @@ enum DragTest {
         try? await Task.sleep(nanoseconds: 300_000_000)
         check(!wheel.isVisible, "wheel is hidden after dismissal")
         try? await Task.sleep(nanoseconds: 1_000_000_000)
-        print("Memory after the wheel hid: \(MemoryFootprint.megabytes)")
+        print("Memory 1 s after the wheel hid: \(MemoryFootprint.megabytes)")
+        try? await Task.sleep(nanoseconds: 3_000_000_000)
+        MemoryFootprint.relieve()
+        print("Memory settled (idle again): \(MemoryFootprint.megabytes)")
 
         try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
         defaults.removePersistentDomain(forName: "\(AppIdentity.bundleID).dragtest")

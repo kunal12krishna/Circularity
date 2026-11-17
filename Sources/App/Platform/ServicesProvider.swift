@@ -64,6 +64,23 @@ enum ServiceShortcut {
         try? pbs.run()
     }
 
+    /// Finder reads Services shortcuts when it starts, so a new shortcut only
+    /// works after Finder relaunches. Offers to do that (it reopens by itself).
+    static func offerFinderRelaunch() {
+        NSApp.activate(ignoringOtherApps: true)
+        let alert = NSAlert()
+        alert.messageText = "⌃⌥C is ready"
+        alert.informativeText = "Finder picks up new keyboard shortcuts when it restarts. Relaunch Finder now? Its windows reopen by themselves."
+        alert.addButton(withTitle: "Relaunch Finder")
+        alert.addButton(withTitle: "Later")
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        let killall = Process()
+        killall.executableURL = URL(fileURLWithPath: "/usr/bin/killall")
+        killall.arguments = ["Finder"]
+        try? killall.run()
+        Log.platform.notice("Relaunched Finder so it picks up the ⌃⌥C Service shortcut")
+    }
+
     /// Fallback: the Keyboard Shortcuts pane where the user can set it by hand.
     static func openKeyboardSettings() {
         let urls = ["x-apple.systempreferences:com.apple.Keyboard-Settings.extension?Shortcuts",
