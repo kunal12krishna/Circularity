@@ -164,9 +164,80 @@ enum DragTest {
                 print(String(format: "Memory after panel open/close #%d: %.1f MB", round, Double(MemoryFootprint.current()) / 1_048_576))
             }
             check(!watch.isStreaming, "removing the last rule stops the stream")
+
+            // Settings → Output really applies to jobs: folder, name template, timestamps, per-type folder.
+            let results = file.deletingLastPathComponent().appendingPathComponent("Results", isDirectory: true)
+            let pdfs = file.deletingLastPathComponent().appendingPathComponent("PDFs", isDirectory: true)
+            for dir in [results, pdfs] { try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true) }
+            func same(_ a: URL?, _ b: URL) -> Bool { a?.resolvingSymlinksInPath().path == b.resolvingSymlinksInPath().path }
+            settings.set("folder", for: SettingsKeys.destination)
+            settings.set(results.path, for: SettingsKeys.outputFolder)
+            settings.set("{name} {format}", for: SettingsKeys.namingTemplate)
+            jobs.run(.convert(.png), files: [file], label: "settings")
+            let named = await waitForResult()
+            check(same(named?.deletingLastPathComponent(), results) && named?.lastPathComponent.hasPrefix("IMG_2041 ") == true
+                  && named?.pathExtension == "png", "Output folder and name template apply (\(named?.lastPathComponent ?? "none"))")
+            settings.set("time", for: SettingsKeys.collisionStyle)
+            jobs.run(.convert(.png), files: [file], label: "settings")
+            let stamped = await waitForResult()
+            check(stamped?.lastPathComponent.contains(" at ") == true, "a taken name gets a timestamp (\(stamped?.lastPathComponent ?? "none"))")
+            settings.set(pdfs.path, for: SettingsKeys.folderPDFs)
+            jobs.run(.convert(.pdf), files: [file], label: "settings")
+            let pdf = await waitForResult()
+            check(same(pdf?.deletingLastPathComponent(), pdfs), "PDFs go to their own folder (\(pdf?.path ?? "none"))")
+            settings.set("stripAll", for: SettingsKeys.metadata)
+            settings.set(0.4, for: SettingsKeys.qualityJPG)
+            let policy = jobs.outputPolicy(for: .convert(.jpg))
+            check(policy.metadata == .stripAll && policy.quality[.jpg] == 0.4, "metadata and quality settings reach the engine")
+            for key in [SettingsKeys.destination.name, SettingsKeys.outputFolder.name, SettingsKeys.namingTemplate.name,
+                        SettingsKeys.collisionStyle.name, SettingsKeys.folderPDFs.name, SettingsKeys.metadata.name, SettingsKeys.qualityJPG.name] {
+                settings.remove(key)
+            }
+
+            // The tutorial follows a real conversion of its practice picture.
+            let tutorial = TutorialModel(settings: settings)
+            tutorial.wheelShown()
+            check(tutorial.step == .choose, "tutorial: the wheel appearing moves on to “choose a format”")
+            if let practice = tutorial.practice {
+                var practiceResult: JobResult?
+                jobs.run(.convert(.jpg), files: [practice], label: "tutorial") { if case let .success(r) = $0 { practiceResult = r } }
+                for _ in 0..<50 where practiceResult == nil { try? await Task.sleep(nanoseconds: 100_000_000) }
+                if let practiceResult { tutorial.jobFinished(practiceResult) }
+            }
+            check(tutorial.step == .done, "tutorial: converting the practice picture completes step 2")
             jobs.history.clear()
             jobs.stats.reset()
         }
+
+        // Shortcuts: a rebound one registers, and a taken one is reported (not silently lost).
+        let combo = HotkeySpec(keyCode: 111, modifiers: HotkeySpec.control | HotkeySpec.option | HotkeySpec.shift) // ⌃⌥⇧F12
+        check(HotkeyCenter.shared.register(id: 90, keyCode: combo.keyCode, modifiers: combo.modifiers) {}, "a rebound shortcut registers")
+        check(!HotkeyCenter.shared.register(id: 91, keyCode: combo.keyCode, modifiers: combo.modifiers) {},
+              "a shortcut that is already taken is reported")
+        HotkeyCenter.shared.unregister(id: 90)
+        HotkeyCenter.shared.unregister(id: 91)
+
+        // The Settings window and the welcome open for real, on every page.
+        let presenter = WindowPresenter()
+        let settingsModel = SettingsModel(store: settings)
+        presenter.show("settings", title: "Settings", size: CGSize(width: 880, height: 680)) { SettingsView(model: settingsModel) }
+        try? await Task.sleep(nanoseconds: 500_000_000)
+        for page in SettingsPage.allCases where page != .watch {
+            settingsModel.page = page
+            try? await Task.sleep(nanoseconds: 120_000_000)
+        }
+        let settingsWindow = NSApp.windows.first { $0.identifier?.rawValue == "settings" }
+        check(settingsWindow?.isVisible == true, "the Settings window opens and shows every page")
+        settings.set("ring", for: SettingsKeys.wheelLayout)
+        Appearance.apply(theme: "tangerine", to: settings)
+        check(settings.value(SettingsKeys.accentHex) == "#FF8A00", "choosing a theme sets its accent")
+        presenter.close("settings")
+        let welcome = OnboardingModel(settings: settings)
+        presenter.show("welcome", title: "Welcome", size: CGSize(width: 560, height: 470)) { OnboardingView(model: welcome) }
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        check(NSApp.windows.contains { $0.identifier?.rawValue == "welcome" && $0.isVisible }, "the welcome window opens")
+        presenter.close("welcome")
+        settings.remove(SettingsKeys.wheelLayout.name)
 
         // 2. Drop on the centre cancels.
         await show()

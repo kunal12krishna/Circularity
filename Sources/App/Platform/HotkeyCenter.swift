@@ -9,7 +9,9 @@ final class HotkeyCenter {
     private var refs: [UInt32: EventHotKeyRef] = [:]
     private var installed = false
 
-    func register(id: UInt32, keyCode: Int, modifiers: Int, _ handler: @escaping () -> Void) {
+    /// Returns false if another app already owns the shortcut.
+    @discardableResult
+    func register(id: UInt32, keyCode: Int, modifiers: Int, _ handler: @escaping () -> Void) -> Bool {
         installHandlerIfNeeded()
         unregister(id: id)
         var ref: EventHotKeyRef?
@@ -17,11 +19,14 @@ final class HotkeyCenter {
         let status = RegisterEventHotKey(UInt32(keyCode), UInt32(modifiers), hotKeyID, GetApplicationEventTarget(), 0, &ref)
         guard status == noErr, let ref else {
             Log.platform.error("Hotkey \(id, privacy: .public) is taken by another app (status \(status, privacy: .public))")
-            return
+            return false
         }
         refs[id] = ref
         handlers[id] = handler
+        return true
     }
+
+    func isRegistered(id: UInt32) -> Bool { refs[id] != nil }
 
     func unregister(id: UInt32) {
         if let ref = refs.removeValue(forKey: id) { UnregisterEventHotKey(ref) }

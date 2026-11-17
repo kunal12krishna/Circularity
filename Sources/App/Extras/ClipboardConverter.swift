@@ -16,7 +16,8 @@ enum ClipboardConverter {
         try? FileManager.default.createDirectory(at: outDir, withIntermediateDirectories: true)
         let isPDF = source.pathExtension.lowercased() == "pdf"
         let operation: CircularityEngine.Operation = isPDF && format != .pdf ? .pdfPages(format, scale: 2) : .convert(format)
-        jobs.run(operation, files: [source], label: "clipboard", policy: OutputPolicy(destination: .folder(outDir))) { result in
+        jobs.run(operation, files: [source], label: "clipboard", policy: OutputPolicy(destination: .folder(outDir)),
+                 interactive: false) { result in
             guard case let .success(r) = result, var output = r.outputs.first else {
                 done("Couldn't convert the clipboard.")
                 return

@@ -13,12 +13,22 @@ final class WatchFolderService: ObservableObject {
     private var stream: FSEventStreamRef?
     private var pending: [String: (size: Int64, work: DispatchWorkItem)] = [:]
     private var produced: Set<String> = []
+    private var bag: Set<AnyCancellable> = []
 
     init(settings: SettingsStore, jobs: JobCenter) {
         self.settings = settings
         self.jobs = jobs
         rules = Self.decode(settings.value(SettingsKeys.watchRulesJSON))
         restart()
+        // An imported settings file may bring different rules.
+        settings.changes.sink { [weak self] name in
+            guard let self, name.isEmpty || name == SettingsKeys.watchRulesJSON.name else { return }
+            let stored = Self.decode(settings.value(SettingsKeys.watchRulesJSON))
+            if stored != rules {
+                rules = stored
+                restart()
+            }
+        }.store(in: &bag)
     }
 
     var enabledCount: Int { rules.filter(\.enabled).count }
@@ -125,7 +135,7 @@ final class WatchFolderService: ObservableObject {
         guard FileManager.default.fileExists(atPath: url.path) else { return }
         let kind = SlotProvider.kind(of: DraggedFiles.type(of: url))
         guard rule.accepts(url, kind: kind) else { return }
-        var policy = OutputPolicy()
+        var policy = jobs.outputPolicy(for: .convert(rule.format))
         switch rule.output {
         case .inPlace: policy.destination = .nextToOriginal
         case let .subfolder(name): policy.destination = .folder(URL(fileURLWithPath: rule.folder).appendingPathComponent(name, isDirectory: true))
@@ -133,7 +143,7 @@ final class WatchFolderService: ObservableObject {
         }
         let operation: CircularityEngine.Operation = kind == .pdf && rule.format != .pdf ? .pdfPages(rule.format, scale: 2) : .convert(rule.format)
         Log.app.notice("Watch folder: converting a new file to \(rule.format.displayName, privacy: .public)")
-        jobs.run(operation, files: [url], label: "watch", policy: policy) { [weak self] result in
+        jobs.run(operation, files: [url], label: "watch", policy: policy, interactive: false) { [weak self] result in
             guard let self, case let .success(r) = result else { return }
             for output in r.outputs { self.produced.insert(output.path) }
             if rule.trashOriginal, !r.outputs.isEmpty {

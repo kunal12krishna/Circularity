@@ -47,12 +47,12 @@ struct Staging {
     /// If macOS refuses the folder (for example Desktop/Downloads access was
     /// declined), the result goes to the first fallback folder that accepts it.
     func publish(_ staged: URL, planner: OutputPlanner, template: NamingTemplate, context: NamingContext,
-                 fileExtension: String? = nil, fallbacks: [URL] = []) async throws -> URL {
+                 fileExtension: String? = nil, fallbacks: [URL] = [], collision: CollisionStyle = .number) async throws -> URL {
         var lastError: Error?
         for folder in [destination] + fallbacks.filter({ $0 != destination }) {
             try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
             let final = await planner.reserve(in: folder, template: template, context: context,
-                                              fileExtensionOverride: fileExtension)
+                                              fileExtensionOverride: fileExtension, collision: collision)
             do {
                 try FileManager.default.moveItem(at: staged, to: final)
                 await planner.release(final)

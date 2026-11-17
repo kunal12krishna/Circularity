@@ -20,6 +20,8 @@ final class WheelController {
     var onDragDismissed: (() -> Void)?
     /// A drop or click finished (including Cancel).
     var onFinished: ((WheelChoice) -> Void)?
+    /// The wheel appeared (the tutorial follows along).
+    var onShown: (() -> Void)?
 
     private let settings: SettingsStore
     private var panel: WheelPanel?
@@ -63,12 +65,15 @@ final class WheelController {
         let screen = NSScreen.screens.first { NSMouseInRect(screenPoint, $0.frame, false) } ?? NSScreen.main
         let contentsScale = screen?.backingScaleFactor ?? 2
         let (renderer, kind) = prepareRenderer()
-        geometry = WheelGeometry.make(kind, scale: CGFloat(settings.value(SettingsKeys.wheelScale)))
+        geometry = Appearance.geometry(settings, layout: kind)
+        let look = Appearance.wheelStyle(settings, layout: kind)
+        Motion.speed = settings.value(SettingsKeys.animationSpeed)
 
         menu = SlotProvider.menu(for: files.types, canWrite: { FormatSupport.current.canWrite($0) },
                                  usage: settings.value(SettingsKeys.wheelUsage),
                                  smartOrdering: settings.value(SettingsKeys.smartOrdering),
-                                 presets: Preset.decodeList(settings.value(SettingsKeys.presetsJSON)))
+                                 presets: Preset.decodeList(settings.value(SettingsKeys.presetsJSON)),
+                                 formatOrder: SlotProvider.imageFormatOrder(settings.value(SettingsKeys.imageFormatOrder)))
 
         var center = screenPoint
         if mode == .click, let visible = screen?.visibleFrame {
@@ -82,8 +87,7 @@ final class WheelController {
         }
 
         let content = orbContent(clickMode: mode == .click)
-        renderer.configure(menu: menu, orb: content, accent: accentColor(for: kind), geometry: geometry,
-                           contentsScale: contentsScale)
+        renderer.configure(menu: menu, orb: content, style: look, geometry: geometry, contentsScale: contentsScale)
         renderer.apply(state, animated: false)
         requestThumbnail(size: geometry.orbDiameter * geometry.scale, scale: contentsScale)
         requestEstimates()
@@ -99,6 +103,7 @@ final class WheelController {
             glass.frame = CGRect(x: (size - d) / 2, y: (size - d) / 2, width: d, height: d)
             glass.maskImage = Self.circleMask(diameter: d)
             glass.isHidden = !renderer.usesGlass
+            glass.appearance = NSAppearance(named: look.light ? .aqua : .darkAqua)
         }
 
         panel.alphaValue = 0
@@ -111,7 +116,9 @@ final class WheelController {
             panel.orderFrontRegardless()
         }
         isVisible = true
-        bloom(renderer)
+        onShown?()
+        bloom(renderer, style: settings.value(SettingsKeys.animationStyle))
+        WheelSounds.play(.open, pack: settings.value(SettingsKeys.soundPack))
         Log.wheel.notice("Wheel shown (\(kind.rawValue, privacy: .public), \(mode == .click ? "click" : "drag", privacy: .public) mode, \(files.count, privacy: .public) item(s), fan \(self.state.fanFlipped ? "flipped" : "down", privacy: .public))")
         NSAccessibility.post(element: host, notification: .layoutChanged)
     }
@@ -143,11 +150,17 @@ final class WheelController {
         })
     }
 
-    private func bloom(_ renderer: WheelRenderer) {
+    /// Settings → Wheel → animation: bloom (board: spring from 0.6 plus the
+    /// segment ripple), pop (spring only), fade, instant.
+    private func bloom(_ renderer: WheelRenderer, style: String) {
         guard let panel, let bloomLayer = host?.layer else { return }
-        if Motion.reduceMotion {
+        if style == "instant" {
+            panel.alphaValue = 1
+            return
+        }
+        if Motion.reduceMotion || style == "fade" {
             NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.12
+                ctx.duration = Motion.duration(Motion.reduceMotion ? 0.12 : 0.16)
                 panel.animator().alphaValue = 1
             }
             return
@@ -163,14 +176,14 @@ final class WheelController {
             return CATransform3DTranslate(t, anchor.x - c.x, anchor.y - c.y, 0)
         }
         let grow = CASpringAnimation(keyPath: "transform")
-        grow.fromValue = NSValue(caTransform3D: scaled(0.6))
+        grow.fromValue = NSValue(caTransform3D: scaled(style == "pop" ? 0.85 : 0.6))
         grow.toValue = NSValue(caTransform3D: CATransform3DIdentity)
-        grow.stiffness = 380; grow.damping = 26; grow.mass = 1
-        grow.duration = min(grow.settlingDuration, 0.32)
-        let fade = CABasicAnimation(keyPath: "opacity"); fade.fromValue = 0; fade.toValue = 1; fade.duration = 0.18
+        grow.stiffness = 380 * Motion.speed * Motion.speed; grow.damping = 26 * Motion.speed; grow.mass = 1
+        grow.duration = min(grow.settlingDuration, Motion.duration(0.32))
+        let fade = CABasicAnimation(keyPath: "opacity"); fade.fromValue = 0; fade.toValue = 1; fade.duration = Motion.duration(0.18)
         bloomLayer.add(grow, forKey: "bloom")
         bloomLayer.add(fade, forKey: "bloomFade")
-        renderer.popIn()
+        if style != "pop" { renderer.popIn() }
     }
 
     // MARK: Building
@@ -214,14 +227,6 @@ final class WheelController {
         self.glass = glass
         self.layerView = layerView
         Log.wheel.notice("Wheel panel built")
-    }
-
-    private func accentColor(for kind: WheelLayoutKind) -> CGColor {
-        let chosen = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .halo
-        // Halo chosen as a layout uses its neon accent; as the Reduce
-        // Transparency fallback it keeps the user's accent.
-        if kind == .halo, chosen == .halo, let c = CGColor.hexString(settings.value(SettingsKeys.haloAccentHex)) { return c }
-        return CGColor.hexString(settings.value(SettingsKeys.accentHex)) ?? .hex(0xFF8A00)
     }
 
     private func orbContent(clickMode: Bool) -> OrbContent {
@@ -407,6 +412,7 @@ final class WheelController {
         if changedTarget, newTarget != .none, settings.value(SettingsKeys.haptics) {
             NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         }
+        if changedTarget, newTarget != .none { WheelSounds.play(.hover, pack: settings.value(SettingsKeys.soundPack)) }
         if changedTarget, let host { NSAccessibility.post(element: host, notification: .layoutChanged) }
     }
 
@@ -543,6 +549,9 @@ final class WheelController {
         finishing = true
         moreTimer?.cancel()
         if let choice { usage(choice.action) }
+        if choice != nil || target != .centre, target != .none {
+            WheelSounds.play(target == .centre ? .cancel : .choose, pack: settings.value(SettingsKeys.soundPack))
+        }
         renderer?.release(to: target, from: cursor)
         if let choice {
             Log.wheel.notice("Wheel choice: \(choice.label, privacy: .public) for \(choice.count, privacy: .public) item(s)")

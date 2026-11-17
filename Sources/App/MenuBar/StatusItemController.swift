@@ -39,6 +39,8 @@ final class StatusItemController: NSObject {
     var menuBuilder: (() -> [NSMenuItem])?
     var onDragEntered: (() -> Void)?
     var onFilesDropped: (([URL]) -> Void)?
+    /// The pointer rested on the icon for a moment (Settings → open on hover).
+    var onHover: (() -> Void)?
 
     private let item: NSStatusItem
     private let catcher = StatusDropView()
@@ -121,6 +123,7 @@ final class StatusItemController: NSObject {
     }
 
     fileprivate func dragEntered() { onDragEntered?() }
+    fileprivate func hovered() { onHover?() }
     fileprivate func dropped(_ urls: [URL]) { onFilesDropped?(urls) }
 
     func remove() { NSStatusBar.system.removeStatusItem(item) }
@@ -131,14 +134,36 @@ final class StatusDropView: NSView {
     weak var owner: StatusItemController?
     private var previous: StatusIconState?
 
+    private var hoverWork: DispatchWorkItem?
+
     override init(frame: NSRect) {
         super.init(frame: frame)
         registerForDraggedTypes(WheelHostView.dragTypes)
     }
 
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        for area in trackingAreas { removeTrackingArea(area) }
+        addTrackingArea(NSTrackingArea(rect: bounds, options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+                                       owner: self, userInfo: nil))
+    }
+
+    override func mouseEntered(with event: NSEvent) {
+        hoverWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.owner?.hovered() }
+        hoverWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: work)
+    }
+
+    override func mouseExited(with event: NSEvent) {
+        hoverWork?.cancel()
+        hoverWork = nil
+    }
+
     required init?(coder: NSCoder) { fatalError("not used") }
 
     override func mouseDown(with event: NSEvent) {
+        hoverWork?.cancel()
         if event.modifierFlags.contains(.control) { owner?.rightClicked() } else { owner?.clicked() }
     }
 

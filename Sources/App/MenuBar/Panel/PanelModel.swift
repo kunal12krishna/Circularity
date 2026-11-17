@@ -71,6 +71,7 @@ final class PanelModel: ObservableObject {
         stats = jobs.stats
         self.watch = watch
         self.settings = settings
+        settings.changes.receive(on: DispatchQueue.main).sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
         for publisher in [jobs.objectWillChange.eraseToAnyPublisher(), history.objectWillChange.eraseToAnyPublisher(),
                           stats.objectWillChange.eraseToAnyPublisher(), watch.objectWillChange.eraseToAnyPublisher()] {
             publisher.receive(on: DispatchQueue.main).sink { [weak self] _ in self?.objectWillChange.send() }.store(in: &bag)
@@ -80,7 +81,7 @@ final class PanelModel: ObservableObject {
     // MARK: Appearance
 
     var accentNS: NSColor {
-        let hex = settings.value(SettingsKeys.wheelLayout) == "halo" ? settings.value(SettingsKeys.haloAccentHex) : settings.value(SettingsKeys.accentHex)
+        let hex = settings.value(SettingsKeys.accentHex)
         return NSColor(cgColor: CGColor.hexString(hex) ?? .hex(0xFF8A00)) ?? .orange
     }
     var accent: Color { Color(nsColor: accentNS) }
@@ -176,6 +177,10 @@ final class PanelModel: ObservableObject {
         let newPresets = presetTiles.filter { tile in !ids.contains(tile.id) && !ids.contains("-\(tile.id)") }
         return ordered + newPresets
     }
+
+    /// Settings → Menu bar → sections (Stack+).
+    var sections: [String] { PanelSections.parse(settings.value(SettingsKeys.panelSections)) }
+    var compact: Bool { settings.value(SettingsKeys.panelDensity) == "compact" }
 
     var gridColumns: Int { settings.value(SettingsKeys.presetGrid).hasPrefix("4") ? 4 : 3 }
     var gridRows: Int { settings.value(SettingsKeys.presetGrid).hasSuffix("1") ? 1 : 2 }

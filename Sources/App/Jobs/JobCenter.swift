@@ -41,6 +41,8 @@ final class JobCenter: ObservableObject {
     @Published var lastError: String?
     /// Fires when a job finishes successfully (icon "done" pulse).
     let finished = PassthroughSubject<Void, Never>()
+    /// Every finished job with its result (notifications).
+    let completed = PassthroughSubject<(title: String, result: Result<JobResult, Error>), Never>()
 
     var runningCount: Int { active.count }
     var overallProgress: Double? { active.isEmpty ? nil : active.map(\.fraction).reduce(0, +) / Double(active.count) }
@@ -60,10 +62,13 @@ final class JobCenter: ObservableObject {
         return nil
     }
 
-    func run(_ operation: CircularityEngine.Operation, files: [URL], label: String, policy: OutputPolicy = OutputPolicy(),
-             completion: ((Result<JobResult, Error>) -> Void)? = nil) {
+    /// `policy` nil = Settings → Output. `interactive` jobs (the wheel, the
+    /// panel, ⌘K, Services) also run the after-conversion actions; watch
+    /// folders and the clipboard pass false and handle their own results.
+    func run(_ operation: CircularityEngine.Operation, files: [URL], label: String, policy: OutputPolicy? = nil,
+             interactive: Bool = true, completion: ((Result<JobResult, Error>) -> Void)? = nil) {
         guard !files.isEmpty else { return }
-        let request = JobRequest(inputs: files, operation: operation, output: policy)
+        let request = JobRequest(inputs: files, operation: operation, output: policy ?? outputPolicy(for: operation))
         let id = request.id
         let job = ActiveJob(id: id, title: Self.title(operation, files: files), firstInput: files.first,
                             isPDF: files.first.map { DraggedFiles.type(of: $0).conforms(to: .pdf) } ?? false,
@@ -78,6 +83,8 @@ final class JobCenter: ObservableObject {
                 })
             } catch { result = .failure(error) }
             self.finish(id, operation: operation, result)
+            if interactive, case let .success(r) = result { self.afterConversion(r) }
+            self.completed.send((Self.title(operation, files: files), result))
             completion?(result)
         }
     }
@@ -166,6 +173,67 @@ final class JobCenter: ObservableObject {
         return line + where_
     }
 
+    // MARK: Settings → Output
+
+    /// The output policy from Settings → Output for an operation.
+    func outputPolicy(for operation: CircularityEngine.Operation) -> OutputPolicy {
+        var policy = OutputPolicy()
+        if settings.value(SettingsKeys.destination) == "folder" {
+            let perType: String = switch Self.outputGroup(operation) {
+            case .images: settings.value(SettingsKeys.folderImages)
+            case .pdfs: settings.value(SettingsKeys.folderPDFs)
+            case .documents: settings.value(SettingsKeys.folderDocuments)
+            }
+            let path = perType.isEmpty ? settings.value(SettingsKeys.outputFolder) : perType
+            if !path.isEmpty { policy.destination = .folder(URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)) }
+        }
+        let template = settings.value(SettingsKeys.namingTemplate).trimmingCharacters(in: .whitespaces)
+        policy.template = template.isEmpty ? .default : NamingTemplate(template)
+        policy.collision = settings.value(SettingsKeys.collisionStyle) == "time" ? .timestamp : .number
+        policy.metadata = MetadataPolicy(rawValue: settings.value(SettingsKeys.metadata)) ?? .keep
+        func q(_ key: SettingsKey<Double>) -> Double { min(1, max(0.1, settings.value(key))) }
+        policy.quality = [.jpg: q(SettingsKeys.qualityJPG), .heic: q(SettingsKeys.qualityHEIC),
+                          .avif: q(SettingsKeys.qualityAVIF), .webp: q(SettingsKeys.qualityWebP)]
+        return policy
+    }
+
+    enum OutputGroup { case images, pdfs, documents }
+
+    static func outputGroup(_ operation: CircularityEngine.Operation) -> OutputGroup {
+        switch operation {
+        case let .convert(f): f == .pdf ? .pdfs : (f.imageTypeIdentifier != nil ? .images : .documents)
+        case .pdfPages, .resize, .compressImage, .cropImage: .images
+        case .combinePDF, .resizePDF, .compressPDF, .cropPDF: .pdfs
+        case .extractText: .documents
+        }
+    }
+
+    /// Open / reveal / copy, and "replace the original" (to the Trash).
+    private func afterConversion(_ r: JobResult) {
+        guard !r.outputs.isEmpty else { return }
+        if settings.value(SettingsKeys.replaceOriginal) {
+            // Only one-to-one results; a combined PDF never trashes its inputs.
+            for outcome in r.outcomes where outcome.inputs.count == 1 && !outcome.outputs.isEmpty {
+                let input = outcome.inputs[0]
+                guard !outcome.outputs.contains(input), FileManager.default.fileExists(atPath: input.path) else { continue }
+                do {
+                    try FileManager.default.trashItem(at: input, resultingItemURL: nil)
+                } catch {
+                    Log.app.error("Couldn't move the original to the Trash: \(error.localizedDescription, privacy: .public)")
+                }
+            }
+        }
+        if settings.value(SettingsKeys.afterCopy) {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.writeObjects(r.outputs as [NSURL])
+        }
+        if settings.value(SettingsKeys.afterReveal) { NSWorkspace.shared.activateFileViewerSelecting(r.outputs) }
+        if settings.value(SettingsKeys.afterOpen) {
+            // A batch could be hundreds of files: open at most five.
+            for url in r.outputs.prefix(5) { NSWorkspace.shared.open(url) }
+        }
+    }
+
     // MARK: Presets ("Also add this as a button")
 
     var presets: [Preset] { Preset.decodeList(settings.value(SettingsKeys.presetsJSON)) }
@@ -206,7 +274,7 @@ final class JobCenter: ObservableObject {
         case .combine: run(.combinePDF, files: files, label: "command.combine")
         case .stripGPS:
             // Same format, location removed.
-            var policy = OutputPolicy()
+            var policy = outputPolicy(for: .convert(.png))
             policy.metadata = .stripGPS
             for file in files {
                 run(.convert(ConversionEngine.sameFormat(for: file)), files: [file], label: "command.nogps", policy: policy)

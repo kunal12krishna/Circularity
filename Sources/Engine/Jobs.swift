@@ -102,6 +102,7 @@ public struct OutputPolicy: Sendable {
     public var fallbackFolder: URL
     public var metadata: MetadataPolicy
     public var quality: [OutputFormat: Double]
+    public var collision: CollisionStyle = .number
 
     public static let defaultQuality: [OutputFormat: Double] = [.jpg: 0.85, .heic: 0.8, .avif: 0.75, .webp: 0.8]
 

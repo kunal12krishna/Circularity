@@ -46,7 +46,16 @@ final class GestureController {
         if let m = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp], handler: handler) {
             monitors.append(m)
         }
-        Log.gesture.notice("Gesture monitors installed (global mouse events only, no event tap)")
+        // Global monitors never see our own windows, so a drag that starts in
+        // one (the practice picture in Settings or the tutorial) needs a local
+        // monitor too. It only observes; events pass through unchanged.
+        if let m = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp], handler: { event in
+            handler(event)
+            return event
+        }) {
+            monitors.append(m)
+        }
+        Log.gesture.notice("Gesture monitors installed (mouse events only, no event tap)")
     }
 
     func stop() {

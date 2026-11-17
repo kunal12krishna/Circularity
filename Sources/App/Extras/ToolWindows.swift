@@ -7,7 +7,9 @@ import SwiftUI
 final class WindowPresenter: NSObject, NSWindowDelegate {
     private var windows: [String: NSWindow] = [:]
 
-    func show<V: View>(_ id: String, title: String, size: CGSize, @ViewBuilder content: () -> V) {
+    /// `floating` keeps the window above other apps (the tutorial, so it stays
+    /// visible while you drag from Finder).
+    func show<V: View>(_ id: String, title: String, size: CGSize, floating: Bool = false, @ViewBuilder content: () -> V) {
         if let existing = windows[id] {
             NSApp.activate(ignoringOtherApps: true)
             existing.makeKeyAndOrderFront(nil)
@@ -25,10 +27,13 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
         window.setContentSize(size)
         window.center()
         window.delegate = self
+        if floating { window.level = .floating }
         windows[id] = window
         NSApp.activate(ignoringOtherApps: true)
         window.makeKeyAndOrderFront(nil)
     }
+
+    func close(_ id: String) { windows[id]?.close() }
 
     func windowWillClose(_ notification: Notification) {
         guard let window = notification.object as? NSWindow, let id = window.identifier?.rawValue else { return }

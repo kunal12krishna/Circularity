@@ -91,3 +91,12 @@ final class WatchRuleTests: XCTestCase {
         XCTAssertEqual(try JSONDecoder().decode([WatchRule].self, from: data), [r])
     }
 }
+
+final class PanelSectionsTests: XCTestCase {
+    func testParse() {
+        XCTAssertEqual(PanelSections.parse(""), PanelSections.all, "never set: everything")
+        XCTAssertEqual(PanelSections.parse("-"), [], "the user hid everything")
+        XCTAssertEqual(PanelSections.parse("recent, drop,recent,bogus"), ["recent", "drop"])
+        XCTAssertEqual(PanelSections.parse(SettingsKeys.panelSections.defaultValue), PanelSections.all)
+    }
+}

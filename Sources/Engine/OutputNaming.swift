@@ -1,5 +1,13 @@
 import Foundation
 
+/// What to do when the output name is taken.
+public enum CollisionStyle: String, Sendable, Codable {
+    /// `photo (1).jpg`, `photo (2).jpg`
+    case number
+    /// `photo 2026-11-17 at 23.10.05.jpg`, then numbers
+    case timestamp
+}
+
 /// A user-editable naming template. Tokens: `{name}` `{format}` `{date}` `{size}`.
 public struct NamingTemplate: Sendable, Equatable, Codable {
     public var pattern: String
@@ -56,11 +64,23 @@ public enum OutputNaming {
         return sanitize(name)
     }
 
-    /// `base.ext`, or the first free `base (n).ext`. `exists` decides what counts
+    /// `base.ext`, or the first free `base (n).ext` (or, with `.timestamp`,
+    /// `base 2026-11-17 at 23.10.05.ext` first). `exists` decides what counts
     /// as taken (the file system plus names reserved by running jobs).
-    public static func uniqueFileName(base: String, fileExtension ext: String, exists: (String) -> Bool) -> String {
+    public static func uniqueFileName(base: String, fileExtension ext: String, collision: CollisionStyle = .number,
+                                      date: Date = Date(), timeZone: TimeZone = .current,
+                                      exists: (String) -> Bool) -> String {
         let candidate = join(base, ext)
         if !exists(candidate) { return candidate }
+        if collision == .timestamp {
+            var calendar = Calendar(identifier: .gregorian)
+            calendar.timeZone = timeZone
+            let c = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+            let stamp = String(format: "%04d-%02d-%02d at %02d.%02d.%02d", c.year ?? 0, c.month ?? 0, c.day ?? 0,
+                               c.hour ?? 0, c.minute ?? 0, c.second ?? 0)
+            let stamped = join("\(base) \(stamp)", ext)
+            if !exists(stamped) { return stamped }
+        }
         for n in 1...9_999 {
             let numbered = join("\(base) (\(n))", ext)
             if !exists(numbered) { return numbered }

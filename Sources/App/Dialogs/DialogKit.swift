@@ -43,7 +43,7 @@ struct Chip: View {
                 .tracking(0.6)
                 .padding(.horizontal, 11)
                 .frame(minHeight: 30)
-                .foregroundStyle(selected ? Halo.background : Halo.text)
+                .foregroundStyle(selected ? accent.readableText : Halo.text)
                 .background(RoundedRectangle(cornerRadius: 8).fill(selected ? accent : Halo.control))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.white.opacity(selected ? 0 : 0.10)))
                 .shadow(color: selected ? accent.opacity(0.45) : .clear, radius: 8)
@@ -114,7 +114,7 @@ struct DialogFrame<Content: View>: View {
                 .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
                 Button(action: onPrimary) {
-                    Text(primaryTitle.uppercased()).font(Halo.mono(12, .heavy)).tracking(0.8).foregroundStyle(Halo.background)
+                    Text(primaryTitle.uppercased()).font(Halo.mono(12, .heavy)).tracking(0.8).foregroundStyle(accent.readableText)
                         .padding(.horizontal, 18).frame(height: 34)
                         .background(RoundedRectangle(cornerRadius: 9).fill(accent.opacity(primaryEnabled ? 1 : 0.35)))
                         .shadow(color: accent.opacity(primaryEnabled ? 0.5 : 0), radius: 10)

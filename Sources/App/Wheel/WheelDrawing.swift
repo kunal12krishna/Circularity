@@ -193,18 +193,26 @@ func samplePicture(size: CGFloat, scale: CGFloat) -> CGImage? {
 }
 
 enum Motion {
+    /// Settings → Wheel → animation speed (0.5 … 2). Springs keep their
+    /// shape and settle `speed` times faster; fixed durations divide by it.
+    static var speed: Double = 1 {
+        didSet { speed = min(2, max(0.5, speed)) }
+    }
+
+    static func duration(_ seconds: CFTimeInterval) -> CFTimeInterval { seconds / speed }
+
     /// The spring used for the bulge and morphs.
     static func spring(_ keyPath: String, from: Any?, to: Any?, delay: CFTimeInterval = 0) -> CASpringAnimation {
         let a = CASpringAnimation(keyPath: keyPath)
         a.fromValue = from
         a.toValue = to
         a.mass = 1
-        a.stiffness = 320
-        a.damping = 22
+        a.stiffness = 320 * speed * speed
+        a.damping = 22 * speed
         a.initialVelocity = 0
         a.duration = a.settlingDuration
         if delay > 0 {
-            a.beginTime = CACurrentMediaTime() + delay
+            a.beginTime = CACurrentMediaTime() + delay / speed
             a.fillMode = .backwards
         }
         return a

@@ -65,7 +65,8 @@ public final class ConversionEngine: Sendable {
             }
             context.format = format
             let final = try await staging.publish(staged, planner: planner, template: policy.template, context: context,
-                                                  fileExtension: folder ? "" : nil, fallbacks: policy.fallbackFolders)
+                                                  fileExtension: folder ? "" : nil, fallbacks: policy.fallbackFolders,
+                                                  collision: policy.collision)
             return JobOutcome(inputs: [input], outputs: [final], bytesIn: bytesIn, bytesOut: Self.size(of: final), note: note,
                               usedFallbackFolder: staging.usedFallback || final.deletingLastPathComponent() != staging.destination)
         }
@@ -197,7 +198,7 @@ public final class ConversionEngine: Sendable {
         try Task.checkCancellation()
         let context = NamingContext(sourceURL: first, format: .pdf, operation: .combine)
         let final = try await staging.publish(out, planner: planner, template: request.output.template, context: context,
-                                              fallbacks: request.output.fallbackFolders)
+                                              fallbacks: request.output.fallbackFolders, collision: request.output.collision)
         let bytesIn = request.inputs.reduce(Int64(0)) { $0 + Self.size(of: $1) }
         return JobOutcome(inputs: request.inputs, outputs: [final], bytesIn: bytesIn, bytesOut: Self.size(of: final),
                           note: nil, usedFallbackFolder: staging.usedFallback)

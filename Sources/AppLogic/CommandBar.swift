@@ -197,3 +197,19 @@ nonisolated struct WatchRule: Codable, Equatable, Identifiable, Sendable {
         }
     }
 }
+
+/// Settings → Menu bar → sections (Stack+): which show, in what order.
+nonisolated enum PanelSections {
+    static let all = ["command", "stats", "progress", "presets", "drop", "recent"]
+
+    /// Known ids in the stored order, no duplicates. "" (never set) shows
+    /// everything; "-" means the user hid every section.
+    static func parse(_ stored: String) -> [String] {
+        var out: [String] = []
+        for part in stored.split(separator: ",").map({ String($0).trimmingCharacters(in: .whitespaces) })
+            where all.contains(part) && !out.contains(part) {
+            out.append(part)
+        }
+        return stored.trimmingCharacters(in: .whitespaces).isEmpty ? all : out
+    }
+}

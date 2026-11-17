@@ -24,6 +24,8 @@ final class AppCoordinator: PanelHost {
     private let pinned: PinnedPanelController
     private let dialogs = DialogPresenter()
     private let windows = WindowPresenter()
+    private let hud = DevHUD()
+    private var tutorial: TutorialModel?
     private var bag: Set<AnyCancellable> = []
 
     /// The most recent files handed to the app or dropped on the wheel: the
@@ -54,6 +56,7 @@ final class AppCoordinator: PanelHost {
 
         wheel.prepare()
         wheel.onFinished = { [weak self] choice in self?.handle(choice) }
+        wheel.onShown = { [weak self] in self?.tutorial?.wheelShown() }
         gesture.onDragReport = { [weak self] report in
             let how = report.opened.map { $0 == .shake ? "opened by shake" : "opened by \(self?.triggerName ?? "Shift")" } ?? "not opened"
             self?.lastDrag = report.verdict == "allowed" ? "Last file drag: wheel \(how)" : "Last file drag: skipped (\(report.verdict))"
@@ -71,6 +74,12 @@ final class AppCoordinator: PanelHost {
         jobs.$lastSummary.compactMap { $0 }.receive(on: RunLoop.main).sink { [weak self] summary in
             self?.panelModel.notice = "Last result: \(summary)"
         }.store(in: &bag)
+        Notifier.shared.install()
+        jobs.completed.receive(on: RunLoop.main).sink { [weak self] event in
+            guard let self else { return }
+            Notifier.shared.jobFinished(title: event.title, result: event.result, settings: settings)
+            if case let .success(r) = event.result { tutorial?.jobFinished(r) }
+        }.store(in: &bag)
         jobs.finished.receive(on: RunLoop.main).sink { [weak self] _ in
             guard let self else { return }
             WidgetBridge.update(stats: jobs.stats, history: jobs.history)
@@ -80,14 +89,13 @@ final class AppCoordinator: PanelHost {
             DispatchQueue.main.async { self?.refreshIcon() }
         }.store(in: &bag)
 
-        // ⌃⌥Space: the panel with ⌘K focused. ⌃⌥V: convert the clipboard.
-        HotkeyCenter.shared.register(id: 1, keyCode: kVK_Space, modifiers: HotkeyCenter.controlOption) { [weak self] in
-            self?.panel.open(focusCommand: true)
-        }
-        HotkeyCenter.shared.register(id: 2, keyCode: kVK_ANSI_V, modifiers: HotkeyCenter.controlOption) { [weak self] in
-            self?.panelClipboard(nil)
-        }
+        // ⌃⌥Space: the panel with ⌘K focused. ⌃⌥V: convert the clipboard (both rebindable).
+        _ = applyHotkeys()
         if settings.value(SettingsKeys.pinned) { pinned.pin() }
+        if settings.value(SettingsKeys.devHUD) { settingsSetDevHUD(true) }
+        if !settings.value(SettingsKeys.onboardingCompleted) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.settingsShowOnboarding() }
+        }
 
         Log.app.notice("\(AppIdentity.name, privacy: .public) started (pid \(ProcessInfo.processInfo.processIdentifier, privacy: .public))")
     }
@@ -102,13 +110,42 @@ final class AppCoordinator: PanelHost {
         wheel.show(DraggedFiles(urls: urls), at: NSEvent.mouseLocation, mode: .click)
     }
 
-    /// Opening the app again shows the menu bar icon even if it was hidden.
+    /// Opening the app again shows the menu bar icon (even if it was hidden)
+    /// and Settings.
     func handleReopen() {
         Log.app.notice("Reopen requested")
         if statusItem == nil {
             settings.set(true, for: SettingsKeys.showInMenuBar)
             installStatusItem()
         }
+        showSettings()
+    }
+
+    // MARK: Shortcuts
+
+    /// Registers the two global shortcuts from Settings; returns the ids that failed.
+    private func applyHotkeys() -> Set<UInt32> {
+        var failed: Set<UInt32> = []
+        let pairs: [(UInt32, SettingsKey<String>, () -> Void)] = [
+            (1, SettingsKeys.hotkeyPanel, { [weak self] in self?.panel.open(focusCommand: true) }),
+            (2, SettingsKeys.hotkeyClipboard, { [weak self] in self?.panelClipboard(nil) }),
+        ]
+        for (id, key, action) in pairs {
+            HotkeyCenter.shared.unregister(id: id)
+            guard let spec = HotkeySpec(settings.value(key)), spec.isAllowed else { continue }
+            if !HotkeyCenter.shared.register(id: id, keyCode: spec.keyCode, modifiers: spec.modifiers, action) { failed.insert(id) }
+        }
+        return failed
+    }
+
+    // MARK: Settings, welcome and tutorial
+
+    func showSettings(_ page: SettingsPage? = nil) {
+        panel.close(animated: false)
+        let model = SettingsModel(store: settings)
+        model.host = self
+        if let page { model.page = page }
+        windows.show("settings", title: "Settings", size: CGSize(width: 880, height: 680)) { SettingsView(model: model) }
     }
 
     private func handle(_ choice: WheelChoice) {
@@ -130,8 +167,12 @@ final class AppCoordinator: PanelHost {
         item.onClick = { [weak self] in self?.panel.toggle() }
         item.menuBuilder = { [weak self] in self?.menuItems() ?? [] }
         item.onDragEntered = { [weak self] in
-            guard let self, !panel.isOpen else { return }
+            guard let self, !panel.isOpen, settings.value(SettingsKeys.openOnDragOver) else { return }
             panel.open(dropMode: true)
+        }
+        item.onHover = { [weak self] in
+            guard let self, !panel.isOpen, settings.value(SettingsKeys.openOnHover) else { return }
+            panel.open()
         }
         item.onFilesDropped = { [weak self] urls in self?.receive(urls, from: .statusIcon) }
         statusItem = item
@@ -185,15 +226,11 @@ final class AppCoordinator: PanelHost {
 
     func panelSettingsMenu() -> [NSMenuItem] { menuItems() }
 
-    func panelOpenSettings() {
-        let menu = NSMenu()
-        for item in menuItems() { menu.addItem(item) }
-        menu.popUp(positioning: nil, at: NSEvent.mouseLocation, in: nil)
-    }
+    func panelOpenSettings() { showSettings() }
 
     func panelTutorial() {
         panel.close(animated: false)
-        showTestWheel()
+        settingsShowTutorial()
     }
 
     func panelTogglePin() {
@@ -256,7 +293,7 @@ final class AppCoordinator: PanelHost {
         }
     }
 
-    // MARK: Settings menu (until the Settings window in milestone i)
+    // MARK: Right-click menu (everything else is in Settings)
 
     private var triggerName: String {
         switch settings.value(SettingsKeys.triggerKey) {
@@ -266,99 +303,34 @@ final class AppCoordinator: PanelHost {
         }
     }
 
-    private func choiceMenu(_ title: String, _ options: [(String, String)], current: String, set: @escaping (String) -> Void) -> NSMenuItem {
-        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-        let menu = NSMenu()
-        for (id, name) in options { menu.addItem(ActionMenuItem(name, checked: current == id) { set(id) }) }
-        item.submenu = menu
-        return item
-    }
-
-    private func toggle(_ title: String, _ key: SettingsKey<Bool>) -> NSMenuItem {
-        ActionMenuItem(title, checked: settings.value(key)) { [weak self] in
-            guard let self else { return }
-            settings.set(!settings.value(key), for: key)
-            panelModel.objectWillChange.send()
-        }
-    }
-
     private func menuItems() -> [NSMenuItem] {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        let s = settings
-        let refresh: () -> Void = { [weak self] in self?.panelModel.objectWillChange.send(); self?.refreshIcon() }
         var items: [NSMenuItem] = [
             .info("\(AppIdentity.name) \(version)"),
             .info(lastDrag),
         ]
         if let summary = jobs.lastSummary { items.append(.info("Last result: \(summary)")) }
+        let paused = settings.value(SettingsKeys.paused)
         items += [
             .separator(),
-            ActionMenuItem("Open Panel", key: "") { [weak self] in self?.panel.open() },
+            ActionMenuItem("Open Panel") { [weak self] in self?.panel.open() },
+            ActionMenuItem("Settings…", key: ",") { [weak self] in self?.showSettings() },
+            .separator(),
             ActionMenuItem("History…") { [weak self] in self?.panelShowHistory() },
             ActionMenuItem("Stats…") { [weak self] in self?.panelShowStats() },
             ActionMenuItem("Watch Folders…") { [weak self] in self?.panelShowWatch() },
-            ActionMenuItem("Convert Clipboard (⌃⌥V)") { [weak self] in self?.panelClipboard(nil) },
+            ActionMenuItem("Convert Clipboard (\(HotkeySpec(settings.value(SettingsKeys.hotkeyClipboard))?.display ?? "no shortcut"))") { [weak self] in
+                self?.panelClipboard(nil)
+            },
             ActionMenuItem("Practice Wheel") { [weak self] in self?.showTestWheel() },
+            ActionMenuItem("Tutorial…") { [weak self] in self?.settingsShowTutorial() },
             .separator(),
-            choiceMenu("Wheel Layout", [("halo", "Halo"), ("ring", "Ring"), ("orbit", "Orbit")], current: s.value(SettingsKeys.wheelLayout)) {
-                s.set($0, for: SettingsKeys.wheelLayout); refresh()
-            },
-            choiceMenu("Halo Accent", [("#C6FF3D", "Neon Lime"), ("#FF8A00", "Tangerine"), ("#5CE1FF", "Cyan"), ("#FF5CA8", "Pink")],
-                       current: s.value(SettingsKeys.haloAccentHex)) { s.set($0, for: SettingsKeys.haloAccentHex); refresh() },
-            choiceMenu("Trigger Key", [("shift", "Shift"), ("option", "Option"), ("control", "Control")], current: s.value(SettingsKeys.triggerKey)) {
-                s.set($0, for: SettingsKeys.triggerKey)
-            },
-            toggle("Shake to Open", SettingsKeys.shakeEnabled),
-            .separator(),
-            choiceMenu("Panel Layout", [("stackPlus", "Stack+"), ("tabs", "Tabs"), ("mini", "Mini")], current: s.value(SettingsKeys.panelLayout)) {
-                s.set($0, for: SettingsKeys.panelLayout); refresh()
-            },
-            choiceMenu("Panel Width", [("s", "Small"), ("m", "Medium"), ("l", "Large")], current: s.value(SettingsKeys.panelWidth)) {
-                s.set($0, for: SettingsKeys.panelWidth)
-            },
-            choiceMenu("Recent Items", [("5", "5"), ("10", "10"), ("25", "25")], current: "\(s.value(SettingsKeys.recentsCount))") {
-                s.set(Int($0) ?? 5, for: SettingsKeys.recentsCount); refresh()
-            },
-            choiceMenu("Preset Grid", [("3x1", "3 × 1"), ("3x2", "3 × 2"), ("4x2", "4 × 2")], current: s.value(SettingsKeys.presetGrid)) {
-                s.set($0, for: SettingsKeys.presetGrid); refresh()
-            },
-            choiceMenu("Menu Bar Icon", [("monochrome", "Monochrome"), ("colour", "Colour"), ("minimal", "Minimal")], current: s.value(SettingsKeys.iconStyle)) {
-                s.set($0, for: SettingsKeys.iconStyle); refresh()
-            },
-            toggle("Show Percentage While Converting", SettingsKeys.showPercent),
-            choiceMenu("Pinned Panel Size", [("s", "Small"), ("m", "Medium"), ("l", "Large")], current: s.value(SettingsKeys.pinnedSize)) { [weak self] in
-                self?.pinned.setSize($0)
-            },
-            ActionMenuItem("Pinned Panel Ignores Clicks", checked: s.value(SettingsKeys.pinnedClickThrough)) { [weak self] in
-                self?.pinned.toggleClickThrough()
+            ActionMenuItem("Pause", checked: paused) { [weak self] in
+                guard let self else { return }
+                settings.set(!paused, for: SettingsKeys.paused)
             },
             .separator(),
         ]
-        let saved = jobs.presets
-        if !saved.isEmpty {
-            let buttons = NSMenuItem(title: "Saved Wheel Buttons", action: nil, keyEquivalent: "")
-            let list = NSMenu()
-            for preset in saved {
-                list.addItem(ActionMenuItem("Remove “\(preset.name)” (\(preset.applies == .pdfs ? "PDFs" : "images"))") { [weak self] in
-                    self?.jobs.removePreset(id: preset.id)
-                })
-            }
-            buttons.submenu = list
-            items.append(buttons)
-        }
-        let installed = ServiceShortcut.isInstalled
-        items.append(ActionMenuItem("⌃⌥C for Finder Selection", checked: installed) {
-            if installed {
-                ServiceShortcut.uninstall()
-                ServiceShortcut.offerFinderRelaunch(turnedOn: false)
-            } else if ServiceShortcut.install() {
-                ServiceShortcut.offerFinderRelaunch()
-            } else {
-                ServiceShortcut.openKeyboardSettings()
-            }
-        })
-        items.append(toggle("Pause", SettingsKeys.paused))
-        items.append(.separator())
         let quit = NSMenuItem(title: "Quit \(AppIdentity.name)", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         quit.target = NSApp
         items.append(quit)
@@ -380,5 +352,106 @@ final class AppCoordinator: PanelHost {
               let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { return nil }
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return (try? data.write(to: url)) != nil ? url : nil
+    }
+}
+
+// MARK: - Settings host
+
+extension AppCoordinator: SettingsHost {
+    func settingsApplyHotkeys() -> Set<UInt32> { applyHotkeys() }
+
+    func settingsSuspendHotkeys() {
+        HotkeyCenter.shared.unregister(id: 1)
+        HotkeyCenter.shared.unregister(id: 2)
+    }
+
+    func settingsShowMenuBarIcon(_ visible: Bool) {
+        if visible {
+            if statusItem == nil { installStatusItem() }
+        } else {
+            panel.close(animated: false)
+            statusItem?.remove()
+            statusItem = nil
+        }
+    }
+
+    func settingsPracticeWheel() {
+        if let practice = tutorial?.practice ?? PracticePicture.url {
+            wheel.show(DraggedFiles(urls: [practice]), at: NSEvent.mouseLocation, mode: .click)
+        }
+    }
+
+    func settingsShowOnboarding() {
+        let model = OnboardingModel(settings: settings)
+        model.host = self
+        windows.show("welcome", title: "Welcome", size: CGSize(width: 560, height: 470)) { OnboardingView(model: model) }
+    }
+
+    func settingsShowTutorial() {
+        windows.close("tutorial")
+        let model = TutorialModel(settings: settings)
+        model.host = self
+        tutorial = model
+        windows.show("tutorial", title: "Tutorial", size: CGSize(width: 520, height: 250), floating: true) { TutorialView(model: model) }
+    }
+
+    func settingsSetDevHUD(_ on: Bool) {
+        if on {
+            hud.lines = { [weak self] in
+                guard let self else { return [] }
+                return ["jobs \(jobs.active.count) · wheel \(wheel.isVisible ? "shown" : "hidden") · panel \(panel.isOpen ? "open" : "closed")",
+                        lastDrag, "trigger \(triggerName) · \(settings.value(SettingsKeys.wheelLayout))"]
+            }
+            hud.show()
+        } else {
+            hud.hide()
+        }
+    }
+
+    func settingsDiagnostics() -> String {
+        let info = Bundle.main.infoDictionary ?? [:]
+        var arch = "unknown"
+        #if arch(arm64)
+        arch = "arm64"
+        #elseif arch(x86_64)
+        arch = "x86_64"
+        #endif
+        let writable = SlotProvider.ringImageCandidates.filter { FormatSupport.current.canWrite($0) }.map(\.displayName)
+        let settingsJSON = (try? settings.exportJSON()).flatMap { String(data: $0, encoding: .utf8) } ?? "{}"
+        return """
+        \(AppIdentity.name) \(info["CFBundleShortVersionString"] as? String ?? "?") (\(info["CFBundleVersion"] as? String ?? "?"))
+        macOS \(ProcessInfo.processInfo.operatingSystemVersionString) · \(arch)
+        Memory \(MemoryFootprint.megabytes) · jobs running \(jobs.active.count)
+        Image formats written: \(writable.joined(separator: ", "))
+        Launch at login: \(LoginItem.status.rawValue) · ⌃⌥C service: \(ServiceShortcut.isInstalled ? "on" : "off")
+        Watch folders: \(watch.rules.count) (\(watch.rules.filter(\.enabled).count) on)
+        \(lastDrag)
+
+        Settings:
+        \(settingsJSON)
+        """
+    }
+
+    var settingsWatch: WatchFolderService { watch }
+    var settingsJobs: JobCenter { jobs }
+}
+
+// MARK: - Welcome and tutorial host
+
+extension AppCoordinator: OnboardingHost {
+    func onboardingFinished(launchAtLogin: Bool, startTutorial: Bool) {
+        settings.set(true, for: SettingsKeys.onboardingCompleted)
+        settings.set(launchAtLogin, for: SettingsKeys.launchAtLogin)
+        LoginItem.set(launchAtLogin)
+        if ServiceShortcut.isInstalled { ServiceShortcut.offerFinderRelaunch() }
+        windows.close("welcome")
+        if startTutorial { settingsShowTutorial() }
+    }
+
+    func onboardingPracticeWheel() { settingsPracticeWheel() }
+
+    func tutorialClose() {
+        windows.close("tutorial")
+        tutorial = nil
     }
 }

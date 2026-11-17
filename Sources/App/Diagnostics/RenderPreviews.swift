@@ -14,6 +14,7 @@ enum RenderPreviews {
             try renderDialogs(into: directory)
             try renderPanels(into: directory)
             try renderIcons(into: directory)
+            try renderSettings(into: directory)
             let variants: [(name: String, bar: NSColor, glyph: NSColor)] = [
                 ("light-mono", NSColor(hex: 0xE4E0DA), NSColor(hex: 0x1D1B18)),
                 ("dark-mono", NSColor(hex: 0x26272C), NSColor(hex: 0xF2F2F2)),
@@ -82,6 +83,67 @@ enum RenderPreviews {
         }
         try snapshot(StatsWindowView(model: model).frame(width: 540, height: 560), background: 0x0D0F14,
                      to: directory.appendingPathComponent("window-stats@2x.png"))
+    }
+
+    /// Every Settings page, the whole window, the welcome steps and the tutorial.
+    private static func renderSettings(into directory: URL) throws {
+        let suite = "\(AppIdentity.bundleID).previews-settings"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let settings = SettingsStore(defaults: defaults)
+        let jobs = JobCenter(settings: settings, history: HistoryStore(file: "preview-h-\(UUID().uuidString).json"),
+                             stats: StatsStore(file: "preview-s-\(UUID().uuidString).json"))
+        let watch = WatchFolderService(settings: settings, jobs: jobs)
+        let host = PreviewSettingsHost(watch: watch, jobs: jobs)
+        let model = SettingsModel(store: settings)
+        model.host = host
+        let preview = WheelPreviewRenderer()
+        for page in SettingsPage.allCases {
+            model.page = page
+            try snapshot(SettingsPageView(model: model, preview: preview).frame(width: 600), background: 0x0D0F14,
+                         to: directory.appendingPathComponent("settings-\(page.rawValue)@2x.png"))
+        }
+        // A light theme and custom sizes, to check the live preview follows.
+        settings.set("ring", for: SettingsKeys.wheelLayout)
+        Appearance.apply(theme: "midnight", to: settings)
+        settings.set("light", for: SettingsKeys.wheelScheme)
+        settings.set(1.2, for: SettingsKeys.ringThickness)
+        settings.set("#5CE1FF", for: SettingsKeys.tintTools)
+        settings.set("upper", for: SettingsKeys.labelCase)
+        model.page = .appearance
+        try snapshot(SettingsPageView(model: model, preview: preview).frame(width: 600), background: 0x0D0F14,
+                     to: directory.appendingPathComponent("settings-appearance-custom@2x.png"))
+        model.page = .general
+        try snapshot(SettingsView(model: model).frame(width: 880, height: 640), background: 0x0D0F14,
+                     to: directory.appendingPathComponent("window-settings@2x.png"))
+        let onboarding = OnboardingModel(settings: settings)
+        for step in 0..<3 {
+            onboarding.step = step
+            try snapshot(OnboardingView(model: onboarding), background: 0x0D0F14,
+                         to: directory.appendingPathComponent("welcome-\(step + 1)@2x.png"))
+        }
+        let tutorial = TutorialModel(settings: settings)
+        for step in [TutorialModel.Step.drag, .choose, .done, .finished] {
+            tutorial.step = step
+            if step == .done { tutorial.resultLine = "Practice photo.jpg · 41 KB" }
+            try snapshot(TutorialView(model: tutorial), background: 0x0D0F14,
+                         to: directory.appendingPathComponent("tutorial-\(step.rawValue + 1)@2x.png"))
+        }
+    }
+
+    private final class PreviewSettingsHost: SettingsHost {
+        let settingsWatch: WatchFolderService
+        let settingsJobs: JobCenter
+        init(watch: WatchFolderService, jobs: JobCenter) { settingsWatch = watch; settingsJobs = jobs }
+        func settingsApplyHotkeys() -> Set<UInt32> { [] }
+        func settingsSuspendHotkeys() {}
+        func settingsShowMenuBarIcon(_ visible: Bool) {}
+        func settingsPracticeWheel() {}
+        func settingsShowOnboarding() {}
+        func settingsShowTutorial() {}
+        func settingsSetDevHUD(_ on: Bool) {}
+        func settingsDiagnostics() -> String { "" }
     }
 
     private static func snapshot<V: View>(_ view: V, background: UInt32, to url: URL) throws {
@@ -231,7 +293,8 @@ enum RenderPreviews {
                                  detail: single ? "3.2 MB" : "8.7 MB total", count: count,
                                  thumbnail: samplePicture(size: 240, scale: 2), clickMode: false)
         let geometry = WheelGeometry.make(kind)
-        renderer.configure(menu: menu, orb: content, accent: .hex(accent), geometry: geometry, contentsScale: 2)
+        renderer.configure(menu: menu, orb: content, style: WheelStyle.board(accent: accent, light: kind == .orbit),
+                           geometry: geometry, contentsScale: 2)
         var s = state
         if case .segment = s.hover {
             let o = WheelGeometry.offset(radius: geometry.contentRadius(hovered: true), angle: 60)

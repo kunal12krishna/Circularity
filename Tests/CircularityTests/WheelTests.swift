@@ -146,3 +146,42 @@ final class SlotProviderTests: XCTestCase {
         XCTAssertEqual(menu.notice?.big, "ZIP")
     }
 }
+
+final class WheelTweaksTests: XCTestCase {
+    func testBoardTweaksChangeNothing() {
+        XCTAssertEqual(WheelGeometry.make(.ring, tweaks: .board), WheelGeometry.ring())
+        XCTAssertEqual(WheelGeometry.make(.halo, tweaks: .board), WheelGeometry.halo())
+    }
+
+    func testThicknessGapAndOrb() {
+        let g = WheelGeometry.make(.ring, tweaks: WheelTweaks(thickness: 1.2, gap: 6, orbScale: 1.15))
+        XCTAssertEqual(g.restInner, 98)
+        XCTAssertEqual(g.restOuter, 98 + 106 * 1.2, accuracy: 0.001)
+        XCTAssertEqual(g.hoverOuter - g.restOuter, 12, accuracy: 0.001, "the bulge stays the same")
+        XCTAssertEqual(g.segmentSpan, 54)
+        XCTAssertLessThanOrEqual(g.orbDiameter, g.restInner * 2 - 8, "the orb never grows into the segments")
+        XCTAssertGreaterThanOrEqual(g.discDiameter / 2, g.hoverOuter, "the disc still contains the bulge")
+    }
+
+    func testOutOfRangeValuesAreClamped() {
+        let g = WheelGeometry.make(.ring, tweaks: WheelTweaks(thickness: 9, gap: 40, orbScale: 0.1))
+        XCTAssertEqual(g.restOuter, 98 + 106 * 1.2, accuracy: 0.001)
+        XCTAssertEqual(g.segmentSpan, 52)
+        XCTAssertEqual(g.orbDiameter, 180 * 0.85, accuracy: 0.001)
+    }
+}
+
+final class FormatOrderTests: XCTestCase {
+    func testOrderSettingIsParsedAndCompleted() {
+        let order = SlotProvider.imageFormatOrder("heic, JPEG,bogus,png,heic")
+        XCTAssertEqual(Array(order.prefix(3)), [.heic, .jpg, .png])
+        XCTAssertEqual(Set(order), Set(SlotProvider.ringImageCandidates), "every format is still offered")
+        XCTAssertEqual(SlotProvider.imageFormatOrder(""), SlotProvider.ringImageCandidates)
+    }
+
+    func testRingFollowsTheOrder() {
+        let menu = SlotProvider.menu(for: [.png], canWrite: { _ in true }, presets: [],
+                                     formatOrder: SlotProvider.imageFormatOrder("avif,heic,jpg"))
+        XCTAssertEqual(menu.ring.prefix(3).map { $0?.action }, [.convert(.avif), .convert(.heic), .convert(.jpg)])
+    }
+}

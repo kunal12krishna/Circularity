@@ -22,6 +22,7 @@ final class SectorRenderer: WheelRenderer {
     private var geometry: WheelGeometry
     private var menu = WheelMenu(ring: Array(repeating: nil, count: 6), fan: [], notice: nil)
     private var accent: CGColor = .hex(0xFF8A00)
+    private var look = WheelStyle.board(accent: 0xFF8A00)
     private var contentsScale: CGFloat = 2
     private var clickMode = false
     private var thumbnail: CGImage?
@@ -61,15 +62,7 @@ final class SectorRenderer: WheelRenderer {
     init(style: Style) {
         self.style = style
         geometry = style == .ring ? .ring() : .halo()
-        tokens = style == .ring
-            ? Tokens(segRest: .white(0.07), segEmpty: .white(0.03), segStroke: .white(0.10), segHotStroke: .white(0.35),
-                     fgRest: .hex(0xF4F1EC), fgHot: .hex(0x1A1206), captionRest: .hex(0xC9C3B9), dimOthers: true,
-                     chipFill: .hex(0x1C1C20, 0.72), chipBorder: .white(0.16),
-                     chipFont: WheelFont.rounded(12, .bold), chipKern: 0, chipCorner: nil)
-            : Tokens(segRest: .hex(0x1B1D23), segEmpty: .hex(0x15171C), segStroke: nil, segHotStroke: nil,
-                     fgRest: .hex(0xECEEF2), fgHot: .hex(0x0D0F14), captionRest: .hex(0x9097A6), dimOthers: false,
-                     chipFill: .hex(0x1B1D23), chipBorder: .white(0.10),
-                     chipFont: WheelFont.mono(12, .bold), chipKern: 0.72, chipCorner: 8)
+        tokens = Self.tokens(style, look: look)
 
         for l in [shadow, disc, glow, band, hairline, segmentsLayer, fanLayer, orb.layer] as [CALayer] { layer.addSublayer(l) }
         // Perspective for the hovered segment's tilt.
@@ -87,13 +80,41 @@ final class SectorRenderer: WheelRenderer {
         }
     }
 
+    private static func tokens(_ style: Style, look: WheelStyle) -> Tokens {
+        switch (style, look.light) {
+        case (.ring, false):
+            Tokens(segRest: .white(0.07), segEmpty: .white(0.03), segStroke: .white(0.10), segHotStroke: .white(0.35),
+                   fgRest: .hex(0xF4F1EC), fgHot: look.onAccent, captionRest: .hex(0xC9C3B9), dimOthers: true,
+                   chipFill: .hex(0x1C1C20, 0.72), chipBorder: .white(0.16),
+                   chipFont: look.labelFont(12, .bold), chipKern: 0, chipCorner: nil)
+        case (.ring, true):
+            Tokens(segRest: .black(0.06), segEmpty: .black(0.03), segStroke: .black(0.10), segHotStroke: .black(0.25),
+                   fgRest: .hex(0x1D1B18), fgHot: look.onAccent, captionRest: .hex(0x4A453E), dimOthers: true,
+                   chipFill: .hex(0xFFFFFF, 0.86), chipBorder: .black(0.12),
+                   chipFont: look.labelFont(12, .bold), chipKern: 0, chipCorner: nil)
+        case (.halo, _):
+            Tokens(segRest: .hex(0x1B1D23), segEmpty: .hex(0x15171C), segStroke: nil, segHotStroke: nil,
+                   fgRest: .hex(0xECEEF2), fgHot: look.onAccent, captionRest: .hex(0x9097A6), dimOthers: false,
+                   chipFill: .hex(0x1B1D23), chipBorder: .white(0.10),
+                   chipFont: WheelFont.mono(12, .bold), chipKern: 0.72, chipCorner: 8)
+        }
+    }
+
+    /// The resting fill of a segment: its category tint, if one is set.
+    private func restFill(_ i: Int) -> CGColor {
+        guard let slot = menu.ring[i], let tint = look.tint(for: slot) else { return tokens.segRest }
+        return tint.copy(alpha: style == .ring ? 0.22 : 0.2) ?? tokens.segRest
+    }
+
     // MARK: Configure
 
-    func configure(menu: WheelMenu, orb content: OrbContent, accent: CGColor, geometry g: WheelGeometry,
+    func configure(menu: WheelMenu, orb content: OrbContent, style look: WheelStyle, geometry g: WheelGeometry,
                    contentsScale: CGFloat) {
         transact(0, animated: false) {
             self.menu = menu
-            self.accent = accent
+            self.look = look
+            self.accent = look.accent
+            tokens = Self.tokens(style, look: look)
             self.contentsScale = contentsScale
             clickMode = content.clickMode
             thumbnail = content.thumbnail
@@ -114,12 +135,14 @@ final class SectorRenderer: WheelRenderer {
                 : DiscImages.outerShadow(diameter: d, offsetY: 30 * s, blur: 80 * s, color: .black(0.7), canvas: size, scale: blurScale)
             disc.path = CGPath(ellipseIn: discRect, transform: nil)
             if style == .ring {
-                disc.fillColor = .hex(0x18181C, 0.55)
+                let strength = min(1, max(0, look.glassStrength))
+                disc.fillColor = look.light ? .hex(0xFFFFFF, strength) : .hex(0x18181C, strength)
                 disc.strokeColor = nil
                 glow.frame = discRect
-                glow.contents = DiscImages.innerGlow(diameter: d, offsetY: 2 * s, blur: 34 * s, color: .white(0.07), scale: blurScale)
+                glow.contents = DiscImages.innerGlow(diameter: d, offsetY: 2 * s, blur: 34 * s,
+                                                     color: look.light ? .white(0.5) : .white(0.07), scale: blurScale)
                 hairline.path = CGPath(ellipseIn: discRect.insetBy(dx: 0.5, dy: 0.5), transform: nil)
-                hairline.strokeColor = .white(0.12)
+                hairline.strokeColor = look.light ? .black(0.10) : .white(0.12)
                 hairline.lineWidth = 1
                 band.isHidden = true
             } else {
@@ -145,7 +168,7 @@ final class SectorRenderer: WheelRenderer {
             for i in segments.indices { configureSegment(i) }
             rebuildChips()
 
-            orb.configure(style: style == .ring ? .ring : .halo, scale: s, accent: accent, contentsScale: contentsScale,
+            orb.configure(style: style == .ring ? .ring : .halo, scale: s, diameter: g.orbDiameter, look: look, contentsScale: contentsScale,
                           fileLine: content.fileLine, count: content.count, thumbnail: content.thumbnail)
             orb.layer.position = center
             apply(state, animated: false)
@@ -172,7 +195,7 @@ final class SectorRenderer: WheelRenderer {
         seg.hot = false
         guard let slot = menu.ring[i] else {
             seg.icon.contents = nil
-            seg.label.set("", font: WheelFont.rounded(15 * s, .bold), color: tokens.fgRest)
+            seg.label.set("", font: look.labelFont(15 * s, .bold), color: tokens.fgRest)
             seg.caption.set("", font: WheelFont.rounded(10 * s, .semibold), color: tokens.captionRest)
             segments[i] = seg
             return
@@ -197,23 +220,29 @@ final class SectorRenderer: WheelRenderer {
         let s = geometry.scale
         let seg = segments[i]
         let fg = hot ? tokens.fgHot : tokens.fgRest
+        let ls = look.labelScale
         if style == .ring {
-            seg.label.set(slot.label, font: WheelFont.rounded(15 * s, .bold), color: fg, kern: 0.3 * s)
+            seg.label.set(look.label(slot.label), font: look.labelFont(15 * s * ls, .bold), color: fg, kern: 0.3 * s,
+                          maxWidth: 96 * s, minScale: 0.7)
             if let image = hot ? seg.hotIcon : seg.restIcon {
                 seg.icon.contents = image
                 seg.icon.bounds = CGRect(x: 0, y: 0, width: CGFloat(image.width) / contentsScale,
                                          height: CGFloat(image.height) / contentsScale)
             }
         } else {
-            seg.label.set(slot.monoLabel, font: WheelFont.mono(15 * s, .bold), color: fg, kern: 1.2 * s)
+            seg.label.set(slot.monoLabel, font: WheelFont.mono(15 * s * ls, .bold), color: fg, kern: 1.2 * s,
+                          maxWidth: 80 * s, minScale: 0.7)
             let caption: CGColor = hot ? hotCaptionColor : tokens.captionRest
-            seg.caption.set(slot.caption, font: WheelFont.rounded(10 * s, .semibold), color: caption, kern: 0.4 * s)
+            seg.caption.set(slot.caption, font: WheelFont.rounded(10 * s * ls, .semibold), color: caption, kern: 0.4 * s,
+                            maxWidth: 80 * s, minScale: 0.7)
         }
     }
 
-    /// Board C uses #2A3300 under its neon accent; other accents get the dark fg at 75 %.
+    /// Board C uses #2A3300 under its neon accent; other accents get the
+    /// on-accent colour at 75 % (dark or white, whichever reads).
     private var hotCaptionColor: CGColor {
-        accent == CGColor.hex(0xC6FF3D) ? .hex(0x2A3300) : tokens.fgHot.copy(alpha: 0.75) ?? tokens.fgHot
+        if RGB(cg: accent).hexString == "#C6FF3D" { return .hex(0x2A3300) }
+        return tokens.fgHot.copy(alpha: look.onAccentIsDark ? 0.75 : 0.85) ?? tokens.fgHot
     }
 
     private func rebuildChips() {
@@ -248,7 +277,7 @@ final class SectorRenderer: WheelRenderer {
 
     private func styleChip(_ k: Int, hot: Bool, animated: Bool) {
         let c = chips[k], slot = menu.fan[k], s = geometry.scale
-        let text = style == .ring ? slot.label : slot.monoLabel
+        let text = style == .ring ? look.label(slot.label) : slot.monoLabel
         let font = NSFont(descriptor: tokens.chipFont.fontDescriptor, size: tokens.chipFont.pointSize * s) ?? tokens.chipFont
         c.label.set(text, font: font, color: hot ? tokens.fgHot : tokens.fgRest, kern: tokens.chipKern * s,
                     maxWidth: c.group.bounds.width - 6 * s, minScale: 0.7)
@@ -366,7 +395,7 @@ final class SectorRenderer: WheelRenderer {
                 seg.shape.shadowOffset = .zero
                 seg.shape.shadowOpacity = hot ? 0.55 : 0
             }
-            seg.shape.fillColor = empty ? tokens.segEmpty : (hot ? accent : tokens.segRest)
+            seg.shape.fillColor = empty ? tokens.segEmpty : (hot ? accent : restFill(i))
             seg.shape.strokeColor = dwc ? .white(0.9) : (hot ? tokens.segHotStroke : tokens.segStroke)
             seg.shape.lineWidth = dwc ? 2.5 : 1
             seg.shape.lineDashPattern = dwc ? [5, 3] : nil
@@ -404,9 +433,9 @@ final class SectorRenderer: WheelRenderer {
         for (i, seg) in segments.enumerated() {
             let fade = CABasicAnimation(keyPath: "opacity"); fade.fromValue = 0; fade.toValue = seg.group.opacity
             let grow = CABasicAnimation(keyPath: "transform.scale"); grow.fromValue = 0.9; grow.toValue = 1
-            let g = CAAnimationGroup(); g.animations = [fade, grow]; g.duration = 0.18
+            let g = CAAnimationGroup(); g.animations = [fade, grow]; g.duration = Motion.duration(0.18)
             g.timingFunction = CAMediaTimingFunction(name: .easeOut)
-            g.beginTime = now + Double(i) * 0.025; g.fillMode = .backwards
+            g.beginTime = now + Motion.duration(Double(i) * 0.025); g.fillMode = .backwards
             seg.group.add(g, forKey: "pop")
         }
     }

@@ -5,6 +5,18 @@ nonisolated enum WheelLayoutKind: String, Sendable, CaseIterable {
     case ring, orbit, halo
 }
 
+/// Size controls from Settings → Appearance (multipliers on the board values).
+nonisolated struct WheelTweaks: Sendable, Equatable {
+    /// Ring thickness, 0.8 … 1.2.
+    var thickness: CGFloat = 1
+    /// Gap between segments in degrees (board D: 3).
+    var gap: CGFloat = 3
+    /// Centre orb size, 0.85 … 1.15.
+    var orbScale: CGFloat = 1
+
+    static let board = WheelTweaks()
+}
+
 /// What the pointer is over.
 nonisolated enum WheelTarget: Sendable, Equatable, Hashable {
     case none
@@ -64,12 +76,32 @@ nonisolated struct WheelGeometry: Sendable, Equatable {
                       fanRadius: 262, fanStep: 24, fanChipSize: CGSize(width: 72, height: 36), fanHoverScale: 1.12)
     }
 
-    static func make(_ kind: WheelLayoutKind, scale: CGFloat = 1) -> WheelGeometry {
-        switch kind {
+    static func make(_ kind: WheelLayoutKind, scale: CGFloat = 1, tweaks: WheelTweaks = .board) -> WheelGeometry {
+        var g: WheelGeometry = switch kind {
         case .ring: ring(scale: scale)
         case .halo: halo(scale: scale)
         case .orbit: orbit(scale: scale)
         }
+        g.apply(tweaks)
+        return g
+    }
+
+    /// Thickness grows the ring outward from its inner edge; the gap sets the
+    /// segment span (Halo's board gap is 2°, so it gets two thirds of Ring's);
+    /// the orb never grows into the segments.
+    mutating func apply(_ t: WheelTweaks) {
+        guard kind != .orbit else {
+            orbDiameter *= min(1.15, max(0.85, t.orbScale))
+            return
+        }
+        let k = min(1.2, max(0.8, t.thickness))
+        let bulge = (hoverOuter - restOuter)
+        restOuter = restInner + (restOuter - restInner) * k
+        hoverOuter = restOuter + bulge
+        let gap = min(8, max(1, t.gap)) * (kind == .halo ? 2.0 / 3.0 : 1)
+        segmentSpan = 60 - gap
+        orbDiameter = min(orbDiameter * min(1.15, max(0.85, t.orbScale)), restInner * 2 - 8)
+        discDiameter = max(discDiameter, (hoverOuter + 2) * 2)
     }
 
     // MARK: Basics

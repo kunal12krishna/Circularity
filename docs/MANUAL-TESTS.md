@@ -86,15 +86,15 @@ an iPhone photo (HEIC), a PNG screenshot, a multi-page PDF, a `.md`, a `.docx` a
 | 36 | More → **Crop**. Drag the box, its corners and edges; try **1:1** and **16:9**. | The box stays inside the image and keeps the ratio; the subtitle shows the pixel size. **Crop** writes `name (cropped).…`. |
 | 37 | In Compress or Resize, turn on **Also add this as a button on the wheel** and run it. Then open the wheel on another image and rest on More. | Your button (e.g. "Q70", "1920w", "<2 MB") is the first chip; dropping on it runs it with no dialog. PDF buttons only appear for PDFs. Remove buttons from the menu → **Saved Wheel Buttons**. |
 | 38 | Drop a **PDF** on Compress, Resize (Scale / Paper) and Crop. | PDF versions of each dialog; results are `name (compressed).pdf` (or "Kept the original …"), `name (resized).pdf`, `name (cropped).pdf`. |
-| 39 | Menu → **⌃⌥C for Finder Selection** (ticked) → click it. | It turns off and offers to relaunch Finder. Click it again to turn it back on. |
-| 40 | Menu → **Halo Accent** → Cyan / Pink / Tangerine / Neon Lime. | The Halo wheel and the dialogs use that colour. |
+| 39 | Settings → General → **⌃⌥C converts the Finder selection** off, then on. | It turns off and offers to relaunch Finder; on again offers the same. |
+| 40 | Settings → Appearance → pick another accent swatch. | The wheel, panel and dialogs use that colour. |
 
 ## Milestones (h) + (h2): menu bar panel and extras
 
 | # | Do this | Expect |
 |---|---|---|
 | 41 | Click the menu bar icon. | The panel springs open under it (board I, in your accent). Click elsewhere or press Esc: it fades away. |
-| 42 | Right-click the icon. | The settings menu (layouts, accents, icon style, panel width, recents, grid, ⌃⌥C, Pause…). |
+| 42 | Right-click the icon. | A short menu: Open Panel, Settings… (⌘,), History, Stats, Watch Folders, Convert Clipboard, Practice Wheel, Tutorial, Pause, Quit. |
 | 43 | Convert something, watch the icon. | A progress ring while converting; a short pulse and a tick when done; back to the ring glyph after 3 s. A failed job shows a red badge until you open the panel. |
 | 44 | Drag a file over the icon and hold. | The panel opens with the drop zone ready. Drag down onto the drop zone: it turns into a mini wheel. Drop on a segment: that conversion runs. Drop on the icon itself: the full wheel opens. |
 | 45 | Drop a file on a preset tile (→ JPG, < 2 MB, 1920w, No GPS). | It runs on that file. Click a tile: it runs on the last files you used, or asks you to choose. |
@@ -104,6 +104,33 @@ an iPhone photo (HEIC), a PNG screenshot, a multi-page PDF, a `.md`, a `.docx` a
 | 49 | Click **Show all**, **TODAY** and **WATCHING**. | History (searchable), Stats (30-day chart, by format, reset), Watch Folders. |
 | 50 | Watch Folders → **Screenshots → JPG**, take a screenshot. | A JPG of it appears next to it a couple of seconds later. Desktop is protected: macOS asks once (the app explains first). |
 | 51 | Click **Edit** in Presets. | Drag tiles to reorder, ✕ to remove, the palette to recolour; Restore brings the built-ins back. |
-| 52 | Click the **pin** in the footer. | The panel becomes a floating window in a corner. Drag it near another corner: it snaps there and remembers it for that display. Unpin from its footer. Right-click the icon → Pinned Panel Size / Ignores Clicks. |
-| 53 | Right-click the icon → **Panel Layout → Tabs**, then **Mini**. | Tabs: light, Now / Recent / Presets (⌘1 ⌘2 ⌘3). Mini: dark Halo panel with a big Halo drop wheel and a recent strip. Same behaviour in all three. |
+| 52 | Click the **pin** in the footer. | The panel becomes a floating window in a corner. Drag it near another corner: it snaps there and remembers it for that display. Unpin from its footer. Size and click-through are in Settings → Menu Bar → Pinned panel. |
+| 53 | Settings → Menu Bar → **Layout → Tabs**, then **Mini**. | Tabs: light, Now / Recent / Presets (⌘1 ⌘2 ⌘3). Mini: dark Halo panel with a big Halo drop wheel and a recent strip. Same behaviour in all three. |
 | 54 | Drag two photos, tap Shift. | "Combine" (PDF) is on the ring. Rest on **More**: the fan opens. |
+| 55 | With the panel open, press on a file in Finder and drag it into the panel. | The panel stays open; drop on a tile or the drop zone. (A plain click outside still closes it.) |
+| 56 | ⌃⌥Space, type `10kb`, ↩ (with a recent photo). | Typing never closes the panel. The note under the header says the new size and pixel size, e.g. "… · 9.6 KB (−99 %) · 2417 × 1812 — Shrunk to … to fit". |
+| 57 | Drag two JPGs, tap Shift, rest on More. | Two PDF chips: **1 PDF** (one combined file) and **2 PDFs** (one per image). |
+
+## Milestone (i): Settings, appearance, welcome, tutorial
+
+Quit the app first and relaunch the new build (`open build/DerivedData/Build/Products/Debug/Circularity.app`).
+
+| # | Do this | Expect |
+|---|---|---|
+| 58 | First launch of this build. | The welcome window: three steps (how it works, what it doesn't touch, choices). "Show me how" opens the tutorial. |
+| 59 | Tutorial: drag the picture, tap Shift, drop on JPG; then Next: More, drag again, rest on More, drop on TIFF. | Each step moves on by itself when you do it. "Show the file" opens the practice folder. |
+| 60 | Right-click the icon → **Settings…** (or the panel's gear, or ⌘, in the panel). | The Settings window with 11 pages in the sidebar. Opening the app again from Finder also opens it. |
+| 61 | Wheel page: switch Halo / Ring / Orbit, hover the preview chips; drag formats in the list (e.g. HEIC to the top). | The preview follows at once; the next real drag shows the new layout and HEIC on the wheel. |
+| 62 | Wheel page: Sounds → Click, press Play; Opening animation → Pop, speed 2×. Drag a file and tap Shift. | Quiet ticks on hover and a click on drop; the wheel pops in faster. Set Sounds back to Off. |
+| 63 | Appearance: try each theme, then Wheel colours → Light with Ring. Move Ring thickness, Gap, Centre size, Label size. | The preview and the next wheel follow. Text on the accent stays readable (dark on light accents, white on dark ones). Reset appearance brings the defaults back. |
+| 64 | Appearance → Export theme…, change the accent, Import… the file. | The exported accent comes back. |
+| 65 | Output → In a folder → choose one; template `{name} {format}`; convert a photo. | The result lands in that folder as `photo JPG.jpg`. Convert again with "If the name is taken" = timestamp: `photo JPG 2026-… at ….jpg`. |
+| 66 | Output → Show it in Finder on; convert something. | Finder opens with the result selected. (Turn it off after.) |
+| 67 | General → Open the panel → click the shortcut, press ⌃⌥P. | The panel now opens with ⌃⌥P; ⌃⌥Space does nothing. "Default" puts it back. A shortcut another app owns shows a red note. |
+| 68 | General → Show in the menu bar off. | The icon disappears; dragging + Shift still works. Open the app from Finder: the icon and Settings come back. |
+| 69 | Gesture → Excluded apps → Add… Finder. Drag a file in Finder and tap Shift. | No wheel. Remove Finder: it works again. |
+| 70 | Menu Bar → Sections: hide Stats, move Recent to the top; Density → Compact. | The panel follows at once. |
+| 71 | Menu Bar → Open on hover on. Rest the pointer on the icon. | The panel opens after about half a second. |
+| 72 | Notifications → on (allow when macOS asks) → Send a test; convert a file. | A banner; for a conversion it has Open and Show in Finder. |
+| 73 | Advanced → Developer HUD on. | A small readout top-right (memory, jobs, wheel, last drag). Off removes it. Save report… writes a text file and shows it. |
+| 74 | General → Launch at login on. | System Settings → General → Login Items lists Circularity (macOS may ask you to approve). |

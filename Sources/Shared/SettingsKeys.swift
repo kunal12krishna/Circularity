@@ -24,10 +24,12 @@ nonisolated struct AnySettingsKey: Sendable {
     let reserved: Bool
 }
 
-/// Every settings key, declared once. Milestones add keys here as features land.
+/// Every settings key, declared once. `all` drives defaults, export/import
+/// and reset; SettingsKeysTests checks that every key is listed.
 nonisolated enum SettingsKeys {
     /// Bumped when a key is renamed or its meaning changes; drives migrations.
-    static let schemaVersion = 1
+    /// v2: one accent for every surface (Halo's neon moved into `accentHex`).
+    static let schemaVersion = 2
     static let schemaVersionKey = "settings.schemaVersion"
 
     // MARK: General
@@ -35,6 +37,8 @@ nonisolated enum SettingsKeys {
     static let showInMenuBar = SettingsKey("general.showInMenuBar", true)
     static let launchAtLogin = SettingsKey("general.launchAtLogin", true)
     static let onboardingCompleted = SettingsKey("general.onboardingCompleted", false)
+    static let hotkeyPanel = SettingsKey("general.hotkey.panel", "49:6144")         // keyCode:carbonModifiers (⌃⌥Space); "" = off
+    static let hotkeyClipboard = SettingsKey("general.hotkey.clipboard", "9:6144")  // ⌃⌥V
 
     // MARK: Gesture (all three triggers on by default, PLAN.md A3)
     static let triggerKey = SettingsKey("gesture.triggerKey", "shift")          // shift | option | control
@@ -46,33 +50,79 @@ nonisolated enum SettingsKeys {
     static let serviceShortcutInstalled = SettingsKey("gesture.serviceShortcutInstalled", false)
     static let excludedApps = SettingsKey("gesture.excludedApps", [String]())     // bundle IDs
 
-    // MARK: Looks
+    // MARK: Wheel
     static let wheelLayout = SettingsKey("wheel.layout", "halo")                // ring | orbit | halo (Halo: the user's favourite)
-    static let wheelScale = SettingsKey("wheel.scale", 1.0)                      // 0.7 … 1.4
     static let moreHoverDelayMs = SettingsKey("wheel.moreHoverDelayMs", 150)
     static let smartOrdering = SettingsKey("wheel.smartOrdering", true)
     static let haptics = SettingsKey("wheel.haptics", true)
+    static let soundPack = SettingsKey("wheel.soundPack", "off")                // off | soft | click | glass
+    static let animationStyle = SettingsKey("wheel.animation", "bloom")         // bloom | pop | fade | instant
+    static let animationSpeed = SettingsKey("wheel.animationSpeed", 1.0)        // 0.5 … 2
+    static let imageFormatOrder = SettingsKey("wheel.imageFormatOrder", "")     // comma-separated extensions; "" = default
     static let wheelUsage = SettingsKey("wheel.usage", [String: Int]())          // smart-ordering counts
-    static let haloAccentHex = SettingsKey("wheel.halo.accentHex", "#C6FF3D")    // board C neon
+
+    // MARK: Output
+    static let destination = SettingsKey("output.destination", "original")      // original | folder
+    static let outputFolder = SettingsKey("output.folder", "")
+    static let folderImages = SettingsKey("output.folder.images", "")
+    static let folderPDFs = SettingsKey("output.folder.pdfs", "")
+    static let folderDocuments = SettingsKey("output.folder.documents", "")
+    static let namingTemplate = SettingsKey("output.template", "{name}")
+    static let collisionStyle = SettingsKey("output.collision", "number")       // number | time
+    static let afterOpen = SettingsKey("output.after.open", false)
+    static let afterReveal = SettingsKey("output.after.reveal", false)
+    static let afterCopy = SettingsKey("output.after.copy", false)
+    static let metadata = SettingsKey("output.metadata", "keep")                // keep | stripGPS | stripAll
+    static let qualityJPG = SettingsKey("output.quality.jpg", 0.85)
+    static let qualityHEIC = SettingsKey("output.quality.heic", 0.8)
+    static let qualityAVIF = SettingsKey("output.quality.avif", 0.75)
+    static let qualityWebP = SettingsKey("output.quality.webp", 0.8)
+    static let replaceOriginal = SettingsKey("output.replaceOriginal", false)
+
+    // MARK: Appearance
+    static let theme = SettingsKey("appearance.theme", "neon")                  // tangerine | glass | graphite | midnight | mono | neon | custom
+    static let accentHex = SettingsKey("appearance.accentHex", "#C6FF3D")
+    static let glassStrength = SettingsKey("appearance.glassStrength", 0.55)    // 0 … 1: tint of the Ring's glass
+    static let wheelScheme = SettingsKey("appearance.wheelScheme", "auto")      // auto (each layout's board look) | system | light | dark; Halo is always dark
+    static let panelScheme = SettingsKey("menubar.colorScheme", "auto")         // auto (Stack+/Mini dark, Tabs light) | system | light | dark
+    static let tintImages = SettingsKey("appearance.tint.images", "")           // "" = none
+    static let tintDocuments = SettingsKey("appearance.tint.documents", "")
+    static let tintTools = SettingsKey("appearance.tint.tools", "")
+    static let wheelScale = SettingsKey("wheel.scale", 1.0)                      // 0.7 … 1.4
+    static let ringThickness = SettingsKey("appearance.ringThickness", 1.0)      // 0.8 … 1.2
+    static let segmentGap = SettingsKey("appearance.segmentGap", 3.0)            // degrees, 1 … 8
+    static let orbScale = SettingsKey("appearance.orbScale", 1.0)                // 0.85 … 1.15
+    static let labelScale = SettingsKey("appearance.labelScale", 1.0)            // 0.85 … 1.3
+    static let fontStyle = SettingsKey("appearance.font", "rounded")            // rounded | default | mono
+    static let labelCase = SettingsKey("appearance.labelCase", "title")         // title | upper
+
+    // MARK: Menu bar
+    static let panelLayout = SettingsKey("menubar.layout", "stackPlus")         // stackPlus | tabs | mini
+    static let panelWidth = SettingsKey("menubar.width", "m")                   // s | m | l
+    static let panelDensity = SettingsKey("menubar.density", "comfortable")     // comfortable | compact
+    static let panelSections = SettingsKey("menubar.sections", "command,stats,progress,presets,drop,recent") // order; missing = hidden
+    static let iconStyle = SettingsKey("menubar.iconStyle", "monochrome")       // monochrome | colour | minimal
+    static let showPercent = SettingsKey("menubar.showPercent", false)
+    static let openOnHover = SettingsKey("menubar.openOnHover", false)
+    static let openOnDragOver = SettingsKey("menubar.openOnDragOver", true)
     static let presetsJSON = SettingsKey("presets.list", "[]")                   // [Preset] as JSON
     static let watchRulesJSON = SettingsKey("watch.rules", "[]")                 // [WatchRule] as JSON
     static let panelTiles = SettingsKey("menubar.tiles", "")                     // tile ids in order ("" = default)
     static let panelTileColors = SettingsKey("menubar.tileColors", [String: Int]())
     static let recentsCount = SettingsKey("menubar.recentsCount", 5)             // 5 | 10 | 25
     static let presetGrid = SettingsKey("menubar.grid", "3x2")                   // 3x1 | 3x2 | 4x2
-    static let showPercent = SettingsKey("menubar.showPercent", false)
-    static let panelScheme = SettingsKey("menubar.colorScheme", "dark")            // system | light | dark
     static let pinned = SettingsKey("menubar.pinned", false)
     static let pinnedSize = SettingsKey("menubar.pinnedSize", "m")
     static let pinnedClickThrough = SettingsKey("menubar.pinnedClickThrough", false)
     static let pinnedCorners = SettingsKey("menubar.pinnedCorners", [String: String]()) // display id → corner
-    static let theme = SettingsKey("appearance.theme", "tangerine")
-    static let accentHex = SettingsKey("appearance.accentHex", "#FF8A00")
 
-    // MARK: Menu bar
-    static let panelLayout = SettingsKey("menubar.layout", "stackPlus")         // stackPlus | tabs | mini
-    static let panelWidth = SettingsKey("menubar.width", "m")                   // s | m | l
-    static let iconStyle = SettingsKey("menubar.iconStyle", "monochrome")       // monochrome | colour | minimal
+    // MARK: Notifications and advanced
+    static let notifyEnabled = SettingsKey("notify.enabled", false)
+    static let notifySound = SettingsKey("notify.sound", false)
+    static let devHUD = SettingsKey("advanced.devHUD", false)
+
+    // MARK: Legacy (kept so old values can be migrated)
+    static let haloAccentHex = SettingsKey("wheel.halo.accentHex", "#C6FF3D", reserved: true)
 
     // MARK: Reserved for v1.1 (no UI, no behaviour)
     static let mediaPackEnabled = SettingsKey("media.packEnabled", false, reserved: true)
@@ -87,16 +137,25 @@ nonisolated enum SettingsKeys {
     static let finderSelectionViaAutomation = SettingsKey("gesture.finderSelectionViaAutomation", false, reserved: true)
 
     static let all: [AnySettingsKey] = [
-        paused.erased, showInMenuBar.erased, launchAtLogin.erased, onboardingCompleted.erased,
-        triggerKey.erased, triggerMode.erased, triggerDelayMs.erased, shakeEnabled.erased,
-        shakeSensitivity.erased, skipFullScreen.erased, serviceShortcutInstalled.erased, excludedApps.erased,
-        wheelLayout.erased, wheelScale.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased,
-        wheelUsage.erased, haloAccentHex.erased, presetsJSON.erased, watchRulesJSON.erased, panelTiles.erased,
-        panelTileColors.erased, panelScheme.erased, recentsCount.erased, presetGrid.erased, showPercent.erased, pinned.erased, pinnedSize.erased,
-        pinnedClickThrough.erased, pinnedCorners.erased, theme.erased, accentHex.erased,
-        panelLayout.erased, panelWidth.erased, iconStyle.erased,
+        paused.erased, showInMenuBar.erased, launchAtLogin.erased, onboardingCompleted.erased, hotkeyPanel.erased, hotkeyClipboard.erased,
+        triggerKey.erased, triggerMode.erased, triggerDelayMs.erased, shakeEnabled.erased, shakeSensitivity.erased,
+        skipFullScreen.erased, serviceShortcutInstalled.erased, excludedApps.erased,
+        wheelLayout.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased, soundPack.erased,
+        animationStyle.erased, animationSpeed.erased, imageFormatOrder.erased, wheelUsage.erased,
+        destination.erased, outputFolder.erased, folderImages.erased, folderPDFs.erased, folderDocuments.erased,
+        namingTemplate.erased, collisionStyle.erased, afterOpen.erased, afterReveal.erased, afterCopy.erased, metadata.erased,
+        qualityJPG.erased, qualityHEIC.erased, qualityAVIF.erased, qualityWebP.erased, replaceOriginal.erased,
+        theme.erased, accentHex.erased, glassStrength.erased, wheelScheme.erased, panelScheme.erased,
+        tintImages.erased, tintDocuments.erased, tintTools.erased, wheelScale.erased, ringThickness.erased, segmentGap.erased,
+        orbScale.erased, labelScale.erased, fontStyle.erased, labelCase.erased,
+        panelLayout.erased, panelWidth.erased, panelDensity.erased, panelSections.erased, iconStyle.erased, showPercent.erased,
+        openOnHover.erased, openOnDragOver.erased, presetsJSON.erased, watchRulesJSON.erased, panelTiles.erased,
+        panelTileColors.erased, recentsCount.erased, presetGrid.erased, pinned.erased, pinnedSize.erased,
+        pinnedClickThrough.erased, pinnedCorners.erased,
+        notifyEnabled.erased, notifySound.erased, devHUD.erased, haloAccentHex.erased,
         mediaPackEnabled.erased, mediaBundleMode.erased, updatesChannel.erased, updatesAutomatic.erased,
         cliInstalled.erased, urlSchemeEnabled.erased, shortcutsEnabled.erased, officeAutomation.erased,
         advancedEventTap.erased, finderSelectionViaAutomation.erased,
     ]
+
 }

@@ -37,6 +37,14 @@ struct PanelPalette {
         hairline: Color.black.opacity(0.08), docThumb: Color(hex: 0xEDE8E1))
 }
 
+extension PanelPalette {
+    func with(onAccent color: Color) -> PanelPalette {
+        var copy = self
+        copy.onAccent = color
+        return copy
+    }
+}
+
 private struct PanelPaletteKey: EnvironmentKey {
     static let defaultValue = PanelPalette.dark
 }
@@ -388,7 +396,7 @@ struct MiniWheel: View {
                 ctx.stroke(p, with: .color(Color.white.opacity(0.14)), lineWidth: 1)
                 let t = WheelGeometry.offset(radius: 42, angle: CGFloat(mid))
                 ctx.draw(Text(PanelModel.miniLabel(slots[i])).font(PanelTokens.rounded(10, .bold))
-                    .foregroundColor(hot ? PanelTokens.onAccent : PanelTokens.strong2), at: CGPoint(x: c.x + t.x, y: c.y + t.y))
+                    .foregroundColor(hot ? accent.readableText : PanelTokens.strong2), at: CGPoint(x: c.x + t.x, y: c.y + t.y))
             }
             ctx.fill(Path(ellipseIn: CGRect(x: c.x - 24, y: c.y - 24, width: 48, height: 48)), with: .color(Color(hex: 0x0E0E10, opacity: 0.8)))
             ctx.draw(Text("Drop").font(PanelTokens.rounded(10, .bold)).foregroundColor(PanelTokens.secondary), at: c)

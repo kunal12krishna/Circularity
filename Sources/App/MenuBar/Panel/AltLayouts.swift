@@ -24,7 +24,8 @@ struct PanelRoot: View {
     var sizing: PanelSizing?
 
     var body: some View {
-        let light = model.layout == .tabs || model.settings.value(SettingsKeys.panelScheme) == "light"
+        let light = Appearance.isLight(model.settings.value(SettingsKeys.panelScheme), auto: model.layout == .tabs)
+        let palette = (light ? PanelPalette.light : .dark).with(onAccent: model.accent.readableText)
         Group {
             if let sizing {
                 SizedScroll(sizing: sizing) { content }
@@ -36,7 +37,7 @@ struct PanelRoot: View {
         .background(light ? Color(hex: 0xF8F6F2, opacity: 0.82) : PanelTokens.tint)
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(light ? Color.white.opacity(0.9) : Color.white.opacity(0.12), lineWidth: 1))
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .environment(\.panelPalette, light ? .light : .dark)
+        .environment(\.panelPalette, palette)
         .environment(\.colorScheme, light ? .light : .dark)
     }
 

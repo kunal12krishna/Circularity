@@ -101,10 +101,23 @@ nonisolated enum SlotProvider {
 
     static let ringImageCandidates: [OutputFormat] = [.png, .jpg, .webp, .heic, .avif, .tiff, .gif, .bmp]
 
+    /// Settings → Wheel → image format order ("jpg,png,…"). Unknown entries
+    /// are ignored and missing formats keep their default place at the end.
+    static func imageFormatOrder(_ setting: String) -> [OutputFormat] {
+        var seen: [OutputFormat] = []
+        for part in setting.split(separator: ",") {
+            let ext = part.trimmingCharacters(in: .whitespaces).lowercased()
+            if let f = ringImageCandidates.first(where: { $0.fileExtension == ext || ($0 == .jpg && ext == "jpeg") }), !seen.contains(f) {
+                seen.append(f)
+            }
+        }
+        return seen + ringImageCandidates.filter { !seen.contains($0) }
+    }
+
     /// Adds matching saved buttons to the front of the More fan (at most three).
     static func menu(for types: [UTType], canWrite: (OutputFormat) -> Bool, usage: [String: Int] = [:],
-                     smartOrdering: Bool = false, presets: [Preset]) -> WheelMenu {
-        var menu = menu(for: types, canWrite: canWrite, usage: usage, smartOrdering: smartOrdering)
+                     smartOrdering: Bool = false, presets: [Preset], formatOrder: [OutputFormat] = ringImageCandidates) -> WheelMenu {
+        var menu = menu(for: types, canWrite: canWrite, usage: usage, smartOrdering: smartOrdering, formatOrder: formatOrder)
         let kinds = Set(types.map { kind(of: $0) })
         let applies: Preset.Applies? = kinds == [.image] ? .images : (kinds == [.pdf] ? .pdfs : nil)
         guard let applies, let moreIndex = menu.ring.firstIndex(where: { $0?.action == .more }) else { return menu }
@@ -122,7 +135,8 @@ nonisolated enum SlotProvider {
     }
 
     static func menu(for types: [UTType], canWrite: (OutputFormat) -> Bool,
-                     usage: [String: Int] = [:], smartOrdering: Bool = false) -> WheelMenu {
+                     usage: [String: Int] = [:], smartOrdering: Bool = false,
+                     formatOrder: [OutputFormat] = ringImageCandidates) -> WheelMenu {
         let count = types.count
         let kinds = types.map(kind(of:))
         guard let first = kinds.first else {
@@ -138,7 +152,8 @@ nonisolated enum SlotProvider {
         if kinds.allSatisfy({ $0 == .image }) {
             let formats = Set(types.compactMap(imageFormat(of:)))
             let source = formats.count == 1 && types.allSatisfy({ imageFormat(of: $0) != nil }) ? formats.first : nil
-            return imageMenu(count: count, source: source, canWrite: canWrite, usage: usage, smartOrdering: smartOrdering)
+            return imageMenu(count: count, source: source, canWrite: canWrite, usage: usage, smartOrdering: smartOrdering,
+                             formatOrder: formatOrder)
         }
         if kinds.allSatisfy({ $0 == .pdf }) { return pdfMenu(count: count) }
         if kinds.allSatisfy({ $0 == .image || $0 == .pdf }) {
@@ -155,8 +170,10 @@ nonisolated enum SlotProvider {
     // MARK: Images
 
     static func imageMenu(count: Int, source: OutputFormat?, canWrite: (OutputFormat) -> Bool,
-                          usage: [String: Int], smartOrdering: Bool) -> WheelMenu {
-        let available = ringImageCandidates.filter { $0 != source && canWrite($0) }
+                          usage: [String: Int], smartOrdering: Bool,
+                          formatOrder: [OutputFormat] = ringImageCandidates) -> WheelMenu {
+        let candidates = formatOrder.filter { ringImageCandidates.contains($0) }
+        let available = candidates.filter { $0 != source && canWrite($0) }
         var ordered = available
         if smartOrdering {
             // Stable: equal usage keeps the default order. Only format slots move.
@@ -169,7 +186,7 @@ nonisolated enum SlotProvider {
         // A batch puts "Combine into one PDF" on the ring (board B, slot 2).
         let ringFormats = Array(ordered.prefix(count > 1 ? 2 : 3))
         // Fan: the rest in canonical order, at most 4 image formats; BMP only fills a gap.
-        var rest = ringImageCandidates.filter { available.contains($0) && !ringFormats.contains($0) }
+        var rest = candidates.filter { available.contains($0) && !ringFormats.contains($0) }
         if rest.filter({ $0 != .bmp }).count >= 4 { rest.removeAll { $0 == .bmp } }
         let fanFormats = Array(rest.prefix(4))
 

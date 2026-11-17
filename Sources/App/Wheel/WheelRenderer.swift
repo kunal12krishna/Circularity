@@ -28,7 +28,7 @@ protocol WheelRenderer: AnyObject {
     var usesGlass: Bool { get }
     /// 3D tilt of the hovered segment (off for offscreen previews).
     var allowsTilt: Bool { get set }
-    func configure(menu: WheelMenu, orb: OrbContent, accent: CGColor, geometry: WheelGeometry, contentsScale: CGFloat)
+    func configure(menu: WheelMenu, orb: OrbContent, style: WheelStyle, geometry: WheelGeometry, contentsScale: CGFloat)
     func setThumbnail(_ image: CGImage?)
     /// Same buttons, new detail lines (live size estimates).
     func updateHints(_ menu: WheelMenu)
@@ -95,7 +95,7 @@ func move(_ layer: CALayer, to position: CGPoint, animated: Bool, delay: CFTimeI
 func transact(_ duration: CFTimeInterval, animated: Bool, _ body: () -> Void) {
     CATransaction.begin()
     CATransaction.setDisableActions(!animated)
-    CATransaction.setAnimationDuration(duration)
+    CATransaction.setAnimationDuration(Motion.duration(duration))
     body()
     CATransaction.commit()
 }
