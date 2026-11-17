@@ -1,0 +1,124 @@
+name: Circularity
+
+options:
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+  generateEmptyDirectories: false
+
+configFiles:
+  Debug: Config/Debug.xcconfig
+  Release: Config/Release.xcconfig
+
+# The WidgetKit extension is only part of the project when CIRCULARITY_WIDGET=1
+# (it needs a sandbox + App Group, i.e. a real Developer ID). See PLAN.md A6.
+include:
+  - path: project-widget.yml
+    enable: ${CIRCULARITY_WIDGET}
+
+targets:
+  CircularityEngine:
+    type: library.static
+    platform: macOS
+    sources:
+      - Sources/Engine
+    settings:
+      base:
+        PRODUCT_NAME: CircularityEngine
+        SKIP_INSTALL: YES
+        STRIP_STYLE: debugging
+
+  Circularity:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/App
+      - Sources/Shared
+      - Resources/Assets.xcassets
+    dependencies:
+      - target: CircularityEngine
+    info:
+      path: Resources/Info.plist
+      properties:
+        CFBundleName: $(APP_NAME)
+        CFBundleDisplayName: $(APP_NAME)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleIconName: AppIcon
+        LSApplicationCategoryType: public.app-category.utilities
+        LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)
+        LSUIElement: true
+        NSPrincipalClass: NSApplication
+        NSHumanReadableCopyright: "© 2026 Kunal Krishna. MIT licence."
+        NSSupportsAutomaticTermination: false
+        NSSupportsSuddenTermination: true
+        CircularityAppName: $(APP_NAME)
+        CircularityAppBundleID: $(BUNDLE_ID)
+    entitlements:
+      path: Resources/Circularity.entitlements
+      properties: {}
+    settings:
+      base:
+        PRODUCT_NAME: $(APP_NAME)
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID)
+        PRODUCT_MODULE_NAME: Circularity
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        STRIP_STYLE: all
+        COMBINE_HIDPI_IMAGES: YES
+
+  EngineSmokeTest:
+    type: tool
+    platform: macOS
+    sources:
+      - Sources/EngineSmokeTest
+    dependencies:
+      - target: CircularityEngine
+    settings:
+      base:
+        PRODUCT_NAME: EngineSmokeTest
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID).enginesmoketest
+        STRIP_STYLE: all
+
+  CircularityTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/CircularityTests
+      - Sources/Shared
+    dependencies:
+      - target: CircularityEngine
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID).tests
+        GENERATE_INFOPLIST_FILE: YES
+        # XCTest itself is built for macOS 14; tests only run on dev machines.
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        # Engine and Shared logic tests run host-less: a hardened, ad-hoc
+        # signed host would refuse to load the injected test bundle.
+        ENABLE_HARDENED_RUNTIME: NO
+
+schemes:
+  Circularity:
+    build:
+      targets:
+        Circularity: all
+        CircularityEngine: all
+        EngineSmokeTest: all
+        CircularityTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - CircularityTests
+    archive:
+      config: Release
+  EngineSmokeTest:
+    build:
+      targets:
+        EngineSmokeTest: all
+    run:
+      config: Debug

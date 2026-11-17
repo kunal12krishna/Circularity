@@ -1,0 +1,45 @@
+# Included only when CIRCULARITY_WIDGET=1 (see project.yml). Ships once a
+# Developer ID exists: widget extensions must be sandboxed and the App Group
+# needs a real Team ID prefix. PLAN.md §3.5 and A6.
+targets:
+  CircularityWidget:
+    type: app-extension
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - Sources/Widget
+      - Sources/Shared
+    info:
+      path: Resources/Widget-Info.plist
+      properties:
+        CFBundleDisplayName: $(APP_NAME)
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+        CircularityAppName: $(APP_NAME)
+        CircularityAppBundleID: $(BUNDLE_ID)
+    entitlements:
+      path: Resources/Widget.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)$(BUNDLE_ID)
+    settings:
+      base:
+        PRODUCT_NAME: CircularityWidget
+        # Desktop widgets need macOS 14; the app itself stays at 13.
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        PRODUCT_BUNDLE_IDENTIFIER: $(BUNDLE_ID).widget
+        SKIP_INSTALL: YES
+        STRIP_STYLE: all
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) CIRCULARITY_WIDGET
+
+  Circularity:
+    dependencies:
+      - target: CircularityWidget
+        embed: true
+        codeSign: true
+    settings:
+      base:
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) CIRCULARITY_WIDGET

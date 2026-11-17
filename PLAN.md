@@ -119,8 +119,8 @@ README.md  LICENSE (MIT)  THIRD-PARTY-NOTICES.md  PLAN.md
 | `CircularityEngine` | static library | Swift 6, nonisolated by default, `Sendable` types |
 | `Circularity` | application | links Engine; MainActor-by-default isolation; LSUIElement; NSServices; document types (CFBundleDocumentTypes) for "Open with" |
 | `EngineSmokeTest` | command-line tool | links Engine; generates fixtures in a temp dir; exit code ≠ 0 on any failure |
-| `CircularityTests` | unit-test bundle | hosted by the app (for AppKit-dependent pieces); Engine tests are host-less where possible |
-| `CircularityWidget` | app extension (WidgetKit) | sandboxed, App Group entitlement; **only included when `CIRCULARITY_WIDGET=1`** (XcodeGen `include` / conditional target dependency). Off for ad-hoc builds |
+| `CircularityTests` | unit-test bundle | host-less (Engine + Shared). A hardened, ad-hoc-signed host refuses injected test bundles, so app logic under test lives in Engine or Shared. Deployment target 14.0, because XCTest itself requires it; tests only run on dev machines |
+| `CircularityWidget` | app extension (WidgetKit) | sandboxed, App Group entitlement, deployment target 14.0 (desktop widgets). Lives in `project-widget.yml`, which is included **only when `CIRCULARITY_WIDGET=1`** (`scripts/bootstrap.sh`). Off for ad-hoc builds |
 
 **Identity:** `Config/Identity.xcconfig` is the only place the name and bundle ID are written. Info.plist picks them up through build settings, and Swift's `AppIdentity` (in Shared) reads them from the bundle with a compiled fallback for the CLI. Renaming the app means changing one file.
 
@@ -297,7 +297,10 @@ The core gesture must not need Accessibility or Input Monitoring, and there is n
 - **`HotkeyCenter`** registers Carbon `RegisterEventHotKey` hotkeys (no permission), each of which can be rebound or cleared: ⌃⌥Space (panel) and ⌃⌥V (clipboard). ⌃⌥C is deliberately **not** a Carbon hotkey, because it belongs to the Service (see A3) and two owners of one shortcut would conflict.
 - **`ServicesProvider`** handles NSServices "Convert with Circularity" (`NSSendFileTypes` = image, PDF and document UTIs). It receives the Finder selection with no prompt when its keyboard shortcut (⌃⌥C after setup) is pressed, and also from the right-click Quick Actions menu. Either way it opens the click-mode wheel at the cursor. `ServiceShortcutInstaller` sets the user's Services shortcut to ⌃⌥C, and falls back to opening Keyboard Shortcuts settings.
 - **Open with:** `CFBundleDocumentTypes` declares image, PDF and document types with `LSHandlerRank = Alternate`, and `application(_:open:)` opens the wheel in click mode.
-- **`SingleInstance`:** on launch, the app checks for another running instance with the same bundle ID. If there is one, it forwards the file paths through `DistributedNotificationCenter` (a private name keyed on the bundle ID), activates that instance and exits.
+- **`SingleInstance`:** on launch, the app checks for another running instance with the same bundle ID.
+  - **Which copy stays:** the one whose process started first (kernel start time, then pid), so two copies launched at the same moment never both quit. Milestone (a) testing caught exactly that race.
+  - **Hand-off:** the running copy listens from `applicationWillFinishLaunching`. A later copy waits for the running copy's `isFinishedLaunching` (at most 5 s), posts the file paths in a distributed notification keyed on the bundle ID, and quits. An empty list means "reopen", which shows the icon.
+  - Launch Services was rejected for the hand-off: with two copies of the same bundle it may route the files back to the copy that is quitting.
 - **`LoginItem`** uses `SMAppService.mainApp`. It is on by default after onboarding asks.
 - **`Notifier`** uses `UNUserNotificationCenter`, with one notification per drop and the actions Open and Reveal. It respects Focus (via `.timeSensitive` off and normal interruption level), and permission is requested only if the user enables notifications.
 - **Logging and diagnostics:**

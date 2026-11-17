@@ -1,0 +1,4 @@
+// The single source of the app's identity. Rename the app or change the
+// bundle ID here only; Info.plist and Swift (AppIdentity) read these values.
+APP_NAME = Circularity
+BUNDLE_ID = com.kunal.circularity
