@@ -28,6 +28,11 @@ targets:
         PRODUCT_NAME: CircularityEngine
         SKIP_INSTALL: YES
         STRIP_STYLE: debugging
+        # Swift-only library: no Objective-C header. Without these, XcodeGen
+        # adds a "Copy Swift Objective-C Interface Header" ditto script that
+        # Xcode's user-script sandbox can refuse on incremental builds.
+        SWIFT_OBJC_INTERFACE_HEADER_NAME: ""
+        SWIFT_INSTALL_OBJC_HEADER: NO
 
   Circularity:
     type: application
