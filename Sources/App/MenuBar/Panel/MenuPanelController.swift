@@ -18,6 +18,10 @@ final class MenuPanelController {
     private var hosting: NSHostingView<PanelRoot>?
     private var monitors: [Any] = []
     private var resize: AnyCancellable?
+    private let sizing = PanelSizing()
+    /// An outside mouse-down closes the panel only if it turns out to be a
+    /// click; pressing on a file to drag it in keeps the panel open.
+    private var outsidePress = false
     var anchor: () -> CGRect? = { nil }
     var onOpenChange: ((Bool) -> Void)?
 
@@ -29,6 +33,7 @@ final class MenuPanelController {
     var isOpen: Bool { panel?.isVisible == true }
     /// For tests: where the panel is (nil when closed).
     var frameForTesting: CGRect? { panel?.frame }
+    var windowForTesting: NSWindow? { panel }
 
     private var width: CGFloat {
         switch settings.value(SettingsKeys.panelWidth) {
@@ -47,7 +52,8 @@ final class MenuPanelController {
         if isOpen { panel?.makeKey(); return }
         let panel = KeyPanel(contentRect: CGRect(x: 0, y: 0, width: width, height: 400),
                              styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
-        panel.level = .popUpMenu
+        // Same level as the wheel, so a wheel opened over the panel is on top.
+        panel.level = .statusBar
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = true
@@ -61,20 +67,36 @@ final class MenuPanelController {
         effect.state = .active
         effect.appearance = NSAppearance(named: model.layout == .tabs ? .aqua : .darkAqua)
         effect.maskImage = Self.roundedMask(radius: 16)
-        let hosting = NSHostingView(rootView: PanelRoot(model: model, width: width))
+        sizing.contentHeight = 0
+        sizing.height = nil
+        let hosting = NSHostingView(rootView: PanelRoot(model: model, width: width, sizing: sizing))
         effect.addSubview(hosting)
         panel.contentView = effect
         self.panel = panel
         self.hosting = hosting
-        fit(animated: false)
+        place(height: 480)
+        hosting.layoutSubtreeIfNeeded()
 
         panel.alphaValue = 0
         panel.makeKeyAndOrderFront(nil)
-        animateIn(effect)
         installMonitors()
-        resize = model.objectWillChange
-            .debounce(for: .milliseconds(20), scheduler: RunLoop.main)
-            .sink { [weak self] _ in self?.fit(animated: true) }
+        var shown = false
+        resize = sizing.$contentHeight
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] height in
+                guard let self, height > 0 else { return }
+                self.fit(contentHeight: height)
+                if !shown { shown = true; self.animateIn(effect) }
+            }
+        // Never stay invisible if the first measurement is slow.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, !shown, self.panel === panel else { return }
+                shown = true
+                self.animateIn(effect)
+            }
+        }
         onOpenChange?(true)
     }
 
@@ -101,17 +123,18 @@ final class MenuPanelController {
     }
 
     /// Height fits the content up to 80 % of the screen; past that the content scrolls.
-    private func fit(animated: Bool) {
+    private func fit(contentHeight: CGFloat) {
+        let maxHeight = (anchorScreen?.visibleFrame.height ?? 900) * 0.8
+        let height = min(contentHeight, maxHeight)
+        if sizing.height != height { sizing.height = height }
+        if sizing.scrolls != (contentHeight > maxHeight) { sizing.scrolls = contentHeight > maxHeight }
+        place(height: height)
+    }
+
+    private func place(height: CGFloat) {
         guard let panel, let hosting else { return }
         let screen = anchorScreen
-        let maxHeight = (screen?.visibleFrame.height ?? 900) * 0.8
-        hosting.rootView = PanelRoot(model: model, width: width)
-        var size = hosting.fittingSize
-        if size.height > maxHeight {
-            hosting.rootView = PanelRoot(model: model, width: width, maxHeight: maxHeight)
-            size.height = maxHeight
-        }
-        size.width = width
+        let size = CGSize(width: width, height: height)
         var frame = CGRect(origin: .zero, size: size)
         if let icon = anchor(), let visible = screen?.visibleFrame {
             // 8 pt below the menu bar (board I), under the icon, kept on screen.
@@ -120,6 +143,7 @@ final class MenuPanelController {
         } else if let visible = screen?.visibleFrame {
             frame.origin = CGPoint(x: visible.maxX - size.width - 12, y: visible.maxY - 8 - size.height)
         }
+        guard panel.frame != frame else { return }
         hosting.frame = CGRect(origin: .zero, size: size)
         panel.setFrame(frame, display: true, animate: false)
         panel.invalidateShadow()
@@ -158,13 +182,10 @@ final class MenuPanelController {
 
     private func installMonitors() {
         removeMonitors()
-        if let m = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown], handler: { [weak self] _ in
+        if let m = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .leftMouseDragged, .leftMouseUp, .rightMouseDown], handler: { [weak self] event in
+            let type = event.type
             let point = NSEvent.mouseLocation
-            MainActor.assumeIsolated {
-                guard let self, let panel = self.panel, !panel.frame.contains(point) else { return }
-                if let icon = self.anchor(), icon.contains(point) { return } // the icon toggles by itself
-                self.close()
-            }
+            MainActor.assumeIsolated { self?.outsideMouse(type, at: point) }
         }) { monitors.append(m) }
         if let m = NSEvent.addLocalMonitorForEvents(matching: .keyDown, handler: { [weak self] event in
             guard event.keyCode == 53 else { return event } // Esc
@@ -175,6 +196,24 @@ final class MenuPanelController {
             }
             return consumed ? nil : event
         }) { monitors.append(m) }
+    }
+
+    private func outsideMouse(_ type: NSEvent.EventType, at point: CGPoint) {
+        guard let panel, isOpen else { return }
+        let outside = !panel.frame.contains(point) && !(anchor()?.contains(point) ?? false) // the icon toggles by itself
+        switch type {
+        case .leftMouseDown:
+            outsidePress = outside
+        case .leftMouseDragged:
+            outsidePress = false // dragging a file (maybe into the panel): stay open
+        case .leftMouseUp:
+            if outsidePress, outside { close() }
+            outsidePress = false
+        case .rightMouseDown:
+            if outside { close() }
+        default:
+            break
+        }
     }
 
     private func removeMonitors() {
@@ -204,6 +243,7 @@ final class PinnedPanelController: NSObject, NSWindowDelegate {
     private var window: KeyPanel?
     private var hosting: NSHostingView<PanelRoot>?
     private var resize: AnyCancellable?
+    private let sizing = PanelSizing()
 
     init(model: PanelModel, settings: SettingsStore) {
         self.model = model
@@ -239,7 +279,9 @@ final class PinnedPanelController: NSObject, NSWindowDelegate {
         effect.state = .active
         effect.appearance = NSAppearance(named: model.layout == .tabs ? .aqua : .darkAqua)
         effect.maskImage = MenuPanelController.roundedMask(radius: 16)
-        let hosting = NSHostingView(rootView: PanelRoot(model: model, width: width))
+        sizing.contentHeight = 0
+        sizing.height = nil
+        let hosting = NSHostingView(rootView: PanelRoot(model: model, width: width, sizing: sizing))
         effect.addSubview(hosting)
         w.contentView = effect
         window = w
@@ -247,11 +289,16 @@ final class PinnedPanelController: NSObject, NSWindowDelegate {
         model.pinned = true
         settings.set(true, for: SettingsKeys.pinned)
         applyClickThrough()
-        fit()
+        w.setContentSize(CGSize(width: width, height: 480))
+        hosting.frame = CGRect(x: 0, y: 0, width: width, height: 480)
         dock(to: savedCorner)
         w.orderFrontRegardless()
-        resize = model.objectWillChange.debounce(for: .milliseconds(20), scheduler: RunLoop.main)
-            .sink { [weak self] _ in self?.fit() }
+        var docked = false
+        resize = sizing.$contentHeight.removeDuplicates().receive(on: RunLoop.main).sink { [weak self] h in
+            guard let self, h > 0 else { return }
+            self.fit(contentHeight: h)
+            if !docked { docked = true; self.dock(to: self.savedCorner) }
+        }
     }
 
     func unpin() {
@@ -281,16 +328,13 @@ final class PinnedPanelController: NSObject, NSWindowDelegate {
         window?.ignoresMouseEvents = settings.value(SettingsKeys.pinnedClickThrough)
     }
 
-    private func fit() {
+    private func fit(contentHeight: CGFloat) {
         guard let window, let hosting else { return }
-        let maxHeight = (window.screen ?? NSScreen.main)?.visibleFrame.height ?? 900
-        hosting.rootView = PanelRoot(model: model, width: width)
-        var size = hosting.fittingSize
-        if size.height > maxHeight * 0.85 {
-            hosting.rootView = PanelRoot(model: model, width: width, maxHeight: maxHeight * 0.85)
-            size.height = maxHeight * 0.85
-        }
-        size.width = width
+        let maxHeight = ((window.screen ?? NSScreen.main)?.visibleFrame.height ?? 900) * 0.85
+        let height = min(contentHeight, maxHeight)
+        if sizing.height != height { sizing.height = height }
+        if sizing.scrolls != (contentHeight > maxHeight) { sizing.scrolls = contentHeight > maxHeight }
+        let size = CGSize(width: width, height: height)
         let top = window.frame.maxY
         hosting.frame = CGRect(origin: .zero, size: size)
         window.setFrame(CGRect(x: window.frame.minX, y: top - size.height, width: size.width, height: size.height), display: true)

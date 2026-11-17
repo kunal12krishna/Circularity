@@ -61,6 +61,7 @@ nonisolated enum SettingsKeys {
     static let recentsCount = SettingsKey("menubar.recentsCount", 5)             // 5 | 10 | 25
     static let presetGrid = SettingsKey("menubar.grid", "3x2")                   // 3x1 | 3x2 | 4x2
     static let showPercent = SettingsKey("menubar.showPercent", false)
+    static let panelScheme = SettingsKey("menubar.colorScheme", "dark")            // system | light | dark
     static let pinned = SettingsKey("menubar.pinned", false)
     static let pinnedSize = SettingsKey("menubar.pinnedSize", "m")
     static let pinnedClickThrough = SettingsKey("menubar.pinnedClickThrough", false)
@@ -91,7 +92,7 @@ nonisolated enum SettingsKeys {
         shakeSensitivity.erased, skipFullScreen.erased, serviceShortcutInstalled.erased, excludedApps.erased,
         wheelLayout.erased, wheelScale.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased,
         wheelUsage.erased, haloAccentHex.erased, presetsJSON.erased, watchRulesJSON.erased, panelTiles.erased,
-        panelTileColors.erased, recentsCount.erased, presetGrid.erased, showPercent.erased, pinned.erased, pinnedSize.erased,
+        panelTileColors.erased, panelScheme.erased, recentsCount.erased, presetGrid.erased, showPercent.erased, pinned.erased, pinnedSize.erased,
         pinnedClickThrough.erased, pinnedCorners.erased, theme.erased, accentHex.erased,
         panelLayout.erased, panelWidth.erased, iconStyle.erased,
         mediaPackEnabled.erased, mediaBundleMode.erased, updatesChannel.erased, updatesAutomatic.erased,

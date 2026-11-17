@@ -128,6 +128,26 @@ enum DragTest {
             menuPanel.open()
             try? await Task.sleep(nanoseconds: 800_000_000)
             check(menuPanel.isOpen, "the panel opens (frame \(menuPanel.frameForTesting.map { "\($0)" } ?? "none"))")
+
+            // ⌃⌥Space path: ⌘K focused, real key events typed into the window.
+            menuPanel.open(focusCommand: true)
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            if let window = menuPanel.windowForTesting {
+                for (ch, code) in [("1", 18), ("0", 29), ("k", 40), ("b", 11)] as [(String, UInt16)] {
+                    for type in [NSEvent.EventType.keyDown, .keyUp] {
+                        if let e = NSEvent.keyEvent(with: type, location: .zero, modifierFlags: [], timestamp: ProcessInfo.processInfo.systemUptime,
+                                                    windowNumber: window.windowNumber, context: nil, characters: ch,
+                                                    charactersIgnoringModifiers: ch, isARepeat: false, keyCode: code) {
+                            window.sendEvent(e)
+                        }
+                    }
+                    try? await Task.sleep(nanoseconds: 120_000_000)
+                }
+            }
+            check(panelModel.query == "10kb", "typing “10kb” into ⌘K keeps focus (got “\(panelModel.query)”)")
+            check(menuPanel.isOpen, "the panel stays open while typing")
+            check(panelModel.results.first?.kind == .command(.compressUnder(10_000)), "“10kb” means Compress under 10 KB")
+            panelModel.query = ""
             let openMB = Double(MemoryFootprint.current()) / 1_048_576
             menuPanel.close()
             try? await Task.sleep(nanoseconds: 2_000_000_000)

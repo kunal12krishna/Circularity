@@ -117,10 +117,21 @@ public final class ConversionEngine: Sendable {
             let alpha = (try? ImageOps.hasAlpha(image.upright(maxPixel: 64))) ?? false
             let format = ImageBackend.compressedFormat(for: Self.imageFormat(of: type), hasAlpha: alpha, support: support)
             let out = staging.scratch(format.fileExtension)
-            let wrote = try ImageBackend.compress(image, compression, format: format, policy: policy, originalBytes: bytesIn,
-                                                  output: out) { progress($0 * 0.9, "") }
-            return try await finish(wrote ? out : nil, format: format,
-                                    note: wrote ? nil : "Kept the original: it is already as small as it gets.")
+            let outcome = try ImageBackend.compress(image, compression, format: format, policy: policy, originalBytes: bytesIn,
+                                                    output: out) { progress($0 * 0.9, "") }
+            switch outcome {
+            case let .written(shrunk):
+                let note = shrunk.map { "Shrunk to \(Int($0.width)) × \(Int($0.height)) to fit" }
+                return try await finish(out, format: format, note: note)
+            case .notSmaller:
+                return try await finish(nil, format: format, note: "Kept the original: it is already as small as it gets.")
+            case .alreadyUnderTarget:
+                if case let .targetBytes(t) = compression {
+                    return try await finish(nil, format: format,
+                                            note: "Kept the original: it is already under \(ByteCountFormatter.string(fromByteCount: t, countStyle: .file)).")
+                }
+                return try await finish(nil, format: format, note: "Kept the original.")
+            }
 
         case let .pdfPages(format, scale):
             guard isPDF else { throw JobError.unsupported("\(input.lastPathComponent) is not a PDF") }

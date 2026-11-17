@@ -159,6 +159,10 @@ final class JobCenter: ObservableObject {
         let name = r.outputs.count == 1 ? r.outputs[0].lastPathComponent : "\(r.outputs.count) files"
         var line = "\(name) · \(Bytes.text(r.bytesOut))"
         if r.bytesIn > 0, r.outputs.count == r.outcomes.count { line += " (\(Bytes.change(from: r.bytesIn, to: r.bytesOut)))" }
+        if r.outputs.count == 1, DraggedFiles.type(of: r.outputs[0]).conforms(to: .image), let px = Thumbnails.pixelSize(r.outputs[0]) {
+            line += " · \(Int(px.width)) × \(Int(px.height))"
+        }
+        if let note = r.notes.first { line += " — \(note)" }
         return line + where_
     }
 

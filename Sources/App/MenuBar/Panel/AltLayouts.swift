@@ -2,17 +2,32 @@ import CircularityEngine
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Chooses the layout; all three share one PanelModel.
+/// Per-window size state. Kept outside the view so the view's structure never
+/// changes while the panel is open (replacing it reset the ⌘K field's focus).
+final class PanelSizing: ObservableObject {
+    @Published var contentHeight: CGFloat = 0
+    @Published var height: CGFloat?
+    @Published var scrolls = false
+}
+
+private struct PanelContentHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
+/// Chooses the layout; all three share one PanelModel. With `sizing` (live
+/// windows) the content scrolls past the window's height and reports its own
+/// height; without it (previews) the content is laid out at its natural size.
 struct PanelRoot: View {
     @ObservedObject var model: PanelModel
     let width: CGFloat
-    var maxHeight: CGFloat?
+    var sizing: PanelSizing?
 
     var body: some View {
-        let light = model.layout == .tabs
+        let light = model.layout == .tabs || model.settings.value(SettingsKeys.panelScheme) == "light"
         Group {
-            if let maxHeight {
-                ScrollView(.vertical, showsIndicators: true) { content }.frame(height: maxHeight)
+            if let sizing {
+                SizedScroll(sizing: sizing) { content }
             } else {
                 content
             }
@@ -30,6 +45,23 @@ struct PanelRoot: View {
         case .stackPlus: StackPlusView(model: model)
         case .tabs: TabsView(model: model)
         case .mini: MiniView(model: model, width: width)
+        }
+    }
+}
+
+private struct SizedScroll<Content: View>: View {
+    @ObservedObject var sizing: PanelSizing
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        ScrollView(.vertical, showsIndicators: sizing.scrolls) {
+            content()
+                .background(GeometryReader { proxy in Color.clear.preference(key: PanelContentHeight.self, value: proxy.size.height) })
+        }
+        .scrollDisabled(!sizing.scrolls)
+        .frame(height: sizing.height)
+        .onPreferenceChange(PanelContentHeight.self) { h in
+            if abs(h - sizing.contentHeight) > 0.5 { sizing.contentHeight = h }
         }
     }
 }

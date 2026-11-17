@@ -109,7 +109,9 @@ final class SlotProviderTests: XCTestCase {
         XCTAssertEqual(menu.ring[2]?.action, .combinePDF, "board B: Combine sits on the ring for batches")
         XCTAssertEqual(menu.ring[2]?.verb, "Combine into one PDF")
         XCTAssertEqual(menu.ring[0]?.verb, "Convert 2 to PNG")
-        XCTAssertTrue(menu.fan.contains { $0.action == .convert(.pdf) }, "one PDF per image stays in the fan")
+        XCTAssertEqual(menu.fan.first { $0.action == .combinePDF }?.label, "1 PDF", "the fan offers one combined PDF…")
+        XCTAssertEqual(menu.fan.first { $0.action == .convert(.pdf) }?.label, "2 PDFs", "…or a separate PDF per image")
+        XCTAssertEqual(menu.fan.last?.action, .crop, "Crop stays last (leftmost)")
         XCTAssertTrue(menu.fan.contains { $0.action == .convert(.webp) }, "the displaced format moves to the fan")
     }
 

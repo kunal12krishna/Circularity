@@ -222,46 +222,63 @@ enum ImageBackend {
                            properties: input.outputProperties(policy: policy.metadata), to: output)
     }
 
-    /// Returns false when compressing would not make the file smaller (nothing written).
+    enum CompressOutcome: Equatable {
+        /// Written; `shrunkTo` is set when the image had to be made smaller to fit.
+        case written(shrunkTo: CGSize?)
+        case notSmaller
+        case alreadyUnderTarget
+    }
+
     static func compress(_ input: ImageInput, _ compression: ImageCompression, format: OutputFormat, policy: OutputPolicy,
-                         originalBytes: Int64, output: URL, progress: (Double) -> Void) throws -> Bool {
-        let image = try input.upright()
+                         originalBytes: Int64, output: URL, progress: (Double) -> Void) throws -> CompressOutcome {
         let props = input.outputProperties(policy: policy.metadata)
         switch compression {
         case let .quality(q):
-            let data = try ImageOps.encode(image, as: format, quality: q, properties: props)
-            guard Int64(data.count) < originalBytes else { return false }
+            let data = try ImageOps.encode(try input.upright(), as: format, quality: q, properties: props)
+            guard Int64(data.count) < originalBytes else { return .notSmaller }
             try data.write(to: output)
-            return true
+            return .written(shrunkTo: nil)
         case let .targetBytes(target):
-            // Highest quality that fits; downscale by 0.85 steps only if even the floor is too big.
-            var current = image
-            for step in 0..<12 {
+            guard originalBytes > target else { return .alreadyUnderTarget }
+            var current = try input.upright()
+            var shrunk = false
+            for step in 0..<20 {
                 try Task.checkCancellation()
-                var low = 0.3, high = 0.95, best: Data?
-                if let top = try? ImageOps.encode(current, as: format, quality: high, properties: props), top.count <= target {
-                    best = top
-                } else {
-                    for _ in 0..<7 {
-                        try Task.checkCancellation()
-                        let mid = (low + high) / 2
-                        let data = try ImageOps.encode(current, as: format, quality: mid, properties: props)
-                        if data.count <= target { best = data; low = mid } else { high = mid }
-                    }
-                    if best == nil, let floor = try? ImageOps.encode(current, as: format, quality: 0.3, properties: props),
-                       floor.count <= target { best = floor }
-                }
-                progress(Double(step + 1) / 12)
-                if let best {
-                    guard Int64(best.count) < originalBytes else { return false }
+                progress(min(0.95, Double(step + 1) / 8))
+                if let best = try highestQualityThatFits(current, format: format, target: target, properties: props) {
                     try best.write(to: output)
-                    return true
+                    return .written(shrunkTo: shrunk ? CGSize(width: current.width, height: current.height) : nil)
                 }
-                current = try ImageOps.scaled(current, to: CGSize(width: CGFloat(current.width) * 0.85,
-                                                                  height: CGFloat(current.height) * 0.85))
+                // Even the lowest quality is too big: shrink by the factor the
+                // bytes suggest (bytes scale with pixel count), then try again.
+                let floorBytes = try ImageOps.encode(current, as: format, quality: minimumQuality, properties: props).count
+                let factor = min(0.85, max(0.2, (Double(target) / Double(max(1, floorBytes))).squareRoot() * 0.92))
+                let next = CGSize(width: (CGFloat(current.width) * factor).rounded(), height: (CGFloat(current.height) * factor).rounded())
+                guard max(next.width, next.height) >= 16 else { break }
+                current = try ImageOps.scaled(current, to: next)
+                shrunk = true
             }
             throw JobError.targetUnreachable(target)
         }
+    }
+
+    static let minimumQuality = 0.3
+
+    /// Binary search over encoder quality (≤ 8 encodes); nil if even the minimum is too big.
+    static func highestQualityThatFits(_ image: CGImage, format: OutputFormat, target: Int64,
+                                       properties: [CFString: Any]) throws -> Data? {
+        let top = try ImageOps.encode(image, as: format, quality: 0.95, properties: properties)
+        if top.count <= target { return top }
+        let floor = try ImageOps.encode(image, as: format, quality: minimumQuality, properties: properties)
+        guard floor.count <= target else { return nil }
+        var low = minimumQuality, high = 0.95, best = floor
+        for _ in 0..<6 {
+            try Task.checkCancellation()
+            let mid = (low + high) / 2
+            let data = try ImageOps.encode(image, as: format, quality: mid, properties: properties)
+            if data.count <= target { best = data; low = mid } else { high = mid }
+        }
+        return best
     }
 
     /// Compressing a lossless file means re-encoding it in a lossy format.

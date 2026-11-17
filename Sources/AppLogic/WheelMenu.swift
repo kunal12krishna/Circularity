@@ -174,7 +174,13 @@ nonisolated enum SlotProvider {
         let fanFormats = Array(rest.prefix(4))
 
         var fan = fanFormats.map { formatSlot($0, count: count) }
-        fan.append(formatSlot(.pdf, count: count))
+        if count > 1 {
+            // Both PDF choices side by side, so it's clear which one you get.
+            fan.append(combineChip(count: count))
+            fan.append(separatePDFsChip(count: count))
+        } else {
+            fan.append(formatSlot(.pdf, count: count))
+        }
         fan.append(cropSlot(count: count))
 
         var ring: [WheelSlot?] = ringFormats.map { formatSlot($0, count: count) }
@@ -249,6 +255,20 @@ nonisolated enum SlotProvider {
         WheelSlot(action: .combinePDF, category: .format, label: "Combine", monoLabel: "PDF", caption: "COMBINE",
                   symbol: "doc.on.doc", kicker: "COMBINE INTO", big: "PDF", hint: "\(count) files, in drop order",
                   verb: "Combine into one PDF")
+    }
+
+    /// "1 PDF": every image as a page of one PDF.
+    static func combineChip(count: Int) -> WheelSlot {
+        WheelSlot(action: .combinePDF, category: .format, label: "1 PDF", monoLabel: "1 PDF", caption: "COMBINE",
+                  symbol: "doc.on.doc", kicker: "COMBINE INTO", big: "1 PDF", hint: "all \(count) images in one PDF",
+                  verb: "Combine into one PDF")
+    }
+
+    /// "N PDFs": a separate PDF for each image.
+    static func separatePDFsChip(count: Int) -> WheelSlot {
+        WheelSlot(action: .convert(.pdf), category: .format, label: "\(count) PDFs", monoLabel: "\(count) PDFS",
+                  caption: "SEPARATE", symbol: "doc", kicker: "CONVERT TO", big: "\(count) PDFs",
+                  hint: "a separate PDF for each image", verb: "Make \(count) separate PDFs")
     }
 
     static func moreSlot(fanCount: Int) -> WheelSlot {

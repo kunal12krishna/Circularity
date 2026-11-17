@@ -67,6 +67,10 @@ final class AppCoordinator: PanelHost {
         // Icon state follows jobs, results, errors and Pause.
         jobs.$active.receive(on: RunLoop.main).sink { [weak self] _ in self?.refreshIcon() }.store(in: &bag)
         jobs.$lastError.receive(on: RunLoop.main).sink { [weak self] _ in self?.refreshIcon() }.store(in: &bag)
+        // Every finished job reports back in the panel (a command never ends silently).
+        jobs.$lastSummary.compactMap { $0 }.receive(on: RunLoop.main).sink { [weak self] summary in
+            self?.panelModel.notice = "Last result: \(summary)"
+        }.store(in: &bag)
         jobs.finished.receive(on: RunLoop.main).sink { [weak self] _ in
             guard let self else { return }
             WidgetBridge.update(stats: jobs.stats, history: jobs.history)

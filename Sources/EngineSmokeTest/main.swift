@@ -199,6 +199,14 @@ func runAll() async {
     let target: Int64 = 400_000
     let byTarget = output(await run([photo], .compressImage(.targetBytes(target))))
     check(byTarget.map { fileSize($0) <= target } == true, "target size ≤ 400 KB (got \(byTarget.map { fileSize($0) } ?? -1))")
+    let photoLikeBig = root.appendingPathComponent("photo-big.png")
+    writeImage(photoLikeImage(4000, 3000), .png, to: photoLikeBig)
+    let tenKB = try? await run([photoLikeBig], .compressImage(.targetBytes(10_000))).get()
+    check(tenKB?.outputs.first.map { fileSize($0) <= 10_000 } == true,
+          "compress a 12 MP photo under 10 KB (\(tenKB?.outputs.first.map { fileSize($0) } ?? -1) bytes, \(tenKB?.notes.first ?? "no note"))")
+    let alreadyUnder = try? await run([photoLikeBig], .compressImage(.targetBytes(500_000_000))).get()
+    check(alreadyUnder?.outputs.isEmpty == true && alreadyUnder?.notes.first?.contains("already under") == true,
+          "a file already under the target is kept (\(alreadyUnder?.notes.first ?? "-"))")
     let tiny = root.appendingPathComponent("tiny.jpg")
     writeImage(gradient(64, 64), .jpeg, to: tiny, properties: [kCGImageDestinationLossyCompressionQuality: 0.3])
     let alreadySmall = try? await run([tiny], .compressImage(.quality(0.95))).get()
