@@ -1,0 +1,1276 @@
+<title>Circularity</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Outfit:wght@300;500;800&family=Press+Start+2P&family=Sora:wght@400;600&family=Unbounded:wght@500;800&family=VT323&display=swap">
+<style>
+/* Layout: a working "desktop" demo is the hero; every section reskins live (Halo · Aqua · ASCII · Pixel · Glass). */
+:root {
+  --bg: #0B0D11; --bg2: #12151B; --panel: #171A21; --panel2: #1D2129; --line: rgba(255,255,255,.09);
+  --fg: #ECEEF2; --muted: #9AA1AF; --accent: #C6FF3D; --on-accent: #10140A; --danger: #FF8A80;
+  --display: "Unbounded", "Avenir Next", system-ui, sans-serif; --body: "Sora", "Avenir Next", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace; --body-size: 16px; --radius: 14px; --shadow: 0 24px 60px rgba(0,0,0,.45);
+  --glow: 0 0 22px rgba(198,255,61,.45); --display-case: uppercase; --display-track: .02em;
+  color-scheme: dark;
+}
+:root[data-skin="aqua"] {
+  --bg: #D9E3EF; --bg2: #E8EEF6; --panel: #F7F9FC; --panel2: #EAF0F7; --line: rgba(30,50,80,.16);
+  --fg: #16202E; --muted: #4E5B6E; --accent: #1C6FE0; --on-accent: #FFFFFF; --danger: #C62828;
+  --display: "Nunito", "Lucida Grande", system-ui, sans-serif; --body: "Lucida Grande", "Nunito", system-ui, sans-serif;
+  --mono: "Monaco", "JetBrains Mono", monospace; --radius: 12px; --shadow: 0 18px 40px rgba(20,40,80,.25);
+  --glow: 0 2px 10px rgba(28,111,224,.45); --display-case: none; --display-track: -.01em; color-scheme: light;
+}
+:root[data-skin="ascii"] {
+  --bg: #040704; --bg2: #061006; --panel: #071107; --panel2: #0A170A; --line: rgba(57,255,106,.35);
+  --fg: #A6FFB0; --muted: #5DBB6A; --accent: #39FF6A; --on-accent: #021003; --danger: #FF6B6B;
+  --display: "VT323", ui-monospace, monospace; --body: "JetBrains Mono", ui-monospace, monospace; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --body-size: 15px; --radius: 0px; --shadow: none; --glow: 0 0 12px rgba(57,255,106,.6); --display-case: uppercase; --display-track: .04em; color-scheme: dark;
+}
+:root[data-skin="pixel"] {
+  --bg: #1B1135; --bg2: #24174A; --panel: #2C1D58; --panel2: #382670; --line: #5A45A0;
+  --fg: #FFF3D6; --muted: #C7B8F0; --accent: #FFCC33; --on-accent: #2A1600; --danger: #FF6B8B;
+  --display: "Press Start 2P", ui-monospace, monospace; --body: "VT323", ui-monospace, monospace; --mono: "VT323", ui-monospace, monospace;
+  --body-size: 21px; --radius: 0px; --shadow: 6px 6px 0 #0C0720; --glow: 4px 4px 0 #8A5A00; --display-case: uppercase; --display-track: 0; color-scheme: dark;
+}
+:root[data-skin="glass"] {
+  --bg: #0D0F26; --bg2: rgba(255,255,255,.04); --panel: rgba(255,255,255,.09); --panel2: rgba(255,255,255,.14); --line: rgba(255,255,255,.22);
+  --fg: #F6F7FF; --muted: #C2C7E6; --accent: #8FE3FF; --on-accent: #041219; --danger: #FFB4C2;
+  --display: "Outfit", system-ui, sans-serif; --body: "Outfit", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius: 22px; --shadow: 0 30px 80px rgba(5,6,30,.55); --glow: 0 0 30px rgba(143,227,255,.55); --display-case: none; --display-track: -.02em; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: var(--body-size); line-height: 1.55;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden; transition: background-color .4s;
+}
+:root[data-skin="aqua"] body { background-image: repeating-linear-gradient(0deg, rgba(255,255,255,.55) 0 2px, transparent 2px 4px); }
+:root[data-skin="ascii"] body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px); }
+.blobs { position: fixed; inset: -20%; z-index: -1; pointer-events: none; display: none; filter: blur(60px); }
+:root[data-skin="glass"] .blobs { display: block; }
+.blobs i { position: absolute; width: 46vmax; height: 46vmax; border-radius: 50%; opacity: .55; animation: drift 22s ease-in-out infinite alternate; }
+.blobs i:nth-child(1) { background: #5B4BFF; left: 0; top: 5%; }
+.blobs i:nth-child(2) { background: #FF4FB0; right: 0; top: 30%; animation-delay: -7s; }
+.blobs i:nth-child(3) { background: #00C2FF; left: 30%; bottom: 0; animation-delay: -12s; }
+@keyframes drift { to { transform: translate(8vmax, -6vmax) scale(1.15); } }
+
+a { color: var(--accent); }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.wrap { max-width: 1180px; margin: 0 auto; }
+.mono { font-family: var(--mono); }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+h1, h2, h3 { font-family: var(--display); text-transform: var(--display-case); letter-spacing: var(--display-track); text-wrap: balance; margin: 0; line-height: 1.08; }
+h1 { font-size: clamp(34px, 5.4vw, 64px); font-weight: 800; }
+h2 { font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; }
+h3 { font-size: 18px; font-weight: 700; }
+:root[data-skin="pixel"] h1 { font-size: clamp(22px, 3.6vw, 40px); line-height: 1.35; }
+:root[data-skin="pixel"] h2 { font-size: clamp(18px, 2.4vw, 26px); line-height: 1.4; }
+:root[data-skin="pixel"] h3 { font-size: 13px; line-height: 1.6; }
+:root[data-skin="ascii"] h1 { font-size: clamp(44px, 7vw, 86px); line-height: .95; }
+:root[data-skin="ascii"] h2 { font-size: clamp(34px, 4.6vw, 56px); }
+:root[data-skin="ascii"] h3 { font-size: 26px; }
+p { margin: 0; max-width: 62ch; }
+.accent { color: var(--accent); }
+:root[data-skin="halo"] .accent, :root:not([data-skin]) .accent, :root[data-skin="ascii"] .accent { text-shadow: var(--glow); }
+
+/* Top bar */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--bg); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+  background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+.top .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; text-transform: var(--display-case); font-size: 15px; text-decoration: none; color: var(--fg); }
+:root[data-skin="pixel"] .brand { font-size: 11px; }
+.glyph { width: 26px; height: 26px; color: var(--accent); }
+.skins { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+.pill { border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; transition: transform .15s, background .2s; }
+:root[data-skin="pixel"] .pill, :root[data-skin="ascii"] .pill { border-radius: 0; }
+:root[data-skin="pixel"] .pill { font-size: 16px; box-shadow: 3px 3px 0 #0C0720; }
+.pill:hover { transform: translateY(-1px); }
+.pill[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); border-color: transparent; box-shadow: var(--glow); }
+:root[data-skin="aqua"] .pill[aria-pressed="true"] { background: linear-gradient(#7CC0FF, #1C6FE0 55%, #1A5CC0); box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 2px 6px rgba(28,111,224,.5); }
+.icon-btn { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer; color: var(--fg); }
+:root[data-skin="pixel"] .icon-btn, :root[data-skin="ascii"] .icon-btn { border-radius: 0; }
+
+section { padding-block: clamp(56px, 8vw, 96px); }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: clamp(24px, 4vw, 56px); align-items: center; padding-block: clamp(28px, 5vw, 56px) 40px; }
+.hero > * { min-width: 0; }
+.lede { font-size: 1.08em; color: var(--muted); margin-top: 18px; }
+.steps { display: grid; gap: 10px; margin: 26px 0 0; padding: 0; list-style: none; }
+.steps li { display: flex; gap: 12px; align-items: baseline; }
+.steps b { font-family: var(--mono); color: var(--accent); min-width: 1.6em; }
+kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); border-bottom-width: 3px; background: var(--panel); color: var(--fg); white-space: nowrap; }
+:root[data-skin="pixel"] kbd, :root[data-skin="ascii"] kbd { border-radius: 0; }
+.cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); color: var(--fg); text-decoration: none; cursor: pointer; font-weight: 600; transition: transform .15s, box-shadow .2s; }
+.btn:hover { transform: translateY(-2px); }
+.btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; box-shadow: var(--glow); }
+:root[data-skin="aqua"] .btn.primary { background: linear-gradient(#8CC8FF, #2A7CEB 52%, #1C62CF); box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 3px 10px rgba(28,111,224,.45); text-shadow: 0 -1px 0 rgba(0,0,0,.25); }
+:root[data-skin="pixel"] .btn { box-shadow: var(--shadow); }
+:root[data-skin="pixel"] .btn.primary { box-shadow: 4px 4px 0 #8A5A00; }
+
+/* Desktop demo */
+.desk { position: relative; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; }
+:root[data-skin="glass"] .desk, :root[data-skin="glass"] .card, :root[data-skin="glass"] .play, :root[data-skin="glass"] .term { backdrop-filter: blur(22px) saturate(1.4); -webkit-backdrop-filter: blur(22px) saturate(1.4); }
+:root[data-skin="aqua"] .desk { background: linear-gradient(#FDFEFF, #E9EFF7); }
+.desk-bar { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--panel2); font-family: var(--mono); font-size: 12px; color: var(--muted); }
+:root[data-skin="aqua"] .desk-bar { background: linear-gradient(#F4F7FB, #CDD8E6); color: #2B3646; }
+:root[data-skin="pixel"] .desk-bar { font-size: 17px; }
+.lights { display: flex; gap: 6px; }
+.lights i { width: 11px; height: 11px; border-radius: 50%; background: #FF5F57; display: block; }
+.lights i:nth-child(2) { background: #FEBC2E; } .lights i:nth-child(3) { background: #28C840; }
+:root[data-skin="ascii"] .lights { display: none; }
+:root[data-skin="pixel"] .lights i { border-radius: 0; }
+.menu-icon { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--fg); }
+.menu-icon svg { width: 18px; height: 18px; color: var(--accent); transition: transform .4s; }
+.menu-icon.pulse svg { animation: pulse .8s ease-out; }
+@keyframes pulse { 30% { transform: scale(1.45) rotate(30deg); } 100% { transform: scale(1); } }
+.cmd { display: flex; align-items: center; gap: 8px; margin: 12px; padding: 0 12px; height: 42px; border-radius: calc(var(--radius) - 4px); background: var(--bg2); border: 1px solid var(--line); }
+:root[data-skin="aqua"] .cmd { background: #FFFFFF; box-shadow: inset 0 1px 3px rgba(0,0,0,.18); }
+.cmd input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-family: var(--mono); font-size: 14px; }
+:root[data-skin="pixel"] .cmd input { font-size: 19px; }
+.cmd .k { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.cmd-hint { margin: -4px 14px 0; min-height: 20px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+:root[data-skin="pixel"] .cmd-hint { font-size: 16px; }
+.files { position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px 8px; padding: 14px 14px 18px; min-height: 300px; align-content: start; }
+.file { display: grid; justify-items: center; gap: 6px; padding: 10px 6px 8px; border-radius: 12px; border: 1px solid transparent; background: transparent; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; text-align: center; animation: pop .35s cubic-bezier(.2,1.4,.4,1) both; }
+.file:hover, .file.selected { background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+:root[data-skin="pixel"] .file, :root[data-skin="ascii"] .file { border-radius: 0; }
+.file.dragging { opacity: .35; }
+@keyframes pop { from { transform: scale(.4); opacity: 0; } }
+.thumb { width: 72px; height: 72px; border-radius: 10px; overflow: hidden; display: grid; place-items: center; background: var(--panel2); box-shadow: 0 6px 16px rgba(0,0,0,.25); position: relative; }
+:root[data-skin="pixel"] .thumb { border-radius: 0; box-shadow: 4px 4px 0 #0C0720; }
+:root[data-skin="pixel"] .thumb img { image-rendering: pixelated; }
+:root[data-skin="ascii"] .thumb { border-radius: 0; box-shadow: none; border: 1px dashed var(--line); }
+:root[data-skin="ascii"] .thumb img { filter: grayscale(1) sepia(1) hue-rotate(60deg) saturate(3) contrast(1.1); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.thumb .doc { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent); }
+.badge { position: absolute; bottom: 4px; right: 4px; font-family: var(--mono); font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(0,0,0,.6); color: #fff; }
+.fname { font-size: 12px; line-height: 1.25; max-width: 104px; overflow-wrap: anywhere; }
+:root[data-skin="pixel"] .fname { font-size: 16px; }
+.fsize { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+:root[data-skin="pixel"] .fsize { font-size: 15px; }
+.fsize .down { color: var(--accent); }
+.fsize .up { color: var(--danger); }
+.drop-note { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+:root[data-skin="pixel"] .drop-note, :root[data-skin="ascii"] .drop-note { border-radius: 0; }
+:root[data-skin="pixel"] .drop-note { font-size: 17px; }
+.desk.dropping .drop-note { border-color: var(--accent); color: var(--fg); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.link-btn { background: none; border: 0; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 0; }
+.stats { display: flex; gap: 16px; font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 0 14px 12px; flex-wrap: wrap; }
+.stats b { color: var(--fg); }
+:root[data-skin="pixel"] .stats { font-size: 16px; }
+
+/* Wheel overlay, ghost, hint */
+#wheel { position: fixed; z-index: 80; left: 0; top: 0; width: 400px; height: 400px; pointer-events: none; transform-origin: 50% 50%; opacity: 0; transform: scale(.6); transition: opacity .16s, transform .24s cubic-bezier(.2,1.5,.4,1); }
+#wheel.open { opacity: 1; transform: scale(1); }
+#wheel.click { pointer-events: auto; cursor: pointer; }
+#wheel canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#wheel .disc { position: absolute; border-radius: 50%; display: none; }
+:root[data-skin="glass"] #wheel .disc { display: block; backdrop-filter: blur(18px) saturate(1.6); -webkit-backdrop-filter: blur(18px) saturate(1.6); background: rgba(255,255,255,.08); }
+#ghost { position: fixed; z-index: 85; width: 64px; height: 64px; border-radius: 12px; overflow: hidden; pointer-events: none; display: none; box-shadow: 0 12px 30px rgba(0,0,0,.4); transform: translate(-50%, -50%) rotate(-4deg); }
+#ghost img { width: 100%; height: 100%; object-fit: cover; }
+#ghost.fly { transition: transform .22s ease-in, opacity .22s; opacity: 0; }
+#hint { position: fixed; z-index: 86; pointer-events: none; display: none; padding: 6px 10px; border-radius: 999px; background: var(--fg); color: var(--bg); font-family: var(--mono); font-size: 12px; white-space: nowrap; transform: translate(14px, 22px); }
+:root[data-skin="pixel"] #hint, :root[data-skin="ascii"] #hint { border-radius: 0; font-size: 15px; }
+.shift-touch { position: fixed; z-index: 87; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: none; padding: 16px 22px; border-radius: 16px; border: 0; background: var(--accent); color: var(--on-accent); font-family: var(--mono); font-weight: 700; box-shadow: var(--glow); }
+.shift-touch.show { display: block; }
+
+/* Sections */
+.section-head { display: grid; gap: 12px; margin-bottom: 32px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+:root[data-skin="pixel"] .card { box-shadow: var(--shadow); }
+:root[data-skin="ascii"] .card { border-style: dashed; }
+.card p { color: var(--muted); font-size: .92em; }
+.keys { display: flex; gap: 6px; flex-wrap: wrap; min-height: 34px; align-items: center; }
+.keys kbd.press { animation: press 2.4s ease-in-out infinite; }
+@keyframes press { 0%, 40%, 60%, 100% { transform: none; border-bottom-width: 3px; } 48% { transform: translateY(2px); border-bottom-width: 1px; background: var(--accent); color: var(--on-accent); } }
+.shake-pad { height: 74px; border: 1.5px dashed var(--line); border-radius: 12px; display: grid; place-items: center; position: relative; overflow: hidden; cursor: ew-resize; font-family: var(--mono); font-size: 12px; color: var(--muted); touch-action: none; }
+:root[data-skin="pixel"] .shake-pad, :root[data-skin="ascii"] .shake-pad { border-radius: 0; font-size: 15px; }
+.shake-pad .meter { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--accent); width: 0; transition: width .2s; }
+.shake-pad.hit { color: var(--on-accent); background: var(--accent); }
+
+.play { position: relative; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); overflow: hidden; box-shadow: var(--shadow); }
+.play canvas { display: block; width: 100%; height: clamp(360px, 52vw, 480px); touch-action: none; cursor: grab; }
+.play-hud { position: absolute; left: 14px; top: 12px; right: 14px; display: flex; justify-content: space-between; gap: 10px; pointer-events: none; font-family: var(--mono); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+:root[data-skin="pixel"] .play-hud { font-size: 17px; }
+.play-hud b { color: var(--accent); font-size: 1.3em; }
+
+.skin-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.skin-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; cursor: pointer; background: var(--panel); text-align: left; padding: 0; color: var(--fg); transition: transform .2s; }
+.skin-card:hover { transform: translateY(-4px) rotate(-1deg); }
+.skin-card[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.skin-card .sw { height: 92px; display: grid; place-items: center; }
+.skin-card .sw span { width: 56px; height: 56px; border-radius: 50%; display: block; }
+.skin-card .lbl { padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+:root[data-skin="pixel"] .skin-card .lbl { font-size: 15px; }
+.sw-halo { background: #0B0D11; } .sw-halo span { background: conic-gradient(#C6FF3D 0 60deg, #1B1D23 60deg 360deg); box-shadow: 0 0 18px rgba(198,255,61,.5); }
+.sw-aqua { background: repeating-linear-gradient(0deg, #E8EEF6 0 2px, #D9E3EF 2px 4px); } .sw-aqua span { background: radial-gradient(circle at 50% 30%, #D5ECFF 0 18%, #3D8EF0 45%, #1A5CC0 100%); box-shadow: inset 0 -6px 10px rgba(0,0,0,.2), 0 4px 10px rgba(28,111,224,.45); }
+.sw-ascii { background: #040704; color: #39FF6A; font-family: "VT323", monospace; font-size: 30px; } .sw-ascii span { display: none; }
+.sw-pixel { background: #1B1135; } .sw-pixel span { border-radius: 0; background: #FFCC33; box-shadow: 6px 6px 0 #8A5A00; clip-path: polygon(30% 0, 70% 0, 70% 10%, 90% 10%, 90% 30%, 100% 30%, 100% 70%, 90% 70%, 90% 90%, 70% 90%, 70% 100%, 30% 100%, 30% 90%, 10% 90%, 10% 70%, 0 70%, 0 30%, 10% 30%, 10% 10%, 30% 10%); }
+.sw-glass { background: linear-gradient(135deg, #5B4BFF, #FF4FB0 55%, #00C2FF); } .sw-glass span { background: rgba(255,255,255,.25); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.6); }
+
+.privacy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.privacy .card b { font-family: var(--mono); color: var(--accent); }
+
+.install { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.term { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; font-family: var(--mono); font-size: 13px; min-width: 0; }
+:root[data-skin="pixel"] .term { font-size: 17px; }
+.term-line { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--line); min-width: 0; }
+.term-line:last-child { border-bottom: 0; }
+.term-line code { overflow-x: auto; white-space: nowrap; min-width: 0; }
+.term-line code::before { content: "$ "; color: var(--accent); }
+.copy { flex: none; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 3px 8px; cursor: pointer; font-family: var(--mono); font-size: 11px; }
+footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; display: grid; gap: 8px; }
+
+/* Preview modal and toast */
+.modal { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 24px; background: rgba(0,0,0,.6); }
+.modal[hidden] { display: none !important; }
+.modal-box { max-width: min(900px, 100%); max-height: 86vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 10px; }
+:root[data-skin="glass"] .modal-box { background: #1A1C3A; }
+.modal-box img { max-height: 64vh; width: auto; margin: 0 auto; border-radius: 8px; }
+.modal-box pre { font-size: 7px; line-height: 1; margin: 0; overflow: auto; color: var(--fg); }
+.modal-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; font-family: var(--mono); font-size: 13px; }
+.toast { position: fixed; z-index: 99; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-family: var(--mono); font-size: 13px; transition: .25s; pointer-events: none; max-width: calc(100vw - 32px); text-align: center; }
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+:root[data-skin="pixel"] .toast, :root[data-skin="ascii"] .toast { border-radius: 0; font-size: 16px; }
+
+@media (max-width: 960px) {
+  .hero, .install { grid-template-columns: minmax(0, 1fr); }
+  .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .skin-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .privacy { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .grid4, .skin-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .skins { margin-left: 0; }
+  .files { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  html { scroll-behavior: auto; }
+}
+</style>
+
+<div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="Circularity home">
+      <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
+        <path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/>
+      </svg>
+      Circularity
+    </a>
+    <nav class="skins" aria-label="Skin">
+      <button class="pill" data-skin-btn="halo">Halo</button>
+      <button class="pill" data-skin-btn="aqua">Aqua</button>
+      <button class="pill" data-skin-btn="ascii">ASCII</button>
+      <button class="pill" data-skin-btn="pixel">Pixel</button>
+      <button class="pill" data-skin-btn="glass">Glass</button>
+    </nav>
+    <button class="icon-btn" id="soundBtn" aria-pressed="false" title="Sound" aria-label="Sound off">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWaves" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" opacity=".25"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow">Mac menu bar app · macOS 13+</div>
+      <h1 style="margin-top:14px">Convert files <span class="accent">without opening</span> anything.</h1>
+      <p class="lede">Drag a file, tap Shift, and a wheel of formats opens around your pointer. Let go on one. The new file lands next to the original.</p>
+      <ol class="steps">
+        <li><b>01</b><span>Press on a picture in the window and start dragging.</span></li>
+        <li><b>02</b><span>Tap <kbd>⇧ Shift</kbd>, shake the pointer, or just hold still.</span></li>
+        <li><b>03</b><span>Let go on <b class="mono" style="color:inherit">JPG</b>, rest on <b class="mono" style="color:inherit">••• MORE</b> for the fun ones.</span></li>
+      </ol>
+      <div class="cta-row">
+        <a class="btn primary" href="#install">Get Circularity</a>
+        <a class="btn" href="#play">Play the fling game</a>
+      </div>
+    </div>
+
+    <div class="desk" id="desk" aria-label="Try it: a pretend Mac desktop">
+      <div class="desk-bar">
+        <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>Desktop — try it here</span>
+        <span class="menu-icon" id="menuIcon" title="Circularity in the menu bar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg>
+        </span>
+      </div>
+      <label class="cmd" for="cmdInput">
+        <span class="k">⌘K</span>
+        <input id="cmdInput" autocomplete="off" spellcheck="false" placeholder="try: webp · 50kb · 800w · ascii · pixel · pdf">
+      </label>
+      <div class="cmd-hint" id="cmdHint">Runs on the selected file. Press ↩.</div>
+      <div class="files" id="files">
+        <div class="drop-note" id="dropNote">Drop your own picture here, or <button class="link-btn" id="pickBtn" type="button">choose one</button>. It never leaves your browser.<input type="file" id="fileInput" accept="image/*" hidden></div>
+      </div>
+      <div class="stats" aria-live="polite"><span>converted <b id="statCount">0</b></span><span>saved <b id="statSaved">0 KB</b></span><span id="statHint">click a file to open the wheel without dragging</span></div>
+    </div>
+  </div>
+
+  <section class="wrap" id="ways">
+    <div class="section-head">
+      <div class="eyebrow">No permissions needed</div>
+      <h2>Four ways to open the wheel</h2>
+    </div>
+    <div class="grid4">
+      <div class="card">
+        <div class="keys"><kbd>drag</kbd><span>+</span><kbd class="press">⇧ Shift</kbd></div>
+        <h3>Tap Shift</h3>
+        <p>While dragging from Finder, the desktop or any app. Option or Control work too.</p>
+      </div>
+      <div class="card">
+        <div class="shake-pad" id="shakePad"><span id="shakeText">shake your pointer here ↔</span><div class="meter" id="shakeMeter"></div></div>
+        <h3>Shake</h3>
+        <p>Wiggle left and right a few times mid-drag. Try it on the pad above.</p>
+      </div>
+      <div class="card">
+        <div class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd class="press">C</kbd></div>
+        <h3>⌃⌥C in Finder</h3>
+        <p>Select files and press it. The wheel opens where your pointer is.</p>
+      </div>
+      <div class="card">
+        <div class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd class="press">Space</kbd></div>
+        <h3>The panel</h3>
+        <p>Presets you can drop files on, recent results, and ⌘K: type <span class="mono">50kb</span> or <span class="mono">1920w</span>.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="play">
+    <div class="section-head">
+      <div class="eyebrow">Physics break</div>
+      <h2>Fling files into the wheel</h2>
+      <p style="color:var(--muted)">Grab a file and throw it into the centre. Every hit converts it and adds to the bytes you've saved. Chain hits for a combo.</p>
+    </div>
+    <div class="play">
+      <canvas id="playCanvas" aria-label="Fling game: throw file bubbles into the wheel"></canvas>
+      <div class="play-hud"><span>saved <b id="playSaved">0 MB</b></span><span id="playCombo">combo ×1</span><span>converted <b id="playCount">0</b></span></div>
+    </div>
+  </section>
+
+  <section class="wrap" id="skins">
+    <div class="section-head">
+      <div class="eyebrow">Themes, like the app</div>
+      <h2>Pick a skin. Everything follows.</h2>
+      <p style="color:var(--muted)">The app ships with themes and three wheel layouts. This page does the same trick: the wheel, the game and every button redraw in the style you choose. Secret: type <span class="mono">shift</span> anywhere.</p>
+    </div>
+    <div class="skin-cards">
+      <button class="skin-card" data-skin-btn="halo"><div class="sw sw-halo"><span></span></div><div class="lbl">Halo · neon</div></button>
+      <button class="skin-card" data-skin-btn="aqua"><div class="sw sw-aqua"><span></span></div><div class="lbl">Aqua · 2001</div></button>
+      <button class="skin-card" data-skin-btn="ascii"><div class="sw sw-ascii">[(o)]<span></span></div><div class="lbl">ASCII · tty</div></button>
+      <button class="skin-card" data-skin-btn="pixel"><div class="sw sw-pixel"><span></span></div><div class="lbl">Pixel · 8-bit</div></button>
+      <button class="skin-card" data-skin-btn="glass"><div class="sw sw-glass"><span></span></div><div class="lbl">Liquid glass</div></button>
+    </div>
+  </section>
+
+  <section class="wrap" id="privacy">
+    <div class="section-head">
+      <div class="eyebrow">What it doesn't touch</div>
+      <h2>Small, quiet, private</h2>
+    </div>
+    <div class="privacy">
+      <div class="card"><b>0 permissions</b><p>No Accessibility, no Input Monitoring, no Screen Recording. macOS never asks.</p></div>
+      <div class="card"><b>12.5 MB at rest</b><p>Measured idle memory, 0.02 % CPU. It sleeps until you drag a file.</p></div>
+      <div class="card"><b>On your Mac</b><p>Apple's own ImageIO, PDFKit and WebKit do the work. Nothing is uploaded, ever.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap" id="install">
+    <div class="section-head">
+      <div class="eyebrow">Version 0.1.0 · 3.3 MB · Apple silicon and Intel</div>
+      <h2>Get Circularity</h2>
+    </div>
+    <div class="install">
+      <div class="card">
+        <h3>Download</h3>
+        <p>Open the disk image and drag Circularity to Applications.</p>
+        <div><a class="btn primary" id="downloadBtn" href="#install">Download for Mac</a></div>
+        <p id="downloadNote"></p>
+        <p><b style="color:var(--fg)">First launch:</b> macOS 15 and later: open it once, then System Settings → Privacy &amp; Security → Open Anyway. macOS 13–14: right-click the app → Open.</p>
+      </div>
+      <div class="term" aria-label="Build from source">
+        <div class="eyebrow" style="margin-bottom:6px">Or build it yourself</div>
+        <div class="term-line"><code>brew install xcodegen create-dmg</code><button class="copy" type="button">copy</button></div>
+        <div class="term-line"><code>./scripts/clean-rebuild.sh</code><button class="copy" type="button">copy</button></div>
+        <div class="term-line"><code>./scripts/release.sh</code><button class="copy" type="button">copy</button></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="wrap">
+    <span>Circularity · MIT licence · made for macOS 13 and later</span>
+    <span>Inspired by Circularity for Windows by Atharv Gogia. The Tangerine theme follows the Tangerine design by LEAP STUDIO.</span>
+  </footer>
+</main>
+
+<div id="wheel" aria-hidden="true"><div class="disc"></div><canvas id="wheelCanvas"></canvas></div>
+<div id="ghost"><img alt=""></div>
+<div id="hint">tap ⇧ Shift · shake · or hold still</div>
+<button class="shift-touch" id="shiftTouch" type="button">⇧ Shift</button>
+<div class="modal" id="modal" hidden><div class="modal-box"><div class="modal-head"><span id="modalTitle"></span><button class="copy" id="modalClose" type="button">close</button></div><div id="modalBody"></div></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+"use strict";
+// Put the hosted DMG's address here when it's online; until then the button explains.
+const DOWNLOAD_URL = "";
+
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const root = document.documentElement;
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const css = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+const fmtBytes = (n) => {
+  if (n < 1024) return n + " B";
+  if (n < 1024 * 1024) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + " KB";
+  return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + " MB";
+};
+const toast = (() => { let t; return (msg) => { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(t); t = setTimeout(() => el.classList.remove("show"), 2600); }; })();
+const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+// ---------- Sound (off until asked) ----------
+let audio = null, soundOn = false;
+function blip(freq, dur = 0.05, type = "sine", vol = 0.05, slide = 0) {
+  if (!soundOn || !audio) return;
+  const t = audio.currentTime, o = audio.createOscillator(), g = audio.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, freq + slide), t + dur);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(audio.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+const sfx = {
+  open: () => blip(320, 0.18, "sine", 0.06, 500),
+  tick: () => blip(1500, 0.025, "square", 0.02),
+  drop: () => { blip(660, 0.08, "triangle", 0.07); setTimeout(() => blip(990, 0.1, "triangle", 0.06), 70); },
+  cancel: () => blip(300, 0.15, "sawtooth", 0.03, -150),
+  skin: () => { [523, 659, 784].forEach((f, i) => setTimeout(() => blip(f, 0.07, "square", 0.03), i * 55)); },
+};
+$("#soundBtn").addEventListener("click", () => {
+  if (!audio) { try { audio = new (window.AudioContext || window.webkitAudioContext)(); } catch { toast("This browser can't play sound."); return; } }
+  soundOn = !soundOn;
+  $("#soundBtn").setAttribute("aria-pressed", soundOn);
+  $("#soundBtn").setAttribute("aria-label", soundOn ? "Sound on" : "Sound off");
+  $("#soundWaves").setAttribute("opacity", soundOn ? "1" : ".25");
+  if (soundOn) sfx.drop();
+});
+
+// ---------- Skins ----------
+const SKINS = ["halo", "aqua", "ascii", "pixel", "glass"];
+let skin = "halo";
+function setSkin(name, announce) {
+  if (!SKINS.includes(name) || name === skin && root.dataset.skin) return;
+  const apply = () => {
+    skin = name; root.dataset.skin = name;
+    $$("[data-skin-btn]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.skinBtn === name));
+    store.set("circularity-skin", name);
+    drawWheel(); play.restyle();
+  };
+  if (document.startViewTransition && !reduceMotion && announce !== "silent") document.startViewTransition(apply); else apply();
+  if (announce === true) { toast("Skin: " + name.toUpperCase()); sfx.skin(); }
+}
+$$("[data-skin-btn]").forEach((b) => b.addEventListener("click", () => setSkin(b.dataset.skinBtn, true)));
+
+// Easter eggs: type "shift" for ASCII, the Konami code for Pixel.
+let typed = "";
+const konami = ["ArrowUp","ArrowUp","ArrowDown","ArrowDown","ArrowLeft","ArrowRight","ArrowLeft","ArrowRight","b","a"];
+let kIndex = 0;
+document.addEventListener("keydown", (e) => {
+  if (e.target.closest && e.target.closest("input, textarea")) return;
+  kIndex = e.key === konami[kIndex] ? kIndex + 1 : (e.key === konami[0] ? 1 : 0);
+  if (kIndex === konami.length) { kIndex = 0; setSkin("pixel", true); toast("↑↑↓↓←→←→BA · PIXEL MODE"); }
+  if (e.key.length === 1) { typed = (typed + e.key.toLowerCase()).slice(-5); if (typed === "shift") { setSkin("ascii", true); toast("you found it · ASCII MODE"); } }
+});
+
+// ---------- Files on the pretend desktop ----------
+const files = [];
+let selected = null, saved = 0, converted = 0;
+let nextId = 1;
+
+function makeCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
+const toBlob = (canvas, type, q) => new Promise((res) => canvas.toBlob((b) => res(b), type, q));
+const loadImage = (url) => new Promise((res, rej) => { const img = new Image(); img.onload = () => res(img); img.onerror = rej; img.src = url; });
+
+// Sample pictures, drawn here so every visitor has something real to convert.
+function noise(ctx, w, h, amount) {
+  const d = ctx.getImageData(0, 0, w, h), p = d.data;
+  let s = 1234567;
+  for (let i = 0; i < p.length; i += 4) { s = (s * 1103515245 + 12345) & 0x7fffffff; const n = ((s >> 16) % (amount * 2)) - amount; p[i] += n; p[i + 1] += n; p[i + 2] += n; }
+  ctx.putImageData(d, 0, 0);
+}
+function drawSunset() {
+  const w = 1200, h = 800, c = makeCanvas(w, h), x = c.getContext("2d");
+  const sky = x.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, "#2B2D6E"); sky.addColorStop(.55, "#F06A4A"); sky.addColorStop(.75, "#FFC27A"); x.fillStyle = sky; x.fillRect(0, 0, w, h);
+  x.fillStyle = "#FFE7A8"; x.beginPath(); x.arc(820, 470, 90, 0, Math.PI * 2); x.fill();
+  [["#3E2A5C", 520, .9], ["#2A1D44", 600, 1.3], ["#170F2A", 680, 1.7]].forEach(([col, base, f]) => {
+    x.fillStyle = col; x.beginPath(); x.moveTo(0, h);
+    for (let i = 0; i <= w; i += 20) x.lineTo(i, base - Math.abs(Math.sin(i / (140 * f)) * 90 * f) - Math.sin(i / 37) * 12);
+    x.lineTo(w, h); x.fill();
+  });
+  noise(x, w, h, 10); return c;
+}
+function drawScreenshot() {
+  const w = 1000, h = 640, c = makeCanvas(w, h), x = c.getContext("2d");
+  x.fillStyle = "#EEF1F5"; x.fillRect(0, 0, w, h); x.fillStyle = "#FFFFFF"; x.fillRect(60, 50, 880, 540);
+  x.fillStyle = "#DDE3EA"; x.fillRect(60, 50, 880, 40); x.fillStyle = "#FF5F57"; x.beginPath(); x.arc(84, 70, 7, 0, 7); x.fill();
+  x.fillStyle = "#FEBC2E"; x.beginPath(); x.arc(106, 70, 7, 0, 7); x.fill(); x.fillStyle = "#28C840"; x.beginPath(); x.arc(128, 70, 7, 0, 7); x.fill();
+  x.fillStyle = "#F4F6F9"; x.fillRect(60, 90, 200, 500);
+  for (let i = 0; i < 9; i++) { x.fillStyle = i === 2 ? "#3B82F6" : "#C9D1DC"; x.fillRect(80, 120 + i * 40, i === 2 ? 150 : 120, 14); }
+  x.fillStyle = "#1F2937"; x.fillRect(300, 130, 360, 26);
+  for (let i = 0; i < 10; i++) { x.fillStyle = "#AEB8C5"; x.fillRect(300, 190 + i * 30, 560 - (i * 37) % 180, 10); }
+  x.fillStyle = "#C6FF3D"; x.fillRect(300, 520, 140, 40); return c;
+}
+function drawKitty() {
+  const w = 900, h = 900, c = makeCanvas(w, h), x = c.getContext("2d");
+  const bg = x.createRadialGradient(450, 380, 50, 450, 450, 600); bg.addColorStop(0, "#7FD3C8"); bg.addColorStop(1, "#2E6F8E"); x.fillStyle = bg; x.fillRect(0, 0, w, h);
+  x.fillStyle = "#F2A65A";
+  x.beginPath(); x.moveTo(250, 330); x.lineTo(300, 120); x.lineTo(420, 260); x.fill();
+  x.beginPath(); x.moveTo(650, 330); x.lineTo(600, 120); x.lineTo(480, 260); x.fill();
+  x.beginPath(); x.ellipse(450, 470, 270, 240, 0, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "#FFF4E6"; x.beginPath(); x.ellipse(450, 560, 140, 110, 0, 0, Math.PI * 2); x.fill();
+  x.fillStyle = "#1D1B18"; x.beginPath(); x.ellipse(360, 430, 34, 46, 0, 0, 7); x.fill(); x.beginPath(); x.ellipse(540, 430, 34, 46, 0, 0, 7); x.fill();
+  x.fillStyle = "#FFFFFF"; x.beginPath(); x.arc(372, 414, 11, 0, 7); x.fill(); x.beginPath(); x.arc(552, 414, 11, 0, 7); x.fill();
+  x.fillStyle = "#E86A7A"; x.beginPath(); x.moveTo(430, 515); x.lineTo(470, 515); x.lineTo(450, 538); x.fill();
+  x.strokeStyle = "#1D1B18"; x.lineWidth = 5; x.lineCap = "round";
+  x.beginPath(); x.moveTo(450, 538); x.quadraticCurveTo(420, 580, 395, 560); x.moveTo(450, 538); x.quadraticCurveTo(480, 580, 505, 560); x.stroke();
+  [[-1, 0], [1, 0]].forEach(([s]) => { for (let i = 0; i < 3; i++) { x.beginPath(); x.moveTo(450 + s * 120, 540 + i * 18); x.lineTo(450 + s * 270, 515 + i * 30); x.stroke(); } });
+  noise(x, w, h, 7); return c;
+}
+
+async function addFile({ name, blob, kind = "image", text = null, from = null, w = 0, h = 0, preview = null }) {
+  const url = URL.createObjectURL(blob);
+  let img = null;
+  if (kind === "image") { try { img = await loadImage(url); w = img.naturalWidth; h = img.naturalHeight; } catch { toast("That file isn't a picture this browser can read."); return null; } }
+  const file = { id: nextId++, name, blob, url, img, kind, text, bytes: blob.size, from, w, h, preview };
+  files.push(file);
+  renderFile(file);
+  return file;
+}
+
+function ext(name) { const m = /\.([^.]+)$/.exec(name); return m ? m[1].toLowerCase() : ""; }
+function base(name) { return name.replace(/\.[^.]+$/, ""); }
+function uniqueName(name) {
+  if (!files.some((f) => f.name === name)) return name;
+  for (let i = 1; ; i++) { const n = `${base(name)} (${i}).${ext(name)}`; if (!files.some((f) => f.name === n)) return n; }
+}
+function middleTruncate(s, max) { return s.length <= max ? s : s.slice(0, Math.ceil((max - 1) * .55)) + "…" + s.slice(-Math.floor((max - 1) * .45)); }
+
+function renderFile(f) {
+  const el = document.createElement("button");
+  el.type = "button"; el.className = "file"; el.dataset.id = f.id;
+  const thumb = f.kind === "image" ? `<img src="${f.url}" alt="">` : f.kind === "pdf" ? `<img src="${f.preview}" alt=""><span class="badge">PDF</span>` : `<span class="doc">TXT</span>`;
+  let delta = "";
+  if (f.from) {
+    const pct = Math.round((f.bytes / f.from.bytes - 1) * 100);
+    delta = pct <= 0 ? ` <span class="down">${pct}%</span>` : ` <span class="up">+${pct}%</span>`;
+  }
+  el.innerHTML = `<span class="thumb">${thumb}</span><span class="fname" title="${f.name}">${middleTruncate(f.name, 30)}</span><span class="fsize">${fmtBytes(f.bytes)}${delta}</span>`;
+  el.setAttribute("aria-label", `${f.name}, ${fmtBytes(f.bytes)}. Drag it and tap Shift, or click it to open the wheel.`);
+  $("#files").insertBefore(el, $("#dropNote"));
+  el.addEventListener("pointerdown", (e) => startPress(e, f, el));
+  el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(f); if (f.kind !== "image") { preview(f); return; } const r = el.getBoundingClientRect(); openWheel(f, r.left + r.width / 2, r.top + r.height / 2, "click"); } });
+}
+function select(f) {
+  selected = f;
+  $$(".file").forEach((el) => el.classList.toggle("selected", Number(el.dataset.id) === f.id));
+}
+
+// Your own pictures: drop or choose. Nothing is uploaded.
+const desk = $("#desk");
+["dragenter", "dragover"].forEach((t) => desk.addEventListener(t, (e) => { if ([...(e.dataTransfer?.types || [])].includes("Files")) { e.preventDefault(); desk.classList.add("dropping"); } }));
+["dragleave", "drop"].forEach((t) => desk.addEventListener(t, () => desk.classList.remove("dropping")));
+desk.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  for (const file of [...(e.dataTransfer?.files || [])].slice(0, 6)) await addUserFile(file);
+});
+$("#pickBtn").addEventListener("click", () => $("#fileInput").click());
+$("#fileInput").addEventListener("change", async (e) => { for (const file of [...e.target.files].slice(0, 6)) await addUserFile(file); e.target.value = ""; });
+async function addUserFile(file) {
+  if (!file.type.startsWith("image/")) { toast(`${file.name} isn't a picture. The app also does PDFs and documents.`); return; }
+  const f = await addFile({ name: uniqueName(file.name), blob: file });
+  if (f) { select(f); toast(`${f.name} is on the desktop. Drag it and tap Shift.`); }
+}
+
+// ---------- Conversions (real, in this browser) ----------
+const CAP = 2400;
+function sourceCanvas(f, cap = CAP) {
+  const s = Math.min(1, cap / Math.max(f.w, f.h));
+  const c = makeCanvas(Math.max(1, Math.round(f.w * s)), Math.max(1, Math.round(f.h * s)));
+  const x = c.getContext("2d");
+  x.fillStyle = "#FFFFFF"; x.fillRect(0, 0, c.width, c.height); // JPEG has no transparency
+  x.drawImage(f.img, 0, 0, c.width, c.height);
+  return c;
+}
+function opaqueCanvas(f, cap) { return sourceCanvas(f, cap); }
+function alphaCanvas(f, cap = CAP) {
+  const s = Math.min(1, cap / Math.max(f.w, f.h));
+  const c = makeCanvas(Math.max(1, Math.round(f.w * s)), Math.max(1, Math.round(f.h * s)));
+  c.getContext("2d").drawImage(f.img, 0, 0, c.width, c.height);
+  return c;
+}
+const MIME = { png: "image/png", jpg: "image/jpeg", webp: "image/webp" };
+function sameFormat(f) { const e = ext(f.name); return e === "jpeg" ? "jpg" : (MIME[e] ? e : "png"); }
+
+async function encodeAs(f, fmt, opts = {}) {
+  const canvas = opts.canvas || (fmt === "png" || fmt === "webp" ? alphaCanvas(f) : opaqueCanvas(f));
+  const blob = await toBlob(canvas, MIME[fmt], opts.q ?? (fmt === "jpg" ? 0.85 : 0.8));
+  if (!blob) throw new Error("This browser couldn't encode " + fmt.toUpperCase());
+  if (fmt === "webp" && blob.type !== "image/webp") throw new Error("This browser can't write WebP. The Mac app can.");
+  return blob;
+}
+
+const ACTIONS = {
+  png:   { label: "PNG",  mono: "PNG",  caption: "LOSSLESS", kicker: "CONVERT TO", hint: "lossless, keeps transparency", run: async (f) => ({ blob: await encodeAs(f, "png"), name: `${base(f.name)}.png` }) },
+  jpg:   { label: "JPG",  mono: "JPG",  caption: "PHOTO",    kicker: "CONVERT TO", hint: "small, best for photos",       run: async (f) => ({ blob: await encodeAs(f, "jpg"), name: `${base(f.name)}.jpg` }) },
+  webp:  { label: "WebP", mono: "WEBP", caption: "WEB",      kicker: "CONVERT TO", hint: "smaller, for websites",        run: async (f) => ({ blob: await encodeAs(f, "webp"), name: `${base(f.name)}.webp` }) },
+  pdf:   { label: "PDF",  mono: "PDF",  caption: "DOCUMENT", kicker: "CONVERT TO", hint: "a one-page PDF",               run: async (f) => makePDF(f) },
+  more:  { label: "More", mono: "•••",  caption: "MORE",     kicker: "REST HERE FOR", hint: "the fun ones" },
+  sqz:   { label: "Compress", mono: "SQZ", caption: "COMPRESS", kicker: "MAKE IT", hint: "smaller, same look", run: async (f) => {
+    const fmt = sameFormat(f) === "png" ? "webp" : sameFormat(f);
+    let blob; try { blob = await encodeAs(f, fmt, { q: 0.55 }); } catch { blob = await encodeAs(f, "jpg", { q: 0.55 }); }
+    const e = blob.type === "image/webp" ? "webp" : "jpg";
+    return { blob, name: `${base(f.name)} (compressed).${e}` }; } },
+  size:  { label: "Resize", mono: "SIZE", caption: "RESIZE", kicker: "MAKE IT", hint: "half the width and height", run: async (f) => {
+    const c = makeCanvas(Math.max(1, Math.round(f.w / 2)), Math.max(1, Math.round(f.h / 2))); const x = c.getContext("2d");
+    const fmt = sameFormat(f); if (fmt === "jpg") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); }
+    x.imageSmoothingQuality = "high"; x.drawImage(f.img, 0, 0, c.width, c.height);
+    let blob; try { blob = await encodeAs(f, fmt, { canvas: c }); } catch { blob = await encodeAs(f, "png", { canvas: c }); }
+    return { blob, name: `${base(f.name)} (resized).${blob.type === "image/jpeg" ? "jpg" : blob.type === "image/webp" ? "webp" : "png"}` }; } },
+  ascii: { label: "ASCII", mono: "ASCII", caption: "TEXT ART", kicker: "TURN IT INTO", hint: "a text file of characters", run: async (f) => {
+    const text = asciiArt(f, 110); return { blob: new Blob([text], { type: "text/plain" }), name: `${base(f.name)}.txt`, kind: "text", text }; } },
+  pixel: { label: "Pixel", mono: "PIXEL", caption: "8-BIT", kicker: "TURN IT INTO", hint: "chunky pixel art", run: async (f) => {
+    const small = alphaCanvas(f, 72), c = makeCanvas(small.width * 8, small.height * 8), x = c.getContext("2d");
+    x.imageSmoothingEnabled = false; x.drawImage(small, 0, 0, c.width, c.height);
+    return { blob: await toBlob(c, "image/png"), name: `${base(f.name)} (pixel).png` }; } },
+  gray:  { label: "Mono", mono: "MONO", caption: "GRAYSCALE", kicker: "TURN IT INTO", hint: "black and white", run: async (f) => {
+    const c = alphaCanvas(f, 1600), x = c.getContext("2d"), d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+    for (let i = 0; i < p.length; i += 4) { const l = p[i] * .2126 + p[i + 1] * .7152 + p[i + 2] * .0722; p[i] = p[i + 1] = p[i + 2] = l; }
+    x.putImageData(d, 0, 0);
+    const fmt = sameFormat(f) === "jpg" ? "jpg" : "png";
+    return { blob: await encodeAs(f, fmt, { canvas: fmt === "jpg" ? flatten(c) : c }), name: `${base(f.name)} (mono).${fmt}` }; } },
+};
+function flatten(c) { const o = makeCanvas(c.width, c.height), x = o.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, o.width, o.height); x.drawImage(c, 0, 0); return o; }
+
+function asciiArt(f, cols) {
+  const ramp = "@%#*+=-:. ";
+  const rows = Math.max(8, Math.round(cols * (f.h / f.w) * 0.5));
+  const c = makeCanvas(cols, rows), x = c.getContext("2d");
+  x.fillStyle = "#fff"; x.fillRect(0, 0, cols, rows); x.drawImage(f.img, 0, 0, cols, rows);
+  const p = x.getImageData(0, 0, cols, rows).data; let out = "";
+  for (let y = 0; y < rows; y++) { for (let i = 0; i < cols; i++) { const k = (y * cols + i) * 4; const l = (p[k] * .2126 + p[k + 1] * .7152 + p[k + 2] * .0722) / 255; out += ramp[Math.min(ramp.length - 1, Math.floor(l * ramp.length))]; } out += "\n"; }
+  return out;
+}
+
+// A real one-page PDF: the picture as a JPEG image object (DCTDecode).
+async function makePDF(f) {
+  const c = opaqueCanvas(f, 2000);
+  const jpeg = new Uint8Array(await (await toBlob(c, "image/jpeg", 0.85)).arrayBuffer());
+  const W = Math.round(c.width * 0.75), H = Math.round(c.height * 0.75);
+  const enc = new TextEncoder(), parts = [], offsets = []; let length = 0;
+  const push = (data) => { const b = typeof data === "string" ? enc.encode(data) : data; parts.push(b); length += b.length; };
+  push("%PDF-1.4\n");
+  const obj = (n, body) => { offsets[n] = length; push(`${n} 0 obj\n${body}\nendobj\n`); };
+  obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+  obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
+  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
+  offsets[4] = length;
+  push(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+  push(jpeg); push("\nendstream\nendobj\n");
+  const content = `q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+  obj(5, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+  const xref = length;
+  let table = "xref\n0 6\n0000000000 65535 f \n";
+  for (let n = 1; n <= 5; n++) table += String(offsets[n]).padStart(10, "0") + " 00000 n \n";
+  push(table + `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  const preview = URL.createObjectURL(await toBlob(opaqueCanvas(f, 300), "image/jpeg", 0.8));
+  return { blob: new Blob(parts, { type: "application/pdf" }), name: `${base(f.name)}.pdf`, kind: "pdf", preview };
+}
+
+// Compress under a byte target: quality search, then shrink if needed (like the app).
+async function compressUnder(f, target) {
+  let canvas = opaqueCanvas(f);
+  for (let step = 0; step < 8; step++) {
+    let lo = 0.3, hi = 0.95, best = null;
+    const top = await toBlob(canvas, "image/jpeg", hi); if (top.size <= target) best = top;
+    else { for (let i = 0; i < 6; i++) { const mid = (lo + hi) / 2, b = await toBlob(canvas, "image/jpeg", mid); if (b.size <= target) { best = b; lo = mid; } else hi = mid; } }
+    if (best) return { blob: best, name: `${base(f.name)} (compressed).jpg`, note: step ? `shrunk to ${canvas.width} × ${canvas.height} to fit` : "" };
+    const floor = await toBlob(canvas, "image/jpeg", 0.3);
+    const k = Math.min(0.85, Math.max(0.2, Math.sqrt(target / floor.size) * 0.92));
+    const n = makeCanvas(Math.max(8, Math.round(canvas.width * k)), Math.max(8, Math.round(canvas.height * k)));
+    n.getContext("2d").drawImage(canvas, 0, 0, n.width, n.height); canvas = n;
+  }
+  throw new Error(`Couldn't get under ${fmtBytes(target)}`);
+}
+
+async function runAction(f, key, extra) {
+  const a = ACTIONS[key];
+  try {
+    const r = extra ? await extra() : await a.run(f);
+    const out = await addFile({ name: uniqueName(r.name), blob: r.blob, kind: r.kind || "image", text: r.text, from: f, preview: r.preview });
+    if (!out) return;
+    converted++; if (out.bytes < f.bytes) saved += f.bytes - out.bytes;
+    $("#statCount").textContent = converted; $("#statSaved").textContent = fmtBytes(saved);
+    const icon = $("#menuIcon"); icon.classList.remove("pulse"); void icon.offsetWidth; icon.classList.add("pulse");
+    sfx.drop();
+    const change = Math.round((out.bytes / f.bytes - 1) * 100);
+    toast(`${out.name} · ${fmtBytes(out.bytes)} (${change > 0 ? "+" : ""}${change}%)${r.note ? " · " + r.note : ""}`);
+    select(out);
+  } catch (err) { toast(err.message || "That didn't work"); sfx.cancel(); }
+}
+
+// Preview a file on double-click / Enter after selecting.
+function preview(f) {
+  $("#modalTitle").textContent = `${f.name} · ${fmtBytes(f.bytes)}${f.w ? ` · ${f.w} × ${f.h}` : ""}`;
+  const body = $("#modalBody"); body.textContent = "";
+  if (f.kind === "text") { const pre = document.createElement("pre"); pre.textContent = f.text; body.append(pre); }
+  else { const img = document.createElement("img"); img.src = f.kind === "pdf" ? f.preview : f.url; img.alt = f.name; body.append(img);
+    if (f.kind === "pdf") { const p = document.createElement("p"); p.style.color = "var(--muted)"; p.textContent = "A real one-page PDF, made in your browser. The app saves it next to the original."; body.append(p); } }
+  $("#modal").hidden = false; $("#modalClose").focus();
+}
+$("#modalClose").addEventListener("click", () => { $("#modal").hidden = true; });
+$("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") $("#modal").hidden = true; });
+
+// ---------- The wheel ----------
+const wheelEl = $("#wheel"), wc = $("#wheelCanvas"), wx = wc.getContext("2d"), disc = $(".disc", wheelEl);
+const G = { size: 400, rin: 62, rout: 150, bulge: 10, orb: 54, span: 56, fanR: 206, chipW: 70, chipH: 30, step: 23 };
+const W = { open: false, mode: "drag", file: null, cx: 0, cy: 0, scale: 1, ring: [], fan: [], hover: { t: "none" }, fanOpen: false, flipped: false, fanTimer: 0, est: {} };
+
+function menuFor(f) {
+  const src = sameFormat(f);
+  const formats = ["png", "jpg", "webp", "pdf"].filter((k) => k !== src).slice(0, 3);
+  const rest = ["png", "jpg", "webp", "pdf"].filter((k) => k !== src && !formats.includes(k));
+  return { ring: [...formats, "more", "sqz", "size"], fan: [...rest, "ascii", "pixel", "gray"] };
+}
+
+function openWheel(f, x, y, mode) {
+  if (W.open) return;
+  const m = menuFor(f);
+  W.file = f; W.mode = mode; W.ring = m.ring; W.fan = m.fan; W.hover = { t: "none" }; W.fanOpen = false; W.est = {};
+  W.scale = Math.min(1, (innerWidth - 16) / G.size);
+  const half = G.size * W.scale / 2;
+  W.cx = mode === "click" ? Math.min(Math.max(x, half), innerWidth - half) : x;
+  W.cy = mode === "click" ? Math.min(Math.max(y, half), innerHeight - half) : y;
+  W.flipped = W.cy + (G.fanR + 30) * W.scale > innerHeight;
+  const size = G.size * W.scale;
+  Object.assign(wheelEl.style, { width: size + "px", height: size + "px", left: W.cx - size / 2 + "px", top: W.cy - size / 2 + "px" });
+  const d = (G.rout + G.bulge + 14) * 2 * W.scale;
+  Object.assign(disc.style, { width: d + "px", height: d + "px", left: (size - d) / 2 + "px", top: (size - d) / 2 + "px" });
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  wc.width = Math.round(size * dpr); wc.height = Math.round(size * dpr);
+  W.open = true;
+  wheelEl.classList.toggle("click", mode === "click");
+  drawWheel();
+  requestAnimationFrame(() => wheelEl.classList.add("open"));
+  $("#hint").style.display = "none"; $("#shiftTouch").classList.remove("show");
+  sfx.open();
+}
+function closeWheel() {
+  W.open = false; clearTimeout(W.fanTimer);
+  wheelEl.classList.remove("open", "click");
+}
+
+function hitTest(px, py) {
+  const s = W.scale, dx = (px - W.cx) / s, dy = (py - W.cy) / s, dist = Math.hypot(dx, dy);
+  if (W.fanOpen) {
+    for (let k = 0; k < W.fan.length; k++) { const c = chipCenter(k); if (Math.abs(dx - c.x) <= G.chipW / 2 + 6 && Math.abs(dy - c.y) <= G.chipH / 2 + 6) return { t: "chip", k }; }
+  }
+  if (dist < G.orb) return { t: "centre" };
+  // With the fan open, outside the ring is travel space to the chips.
+  if (dist > G.rout + G.bulge + (W.fanOpen ? 2 : 30)) return { t: "none" };
+  if (dist < G.rin - 4) return { t: "centre" };
+  let deg = Math.atan2(dx, -dy) * 180 / Math.PI; if (deg < 0) deg += 360;
+  return { t: "seg", i: Math.floor((deg + 30) / 60) % 6 };
+}
+function chipCenter(k) {
+  const n = W.fan.length, mid = W.flipped ? 0 : 180;
+  const a = (mid + (k - (n - 1) / 2) * G.step) * Math.PI / 180;
+  return { x: Math.sin(a) * G.fanR, y: -Math.cos(a) * G.fanR };
+}
+function same(a, b) { return a.t === b.t && a.i === b.i && a.k === b.k; }
+
+function setHover(h) {
+  if (same(h, W.hover)) return;
+  W.hover = h;
+  const onMore = h.t === "seg" && W.ring[h.i] === "more";
+  clearTimeout(W.fanTimer);
+  if (onMore && !W.fanOpen) W.fanTimer = setTimeout(() => { W.fanOpen = true; drawWheel(); sfx.tick(); }, 220);
+  else if (h.t === "centre" || (h.t === "seg" && !onMore)) W.fanOpen = false;
+  if (h.t !== "none") sfx.tick();
+  const key = keyFor(h);
+  if (key && ACTIONS[key].run && !(key in W.est)) estimate(key);
+  drawWheel();
+}
+function keyFor(h) { return h.t === "seg" ? W.ring[h.i] : h.t === "chip" ? W.fan[h.k] : null; }
+
+// Live size estimate on hover, by really encoding a small copy.
+async function estimate(key) {
+  W.est[key] = null; const f = W.file;
+  if (!["png", "jpg", "webp", "sqz", "gray"].includes(key)) return;
+  try {
+    const s = Math.min(1, 480 / Math.max(f.w, f.h)), c = makeCanvas(Math.max(1, Math.round(f.w * s)), Math.max(1, Math.round(f.h * s)));
+    const x = c.getContext("2d"); if (key !== "png" && key !== "webp") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); } x.drawImage(f.img, 0, 0, c.width, c.height);
+    const type = key === "png" ? "image/png" : key === "webp" ? "image/webp" : key === "sqz" ? (sameFormat(f) === "jpg" ? "image/jpeg" : "image/webp") : "image/jpeg";
+    const b = await toBlob(c, type, key === "sqz" ? 0.55 : 0.85);
+    if (!b || W.file !== f) return;
+    W.est[key] = Math.round(b.size / (s * s)); if (W.open) drawWheel();
+  } catch {}
+}
+
+function orbText() {
+  const h = W.hover, f = W.file;
+  if (h.t === "centre") return { k: W.mode === "click" ? "CLICK HERE TO" : "DROP HERE TO", big: "Cancel", d: "nothing is changed", cancel: true };
+  const key = keyFor(h);
+  if (key) { const a = ACTIONS[key]; const est = W.est[key]; return { k: a.kicker, big: a.mono === "•••" ? "More" : a.mono, d: est ? `about ${fmtBytes(est)}` : a.hint }; }
+  return { k: "CIRCULARITY", big: sameFormat(f).toUpperCase(), d: `${middleTruncate(f.name, 26)} · ${fmtBytes(f.bytes)}` };
+}
+
+function sector(ctx, cx, cy, rin, rout, a0, a1) {
+  ctx.beginPath(); ctx.arc(cx, cy, rout, a0, a1); ctx.arc(cx, cy, rin, a1, a0, true); ctx.closePath();
+}
+function rad(deg) { return (deg - 90) * Math.PI / 180; }
+
+function drawWheel() {
+  if (!W.open || !W.file) return;
+  const dpr = wc.width / (G.size * W.scale);
+  const ctx = wx; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, wc.width, wc.height);
+  ctx.setTransform(dpr * W.scale, 0, 0, dpr * W.scale, 0, 0);
+  const c = G.size / 2;
+  const style = {
+    accent: css("--accent"), onAccent: css("--on-accent"), fg: css("--fg"), muted: css("--muted"),
+    mono: css("--mono") || "monospace", display: css("--display") || "sans-serif",
+  };
+  if (skin === "pixel") return drawPixelWheel(ctx, c, style);
+  if (skin === "ascii") return drawAsciiWheel(ctx, c, style);
+  drawSmoothWheel(ctx, c, style);
+}
+
+function segColors(i, hot, style) {
+  switch (skin) {
+    case "aqua": return { fill: hot ? ["#9BD3FF", "#2C83F2", "#1559C2"] : ["#FFFFFF", "#E2EAF4", "#C5D2E2"], text: hot ? "#FFFFFF" : "#1A2433", cap: hot ? "rgba(255,255,255,.85)" : "#5B6779", stroke: hot ? "#0E4AA6" : "rgba(40,70,110,.35)" };
+    case "glass": return { fill: hot ? style.accent : "rgba(255,255,255,.16)", text: hot ? style.onAccent : "#FFFFFF", cap: hot ? style.onAccent : "rgba(255,255,255,.75)", stroke: "rgba(255,255,255,.45)" };
+    default: return { fill: hot ? style.accent : "#1B1D23", text: hot ? style.onAccent : "#ECEEF2", cap: hot ? "#2A3300" : "#9097A6", stroke: null };
+  }
+}
+
+function drawSmoothWheel(ctx, c, style) {
+  const hotSeg = W.hover.t === "seg" ? W.hover.i : -1;
+  const moreIndex = W.ring.indexOf("more");
+  // Disc
+  ctx.save();
+  if (skin === "halo") { ctx.shadowColor = "rgba(0,0,0,.6)"; ctx.shadowBlur = 50; ctx.shadowOffsetY = 20; ctx.fillStyle = "#0D0F14"; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 12, 0, Math.PI * 2); ctx.fill();
+    ctx.shadowColor = "transparent"; ctx.strokeStyle = style.accent; ctx.globalAlpha = .25; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 6, 0, Math.PI * 2); ctx.stroke(); }
+  if (skin === "aqua") { const g = ctx.createRadialGradient(c, c - 40, 20, c, c, G.rout + 30); g.addColorStop(0, "#F7FAFE"); g.addColorStop(1, "#AEBFD3"); ctx.shadowColor = "rgba(20,50,90,.35)"; ctx.shadowBlur = 28; ctx.shadowOffsetY = 10; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 12, 0, Math.PI * 2); ctx.fill(); }
+  if (skin === "glass") { ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 13, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.restore();
+  // Segments
+  W.ring.forEach((key, i) => {
+    const hot = i === hotSeg || (i === moreIndex && W.fanOpen);
+    const mid = i * 60, half = G.span / 2, rout = G.rout + (hot ? G.bulge : 0), rin = G.rin - (hot ? 4 : 0);
+    const col = segColors(i, hot, style);
+    ctx.save();
+    sector(ctx, c, c, rin, rout, rad(mid - half), rad(mid + half));
+    if (Array.isArray(col.fill)) { const g = ctx.createLinearGradient(0, c - rout, 0, c + rout); g.addColorStop(0, col.fill[0]); g.addColorStop(.5, col.fill[1]); g.addColorStop(1, col.fill[2]); ctx.fillStyle = g; }
+    else ctx.fillStyle = col.fill;
+    if (hot && skin !== "aqua") { ctx.shadowColor = style.accent; ctx.shadowBlur = skin === "glass" ? 30 : 22; }
+    ctx.fill();
+    ctx.shadowColor = "transparent";
+    if (col.stroke) { ctx.strokeStyle = col.stroke; ctx.lineWidth = 1; ctx.stroke(); }
+    if (skin === "aqua") { // the gel highlight
+      ctx.clip(); const p = polar(c, (rin + rout) / 2 + 18, mid); const g = ctx.createRadialGradient(p.x, p.y - 8, 2, p.x, p.y, 60);
+      g.addColorStop(0, "rgba(255,255,255,.75)"); g.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, G.size, G.size);
+    }
+    ctx.restore();
+    const a = ACTIONS[key], p = polar(c, (G.rin + G.rout) / 2 + (hot ? 4 : 0), mid);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = col.text; ctx.font = `700 ${skin === "halo" ? 15 : 14}px ${skin === "halo" ? style.mono : style.display}`;
+    if (skin === "aqua") { ctx.shadowColor = hot ? "rgba(0,0,0,.35)" : "rgba(255,255,255,.9)"; ctx.shadowOffsetY = hot ? -1 : 1; ctx.shadowBlur = 0; }
+    ctx.fillText(skin === "halo" ? a.mono : a.label, p.x, p.y - 7);
+    ctx.shadowColor = "transparent";
+    ctx.fillStyle = col.cap; ctx.font = `600 9.5px ${style.mono}`;
+    ctx.fillText(a.caption, p.x, p.y + 11);
+  });
+  drawFan(ctx, c, style);
+  drawOrb(ctx, c, style);
+}
+
+function polar(c, r, deg) { const a = rad(deg); return { x: c + Math.cos(a) * r, y: c + Math.sin(a) * r }; }
+
+function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+function drawFan(ctx, c, style) {
+  if (!W.fanOpen) return;
+  W.fan.forEach((key, k) => {
+    const p = chipCenter(k), hot = W.hover.t === "chip" && W.hover.k === k;
+    const x = c + p.x - G.chipW / 2, y = c + p.y - G.chipH / 2;
+    ctx.save();
+    roundRect(ctx, x, y, G.chipW, G.chipH, skin === "pixel" || skin === "ascii" ? 0 : (skin === "aqua" ? 15 : 8));
+    const col = segColors(0, hot, style);
+    if (Array.isArray(col.fill)) { const g = ctx.createLinearGradient(0, y, 0, y + G.chipH); g.addColorStop(0, col.fill[0]); g.addColorStop(.5, col.fill[1]); g.addColorStop(1, col.fill[2]); ctx.fillStyle = g; } else ctx.fillStyle = col.fill;
+    if (hot) { ctx.shadowColor = style.accent; ctx.shadowBlur = 16; }
+    ctx.fill(); ctx.shadowColor = "transparent";
+    ctx.strokeStyle = col.stroke || "rgba(255,255,255,.12)"; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = col.text; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = `700 12px ${style.mono}`;
+    ctx.fillText(ACTIONS[key].mono, c + p.x, c + p.y + 1);
+    ctx.restore();
+  });
+}
+
+function drawOrb(ctx, c, style) {
+  const t = orbText();
+  ctx.save();
+  if (skin === "aqua") { const g = ctx.createRadialGradient(c, c - 20, 4, c, c, G.orb); g.addColorStop(0, "#FFFFFF"); g.addColorStop(1, "#D4DEEA"); ctx.fillStyle = g; }
+  else if (skin === "glass") ctx.fillStyle = "rgba(255,255,255,.14)";
+  else ctx.fillStyle = "#1A1D24";
+  ctx.beginPath(); ctx.arc(c, c, G.orb, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = t.cancel ? css("--danger") : (skin === "aqua" ? "rgba(30,60,100,.3)" : "rgba(255,255,255,.14)"); ctx.lineWidth = t.cancel ? 2 : 1; ctx.stroke();
+  // the file's picture, faint, behind the text
+  if (W.file.img && skin !== "aqua") { ctx.save(); ctx.beginPath(); ctx.arc(c, c, G.orb - 2, 0, Math.PI * 2); ctx.clip(); ctx.globalAlpha = .22; const s = Math.max((G.orb * 2) / W.file.w, (G.orb * 2) / W.file.h); ctx.drawImage(W.file.img, c - W.file.w * s / 2, c - W.file.h * s / 2, W.file.w * s, W.file.h * s); ctx.restore(); }
+  const ink = skin === "aqua" ? "#1A2433" : "#ECEEF2", sub = skin === "aqua" ? "#4E5B6E" : "#A9AFBC";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillStyle = sub; ctx.font = `600 8.5px ${style.mono}`; ctx.fillText(t.k, c, c - 26);
+  ctx.fillStyle = t.cancel ? css("--danger") : (skin === "aqua" ? "#1C6FE0" : style.accent);
+  const bigFont = skin === "halo" ? style.mono : style.display;
+  let size = 24; ctx.font = `800 ${size}px ${bigFont}`;
+  while (ctx.measureText(t.big).width > G.orb * 1.6 && size > 12) { size -= 1; ctx.font = `800 ${size}px ${bigFont}`; }
+  ctx.fillText(t.big, c, c - 2);
+  ctx.fillStyle = ink; ctx.font = `600 9px ${style.mono}`;
+  let d = t.d; while (ctx.measureText(d).width > G.orb * 1.75 && d.length > 6) d = middleTruncate(d, d.length - 2);
+  ctx.fillText(d, c, c + 22);
+  ctx.restore();
+}
+
+// Pixel: draw the Halo shapes small, then blow them up with no smoothing.
+const pixelBuf = makeCanvas(100, 100);
+function drawPixelWheel(ctx, c, style) {
+  const p = pixelBuf.getContext("2d"), k = 4, n = G.size / k; pixelBuf.width = n; pixelBuf.height = n;
+  p.imageSmoothingEnabled = false; p.clearRect(0, 0, n, n);
+  const hotSeg = W.hover.t === "seg" ? W.hover.i : -1, moreIndex = W.ring.indexOf("more");
+  p.fillStyle = "#120A26"; p.beginPath(); p.arc(n / 2, n / 2, (G.rout + G.bulge + 12) / k, 0, Math.PI * 2); p.fill();
+  W.ring.forEach((key, i) => {
+    const hot = i === hotSeg || (i === moreIndex && W.fanOpen), mid = i * 60, half = G.span / 2;
+    sector(p, n / 2, n / 2, (G.rin - (hot ? 4 : 0)) / k, (G.rout + (hot ? G.bulge : 0)) / k, rad(mid - half), rad(mid + half));
+    p.fillStyle = hot ? style.accent : "#3A2A6E"; p.fill();
+  });
+  p.fillStyle = "#24174A"; p.beginPath(); p.arc(n / 2, n / 2, G.orb / k, 0, Math.PI * 2); p.fill();
+  if (W.fanOpen) W.fan.forEach((key, i) => { const q = chipCenter(i), hot = W.hover.t === "chip" && W.hover.k === i; p.fillStyle = hot ? style.accent : "#3A2A6E"; p.fillRect(Math.round((c + q.x - G.chipW / 2) / k), Math.round((c + q.y - G.chipH / 2) / k), G.chipW / k, G.chipH / k); });
+  ctx.imageSmoothingEnabled = false; ctx.drawImage(pixelBuf, 0, 0, G.size, G.size);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  W.ring.forEach((key, i) => { const hot = i === hotSeg || (i === moreIndex && W.fanOpen), q = polar(c, (G.rin + G.rout) / 2, i * 60); ctx.fillStyle = hot ? style.onAccent : "#FFF3D6"; ctx.font = `9px ${style.display}`; ctx.fillText(ACTIONS[key].mono, q.x, q.y); });
+  if (W.fanOpen) W.fan.forEach((key, i) => { const q = chipCenter(i), hot = W.hover.t === "chip" && W.hover.k === i; ctx.fillStyle = hot ? style.onAccent : "#FFF3D6"; ctx.font = `8px ${style.display}`; ctx.fillText(ACTIONS[key].mono, c + q.x, c + q.y + 1); });
+  const t = orbText();
+  ctx.fillStyle = "#C7B8F0"; ctx.font = `20px ${style.mono}`; ctx.fillText(t.k, c, c - 24);
+  ctx.fillStyle = t.cancel ? css("--danger") : style.accent; let size = 15; ctx.font = `${size}px ${style.display}`;
+  while (ctx.measureText(t.big).width > G.orb * 1.6 && size > 7) { size -= 1; ctx.font = `${size}px ${style.display}`; }
+  ctx.fillText(t.big, c, c);
+  ctx.fillStyle = "#FFF3D6"; ctx.font = `18px ${style.mono}`; let d = t.d; while (ctx.measureText(d).width > G.orb * 1.8 && d.length > 6) d = middleTruncate(d, d.length - 2); ctx.fillText(d, c, c + 22);
+}
+
+// ASCII: every cell of a character grid decides what it is by geometry.
+function drawAsciiWheel(ctx, c, style) {
+  const cols = 50, rows = 25, cw = G.size / cols, ch = G.size / rows;
+  ctx.fillStyle = "rgba(4,7,4,.92)"; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 14, 0, Math.PI * 2); ctx.fill();
+  ctx.font = `${Math.round(ch * 1.05)}px ${style.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const hotSeg = W.hover.t === "seg" ? W.hover.i : -1, moreIndex = W.ring.indexOf("more");
+  for (let r = 0; r < rows; r++) for (let q = 0; q < cols; q++) {
+    const x = (q + .5) * cw, y = (r + .5) * ch, dx = x - c, dy = y - c, dist = Math.hypot(dx, dy);
+    let deg = Math.atan2(dx, -dy) * 180 / Math.PI; if (deg < 0) deg += 360;
+    const i = Math.floor((deg + 30) / 60) % 6, hot = i === hotSeg || (i === moreIndex && W.fanOpen);
+    const off = Math.abs(((deg + 30) % 60) - 30), rout = G.rout + (hot ? G.bulge : 0);
+    let chr = "";
+    if (dist <= G.orb) chr = dist > G.orb - ch * .8 ? "o" : "";
+    else if (dist >= G.rin && dist <= rout && off <= G.span / 2) chr = (dist > rout - ch || dist < G.rin + ch * .6 || off > G.span / 2 - 4) ? "+" : (hot ? "#" : ":");
+    if (!chr) continue;
+    ctx.fillStyle = hot && chr !== "+" ? style.accent : (chr === "+" ? style.muted : "rgba(166,255,176,.45)");
+    ctx.fillText(chr, x, y);
+  }
+  W.ring.forEach((key, i) => { const hot = i === hotSeg, p = polar(c, (G.rin + G.rout) / 2, i * 60), label = `[${ACTIONS[key].mono}]`;
+    ctx.font = `700 13px ${style.mono}`; const w = ctx.measureText(label).width + 6; ctx.fillStyle = "#040704"; ctx.fillRect(p.x - w / 2, p.y - 9, w, 18);
+    ctx.fillStyle = hot ? style.accent : style.fg; ctx.fillText(label, p.x, p.y); });
+  if (W.fanOpen) W.fan.forEach((key, k) => { const p = chipCenter(k), hot = W.hover.t === "chip" && W.hover.k === k, label = hot ? `>${ACTIONS[key].mono}<` : `[${ACTIONS[key].mono}]`;
+    ctx.font = `700 12px ${style.mono}`; const w = ctx.measureText(label).width + 8; ctx.fillStyle = "#040704"; ctx.fillRect(c + p.x - w / 2, c + p.y - 10, w, 20); ctx.fillStyle = hot ? style.accent : style.fg; ctx.fillText(label, c + p.x, c + p.y); });
+  const t = orbText();
+  ctx.fillStyle = style.muted; ctx.font = `11px ${style.mono}`; ctx.fillText(t.k, c, c - 24);
+  ctx.fillStyle = t.cancel ? css("--danger") : style.accent; let size = 30; ctx.font = `${size}px ${style.display}`;
+  while (ctx.measureText(t.big).width > G.orb * 1.6 && size > 14) { size -= 1; ctx.font = `${size}px ${style.display}`; }
+  ctx.fillText(t.big, c, c);
+  ctx.fillStyle = style.fg; ctx.font = `10px ${style.mono}`; let d = t.d; while (ctx.measureText(d).width > G.orb * 1.8 && d.length > 6) d = middleTruncate(d, d.length - 2); ctx.fillText(d, c, c + 24);
+}
+
+// ---------- Dragging files (pointer events, so it works with a mouse, pen or finger) ----------
+const ghost = $("#ghost"), hint = $("#hint");
+const D = { active: false, f: null, el: null, x: 0, y: 0, sx: 0, sy: 0, moved: false, stillTimer: 0, lastMove: 0, shake: [], pointerId: null };
+
+function startPress(e, f, el) {
+  if (e.button !== 0) return;
+  e.preventDefault();
+  Object.assign(D, { active: true, f, el, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false, shake: [], pointerId: e.pointerId });
+  select(f);
+  try { el.setPointerCapture(e.pointerId); } catch {}
+}
+function beginDrag() {
+  D.moved = true; D.el.classList.add("dragging");
+  const img = $("img", ghost), src = D.f.kind === "pdf" ? D.f.preview : (D.f.kind === "image" ? D.f.url : null);
+  if (src) { img.src = src; img.style.visibility = "visible"; } else img.style.visibility = "hidden";
+  ghost.style.background = "var(--panel2)";
+  ghost.style.display = "block"; ghost.classList.remove("fly");
+  hint.style.display = "block";
+  if (matchMedia("(pointer: coarse)").matches) $("#shiftTouch").classList.add("show");
+}
+document.addEventListener("pointermove", (e) => {
+  if (!D.active) { if (W.open && W.mode === "click") setHover(hitTest(e.clientX, e.clientY)); return; }
+  if (e.pointerId !== D.pointerId) return;
+  const px = e.clientX, py = e.clientY;
+  if (!D.moved && Math.hypot(px - D.sx, py - D.sy) > 6) beginDrag();
+  if (!D.moved) return;
+  // shake: count left/right reversals of at least 18 px within 700 ms
+  const now = performance.now(), dx = px - D.x;
+  if (Math.abs(dx) > 2) { D.shake.push({ t: now, dir: Math.sign(dx), x: px }); D.shake = D.shake.filter((s) => now - s.t < 700); }
+  D.x = px; D.y = py; D.lastMove = now;
+  ghost.style.left = px + "px"; ghost.style.top = py + "px";
+  hint.style.left = px + "px"; hint.style.top = py + "px";
+  if (W.open) { setHover(hitTest(px, py)); return; }
+  if (D.f.kind !== "image") return;
+  let reversals = 0, lastDir = 0, anchor = null;
+  for (const s of D.shake) { if (s.dir !== lastDir) { if (lastDir && anchor !== null && Math.abs(s.x - anchor) >= 18) reversals++; lastDir = s.dir; anchor = s.x; } }
+  if (reversals >= 3) { openWheel(D.f, px, py, "drag"); return; }
+  clearTimeout(D.stillTimer);
+  D.stillTimer = setTimeout(() => { if (D.active && D.moved && !W.open) openWheel(D.f, D.x, D.y, "drag"); }, 750);
+});
+document.addEventListener("pointerup", (e) => { if (D.active && e.pointerId === D.pointerId) endPress(e.clientX, e.clientY); });
+document.addEventListener("pointercancel", (e) => { if (D.active && e.pointerId === D.pointerId) { cleanupDrag(); closeWheel(); } });
+
+function endPress(x, y) {
+  clearTimeout(D.stillTimer);
+  const f = D.f, wasDrag = D.moved;
+  if (f.kind !== "image") { cleanupDrag(); closeWheel(); preview(f); if (wasDrag) toast("The Mac app converts PDFs and documents too. This demo converts pictures."); return; }
+  if (!wasDrag) { cleanupDrag(); openWheel(f, x, y, "click"); return; } // a click opens the wheel at the file
+  if (W.open) {
+    const h = hitTest(x, y), key = keyFor(h);
+    if (key && key !== "more") flyGhostTo(x, y);
+    cleanupDrag(key && key !== "more");
+    closeWheel();
+    if (key && key !== "more") runAction(f, key); else sfx.cancel();
+  } else { cleanupDrag(); toast("Tip: tap Shift, shake, or hold still while dragging"); }
+}
+function flyGhostTo(x, y) { ghost.classList.add("fly"); ghost.style.transform = "translate(-50%, -50%) scale(.2)"; }
+function cleanupDrag(keepGhost) {
+  D.active = false; D.el?.classList.remove("dragging"); hint.style.display = "none"; $("#shiftTouch").classList.remove("show");
+  setTimeout(() => { ghost.style.display = "none"; ghost.style.transform = ""; }, keepGhost ? 220 : 0);
+}
+
+// Click mode: click a segment, or anywhere outside to cancel.
+wheelEl.addEventListener("click", (e) => {
+  if (W.mode !== "click") return;
+  const h = hitTest(e.clientX, e.clientY), key = keyFor(h);
+  if (key === "more") { W.fanOpen = true; drawWheel(); return; }
+  const f = W.file; closeWheel();
+  if (key) runAction(f, key); else sfx.cancel();
+});
+document.addEventListener("pointerdown", (e) => { if (W.open && W.mode === "click" && !wheelEl.contains(e.target)) { const h = hitTest(e.clientX, e.clientY); if (h.t === "none") { closeWheel(); sfx.cancel(); } } }, true);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Shift" && D.active && D.moved && !W.open && D.f.kind === "image") { openWheel(D.f, D.x, D.y, "drag"); return; }
+  if (e.key === "Escape") { if (!$("#modal").hidden) { $("#modal").hidden = true; return; } if (W.open) { closeWheel(); cleanupDrag(); sfx.cancel(); } }
+  if (W.open && W.mode === "click" && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
+    const i = W.hover.t === "seg" ? W.hover.i : -1; setHover({ t: "seg", i: ((i + (e.key === "ArrowRight" ? 1 : 5)) % 6 + 6) % 6 }); e.preventDefault();
+  }
+  if (W.open && W.mode === "click" && e.key === "Enter") { const key = keyFor(W.hover); if (key && key !== "more") { const f = W.file; closeWheel(); runAction(f, key); e.preventDefault(); } }
+});
+$("#shiftTouch").addEventListener("pointerdown", (e) => { e.preventDefault(); if (D.active && D.moved && !W.open && D.f.kind === "image") openWheel(D.f, D.x, D.y, "drag"); });
+$("#files").addEventListener("dblclick", (e) => { const el = e.target.closest(".file"); if (el) { closeWheel(); preview(files.find((f) => f.id === Number(el.dataset.id))); } });
+
+// ---------- ⌘K ----------
+const cmdInput = $("#cmdInput"), cmdHint = $("#cmdHint");
+function parseCommand(q) {
+  q = q.trim().toLowerCase().replace(/^</, "").trim();
+  if (!q) return null;
+  const size = /^(\d+(?:\.\d+)?)\s*(kb|k|mb|m)$/.exec(q);
+  if (size) { const n = parseFloat(size[1]) * (size[2].startsWith("m") ? 1e6 : 1e3); return { title: `Compress under ${fmtBytes(n)}`, run: (f) => runAction(f, "sqz", () => compressUnder(f, n)) }; }
+  const width = /^(\d{2,5})\s*w$/.exec(q);
+  if (width) { const w = parseInt(width[1], 10); return { title: `Resize to ${w} px wide`, run: (f) => runAction(f, "size", async () => {
+    const h = Math.round(f.h * w / f.w), c = makeCanvas(w, Math.max(1, h)), x = c.getContext("2d"); const fmt = sameFormat(f);
+    if (fmt === "jpg") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); } x.imageSmoothingQuality = "high"; x.drawImage(f.img, 0, 0, c.width, c.height);
+    return { blob: await encodeAs(f, fmt === "webp" ? "webp" : fmt, { canvas: c }), name: `${base(f.name)} (resized).${fmt}` }; }) }; }
+  const map = { jpg: "jpg", jpeg: "jpg", png: "png", webp: "webp", pdf: "pdf", ascii: "ascii", pixel: "pixel", gray: "gray", grey: "gray", mono: "gray", compress: "sqz", resize: "size", half: "size" };
+  const hit = Object.keys(map).find((k) => k.startsWith(q) || q === k);
+  const titles = { sqz: "Compress", size: "Resize to half", ascii: "Turn into ASCII art", pixel: "Turn into pixel art", gray: "Make it black and white" };
+  if (hit) { const key = map[hit]; return { title: titles[key] || `Convert to ${ACTIONS[key].label}`, run: (f) => runAction(f, key) }; }
+  if (/^(shift|halo|aqua|ascii|pixel|glass)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
+  return null;
+}
+cmdInput.addEventListener("input", () => { const c = parseCommand(cmdInput.value); cmdHint.textContent = cmdInput.value ? (c ? `↩ ${c.title}${selected ? ` · ${middleTruncate(selected.name, 28)}` : ""}` : "Try webp, 50kb, 800w, ascii, pixel, pdf") : "Runs on the selected file. Press ↩."; });
+cmdInput.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter") return;
+  const c = parseCommand(cmdInput.value);
+  if (!c) { toast("Try webp, 50kb, 800w, ascii, pixel or pdf"); return; }
+  const f = selected || files[0]; if (!f) return;
+  if (f.kind !== "image" && !/skin/i.test(c.title)) { toast("Pick a picture first. That one isn't an image."); return; }
+  c.run(f); cmdInput.value = ""; cmdHint.textContent = "Runs on the selected file. Press ↩.";
+});
+document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); cmdInput.focus(); } });
+
+// ---------- Shake pad ----------
+(() => {
+  const pad = $("#shakePad"), meter = $("#shakeMeter"), text = $("#shakeText");
+  let samples = [], lastX = null, done = 0;
+  pad.addEventListener("pointermove", (e) => {
+    const now = performance.now();
+    if (lastX !== null && Math.abs(e.clientX - lastX) > 2) samples.push({ t: now, dir: Math.sign(e.clientX - lastX) });
+    lastX = e.clientX; samples = samples.filter((s) => now - s.t < 800);
+    let rev = 0; for (let i = 1; i < samples.length; i++) if (samples[i].dir !== samples[i - 1].dir) rev++;
+    meter.style.width = Math.min(100, rev / 4 * 100) + "%";
+    if (rev >= 4 && now - done > 1200) { done = now; pad.classList.add("hit"); text.textContent = "wheel opened ✦"; sfx.open(); samples = [];
+      setTimeout(() => { pad.classList.remove("hit"); text.textContent = "shake your pointer here ↔"; meter.style.width = "0"; }, 1100); }
+  });
+  pad.addEventListener("pointerleave", () => { lastX = null; samples = []; meter.style.width = "0"; });
+})();
+
+// ---------- The fling game ----------
+const play = (() => {
+  const canvas = $("#playCanvas"), ctx = canvas.getContext("2d");
+  const lowRes = makeCanvas(10, 10);
+  const KINDS = [["HEIC", 3.2], ["PNG", 6.1], ["TIFF", 48], ["PDF", 18], ["PNG", 2.4], ["HEIC", 4.8], ["BMP", 24], ["RAW", 32]];
+  let w = 0, h = 0, dpr = 1, bodies = [], parts = [], grab = null, visible = false, running = false, last = 0, spawnAt = 0, angle = 0;
+  let savedMB = 0, count = 0, combo = 1, comboUntil = 0, colors = {};
+  function resize() { const r = canvas.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); w = r.width; h = r.height; canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
+  function restyle() { colors = { accent: css("--accent"), fg: css("--fg"), muted: css("--muted"), panel: css("--panel2"), line: css("--line"), on: css("--on-accent"), mono: css("--mono"), display: css("--display") }; }
+  function wheel() { return { x: w / 2, y: h * .46, r: Math.min(w, h) * .2 }; }
+  function spawn() {
+    if (bodies.length >= 12) return;
+    const [label, mb] = KINDS[Math.floor(Math.random() * KINDS.length)];
+    const r = 22 + Math.min(22, Math.sqrt(mb) * 4);
+    bodies.push({ x: 40 + Math.random() * (w - 80), y: -r, vx: (Math.random() - .5) * 2, vy: 0, r, label, mb, done: 0, alive: true });
+  }
+  function step(dt) {
+    const g = 900, wh = wheel();
+    angle += dt * .5;
+    for (const b of bodies) {
+      if (b === grab?.b) continue;
+      if (b.done) { b.done += dt; b.x += (wh.x - b.x) * Math.min(1, dt * 10); b.y += (wh.y - b.y) * Math.min(1, dt * 10); if (b.done > .6) b.alive = false; continue; }
+      b.vy += g * dt; b.x += b.vx * dt; b.y += b.vy * dt;
+      if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx) * .7; } if (b.x > w - b.r) { b.x = w - b.r; b.vx = -Math.abs(b.vx) * .7; }
+      if (b.y > h - b.r) { b.y = h - b.r; b.vy = -Math.abs(b.vy) * .45; b.vx *= .96; }
+      const d = Math.hypot(b.x - wh.x, b.y - wh.y);
+      if (d < wh.r * .45) hit(b);
+      else if (d < wh.r + b.r && d > wh.r * .45) { // bounce off the ring
+        const nx = (b.x - wh.x) / d, ny = (b.y - wh.y) / d, vn = b.vx * nx + b.vy * ny;
+        if (vn < 0 && d > wh.r * .8) { b.vx -= 1.6 * vn * nx; b.vy -= 1.6 * vn * ny; b.x = wh.x + nx * (wh.r + b.r); b.y = wh.y + ny * (wh.r + b.r); }
+      }
+    }
+    for (let i = 0; i < bodies.length; i++) for (let j = i + 1; j < bodies.length; j++) {
+      const a = bodies[i], b = bodies[j]; if (a.done || b.done) continue;
+      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = a.r + b.r;
+      if (d > 0 && d < min) { const nx = dx / d, ny = dy / d, push = (min - d) / 2; a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
+        const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny; if (rel < 0) { a.vx += rel * nx * .9; a.vy += rel * ny * .9; b.vx -= rel * nx * .9; b.vy -= rel * ny * .9; } }
+    }
+    bodies = bodies.filter((b) => b.alive);
+    for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; p.life -= dt; }
+    parts = parts.filter((p) => p.life > 0);
+  }
+  function hit(b) {
+    const now = performance.now(); combo = now < comboUntil ? combo + 1 : 1; comboUntil = now + 2500;
+    const before = b.mb, out = before * (0.2 + Math.random() * 0.4); b.done = 0.001; b.label = "JPG"; b.mb = out;
+    savedMB += before - out; count++;
+    $("#playSaved").textContent = savedMB < 1000 ? savedMB.toFixed(1) + " MB" : (savedMB / 1000).toFixed(2) + " GB"; $("#playCount").textContent = count; $("#playCombo").textContent = `combo ×${combo}`;
+    const wh = wheel(); for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, s = 120 + Math.random() * 260; parts.push({ x: wh.x, y: wh.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 120, life: .6 + Math.random() * .5 }); }
+    sfx.drop();
+  }
+  function drawScene(c, scale) {
+    c.save(); c.scale(scale, scale);
+    const wh = wheel(), pixel = skin === "pixel", ascii = skin === "ascii";
+    // wheel ring: six rotating segments
+    for (let i = 0; i < 6; i++) {
+      const a0 = angle + i * Math.PI / 3 + .06, a1 = a0 + Math.PI / 3 - .12;
+      sector(c, wh.x, wh.y, wh.r * .55, wh.r, a0, a1);
+      c.fillStyle = i === 0 ? colors.accent : (skin === "aqua" ? "#C9D6E6" : skin === "glass" ? "rgba(255,255,255,.18)" : colors.panel);
+      c.fill(); if (!pixel) { c.strokeStyle = colors.line; c.lineWidth = 1; c.stroke(); }
+    }
+    c.fillStyle = skin === "aqua" ? "#FFFFFF" : (skin === "glass" ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.35)");
+    c.beginPath(); c.arc(wh.x, wh.y, wh.r * .45, 0, Math.PI * 2); c.fill();
+    c.fillStyle = colors.accent; c.textAlign = "center"; c.textBaseline = "middle"; c.font = `800 ${Math.round(wh.r * .2)}px ${colors.display}`;
+    c.fillText(ascii ? "[ IN ]" : "DROP", wh.x, wh.y);
+    for (const b of bodies) {
+      const s = b.done ? Math.max(0, 1 - b.done / .6) : 1;
+      if (s <= 0) continue;
+      c.save(); c.translate(b.x, b.y); c.scale(s, s);
+      if (ascii) { c.fillStyle = b.done ? colors.accent : colors.fg; c.font = `700 ${Math.round(b.r * .55)}px ${colors.mono}`; c.fillText(`[${b.label}]`, 0, 0); }
+      else {
+        c.beginPath(); c.arc(0, 0, b.r, 0, Math.PI * 2);
+        if (skin === "aqua") { const g = c.createRadialGradient(-b.r * .3, -b.r * .4, 2, 0, 0, b.r); g.addColorStop(0, "#E9F4FF"); g.addColorStop(.5, b.done ? "#2C83F2" : "#7FB2E8"); g.addColorStop(1, "#1A5CC0"); c.fillStyle = g; }
+        else c.fillStyle = b.done ? colors.accent : (skin === "glass" ? "rgba(255,255,255,.22)" : colors.panel);
+        c.fill(); if (!pixel) { c.strokeStyle = colors.line; c.lineWidth = 1.5; c.stroke(); }
+        c.fillStyle = b.done ? colors.on : (skin === "aqua" ? "#FFFFFF" : colors.fg);
+        c.font = `700 ${Math.round(b.r * .42)}px ${pixel ? colors.display : colors.mono}`; c.textAlign = "center"; c.textBaseline = "middle";
+        c.fillText(b.label, 0, -b.r * .12); c.font = `${Math.round(b.r * .3)}px ${colors.mono}`; c.globalAlpha = .75; c.fillText(b.mb >= 10 ? b.mb.toFixed(0) + "MB" : b.mb.toFixed(1) + "MB", 0, b.r * .32);
+      }
+      c.restore();
+    }
+    c.fillStyle = colors.accent; for (const p of parts) { c.globalAlpha = Math.max(0, p.life); c.fillRect(p.x - 2, p.y - 2, pixel ? 6 : 4, pixel ? 6 : 4); }
+    c.globalAlpha = 1;
+    if (grab) { c.strokeStyle = colors.accent; c.setLineDash([4, 6]); c.beginPath(); c.moveTo(grab.b.x, grab.b.y); c.lineTo(grab.b.x + grab.vx * .12, grab.b.y + grab.vy * .12); c.stroke(); c.setLineDash([]); }
+    c.restore();
+  }
+  function frame(t) {
+    if (!running) return;
+    const dt = Math.min(1 / 30, (t - last) / 1000 || 0); last = t;
+    if (t > spawnAt) { spawn(); spawnAt = t + 1300; }
+    step(dt);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (skin === "pixel") {
+      const k = 4; lowRes.width = Math.ceil(w / k); lowRes.height = Math.ceil(h / k);
+      const lc = lowRes.getContext("2d"); lc.imageSmoothingEnabled = false; drawScene(lc, 1 / k);
+      ctx.imageSmoothingEnabled = false; ctx.drawImage(lowRes, 0, 0, canvas.width, canvas.height);
+    } else drawScene(ctx, dpr);
+    requestAnimationFrame(frame);
+  }
+  function start() { if (running || !visible) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
+  function stop() { running = false; }
+  const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  canvas.addEventListener("pointerdown", (e) => {
+    const p = pos(e); const b = bodies.filter((b) => !b.done).find((b) => Math.hypot(b.x - p.x, b.y - p.y) < b.r + 8);
+    if (!b) return; grab = { b, x: p.x, y: p.y, t: performance.now(), vx: 0, vy: 0 }; canvas.setPointerCapture(e.pointerId); sfx.tick();
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!grab) return; const p = pos(e), now = performance.now(), dt = Math.max(1, now - grab.t) / 1000;
+    grab.vx = grab.vx * .5 + ((p.x - grab.x) / dt) * .5; grab.vy = grab.vy * .5 + ((p.y - grab.y) / dt) * .5;
+    grab.b.x = p.x; grab.b.y = p.y; grab.x = p.x; grab.y = p.y; grab.t = now;
+  });
+  const release = () => { if (!grab) return; grab.b.vx = Math.max(-2200, Math.min(2200, grab.vx)); grab.b.vy = Math.max(-2200, Math.min(2200, grab.vy)); grab = null; };
+  canvas.addEventListener("pointerup", release); canvas.addEventListener("pointercancel", release);
+  new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; if (visible) { resize(); start(); } else stop(); }).observe(canvas);
+  addEventListener("resize", () => { resize(); });
+  resize(); restyle();
+  for (let i = 0; i < 5; i++) { spawn(); bodies[bodies.length - 1].y = 40 + i * 20; }
+  return { restyle };
+})();
+
+// ---------- Install bits ----------
+$$(".copy").forEach((b) => { if (b.id === "modalClose") return; b.addEventListener("click", async () => {
+  const text = b.previousElementSibling.textContent;
+  try { await navigator.clipboard.writeText(text); b.textContent = "copied"; } catch { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "selected"; }
+  setTimeout(() => (b.textContent = "copy"), 1500);
+}); });
+const dl = $("#downloadBtn");
+if (DOWNLOAD_URL) { dl.href = DOWNLOAD_URL; dl.target = "_blank"; dl.rel = "noopener"; }
+else { dl.addEventListener("click", (e) => { e.preventDefault(); $("#downloadNote").textContent = "The download link arrives with the first public release. Until then, build it from source with the commands here."; }); }
+
+// ---------- Start ----------
+const savedSkin = store.get("circularity-skin");
+setSkin(SKINS.includes(savedSkin) ? savedSkin : "halo", "silent");
+(async () => {
+  const samples = [["Sunset over the hills.png", drawSunset], ["Screenshot 2026-11-18 at 09.41.png", drawScreenshot], ["Kitty.png", drawKitty]];
+  for (const [name, draw] of samples) { const c = draw(); const blob = await toBlob(c, "image/png"); const f = await addFile({ name, blob }); if (f && !selected) select(f); }
+})();
+document.fonts?.ready.then(() => { drawWheel(); play.restyle(); });
+})();
+</script>
