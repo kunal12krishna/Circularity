@@ -201,7 +201,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .nav .right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .nav .btn.primary { padding: 7px 14px; font-size: 14px; }
 .style-menu { position: relative; }
-.style-btn { width: auto; padding: 0 12px; gap: 8px; display: inline-flex; border-radius: 999px; font-size: 13px; font-family: var(--body); }
+.nav .style-btn { width: auto; height: 34px; padding: 0 12px; gap: 8px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 13px; font-family: var(--body); white-space: nowrap; }
 .style-dot { width: 12px; height: 12px; border-radius: 50%; background: conic-gradient(#C6FF3D, #1C6FE0, #FF5CA8, #FFCC33, #C6FF3D); }
 .style-pop { position: absolute; right: 0; top: calc(100% + 8px); width: 260px; padding: 8px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); display: grid; gap: 2px; z-index: 60; }
 .style-opt { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; border: 0; background: transparent; cursor: pointer; text-align: left; font-family: var(--body); font-size: 14px; color: var(--fg); }
@@ -473,7 +473,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 #buddy svg { width: 100%; height: 100%; animation: spin 8s linear infinite; }
 #mini { position: fixed; left: 0; top: 0; z-index: 71; pointer-events: none; width: 200px; height: 200px; margin: -100px 0 0 -100px; opacity: 0; scale: .6; transition: opacity .15s, scale .25s cubic-bezier(.2,1.5,.4,1); }
 #mini.open { opacity: 1; scale: 1; }
-#mini .ring { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, transparent 38px, rgba(13,15,20,.94) 39px 96px, transparent 97px); box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+#mini .ring { position: absolute; inset: 4px; border-radius: 50%; background: #0D0F14; border: 1px solid rgba(198,255,61,.25); box-shadow: 0 18px 50px rgba(0,0,0,.55); }
 #mini .seg { position: absolute; left: 50%; top: 50%; width: 52px; height: 26px; margin: -13px 0 0 -26px; display: grid; place-items: center; border-radius: 6px;
   font: 700 11px var(--mono); color: #ECEEF2; transform: rotate(var(--a)) translateY(-67px) rotate(calc(-1 * var(--a))); transition: background .1s, color .1s, scale .15s; }
 #mini .seg.hot { background: var(--c); color: #0B0D10; scale: 1.12; }
@@ -517,9 +517,9 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 .st-file.ghost i { width: 52px; height: 52px; opacity: .85; }
 .st-file.result { left: 30%; top: 16%; opacity: 0; transform: scale(.4); transition: opacity .4s .3s, transform .5s .3s cubic-bezier(.2,1.5,.4,1); }
 .st-file.result i { filter: saturate(.9) contrast(1.05); }
-.st-cursor { position: absolute; width: 18px; height: 24px; left: 58%; top: 60%; opacity: 0; z-index: 3;
+.st-cursor { position: absolute; width: 18px; height: 24px; left: 58%; top: 56%; opacity: 0; z-index: 3;
   background: #FFFFFF; clip-path: polygon(0 0, 0 78%, 22% 62%, 38% 100%, 52% 94%, 37% 58%, 66% 58%); filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
-.st-wheel { position: absolute; width: min(92%, 470px); left: 58%; top: 60%; translate: -50% -50%; opacity: 0; transform: scale(.55); transform-origin: 50% 50%;
+.st-wheel { position: absolute; width: min(64%, 360px); height: auto; aspect-ratio: 1; left: 58%; top: 56%; translate: -50% -50%; opacity: 0; transform: scale(.55); transform-origin: 50% 50%;
   transition: opacity .25s, transform .45s cubic-bezier(.2,1.4,.4,1); filter: drop-shadow(0 20px 40px rgba(0,0,0,.45)); z-index: 2; }
 .st-key { position: absolute; right: 22px; bottom: 22px; opacity: 0; transition: opacity .3s; }
 .st-key kbd { background: #1B1E24; color: #ECEEF2; border-color: rgba(255,255,255,.2); font-size: 15px; padding: 8px 14px; }
@@ -532,7 +532,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 .stage[data-step="2"] .st-finder, .stage[data-step="3"] .st-finder { opacity: .35; }
 .stage[data-step="3"] .st-wheel { opacity: 0; transform: scale(.2); }
 .stage[data-step="3"] .st-file.result { opacity: 1; transform: scale(1); }
-@keyframes dragmove { 0%, 8% { left: 18%; top: 26%; } 62%, 100% { left: 58%; top: 60%; } }
+@keyframes dragmove { 0%, 8% { left: 18%; top: 26%; } 62%, 100% { left: 58%; top: 56%; } }
 
 /* Feature explorer: tabs that switch real product shots */
 .explorer { display: grid; gap: 22px; }
@@ -623,7 +623,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   html { scroll-behavior: auto; }
 }
 </style>
-<script>try { document.documentElement.dataset.skin = localStorage.getItem("circularity-style") || "desk"; } catch (e) { document.documentElement.dataset.skin = "desk"; }</script>
+<script>try { document.documentElement.dataset.skin = localStorage.getItem("circularity-look") || "desk"; } catch (e) { document.documentElement.dataset.skin = "desk"; }</script>
 
 <a class="skip" href="#desk">Skip to the demo</a>
 <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1090,7 +1090,7 @@ function setSkin(name, announce) {
   const apply = () => {
     pageStyle = name; skin = name === "studio" || name === "desk" ? "halo" : name; root.dataset.skin = name;
     $$("[data-skin-btn]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.skinBtn === name));
-    store.set("circularity-style", name);
+    store.set("circularity-look", name);
     drawWheel(); play.restyle(); if (typeof lab !== "undefined") lab.draw();
   };
   if (document.startViewTransition && !reduceMotion && announce !== "silent") document.startViewTransition(apply); else apply();
@@ -2344,12 +2344,13 @@ $$(".dl").forEach((dl) => {
     if (!raf && !reduceMotion) raf = requestAnimationFrame(loop);
   }, { passive: true });
   addEventListener("keydown", (e) => {
-    if (e.key !== "Shift" || e.repeat || open || typing() || D.active || W.open || x < 0) return;
+    if (open && e.key !== "Shift") { close(false); return; } // part of a shortcut such as ⌘⇧4
+    if (e.key !== "Shift" || e.repeat || open || e.metaKey || e.ctrlKey || e.altKey || typing() || D.active || W.open || x < 0) return;
     open = true; anchor = { x, y };
     mini.style.left = x + "px"; mini.style.top = y + "px"; mini.classList.add("open"); buddy.classList.remove("on");
     sfx.open(); pick();
   });
-  const close = (fire) => {
+  function close(fire) {
     if (!open) return; open = false; mini.classList.remove("open");
     if (fire && hot) {
       const c = getComputedStyle(hot).getPropertyValue("--c") || "var(--accent)";
@@ -2364,7 +2365,7 @@ $$(".dl").forEach((dl) => {
       toast(lines[jokes++ % lines.length]); sfx.drop();
     } else sfx.cancel();
     hot?.classList.remove("hot"); hot = null; core.innerHTML = "let go<br>on one";
-  };
+  }
   addEventListener("keyup", (e) => { if (e.key === "Shift") close(true); });
   addEventListener("blur", () => close(false));
 })();
@@ -2539,7 +2540,7 @@ $$(".dl").forEach((dl) => {
 })();
 
 // ---------- Start ----------
-const savedSkin = store.get("circularity-style");
+const savedSkin = store.get("circularity-look");
 setSkin(SKINS.includes(savedSkin) ? savedSkin : "desk", "silent");
 (async () => {
   const samples = [["Sunset over the hills.png", drawSunset], ["Screenshot 2026-11-18 at 09.41.png", drawScreenshot], ["Kitty.png", drawKitty]];
