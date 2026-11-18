@@ -22,7 +22,7 @@
   --grid-line: 23,20,15; --grid-active: 47,91,255;
   color-scheme: light;
 }
-/* Riso Ink: the same print on ink-black paper (a style you pick). */
+/* Riso Ink: the same print on ink-black paper (the default on a Mac in Dark Mode). */
 :root[data-skin="ink"] {
   --bg: #14110D; --bg2: #1B1813; --panel: #1E1A15; --panel2: #262119; --line: rgba(243,238,228,.12);
   --fg: #F3EEE4; --muted: #ABA295; --accent-text: #FF7AB8; --danger: #FF8A80; --blue: #6F8CFF; --blue-text: #8FA6FF; --offset: #6F8CFF;
@@ -361,6 +361,20 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 .section-head { display: grid; gap: 12px; margin-bottom: 32px; }
 .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card h3 .tag { font: 600 10px var(--mono); letter-spacing: .04em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px; margin-left: 6px; vertical-align: 3px; white-space: nowrap; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+/* Small things that feel big: the card under the pointer grows, the rest step back */
+.feel .card { position: relative; transition: transform .32s cubic-bezier(.2,1.35,.4,1), box-shadow .3s, opacity .25s, border-color .2s;
+  background-image: radial-gradient(260px circle at var(--mx, 50%) var(--my, -40%), color-mix(in srgb, var(--accent) 16%, transparent), transparent 70%); outline-offset: 4px; }
+.feel .card:hover, .feel .card:focus-visible { transform: scale(1.07) translateY(-4px) rotate(-.6deg); z-index: 2; border-color: var(--fg);
+  box-shadow: 6px 6px 0 var(--offset, color-mix(in srgb, var(--accent) 60%, transparent)), 0 26px 50px rgba(0,0,0,.16); }
+.feel .card:nth-child(even):hover, .feel .card:nth-child(even):focus-visible { transform: scale(1.07) translateY(-4px) rotate(.6deg); }
+.feel:hover .card:not(:hover), .feel:focus-within .card:not(:focus-visible):not(:hover) { transform: scale(.97); opacity: .7; }
+.feel .card h3 { transition: color .2s; }
+.feel .card:hover h3, .feel .card:focus-visible h3 { color: var(--accent-text, var(--accent)); }
+.feel-n { font: 700 11px var(--mono); color: var(--muted); letter-spacing: .1em; transition: color .2s, transform .3s cubic-bezier(.2,1.4,.4,1); justify-self: start; }
+.feel .card:hover .feel-n, .feel .card:focus-visible .feel-n { color: var(--on-accent); background: var(--accent); padding: 1px 6px; transform: rotate(-4deg) scale(1.1); }
+@media (prefers-reduced-motion: reduce) { .feel .card, .feel-n { transition: none; } .feel .card:hover, .feel .card:focus-visible, .feel:hover .card:not(:hover) { transform: none; opacity: 1; } }
 :root[data-skin="pixel"] .card { box-shadow: var(--shadow); }
 :root[data-skin="ascii"] .card { border-style: dashed; }
 .card p { color: var(--muted); font-size: .92em; }
@@ -660,7 +674,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   html { scroll-behavior: auto; }
 }
 </style>
-<script>try { var l = localStorage.getItem("circularity-page-style"); document.documentElement.dataset.skin = ["ink","neon","aqua","ascii","pixel","glass","win95","blueprint","news"].indexOf(l) >= 0 ? l : "riso"; } catch (e) { document.documentElement.dataset.skin = "riso"; }</script>
+<script>try { var l = localStorage.getItem("circularity-style-pick"); document.documentElement.dataset.skin = ["riso","ink","neon","aqua","ascii","pixel","glass","win95","blueprint","news"].indexOf(l) >= 0 ? l : (matchMedia("(prefers-color-scheme: dark)").matches ? "ink" : "riso"); } catch (e) { document.documentElement.dataset.skin = matchMedia("(prefers-color-scheme: dark)").matches ? "ink" : "riso"; }</script>
 
 <a class="skip" href="#desk">Skip to the demo</a>
 <canvas id="kgrid" aria-hidden="true"></canvas>
@@ -680,8 +694,8 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <div class="style-menu">
         <button class="icon-btn style-btn" id="styleBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="stylePop"><span class="style-dot" aria-hidden="true"></span><span class="lbl-text">Style</span></button>
         <div class="style-pop" id="stylePop" hidden role="group" aria-label="Page style">
-          <button class="style-opt" type="button" data-skin-btn="riso"><i style="background:linear-gradient(135deg,#FF4FA0 0 50%,#2F5BFF 50%)"></i><span>Riso<br><small>default</small></span></button>
-          <button class="style-opt" type="button" data-skin-btn="ink"><i style="background:linear-gradient(135deg,#14110D 0 50%,#FF4FA0 50%)"></i><span>Riso Ink<br><small>the print, after dark</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="riso"><i style="background:linear-gradient(135deg,#FF4FA0 0 50%,#2F5BFF 50%)"></i><span>Riso<br><small>paper · light Macs</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="ink"><i style="background:linear-gradient(135deg,#14110D 0 50%,#FF4FA0 50%)"></i><span>Riso Ink<br><small>ink · dark Macs</small></span></button>
           <button class="style-opt" type="button" data-skin-btn="neon"><i style="background:conic-gradient(#C6FF3D 0 60deg,#14171D 60deg)"></i><span>Neon<br><small>lime on graphite</small></span></button>
           <button class="style-opt" type="button" data-skin-btn="aqua"><i style="background:radial-gradient(circle at 50% 30%,#D5ECFF,#1A5CC0)"></i><span>Aqua<br><small>2001 gel</small></span></button>
           <button class="style-opt" type="button" data-skin-btn="ascii"><i style="background:#040704"></i><span>ASCII<br><small>terminal</small></span></button>
@@ -898,13 +912,13 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <div class="eyebrow" data-tag="new">New in 0.2</div>
       <h2>Small things that feel big</h2>
     </div>
-    <div class="grid3">
-      <div class="card"><h3>Cut out <span class="tag">macOS 14+</span></h3><p>Removes the background from a photo with Apple's on-device subject lifting and saves a transparent PNG.</p></div>
-      <div class="card"><h3>Drop shelf</h3><p>The result floats next to your pointer. Drag it straight into Mail, Slack or a chat, or copy it with one click.</p></div>
-      <div class="card"><h3>Before and after</h3><p>Hover JPG, HEIC or Compress and a magnifier shows a piece of your picture, half as it is and half as it will be.</p></div>
-      <div class="card"><h3>Your own buttons</h3><p>Choose what sits in each of the six spots on the wheel. Everything else waits under More.</p></div>
-      <div class="card"><h3>Milestones</h3><p>Your first conversion, 1 GB saved, 10,000 files. A small celebration in the menu bar each time.</p></div>
-      <div class="card"><h3>Themes from here</h3><p>Build a theme below, copy it, and paste it into the app in one click.</p></div>
+    <div class="grid3 feel" role="list">
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">01</span><h3>Cut out <span class="tag">macOS 14+</span></h3><p>Removes the background from a photo with Apple's on-device subject lifting and saves a transparent PNG.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">02</span><h3>Drop shelf</h3><p>The result floats next to your pointer. Drag it straight into Mail, Slack or a chat, or copy it with one click.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">03</span><h3>Before and after</h3><p>Hover JPG, HEIC or Compress and a magnifier shows a piece of your picture, half as it is and half as it will be.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">04</span><h3>Your own buttons</h3><p>Choose what sits in each of the six spots on the wheel. Everything else waits under More.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">05</span><h3>Milestones</h3><p>Your first conversion, 1 GB saved, 10,000 files. A small celebration in the menu bar each time.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">06</span><h3>Themes from here</h3><p>Design a wheel in the Wheel Studio below, copy it, and paste it into the app in one click.</p></div>
     </div>
   </section>
 
@@ -955,8 +969,8 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <p style="color:var(--muted)">The app ships with themes and three wheel layouts. This page does the same trick: the wheel and every button redraw in the style you choose. Secret: type <span class="mono">shift</span> anywhere.</p>
     </div>
     <div class="skin-cards">
-      <button class="skin-card" data-skin-btn="riso"><div class="sw sw-riso"><span></span></div><div class="lbl">Riso · default</div></button>
-      <button class="skin-card" data-skin-btn="ink"><div class="sw sw-riso" style="background:#14110D"><span style="mix-blend-mode:screen"></span></div><div class="lbl">Riso Ink</div></button>
+      <button class="skin-card" data-skin-btn="riso"><div class="sw sw-riso"><span></span></div><div class="lbl">Riso · light</div></button>
+      <button class="skin-card" data-skin-btn="ink"><div class="sw sw-riso" style="background:#14110D"><span style="mix-blend-mode:screen"></span></div><div class="lbl">Riso Ink · dark</div></button>
       <button class="skin-card" data-skin-btn="neon"><div class="sw sw-halo"><span></span></div><div class="lbl">Neon</div></button>
       <button class="skin-card" data-skin-btn="aqua"><div class="sw sw-aqua"><span></span></div><div class="lbl">Aqua · 2001</div></button>
       <button class="skin-card" data-skin-btn="ascii"><div class="sw sw-ascii">[(o)]<span></span></div><div class="lbl">ASCII · tty</div></button>
@@ -1107,7 +1121,7 @@ function setSkin(name, announce) {
   const apply = () => {
     pageStyle = name; skin = ["riso", "ink", "neon"].includes(name) ? "halo" : name; root.dataset.skin = name;
     $$("[data-skin-btn]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.skinBtn === name));
-    store.set("circularity-page-style", name);
+    if (announce !== "silent") store.set("circularity-style-pick", name); // only a real pick is remembered
     drawWheel(); if (typeof lab !== "undefined") lab.draw(); if (typeof kgridRedraw !== "undefined") kgridRedraw();
   };
   if (document.startViewTransition && !reduceMotion && announce !== "silent") document.startViewTransition(apply); else apply();
@@ -2170,6 +2184,11 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
   measure(); frame();
 })();
 
+// ---------- Small things that feel big: a spotlight that follows the pointer ----------
+$$(".feel .card").forEach((card) => card.addEventListener("pointermove", (e) => {
+  const r = card.getBoundingClientRect(); card.style.setProperty("--mx", ((e.clientX - r.left) / r.width * 100).toFixed(1) + "%"); card.style.setProperty("--my", ((e.clientY - r.top) / r.height * 100).toFixed(1) + "%");
+}));
+
 // ---------- Menu bar clock ----------
 (() => {
   const clock = $("#menuClock");
@@ -2417,8 +2436,11 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
 })();
 
 // ---------- Start ----------
-const savedSkin = store.get("circularity-page-style");
-setSkin(SKINS.includes(savedSkin) ? savedSkin : "riso", "silent");
+const savedSkin = store.get("circularity-style-pick");
+const systemDark = matchMedia("(prefers-color-scheme: dark)");
+// No pick yet: follow the Mac, live (Dark → Riso Ink, Light → Riso paper).
+setSkin(SKINS.includes(savedSkin) ? savedSkin : (systemDark.matches ? "ink" : "riso"), "silent");
+systemDark.addEventListener?.("change", (e) => { if (!SKINS.includes(store.get("circularity-style-pick"))) setSkin(e.matches ? "ink" : "riso", "silent"); });
 (async () => {
   const samples = [["Sunset over the hills.png", drawSunset], ["Screenshot 2026-11-18 at 09.41.png", drawScreenshot], ["Kitty.png", drawKitty]];
   for (const [name, draw] of samples) { const c = draw(); const blob = await toBlob(c, "image/png"); const f = await addFile({ name, blob }); if (f && !selected) select(f); }
