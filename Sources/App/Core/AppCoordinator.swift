@@ -186,6 +186,7 @@ final class AppCoordinator: PanelHost {
             panel.open()
         }
         item.onFilesDropped = { [weak self] urls in self?.receive(urls, from: .statusIcon) }
+        item.onDragEnded = { [weak self] in self?.refreshIcon() }
         statusItem = item
         refreshIcon()
     }

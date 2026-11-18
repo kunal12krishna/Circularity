@@ -253,11 +253,31 @@ enum PDFBackend {
         for i in 0..<doc.pageCount {
             guard let page = doc.page(at: i) else { continue }
             let box = page.bounds(for: .cropBox)
+            // The rect was drawn on the upright page; map it onto the page as stored.
+            let u = PDFCropMath.unrotated(r, rotation: page.rotation)
             // Normalised rect has a top-left origin; PDF space is y-up.
-            let cropped = CGRect(x: box.minX + r.minX * box.width, y: box.maxY - r.maxY * box.height,
-                                 width: r.width * box.width, height: r.height * box.height)
+            let cropped = CGRect(x: box.minX + u.minX * box.width, y: box.maxY - u.maxY * box.height,
+                                 width: u.width * box.width, height: u.height * box.height)
             page.setBounds(cropped, for: .cropBox)
         }
         guard doc.write(to: output) else { throw JobError.encodeFailed("the cropped PDF") }
+    }
+}
+
+/// Crop rects are chosen on the upright (displayed) page; pages with /Rotate
+/// store their content turned. Normalised, top-left origin (pure, tested).
+public enum PDFCropMath {
+    /// `rotation`: the page's clockwise display rotation in degrees.
+    public static func unrotated(_ r: CGRect, rotation: Int) -> CGRect {
+        func map(_ u: CGFloat, _ v: CGFloat) -> CGPoint {
+            switch ((rotation % 360) + 360) % 360 {
+            case 90: CGPoint(x: v, y: 1 - u)
+            case 180: CGPoint(x: 1 - u, y: 1 - v)
+            case 270: CGPoint(x: 1 - v, y: u)
+            default: CGPoint(x: u, y: v)
+            }
+        }
+        let a = map(r.minX, r.minY), b = map(r.maxX, r.maxY)
+        return CGRect(x: min(a.x, b.x), y: min(a.y, b.y), width: abs(a.x - b.x), height: abs(a.y - b.y))
     }
 }

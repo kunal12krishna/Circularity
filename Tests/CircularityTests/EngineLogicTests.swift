@@ -3,6 +3,13 @@ import CoreGraphics
 import XCTest
 
 final class MarkdownTests: XCTestCase {
+    func testSetextHeadingWithDashesIsNotARule() {
+        let html = Markdown.html("Title\n---\n\ntext")
+        XCTAssertTrue(html.contains("<h2>Title</h2>"), html)
+        XCTAssertFalse(html.contains("<hr>"), html)
+        XCTAssertTrue(Markdown.html("text\n\n---").contains("<hr>"), "after a blank line it is still a rule")
+    }
+
     func testHeadingsAndParagraphs() {
         XCTAssertEqual(Markdown.html("# Title\n\nHello world"), "<h1>Title</h1>\n<p>Hello world</p>")
         XCTAssertEqual(Markdown.html("Title\n====="), "<h1>Title</h1>")
@@ -76,5 +83,18 @@ final class ResizeAndPaperTests: XCTestCase {
     func testPagesFolderNaming() {
         XCTAssertEqual(OperationKind.pdfToImages.nameSuffix, "pages")
         XCTAssertEqual(CircularityEngine.Operation.compressPDF(.balanced).kind, .compress)
+    }
+}
+
+final class PDFCropMathTests: XCTestCase {
+    /// The top half of the upright page, for each stored rotation.
+    func testTopHalfOnRotatedPages() {
+        let topHalf = CGRect(x: 0, y: 0, width: 1, height: 0.5)
+        XCTAssertEqual(PDFCropMath.unrotated(topHalf, rotation: 0), topHalf)
+        // Shown turned 90° clockwise: the upright top is the stored left side.
+        XCTAssertEqual(PDFCropMath.unrotated(topHalf, rotation: 90), CGRect(x: 0, y: 0, width: 0.5, height: 1))
+        XCTAssertEqual(PDFCropMath.unrotated(topHalf, rotation: 180), CGRect(x: 0, y: 0.5, width: 1, height: 0.5))
+        XCTAssertEqual(PDFCropMath.unrotated(topHalf, rotation: 270), CGRect(x: 0.5, y: 0, width: 0.5, height: 1))
+        XCTAssertEqual(PDFCropMath.unrotated(topHalf, rotation: -90), PDFCropMath.unrotated(topHalf, rotation: 270))
     }
 }

@@ -337,6 +337,61 @@ func runAll() async {
         check(ratio > 0.5 && ratio < 2, "JPG size estimate within 2× (\(estimatedJPG) vs \(fileSize(realJPG)))")
     } else { check(false, "size estimate produced") }
 
+    // 12. Review fixes
+    // A batch with one unreadable file keeps the others' results.
+    let good = root.appendingPathComponent("good.png")
+    writeImage(noisy(200, 150), .png, to: good)
+    let bad = root.appendingPathComponent("bad.png")
+    try? Data("not an image".utf8).write(to: bad)
+    let mixed = try? await run([good, bad], .convert(.jpg)).get()
+    check(mixed?.outputs.count == 1 && mixed?.notes.contains { $0.contains("bad.png") } == true,
+          "a batch with one bad file keeps the good result (\(mixed?.notes ?? ["failed"]))")
+    if case .failure = await run([bad, bad], .convert(.jpg)) { check(true, "a batch where every file fails is a failure") }
+    else { check(false, "a batch where every file fails is a failure") }
+
+    // Crop on a page stored with /Rotate 90: the upright top half is the stored left half.
+    let rotatedPDF = root.appendingPathComponent("rotated.pdf")
+    makePDF(rotatedPDF, pages: 1)
+    if let doc = PDFDocument(url: rotatedPDF), let page = doc.page(at: 0) {
+        page.rotation = 90
+        doc.write(to: rotatedPDF)
+    }
+    if let cropped = output(await run([rotatedPDF], .cropPDF(CGRect(x: 0, y: 0, width: 1, height: 0.5)))),
+       let page = PDFDocument(url: cropped)?.page(at: 0) {
+        let box = page.bounds(for: .cropBox)
+        check(abs(box.width - 306) < 1 && abs(box.height - 792) < 1 && box.minX < 1,
+              "crop on a rotated PDF page uses the upright top half (cropBox \(box))")
+    } else { check(false, "crop on a rotated PDF page") }
+
+    // Animated GIF → GIF keeps looping.
+    let anim = root.appendingPathComponent("anim.gif")
+    if let dest = CGImageDestinationCreateWithURL(anim as CFURL, UTType.gif.identifier as CFString, 2, nil) {
+        CGImageDestinationSetProperties(dest, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]] as CFDictionary)
+        for seed in [1, 2] as [UInt64] { CGImageDestinationAddImage(dest, noisy(40, 40, seed: seed), nil) }
+        CGImageDestinationFinalize(dest)
+    }
+    if let gifOut = output(await run([anim], .convert(.gif), {
+        var p = policy; p.destination = .folder(root.appendingPathComponent("gif-out", isDirectory: true)); return p }())),
+       let src = CGImageSourceCreateWithURL(gifOut as CFURL, nil) {
+        let props = CGImageSourceCopyProperties(src, nil) as? [CFString: Any]
+        let loop = (props?[kCGImagePropertyGIFDictionary] as? [CFString: Any])?[kCGImagePropertyGIFLoopCount] as? Int
+        check(CGImageSourceGetCount(src) == 2 && loop == 0, "GIF → GIF keeps both frames and loops forever (loop \(loop.map(String.init) ?? "missing"))")
+    } else { check(false, "GIF → GIF") }
+
+    // Stretch to another aspect ratio: exact size.
+    let wide = root.appendingPathComponent("wide.png")
+    writeImage(gradient(4000, 1000), .png, to: wide)
+    let stretched = output(await run([wide], .resize(ResizeSpec(width: 1000, height: 900, mode: .stretch))))
+    check(stretched.flatMap(pixelSize) == CGSize(width: 1000, height: 900), "stretch 4000×1000 → 1000×900")
+
+    // Cancelling a document job right away: no crash, a clean cancellation.
+    let cancelMD = root.appendingPathComponent("cancel.md")
+    try? "# Hi\n\ntext".write(to: cancelMD, atomically: true, encoding: .utf8)
+    let cancelledDoc = Task { await run([cancelMD], .convert(.docx)) }
+    cancelledDoc.cancel()
+    if case let .failure(error) = await cancelledDoc.value { check(error is CancellationError, "cancelling a document job at once (\(error))") }
+    else { check(true, "cancelling a document job at once finished cleanly") }
+
     // 11. Large files (performance report)
     if large {
         let huge = root.appendingPathComponent("huge.png")

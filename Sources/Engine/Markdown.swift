@@ -100,7 +100,9 @@ public enum Markdown {
             }
 
             // Thematic break
-            if isRule(trimmed) { flushParagraph(); out.append("<hr>"); i += 1; continue }
+            // (A line of only "-" under paragraph text is a setext heading instead.)
+            let setextDashes = !paragraph.isEmpty && trimmed.count >= 2 && trimmed.allSatisfy { $0 == "-" }
+            if isRule(trimmed), !setextDashes { flushParagraph(); out.append("<hr>"); i += 1; continue }
 
             // Block quote
             if trimmed.hasPrefix(">") {

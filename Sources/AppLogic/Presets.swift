@@ -101,9 +101,15 @@ nonisolated enum CropMath {
         r.size.width = max(minimum, r.width)
         r.size.height = max(minimum, r.height)
         if let ratio, ratio > 0, imageAspect > 0 {
-            // Keep the ratio: height follows width (normalised units).
+            // Keep the ratio (normalised units). Top/bottom edges drive the
+            // height and the width follows, centred; everything else the reverse.
             let normalised = ratio / imageAspect
-            r.size.height = r.width / normalised
+            if handle == .top || handle == .bottom {
+                r.size.width = r.height * normalised
+                r.origin.x = rect.midX - r.width / 2
+            } else {
+                r.size.height = r.width / normalised
+            }
             if [.topLeft, .topRight, .top].contains(handle) { r.origin.y = rect.maxY - r.height }
             if [.topLeft, .bottomLeft, .left].contains(handle) { r.origin.x = rect.maxX - r.width }
         }

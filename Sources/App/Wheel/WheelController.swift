@@ -41,6 +41,9 @@ final class WheelController {
     private var finishing = false
     private var lastDragPoint: CGPoint?
     private(set) var isVisible = false
+    /// Bumped by every show(), so a delayed hide meant for an earlier wheel
+    /// never closes a newer one.
+    private var generation = 0
 
     init(settings: SettingsStore) {
         self.settings = settings
@@ -56,6 +59,7 @@ final class WheelController {
 
     func show(_ files: DraggedFiles, at screenPoint: CGPoint, mode: Mode) {
         moreTimer?.cancel()
+        generation += 1
         self.files = files
         self.mode = mode
         finishing = false
@@ -347,9 +351,10 @@ final class WheelController {
     func dragEnded(screenPoint: CGPoint) {
         guard isVisible, mode == .drag else { return }
         let point = hostPoint(fromScreen: screenPoint) ?? lastDragPoint
+        let shown = generation
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
             MainActor.assumeIsolated {
-                guard let self, self.isVisible, !self.finishing, self.mode == .drag else { return }
+                guard let self, self.generation == shown, self.isVisible, !self.finishing, self.mode == .drag else { return }
                 guard let point else { self.hide(animated: true); return }
                 let t = self.target(at: point)
                 guard let slot = self.menu.slot(for: t), slot.action != .more, !self.files.urls.isEmpty else {
@@ -557,8 +562,12 @@ final class WheelController {
             Log.wheel.notice("Wheel choice: \(choice.label, privacy: .public) for \(choice.count, privacy: .public) item(s)")
             onFinished?(choice)
         }
+        let shown = generation
         DispatchQueue.main.asyncAfter(deadline: .now() + (Motion.reduceMotion ? 0 : 0.18)) { [weak self] in
-            MainActor.assumeIsolated { self?.hide(animated: true) }
+            MainActor.assumeIsolated {
+                guard let self, self.generation == shown else { return }
+                self.hide(animated: true)
+            }
         }
     }
 

@@ -84,6 +84,12 @@ final class WatchRuleTests: XCTestCase {
         XCTAssertFalse(rule.accepts(URL(fileURLWithPath: "/tmp/w/report.pdf"), kind: .pdf), "images only")
     }
 
+    func testPDFRuleSkipsPDFs() {
+        let pdfRule = WatchRule(folder: "/tmp/w", match: .all, format: .pdf)
+        XCTAssertFalse(pdfRule.accepts(URL(fileURLWithPath: "/tmp/w/report.pdf"), kind: .pdf), "a PDF is already a PDF")
+        XCTAssertTrue(pdfRule.accepts(URL(fileURLWithPath: "/tmp/w/scan.png"), kind: .image))
+    }
+
     func testCodable() throws {
         var r = rule
         r.output = .subfolder("Converted")

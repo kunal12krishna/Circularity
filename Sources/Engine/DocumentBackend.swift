@@ -108,6 +108,7 @@ enum TextUtil {
         let errors = Pipe()
         process.standardError = errors
         process.standardOutput = FileHandle.nullDevice
+        let control = ProcessControl(process)
         try await withTaskCancellationHandler {
             try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
                 process.terminationHandler = { p in
@@ -118,12 +119,46 @@ enum TextUtil {
                         continuation.resume(throwing: JobError.toolFailed(message.isEmpty ? "textutil exited \(p.terminationStatus)" : message))
                     }
                 }
-                do { try process.run() } catch { continuation.resume(throwing: JobError.toolFailed(error.localizedDescription)) }
+                switch control.launch() {
+                case .launched: break
+                case .cancelled: continuation.resume(throwing: CancellationError())
+                case let .failed(error): continuation.resume(throwing: JobError.toolFailed(error.localizedDescription))
+                }
             }
         } onCancel: {
-            process.terminate()
+            control.cancel()
         }
         try Task.checkCancellation()
+    }
+}
+
+/// Launch and cancel of a Process from different threads, without ever
+/// terminating one that hasn't started (NSTask raises for that).
+nonisolated final class ProcessControl: @unchecked Sendable {
+    enum Launch { case launched, cancelled, failed(Error) }
+    private let process: Process
+    private let lock = NSLock()
+    private var cancelled = false
+    private var running = false
+
+    init(_ process: Process) { self.process = process }
+
+    func launch() -> Launch {
+        lock.lock(); defer { lock.unlock() }
+        if cancelled { return .cancelled }
+        do {
+            try process.run()
+            running = true
+            return .launched
+        } catch {
+            return .failed(error)
+        }
+    }
+
+    func cancel() {
+        lock.lock(); defer { lock.unlock() }
+        cancelled = true
+        if running, process.isRunning { process.terminate() }
     }
 }
 
@@ -182,9 +217,19 @@ final class HTMLPrinter: NSObject, WKNavigationDelegate {
         let page = html.range(of: "<head>").map { html.replacingCharacters(in: $0, with: "<head>\(base)") } ?? base + html
         let file = workDir.appendingPathComponent("\(UUID().uuidString).html")
         try DocumentBackend.write(page, to: file)
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-            loaded = continuation
-            webView.loadFileURL(file, allowingReadAccessTo: URL(fileURLWithPath: "/"))
+        // Resumed by the navigation callbacks, by Cancel, or after 60 s, so a
+        // load that never finishes can't hold a queue slot forever.
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                loaded = continuation
+                if Task.isCancelled { finish(CancellationError()); return }
+                webView.loadFileURL(file, allowingReadAccessTo: URL(fileURLWithPath: "/"))
+                DispatchQueue.main.asyncAfter(deadline: .now() + 60) { [weak self] in
+                    MainActor.assumeIsolated { self?.finish(JobError.toolFailed("the page took too long to load")) }
+                }
+            }
+        } onCancel: {
+            Task { @MainActor [weak self] in self?.finish(CancellationError()) }
         }
         try Task.checkCancellation()
         Self.trace("loaded")

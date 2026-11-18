@@ -25,23 +25,35 @@ public final class ConversionEngine: Sendable {
             return JobResult(outcomes: [outcome])
         }
         let tracker = ProgressTracker(count: request.inputs.count, report: progress)
-        let outcomes = try await withThrowingTaskGroup(of: (Int, JobOutcome).self) { group in
+        let batch = request.inputs.count > 1
+        // In a batch, one bad file becomes a note on its own outcome; the
+        // others keep going and their results are reported. Cancel stops all.
+        let collected = try await withThrowingTaskGroup(of: (Int, JobOutcome, Error?).self) { group in
             for (i, input) in request.inputs.enumerated() {
                 group.addTask {
-                    try await self.queue.run {
-                        let outcome = try await self.process(input, request: request) { fraction, detail in
-                            Task { await tracker.update(i, fraction, detail) }
+                    do {
+                        return try await self.queue.run {
+                            let outcome = try await self.process(input, request: request) { fraction, detail in
+                                Task { await tracker.update(i, fraction, detail) }
+                            }
+                            await tracker.update(i, 1, "")
+                            return (i, outcome, nil)
                         }
+                    } catch where batch && !(error is CancellationError) && !Task.isCancelled {
                         await tracker.update(i, 1, "")
-                        return (i, outcome)
+                        let note = "\(input.lastPathComponent): \(error.localizedDescription)"
+                        return (i, JobOutcome(inputs: [input], outputs: [], bytesIn: Self.size(of: input), bytesOut: 0,
+                                              note: note, usedFallbackFolder: false), error)
                     }
                 }
             }
-            var collected: [(Int, JobOutcome)] = []
-            for try await item in group { collected.append(item) }
-            return collected.sorted { $0.0 < $1.0 }.map(\.1)
+            var items: [(Int, JobOutcome, Error?)] = []
+            for try await item in group { items.append(item) }
+            return items.sorted { $0.0 < $1.0 }
         }
-        return JobResult(outcomes: outcomes)
+        // Every file failed: report it as a failure, as for a single file.
+        if let first = collected.first?.2, collected.allSatisfy({ $0.2 != nil }) { throw first }
+        return JobResult(outcomes: collected.map(\.1))
     }
 
     // MARK: One input
@@ -201,7 +213,7 @@ public final class ConversionEngine: Sendable {
                                               fallbacks: request.output.fallbackFolders, collision: request.output.collision)
         let bytesIn = request.inputs.reduce(Int64(0)) { $0 + Self.size(of: $1) }
         return JobOutcome(inputs: request.inputs, outputs: [final], bytesIn: bytesIn, bytesOut: Self.size(of: final),
-                          note: nil, usedFallbackFolder: staging.usedFallback)
+                          note: nil, usedFallbackFolder: staging.usedFallback || final.deletingLastPathComponent() != staging.destination)
     }
 
     // MARK: Helpers

@@ -78,4 +78,12 @@ final class CropMathTests: XCTestCase {
         XCTAssertGreaterThanOrEqual(r.width, 0.05)
         XCTAssertTrue(CGRect(x: 0, y: 0, width: 1, height: 1).contains(r))
     }
+
+    func testBottomHandleWorksWithALockedRatio() {
+        let start = CGRect(x: 0.3, y: 0.3, width: 0.4, height: 0.4)
+        let r = CropMath.drag(start, handle: .bottom, delta: CGVector(dx: 0, dy: 0.1), ratio: 1, imageAspect: 1)
+        XCTAssertEqual(r.height, 0.5, accuracy: 0.0001, "the bottom edge moves")
+        XCTAssertEqual(r.width, 0.5, accuracy: 0.0001, "the width follows the ratio")
+        XCTAssertEqual(r.midX, start.midX, accuracy: 0.0001, "and stays centred")
+    }
 }

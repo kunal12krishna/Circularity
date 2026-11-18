@@ -7,7 +7,10 @@ import UniformTypeIdentifiers
 enum ClipboardConverter {
     static func convert(to requested: OutputFormat?, jobs: JobCenter, done: @escaping (String) -> Void) {
         let pasteboard = NSPasteboard.general
-        guard let source = readSource(pasteboard) else {
+        // Read (copy) first: the clipboard may point at the previous result.
+        let source = readSource(pasteboard)
+        removeOldCopies(keeping: source?.deletingLastPathComponent())
+        guard let source else {
             done("The clipboard has no image or PDF (or macOS didn't allow reading it).")
             return
         }
@@ -35,6 +38,17 @@ enum ClipboardConverter {
             pasteboard.setData(data, forType: NSPasteboard.PasteboardType(uti.identifier))
             pasteboard.writeObjects([output as NSURL])
             done("The clipboard now holds a \(format.displayName) (\(Bytes.text(Int64(data.count)))).")
+        }
+    }
+
+    /// Earlier clipboard conversions' private copies (the newest one stays until
+    /// the next conversion, because its result is what the clipboard points at).
+    private static func removeOldCopies(keeping current: URL?) {
+        let tmp = FileManager.default.temporaryDirectory
+        let prefix = "\(AppIdentity.name)-Clipboard-"
+        for item in (try? FileManager.default.contentsOfDirectory(at: tmp, includingPropertiesForKeys: nil)) ?? []
+            where item.lastPathComponent.hasPrefix(prefix) && item.lastPathComponent != current?.lastPathComponent {
+            try? FileManager.default.removeItem(at: item)
         }
     }
 

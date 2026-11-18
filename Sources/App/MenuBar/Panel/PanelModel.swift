@@ -193,11 +193,21 @@ final class PanelModel: ObservableObject {
         objectWillChange.send()
     }
 
+    /// "-p.<id>" markers: preset tiles hidden from the panel (still on the wheel).
+    private var hiddenMarkers: [String] {
+        settings.value(SettingsKeys.panelTiles).split(separator: ",").map(String.init).filter { $0.hasPrefix("-") }
+    }
+
+    private func saveTiles(_ ids: [String]) {
+        let markers = hiddenMarkers.filter { !ids.contains(String($0.dropFirst())) }
+        settings.set((ids + markers).joined(separator: ","), for: SettingsKeys.panelTiles)
+        objectWillChange.send()
+    }
+
     func removeTile(_ tile: PanelTile) {
         var ids = allTiles.map(\.id).filter { $0 != tile.id }
         if tile.id.hasPrefix("p.") { ids.append("-\(tile.id)") } // hidden from the panel, still on the wheel
-        settings.set(ids.joined(separator: ","), for: SettingsKeys.panelTiles)
-        objectWillChange.send()
+        saveTiles(ids)
     }
 
     func moveTile(_ id: String, before target: String) {
@@ -205,8 +215,7 @@ final class PanelModel: ObservableObject {
         guard let from = ids.firstIndex(of: id), ids.contains(target), id != target else { return }
         ids.remove(at: from)
         ids.insert(id, at: ids.firstIndex(of: target) ?? ids.endIndex)
-        settings.set(ids.joined(separator: ","), for: SettingsKeys.panelTiles)
-        objectWillChange.send()
+        saveTiles(ids)
     }
 
     func restoreTiles() {
@@ -334,9 +343,9 @@ final class PanelModel: ObservableObject {
     /// Loads file URLs from SwiftUI drop providers.
     static func loadURLs(_ providers: [NSItemProvider], _ done: @escaping ([URL]) -> Void) {
         let collector = URLCollector(count: providers.count, done: done)
-        for provider in providers {
+        for (index, provider) in providers.enumerated() {
             _ = provider.loadObject(ofClass: NSURL.self) { object, _ in
-                collector.add((object as? NSURL) as URL?)
+                collector.add((object as? NSURL) as URL?, at: index)
             }
         }
         if providers.isEmpty { done([]) }
@@ -346,21 +355,23 @@ final class PanelModel: ObservableObject {
 /// Gathers asynchronously loaded URLs and reports once, on the main thread.
 nonisolated private final class URLCollector: @unchecked Sendable {
     private let lock = NSLock()
-    private var urls: [URL] = []
+    /// By drop position, so "combine" keeps the order the files were dropped in.
+    private var urls: [URL?]
     private var remaining: Int
     private let done: ([URL]) -> Void
 
     init(count: Int, done: @escaping ([URL]) -> Void) {
         remaining = count
+        urls = Array(repeating: nil, count: count)
         self.done = done
     }
 
-    func add(_ url: URL?) {
+    func add(_ url: URL?, at index: Int) {
         lock.lock()
-        if let url, url.isFileURL { urls.append(url) }
+        if let url, url.isFileURL, urls.indices.contains(index) { urls[index] = url }
         remaining -= 1
         let finished = remaining == 0
-        let result = urls
+        let result = urls.compactMap { $0 }
         lock.unlock()
         guard finished else { return }
         let box = UncheckedSendable(done)

@@ -190,6 +190,8 @@ nonisolated struct WatchRule: Codable, Equatable, Identifiable, Sendable {
         // Our own outputs carry an operation suffix or collision counter.
         if name.contains(" (converted)") { return false }
         if let type = UTType(filenameExtension: url.pathExtension), SlotProvider.imageFormat(of: type) == format { return false }
+        // Already a PDF and the rule makes PDFs: nothing to do.
+        if kind == .pdf && format == .pdf { return false }
         switch match {
         case .images: return kind == .image
         case .pdfs: return kind == .pdf

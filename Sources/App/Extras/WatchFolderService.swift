@@ -112,7 +112,9 @@ final class WatchFolderService: ObservableObject {
     }
 
     /// Waits until the file stops growing (downloads, screenshots being written).
-    private func scheduleCheck(_ url: URL, rule: WatchRule) {
+    /// Gives up after about a minute of an empty or still-changing file (a
+    /// stalled download or a placeholder); a later write starts it again.
+    private func scheduleCheck(_ url: URL, rule: WatchRule, attempt: Int = 0) {
         pending[url.path]?.work.cancel()
         let size = Self.size(url)
         let work = DispatchWorkItem { [weak self] in
@@ -120,7 +122,11 @@ final class WatchFolderService: ObservableObject {
                 guard let self else { return }
                 let now = Self.size(url)
                 if now != size || now == 0 {
-                    if FileManager.default.fileExists(atPath: url.path) { self.scheduleCheck(url, rule: rule) }
+                    if attempt < 40, FileManager.default.fileExists(atPath: url.path) {
+                        self.scheduleCheck(url, rule: rule, attempt: attempt + 1)
+                    } else {
+                        self.pending[url.path] = nil
+                    }
                     return
                 }
                 self.pending[url.path] = nil

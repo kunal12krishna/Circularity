@@ -41,6 +41,8 @@ final class StatusItemController: NSObject {
     var onFilesDropped: (([URL]) -> Void)?
     /// The pointer rested on the icon for a moment (Settings → open on hover).
     var onHover: (() -> Void)?
+    /// A drag left the icon or dropped on it: show the current state again.
+    var onDragEnded: (() -> Void)?
 
     private let item: NSStatusItem
     private let catcher = StatusDropView()
@@ -124,6 +126,10 @@ final class StatusItemController: NSObject {
 
     fileprivate func dragEntered() { onDragEntered?() }
     fileprivate func hovered() { onHover?() }
+    fileprivate func dragEnded() {
+        if state == .dragOver { set(.idle) }
+        onDragEnded?()
+    }
     fileprivate func dropped(_ urls: [URL]) { onFilesDropped?(urls) }
 
     func remove() { NSStatusBar.system.removeStatusItem(item) }
@@ -132,7 +138,6 @@ final class StatusItemController: NSObject {
 /// Sits over the status button: takes clicks and file drops.
 final class StatusDropView: NSView {
     weak var owner: StatusItemController?
-    private var previous: StatusIconState?
 
     private var hoverWork: DispatchWorkItem?
 
@@ -170,18 +175,17 @@ final class StatusDropView: NSView {
     override func rightMouseDown(with event: NSEvent) { owner?.rightClicked() }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        previous = owner?.state
         owner?.set(.dragOver)
         owner?.dragEntered()
         return .copy
     }
 
     override func draggingExited(_ sender: NSDraggingInfo?) {
-        if owner?.state == .dragOver { owner?.set(previous ?? .idle) }
+        owner?.dragEnded()
     }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        if owner?.state == .dragOver { owner?.set(previous ?? .idle) }
+        owner?.dragEnded()
         let urls = DraggedFiles.read(sender.draggingPasteboard).urls
         guard !urls.isEmpty else { return false }
         owner?.dropped(urls)

@@ -85,6 +85,11 @@ struct ImageInput {
     /// Animated GIF → GIF keeps every frame.
     func copyFrames(to destination: CGImageDestination) -> Bool {
         guard let source else { return false }
+        // Keep the file-level loop count (no entry = play once; GIFs usually loop forever).
+        let fileProps = CGImageSourceCopyProperties(source, nil) as? [CFString: Any]
+        let gif = fileProps?[kCGImagePropertyGIFDictionary] as? [CFString: Any]
+        let loops = gif?[kCGImagePropertyGIFLoopCount] ?? 0
+        CGImageDestinationSetProperties(destination, [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: loops]] as CFDictionary)
         for i in 0..<CGImageSourceGetCount(source) {
             CGImageDestinationAddImageFromSource(destination, source, i, nil)
         }
@@ -204,8 +209,12 @@ enum ImageBackend {
         let source = input.uprightSize
         let target = ResizeMath.targetSize(source: source, spec: spec)
         let downscale = target.width <= source.width && target.height <= source.height
-        // Decode straight at (about) the target size when shrinking.
-        var image = try input.upright(maxPixel: downscale ? Int(max(target.width, target.height)) : nil)
+        // Decode straight at (about) the target size when shrinking. The decode
+        // keeps the aspect, so size it for the axis that needs the most pixels
+        // (a stretch to another ratio would otherwise upscale the other axis).
+        let k = max(target.width / max(1, source.width), target.height / max(1, source.height))
+        let decodeEdge = Int((max(source.width, source.height) * k).rounded(.up))
+        var image = try input.upright(maxPixel: downscale ? decodeEdge : nil)
         image = try ImageOps.scaled(image, to: target)
         try ImageOps.write(image, as: format, quality: policy.quality(for: format),
                            properties: input.outputProperties(policy: policy.metadata), to: output)

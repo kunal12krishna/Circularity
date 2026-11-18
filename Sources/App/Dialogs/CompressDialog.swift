@@ -11,6 +11,20 @@ struct CompressDialog: View {
     let accent: Color
     let onRun: (CircularityEngine.Operation, Preset?) -> Void
     let onCancel: () -> Void
+    /// Read once, not on every render (each slider tick re-renders).
+    private let totalBytes: Int64
+    private let outputFormat: OutputFormat
+
+    init(files: [URL], isPDF: Bool, accent: Color, onRun: @escaping (CircularityEngine.Operation, Preset?) -> Void,
+         onCancel: @escaping () -> Void) {
+        self.files = files
+        self.isPDF = isPDF
+        self.accent = accent
+        self.onRun = onRun
+        self.onCancel = onCancel
+        totalBytes = files.reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
+        outputFormat = files.first.map { ConversionEngine.compressedFormat(for: $0) } ?? .jpg
+    }
 
     @State private var mode = Mode.quality
     @State private var quality = 70.0
@@ -21,7 +35,6 @@ struct CompressDialog: View {
     @State private var estimate = "estimating…"
     @State private var estimateTask: Task<Void, Never>?
 
-    private var totalBytes: Int64 { files.reduce(0) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) } }
     private var subtitle: String {
         let what = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(isPDF ? "PDFs" : "images")"
         return "\(what) · \(Bytes.text(totalBytes))"
@@ -30,7 +43,6 @@ struct CompressDialog: View {
         guard let v = Double(targetText.replacingOccurrences(of: ",", with: ".")), v > 0 else { return nil }
         return Int64(v * (targetInMB ? 1_000_000 : 1_000))
     }
-    private var outputFormat: OutputFormat { files.first.map { ConversionEngine.compressedFormat(for: $0) } ?? .jpg }
 
     var body: some View {
         DialogFrame(title: "Compress", subtitle: subtitle, accent: accent, primaryTitle: "Compress",

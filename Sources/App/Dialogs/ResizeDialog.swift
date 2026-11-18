@@ -20,7 +20,10 @@ struct ResizeDialog: View {
     @State private var addButton = false
     @State private var estimate = ""
     @State private var estimateTask: Task<Void, Never>?
-    @State private var syncing = false
+    /// Values we wrote into a field ourselves; SwiftUI's onChange arrives
+    /// after the write, so it is recognised by value and not echoed back.
+    @State private var echoWidth: String?
+    @State private var echoHeight: String?
 
     private var subtitle: String {
         let what = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(isPDF ? "PDFs" : "images")"
@@ -125,22 +128,33 @@ struct ResizeDialog: View {
             source = Thumbnails.pdfPage(url, maxPixel: 64)?.size ?? .zero
         } else if let size = Thumbnails.pixelSize(url) {
             source = size
-            syncing = true
-            widthText = "\(Int(size.width))"
-            heightText = "\(Int(size.height))"
-            syncing = false
+            setWidth("\(Int(size.width))")
+            setHeight("\(Int(size.height))")
         }
     }
 
+    private func setWidth(_ text: String) {
+        guard text != widthText else { return }
+        echoWidth = text
+        widthText = text
+    }
+
+    private func setHeight(_ text: String) {
+        guard text != heightText else { return }
+        echoHeight = text
+        heightText = text
+    }
+
     private func followAspect(fromWidth: Bool) {
-        guard !syncing, keepAspect, source.width > 0, source.height > 0 else { refreshEstimate(); return }
-        syncing = true
+        // Our own write coming back through onChange: leave the other field alone.
+        if fromWidth, let echo = echoWidth, echo == widthText { echoWidth = nil; refreshEstimate(); return }
+        if !fromWidth, let echo = echoHeight, echo == heightText { echoHeight = nil; refreshEstimate(); return }
+        guard keepAspect, source.width > 0, source.height > 0 else { refreshEstimate(); return }
         if fromWidth, let w = width {
-            heightText = "\(max(1, Int((Double(w) * source.height / source.width).rounded())))"
+            setHeight("\(max(1, Int((Double(w) * source.height / source.width).rounded())))")
         } else if !fromWidth, let h = height {
-            widthText = "\(max(1, Int((Double(h) * source.width / source.height).rounded())))"
+            setWidth("\(max(1, Int((Double(h) * source.width / source.height).rounded())))")
         }
-        syncing = false
         refreshEstimate()
     }
 
@@ -155,10 +169,8 @@ struct ResizeDialog: View {
         case "4K": widthText = "3840"
         case "1080²":
             keepAspect = false
-            syncing = true
-            widthText = "1080"
-            heightText = "1080"
-            syncing = false
+            setWidth("1080")
+            setHeight("1080")
         default: break
         }
         followAspect(fromWidth: true)
