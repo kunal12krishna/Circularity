@@ -1,5 +1,5 @@
 #!/usr/bin/env swift
-// Draws the DMG window background in the Halo look (graphite, neon accent):
+// Draws the DMG window background in the Halo look (graphite, riso pink accent):
 // background.png (660 × 420) and background@2x.png. Usage:
 //   swift scripts/make-dmg-art.swift <output dir>
 // Layout matches scripts/dmg.sh: app icon at (180, 200), Applications at (480, 200).
@@ -21,7 +21,7 @@ func rgb(_ hex: UInt32, _ alpha: CGFloat = 1) -> CGColor {
 }
 
 let width: CGFloat = 660, height: CGFloat = 420
-let neon = rgb(0xC6FF3D)
+let neon = rgb(0xFF4FA0) // the default accent (Riso)
 
 /// Draws text with its baseline-left at (x, y) in the y-down canvas.
 func text(_ ctx: CGContext, _ string: String, x: CGFloat, y: CGFloat, size: CGFloat, weight: NSFont.Weight,

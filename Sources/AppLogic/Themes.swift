@@ -53,10 +53,12 @@ nonisolated struct Theme: Identifiable, Equatable, Sendable {
     let font: String
 }
 
-/// The built-in themes (BRIEF.md: Tangerine, Glass, Graphite, Midnight, Mono,
-/// Neon, plus Custom) and the accent swatches.
+/// The built-in themes (Riso, the default since 0.3; BRIEF.md's Tangerine,
+/// Glass, Graphite, Midnight, Mono and Neon; plus Custom) and the accent swatches.
 nonisolated enum ThemeCatalog {
     static let all: [Theme] = [
+        // Riso: fluorescent pink, as in risograph ink (the website's colours).
+        Theme(id: "riso", name: "Riso", accent: RGB(hex: 0xFF4FA0), glassStrength: 0.55, font: "rounded"),
         Theme(id: "neon", name: "Neon", accent: RGB(hex: 0xC6FF3D), glassStrength: 0.55, font: "rounded"),
         Theme(id: "tangerine", name: "Tangerine", accent: RGB(hex: 0xFF8A00), glassStrength: 0.55, font: "rounded"),
         Theme(id: "glass", name: "Glass", accent: RGB(hex: 0x7C8CFF), glassStrength: 0.3, font: "rounded"),
@@ -65,8 +67,10 @@ nonisolated enum ThemeCatalog {
         Theme(id: "mono", name: "Mono", accent: RGB(hex: 0xF2F2F2), glassStrength: 0.6, font: "default"),
     ]
 
-    /// Eight swatches for Custom (board accents + Halo accents).
-    static let swatches: [String] = ["#FF8A00", "#FF5E3A", "#FFB020", "#7C8CFF", "#C6FF3D", "#5CE1FF", "#FF5CA8", "#9BA3AF"]
+    /// Eight swatches for Custom (the riso inks, board accents, Halo accents).
+    static let swatches: [String] = ["#FF4FA0", "#2F5BFF", "#FF8A00", "#FFB020", "#7C8CFF", "#C6FF3D", "#5CE1FF", "#9BA3AF"]
+    /// What a fresh install looks like.
+    static let defaultAccentHex = "#FF4FA0"
 
     static func theme(id: String) -> Theme? { all.first { $0.id == id } }
     static func theme(forAccent hex: String) -> Theme? {

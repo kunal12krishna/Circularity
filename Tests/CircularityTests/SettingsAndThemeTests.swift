@@ -45,6 +45,7 @@ final class ThemeContrastTests: XCTestCase {
 
     func testThemeLookup() {
         XCTAssertEqual(ThemeCatalog.theme(forAccent: "#c6ff3d")?.id, "neon")
+        XCTAssertEqual(ThemeCatalog.theme(forAccent: "#ff4fa0")?.id, "riso")
         XCTAssertNil(ThemeCatalog.theme(forAccent: "#123456"))
         XCTAssertEqual(RGB(hexString: "#FF8A00")?.hexString, "#FF8A00")
     }
@@ -135,10 +136,12 @@ final class SettingsMigrationTests: XCTestCase {
         XCTAssertEqual(d.string(forKey: SettingsKeys.accentHex.name), "#FF8A00")
     }
 
-    func testFreshInstallGetsNeonDefault() {
+    func testFreshInstallGetsRisoDefault() {
         let d = freshDefaults("fresh")
         migrate(d)
-        XCTAssertNil(d.object(forKey: SettingsKeys.accentHex.name), "nothing stored: the registered default (neon) applies")
-        XCTAssertEqual(SettingsKeys.accentHex.defaultValue, "#C6FF3D")
+        XCTAssertNil(d.object(forKey: SettingsKeys.accentHex.name), "nothing stored: the registered default (riso) applies")
+        XCTAssertEqual(SettingsKeys.accentHex.defaultValue, "#FF4FA0")
+        XCTAssertEqual(SettingsKeys.accentHex.defaultValue, ThemeCatalog.defaultAccentHex)
+        XCTAssertEqual(ThemeCatalog.theme(id: SettingsKeys.theme.defaultValue)?.accent.hexString, ThemeCatalog.defaultAccentHex)
     }
 }

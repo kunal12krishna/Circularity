@@ -85,8 +85,8 @@ nonisolated enum SettingsKeys {
     static let replaceOriginal = SettingsKey("output.replaceOriginal", false)
 
     // MARK: Appearance
-    static let theme = SettingsKey("appearance.theme", "neon")                  // tangerine | glass | graphite | midnight | mono | neon | custom
-    static let accentHex = SettingsKey("appearance.accentHex", "#C6FF3D")
+    static let theme = SettingsKey("appearance.theme", "riso")                  // riso | neon | tangerine | glass | graphite | midnight | mono | custom
+    static let accentHex = SettingsKey("appearance.accentHex", "#FF4FA0")
     static let glassStrength = SettingsKey("appearance.glassStrength", 0.55)    // 0 … 1: tint of the Ring's glass
     static let wheelScheme = SettingsKey("appearance.wheelScheme", "auto")      // auto (each layout's board look) | system | light | dark; Halo is always dark
     static let panelScheme = SettingsKey("menubar.colorScheme", "auto")         // auto (Stack+/Mini dark, Tabs light) | system | light | dark

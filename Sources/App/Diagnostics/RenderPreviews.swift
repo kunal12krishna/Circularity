@@ -92,8 +92,8 @@ enum RenderPreviews {
             try snapshot(PanelRoot(model: model, width: width), background: layout == "tabs" ? 0xDCD6CC : 0x1E2E36,
                          to: directory.appendingPathComponent("\(name)@2x.png"))
         }
-        // Every layout in every colour setting, with the default neon accent (readability check).
-        settings.set("#C6FF3D", for: SettingsKeys.accentHex)
+        // Every layout in every colour setting, with the default accent (readability check).
+        settings.set(ThemeCatalog.defaultAccentHex, for: SettingsKeys.accentHex)
         for (layout, scheme) in [("tabs", "auto"), ("tabs", "dark"), ("stackPlus", "light"), ("mini", "light"), ("stackPlus", "auto")] {
             settings.set(layout, for: SettingsKeys.panelLayout)
             settings.set(scheme, for: SettingsKeys.panelScheme)
@@ -242,7 +242,7 @@ enum RenderPreviews {
             ctx.endPage()
             ctx.closePDF()
         }
-        let accent = SwiftUI.Color(hex: 0xC6FF3D)
+        let accent = SwiftUI.Color(hex: 0xFF4FA0)
         let none: (CircularityEngine.Operation, Preset?) -> Void = { _, _ in }
         let views: [(String, AnyView)] = [
             ("dialog-compress-image", AnyView(CompressDialog(files: [photo], isPDF: false, accent: accent, onRun: none, onCancel: {}))),
@@ -285,7 +285,7 @@ enum RenderPreviews {
         let cases: [(WheelLayoutKind, [UTType], Int, UInt32, UInt32)] = [
             (.ring, photo, 1, 0xFF8A00, 0x1F2228),
             (.orbit, [.png, .png, .png], 3, 0xFF8A00, 0xE9E5DF),
-            (.halo, photo, 1, 0xC6FF3D, 0x0D0F14),
+            (.halo, photo, 1, 0xFF4FA0, 0x0D0F14),
         ]
         for (kind, types, count, accent, backdrop) in cases {
             for (name, state) in states {
@@ -302,13 +302,13 @@ enum RenderPreviews {
         ]
         // Transparent Halo wheels for the website's "How it works".
         for (name, state) in [("hover-jpg", WheelVisualState(hover: .segment(1))), ("rest", WheelVisualState())] {
-            try renderWheel(kind: .halo, types: [.heic], count: 1, accent: 0xC6FF3D, backdrop: 0, state: state,
+            try renderWheel(kind: .halo, types: [.heic], count: 1, accent: 0xFF4FA0, backdrop: 0, state: state,
                             to: directory.appendingPathComponent("wheel-halo-\(name)-clear@2x.png"))
         }
         // A very long file name must stay inside the centre in every layout.
         let longName = "Family_holiday_in_the_mountains_summer_2026_final_edit_version_3_exported.HEIC"
         for kind in [WheelLayoutKind.halo, .ring, .orbit] {
-            try renderWheel(kind: kind, types: [.heic], count: 1, accent: kind == .halo ? 0xC6FF3D : 0xFF8A00, backdrop: 0x1F2228,
+            try renderWheel(kind: kind, types: [.heic], count: 1, accent: kind == .halo ? 0xFF4FA0 : 0xFF8A00, backdrop: 0x1F2228,
                             state: WheelVisualState(), fileName: longName,
                             to: directory.appendingPathComponent("wheel-\(kind.rawValue)-long-name@2x.png"))
         }

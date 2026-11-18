@@ -65,7 +65,7 @@ extension RGB {
 /// Settings → resolved colours and styles, in one place (wheel, panel, dialogs).
 enum Appearance {
     static func accentRGB(_ settings: SettingsStore) -> RGB {
-        RGB(hexString: settings.value(SettingsKeys.accentHex)) ?? RGB(hex: 0xC6FF3D)
+        RGB(hexString: settings.value(SettingsKeys.accentHex)) ?? RGB(hex: 0xFF4FA0)
     }
 
     static func accent(_ settings: SettingsStore) -> CGColor {
