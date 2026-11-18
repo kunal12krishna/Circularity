@@ -219,7 +219,7 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 .privacy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .privacy .card b { font-family: var(--mono); color: var(--accent); }
 
-.install { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.install { display: grid; grid-template-columns: minmax(0, 640px); gap: 18px; align-items: start; }
 .term { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; font-family: var(--mono); font-size: 13px; min-width: 0; }
 :root[data-skin="pixel"] .term { font-size: 17px; }
 .term-line { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--line); min-width: 0; }
@@ -398,12 +398,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
         <div><a class="btn primary" id="downloadBtn" href="#install">Download for Mac</a></div>
         <p id="downloadNote"></p>
         <p><b style="color:var(--fg)">First launch:</b> macOS 15 and later: open it once, then System Settings → Privacy &amp; Security → Open Anyway. macOS 13–14: right-click the app → Open.</p>
-      </div>
-      <div class="term" aria-label="Build from source">
-        <div class="eyebrow" style="margin-bottom:6px">Or build it yourself</div>
-        <div class="term-line"><code>brew install xcodegen create-dmg</code><button class="copy" type="button">copy</button></div>
-        <div class="term-line"><code>./scripts/clean-rebuild.sh</code><button class="copy" type="button">copy</button></div>
-        <div class="term-line"><code>./scripts/release.sh</code><button class="copy" type="button">copy</button></div>
       </div>
     </div>
   </section>
@@ -1262,7 +1256,7 @@ $$(".copy").forEach((b) => { if (b.id === "modalClose") return; b.addEventListen
 }); });
 const dl = $("#downloadBtn");
 if (DOWNLOAD_URL) { dl.href = DOWNLOAD_URL; dl.target = "_blank"; dl.rel = "noopener"; }
-else { dl.addEventListener("click", (e) => { e.preventDefault(); $("#downloadNote").textContent = "The download link arrives with the first public release. Until then, build it from source with the commands here."; }); }
+else { dl.addEventListener("click", (e) => { e.preventDefault(); $("#downloadNote").textContent = "The download link arrives with the first public release. Check back soon."; }); }
 
 // ---------- Start ----------
 const savedSkin = store.get("circularity-skin");
