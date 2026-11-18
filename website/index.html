@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=Outfit:wght@300;500;800&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Sora:wght@400;600&family=Unbounded:wght@500;800&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=Outfit:wght@300;500;800&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Sora:wght@400;600&family=Unbounded:wght@500;800&family=VT323&display=swap">
 <style>
 /* Layout: a sticky product nav, a hero that is a working demo, then one idea per section
    (numbers, a scroll story, tabbed features, use cases, builder, lab, game, changelog).
@@ -15,6 +15,7 @@
   --shadow: 0 1px 2px rgba(15,18,24,.05), 0 18px 44px rgba(15,18,24,.09); --glow: none;
   --display-case: none; --display-track: -.035em; --display-weight: 620;
   --cta: #0E1116; --on-cta: #FFFFFF; --plate: #0E1014; --mark: #C6FF3D; --nav: rgba(245,246,248,.78);
+  --s-heic: #FF9A3D; --s-png: #35D0E6; --s-jpg: #FF6FB5; --s-pdf: #FF5E5B; --s-webp: #9B6BFF; --s-avif: #FFD23F; --s-tiff: #3ECF8E;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
@@ -31,8 +32,20 @@
   --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 22px 54px rgba(0,0,0,.5);
   --cta: #EDEFF3; --on-cta: #0A0B0E; --nav: rgba(10,11,14,.72); color-scheme: dark;
 }
+/* Desk (default): a pretend Mac desktop at night. The app's neon, plus one
+   sticker colour per file format; Geist for headlines, Geist Mono for the rest. */
+:root[data-skin="desk"] {
+  --bg: #0B0D10; --bg2: #101318; --panel: #13161C; --panel2: #1A1E26; --line: rgba(255,255,255,.12);
+  --fg: #ECEEF2; --muted: #9AA2AE; --accent: #C6FF3D; --on-accent: #0E1206; --danger: #FF8A80;
+  --display: "Geist", system-ui, sans-serif; --body: "Geist Mono", ui-monospace, Menlo, monospace; --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  --body-size: 15px; --radius: 8px; --shadow: 0 0 0 1px rgba(255,255,255,.03), 0 28px 60px rgba(0,0,0,.55); --glow: none;
+  --display-case: lowercase; --display-track: -.05em; --plate: #0E1014; --mark: #C6FF3D; --nav: rgba(11,13,16,.86);
+  --s-heic: #FF9A3D; --s-png: #35D0E6; --s-jpg: #FF6FB5; --s-pdf: #FF5E5B; --s-webp: #9B6BFF; --s-avif: #FFD23F; --s-tiff: #3ECF8E;
+  color-scheme: dark;
+}
 /* Every other style: buttons take the style's accent, headings its own weight. */
-:root[data-skin]:not([data-skin="studio"]) { --cta: var(--accent); --on-cta: var(--on-accent); --display-weight: 800; --nav: color-mix(in srgb, var(--bg) 84%, transparent); }
+:root[data-skin]:not([data-skin="studio"]):not([data-skin="desk"]) { --cta: var(--accent); --on-cta: var(--on-accent); --display-weight: 800; --nav: color-mix(in srgb, var(--bg) 84%, transparent); }
+:root[data-skin="desk"] { --cta: var(--accent); --on-cta: var(--on-accent); --display-weight: 700; }
 :root[data-skin="halo"] {
   --bg: #0B0D11; --bg2: #12151B; --panel: #171A21; --panel2: #1D2129; --line: rgba(255,255,255,.09);
   --fg: #ECEEF2; --muted: #9AA1AF; --accent: #C6FF3D; --on-accent: #10140A; --danger: #FF8A80;
@@ -149,6 +162,18 @@ h1, h2, h3 { font-family: var(--display); text-transform: var(--display-case); l
 h1 { font-size: clamp(42px, 7vw, 84px); font-weight: var(--display-weight); line-height: .98; }
 h2 { font-size: clamp(30px, 4.2vw, 52px); font-weight: var(--display-weight); }
 h3 { font-size: 19px; font-weight: 650; letter-spacing: -.01em; }
+:root[data-skin="desk"] body { background-image: radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.3px); background-size: 22px 22px; }
+:root[data-skin="desk"] h1 { line-height: .92; }
+:root[data-skin="desk"] .eyebrow { font-family: "Silkscreen", var(--mono); text-transform: lowercase; letter-spacing: .06em; font-size: 13px; color: var(--muted); }
+:root[data-skin="desk"] .eyebrow::before { content: attr(data-tag); display: inline-block; background: var(--accent); color: var(--on-accent); padding: 1px 7px 0; margin-right: 8px; }
+:root[data-skin="desk"] .eyebrow:not([data-tag])::before { content: "◖"; }
+:root[data-skin="desk"] :is(.btn, .ex-tab, .pill, .use-tab, .announce, .style-btn) { border-radius: 6px; }
+:root[data-skin="desk"] .btn { font-family: var(--mono); font-size: 14px; text-transform: lowercase; padding: 10px 16px; }
+:root[data-skin="desk"] .btn.primary { box-shadow: 0 0 0 1px rgba(198,255,61,.4), 0 8px 28px rgba(198,255,61,.18); }
+:root[data-skin="desk"] .btn.primary:hover { box-shadow: 0 0 0 1px rgba(198,255,61,.7), 0 10px 34px rgba(198,255,61,.32); }
+:root[data-skin="desk"] .nav .links a { font-family: var(--mono); text-transform: lowercase; font-size: 13px; }
+:root[data-skin="desk"] .sec-sub, :root[data-skin="desk"] .lede { font-family: var(--mono); font-size: 15px; line-height: 1.7; }
+:root[data-skin="desk"] .hero .lede { font-size: 16px; max-width: 52ch; }
 :root:not([data-skin]) .eyebrow, :root[data-skin="studio"] .eyebrow { font-family: var(--body); text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 550; color: var(--accent); }
 :root[data-skin="pixel"] h1 { font-size: clamp(22px, 3.6vw, 40px); line-height: 1.35; }
 :root[data-skin="pixel"] h2 { font-size: clamp(18px, 2.4vw, 26px); line-height: 1.4; }
@@ -400,6 +425,64 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 :root[data-skin="pixel"] .toast, :root[data-skin="ascii"] .toast { border-radius: 0; font-size: 16px; }
 
+/* Menu-bar status items: the app's own icon, a live clock */
+.status { display: flex; align-items: center; gap: 14px; color: var(--muted); font: 500 13px var(--mono); white-space: nowrap; }
+.status .clock { color: var(--fg); }
+.status svg { width: 16px; height: 16px; color: var(--accent); }
+.status .pulse svg { animation: pulse .8s ease-out; }
+
+/* Format stickers you can toss around the hero */
+.hero { position: relative; }
+.stickers { position: absolute; inset: 0; pointer-events: none; }
+.sticker { position: absolute; pointer-events: auto; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+  font: 700 13px "Silkscreen", var(--mono); color: #0B0D10; background: var(--c); padding: 6px 10px 5px; border-radius: 4px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.45); rotate: var(--r, 0deg); animation: float 6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.sticker:active { cursor: grabbing; }
+.sticker.held { animation: none; scale: 1.08; z-index: 5; }
+@keyframes float { 50% { translate: 0 -8px; } }
+:root:not([data-skin="desk"]) .stickers { display: none; }
+.psst { font: 500 13px var(--mono); color: var(--muted); }
+.psst kbd { font-size: 12px; }
+
+/* Marquee */
+.marquee { overflow: hidden; border-block: 1px solid var(--line); margin-top: 28px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.marquee .track { display: flex; width: max-content; gap: 34px; padding: 12px 0; font: 500 13px var(--mono); color: var(--muted); animation: marquee 38s linear infinite; }
+.marquee:hover .track { animation-play-state: paused; }
+.marquee b { color: var(--fg); font-weight: 600; }
+.marquee i { font-style: normal; color: var(--accent); }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* Windows: cards that are little Mac windows */
+.win { border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+.win-bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--panel2); font: 500 12px var(--mono); color: var(--muted); }
+.win-bar .lights { display: flex; gap: 6px; }
+.win-bar .lights i { width: 10px; height: 10px; border-radius: 50%; display: block; background: #FF5F57; }
+.win-bar .lights i:nth-child(2) { background: #FEBC2E; } .win-bar .lights i:nth-child(3) { background: #28C840; }
+.win-bar span:nth-child(2) { text-align: center; }
+.win-body { padding: 18px 20px; display: grid; gap: 10px; }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font: 14px/1.55 var(--mono); }
+.checks li { display: grid; grid-template-columns: 3ch 1fr; gap: 8px; }
+.checks li::before { content: "[x]"; color: var(--accent); }
+.checks li.no::before { content: "[ ]"; color: var(--muted); }
+.checks li.no { color: var(--muted); }
+.windows { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 16px; align-items: start; }
+
+/* The page's own wheel: hold Shift anywhere */
+#buddy { position: fixed; left: 0; top: 0; z-index: 70; pointer-events: none; width: 20px; height: 20px; color: var(--accent); opacity: 0; transition: opacity .2s; }
+#buddy.on { opacity: .9; }
+#buddy svg { width: 100%; height: 100%; animation: spin 8s linear infinite; }
+#mini { position: fixed; left: 0; top: 0; z-index: 71; pointer-events: none; width: 200px; height: 200px; margin: -100px 0 0 -100px; opacity: 0; scale: .6; transition: opacity .15s, scale .25s cubic-bezier(.2,1.5,.4,1); }
+#mini.open { opacity: 1; scale: 1; }
+#mini .ring { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle, transparent 38px, rgba(13,15,20,.94) 39px 96px, transparent 97px); box-shadow: 0 18px 50px rgba(0,0,0,.5); }
+#mini .seg { position: absolute; left: 50%; top: 50%; width: 52px; height: 26px; margin: -13px 0 0 -26px; display: grid; place-items: center; border-radius: 6px;
+  font: 700 11px var(--mono); color: #ECEEF2; transform: rotate(var(--a)) translateY(-67px) rotate(calc(-1 * var(--a))); transition: background .1s, color .1s, scale .15s; }
+#mini .seg.hot { background: var(--c); color: #0B0D10; scale: 1.12; }
+#mini .core { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; display: grid; place-items: center; text-align: center;
+  font: 600 10px/1.2 var(--mono); color: #A9AFBC; background: #1A1D24; }
+.spark { position: fixed; z-index: 72; width: 6px; height: 6px; pointer-events: none; background: var(--c); border-radius: 1px; animation: spark .7s ease-out forwards; }
+@keyframes spark { to { transform: translate(var(--dx), var(--dy)) rotate(200deg); opacity: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
 /* Section titles: one idea per screen */
 .sec-title { margin-bottom: 14px; }
 .sec-sub { color: var(--muted); font-size: 18px; max-width: 52ch; margin-bottom: 36px; }
@@ -429,24 +512,27 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 .st-file { position: absolute; display: grid; justify-items: center; gap: 6px; font: 12px var(--mono); color: #ECEEF2; }
 .st-file i { width: 64px; height: 64px; border-radius: 12px; display: block; box-shadow: 0 8px 20px rgba(0,0,0,.4);
   background: linear-gradient(180deg, #2B2D6E, #F06A4A 58%, #FFC27A 74%, #2A1D44 75%); }
-.st-file.orig { left: 14%; top: 22%; }
-.st-file.ghost { left: 14%; top: 22%; opacity: 0; }
-.st-file.result { left: 34%; top: 22%; opacity: 0; transform: scale(.4); transition: opacity .4s .25s, transform .5s .25s cubic-bezier(.2,1.5,.4,1); }
+.st-file.orig { left: 10%; top: 16%; }
+.st-file.ghost { left: 18%; top: 26%; opacity: 0; translate: -50% -50%; }
+.st-file.ghost i { width: 52px; height: 52px; opacity: .85; }
+.st-file.result { left: 30%; top: 16%; opacity: 0; transform: scale(.4); transition: opacity .4s .3s, transform .5s .3s cubic-bezier(.2,1.5,.4,1); }
 .st-file.result i { filter: saturate(.9) contrast(1.05); }
-.st-cursor { position: absolute; width: 18px; height: 24px; left: 20%; top: 30%; opacity: 0;
+.st-cursor { position: absolute; width: 18px; height: 24px; left: 58%; top: 60%; opacity: 0; z-index: 3;
   background: #FFFFFF; clip-path: polygon(0 0, 0 78%, 22% 62%, 38% 100%, 52% 94%, 37% 58%, 66% 58%); filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
-.st-wheel { position: absolute; width: 74%; left: 13%; top: 8%; border-radius: 50%; opacity: 0; transform: scale(.6); transition: opacity .3s, transform .45s cubic-bezier(.2,1.4,.4,1); }
+.st-wheel { position: absolute; width: min(92%, 470px); left: 58%; top: 60%; translate: -50% -50%; opacity: 0; transform: scale(.55); transform-origin: 50% 50%;
+  transition: opacity .25s, transform .45s cubic-bezier(.2,1.4,.4,1); filter: drop-shadow(0 20px 40px rgba(0,0,0,.45)); z-index: 2; }
 .st-key { position: absolute; right: 22px; bottom: 22px; opacity: 0; transition: opacity .3s; }
 .st-key kbd { background: #1B1E24; color: #ECEEF2; border-color: rgba(255,255,255,.2); font-size: 15px; padding: 8px 14px; }
 .st-caption { position: absolute; left: 22px; bottom: 22px; font: 13px var(--mono); color: #A9AFBC; }
-.stage[data-step="1"] .st-cursor, .stage[data-step="1"] .st-file.ghost { opacity: 1; animation: drag 2.6s ease-in-out infinite; }
-.stage[data-step="2"] .st-wheel, .stage[data-step="3"] .st-wheel { opacity: 1; transform: scale(1); }
+.stage[data-step="1"] .st-cursor, .stage[data-step="1"] .st-file.ghost { opacity: 1; animation: dragmove 2.8s ease-in-out infinite; }
+.stage[data-step="2"] .st-cursor { opacity: 1; }
+.stage[data-step="2"] .st-wheel { opacity: 1; transform: scale(1); }
 .stage[data-step="2"] .st-key { opacity: 1; }
 .stage[data-step="2"] .st-key kbd { animation: press 1.6s ease-in-out infinite; }
 .stage[data-step="2"] .st-finder, .stage[data-step="3"] .st-finder { opacity: .35; }
-.stage[data-step="3"] .st-wheel { opacity: 0; transform: scale(.7); transition-delay: .15s; }
+.stage[data-step="3"] .st-wheel { opacity: 0; transform: scale(.2); }
 .stage[data-step="3"] .st-file.result { opacity: 1; transform: scale(1); }
-@keyframes drag { 0% { transform: translate(0, 0); } 60%, 100% { transform: translate(120px, 90px); } }
+@keyframes dragmove { 0%, 8% { left: 18%; top: 26%; } 62%, 100% { left: 58%; top: 60%; } }
 
 /* Feature explorer: tabs that switch real product shots */
 .explorer { display: grid; gap: 22px; }
@@ -503,6 +589,8 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 .sw-studio { background: linear-gradient(135deg, #F5F6F8 50%, #0A0B0E 50%); } .sw-studio span { background: #0E1116; border: 3px solid #C6FF3D; }
 
 @media (max-width: 960px) {
+  .windows { grid-template-columns: minmax(0, 1fr); }
+  .status .clock { display: none; }
   .story-grid, .ex-panel, .uses { grid-template-columns: minmax(0, 1fr); }
   .story-stage { height: 300px; z-index: 2; }
   .story-step { min-height: 46vh; }
@@ -524,15 +612,18 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   .num:nth-child(odd) { border-left: 0; } .num:nth-child(4) { border-left: 1px solid var(--line); }
   .shots-3 { grid-template-columns: 1fr; }
   .nav .style-btn .lbl-text { display: none; }
+  .stickers .sticker:nth-child(n+4) { display: none; }
   .skins { overflow-x: auto; flex-wrap: nowrap; max-width: 100%; padding-bottom: 2px; }
   .skins { margin-left: 0; }
   .files { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
+  .marquee .track { animation: none; flex-wrap: wrap; width: auto; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   html { scroll-behavior: auto; }
 }
 </style>
+<script>try { document.documentElement.dataset.skin = localStorage.getItem("circularity-style") || "desk"; } catch (e) { document.documentElement.dataset.skin = "desk"; }</script>
 
 <a class="skip" href="#desk">Skip to the demo</a>
 <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -547,10 +638,12 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <a href="#how">How it works</a><a href="#features">Features</a><a href="#theme">Themes</a><a href="#lab">Format lab</a><a href="#play">Game</a><a href="#changelog">Changelog</a>
     </nav>
     <div class="right">
+      <div class="status" aria-hidden="true"><span id="navGlyph" title="Circularity in the menu bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg></span><span class="clock" id="menuClock">9:41</span></div>
       <div class="style-menu">
         <button class="icon-btn style-btn" id="styleBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="stylePop"><span class="style-dot" aria-hidden="true"></span><span class="lbl-text">Style</span></button>
         <div class="style-pop" id="stylePop" hidden role="group" aria-label="Page style">
-          <button class="style-opt" type="button" data-skin-btn="studio"><i style="background:linear-gradient(135deg,#F5F6F8 50%,#0A0B0E 50%)"></i><span>Studio<br><small>default</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="desk"><i style="background:radial-gradient(#C6FF3D 2px, #0B0D10 3px) 0 0/8px 8px"></i><span>Desk<br><small>default</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="studio"><i style="background:linear-gradient(135deg,#F5F6F8 50%,#0A0B0E 50%)"></i><span>Studio<br><small>light and dark</small></span></button>
           <button class="style-opt" type="button" data-skin-btn="halo"><i style="background:conic-gradient(#C6FF3D 0 60deg,#1B1D23 60deg)"></i><span>Halo<br><small>neon, like the app</small></span></button>
           <button class="style-opt" type="button" data-skin-btn="aqua"><i style="background:radial-gradient(circle at 50% 30%,#D5ECFF,#1A5CC0)"></i><span>Aqua<br><small>2001 gel</small></span></button>
           <button class="style-opt" type="button" data-skin-btn="ascii"><i style="background:#040704"></i><span>ASCII<br><small>terminal</small></span></button>
@@ -572,6 +665,14 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
 <main id="top">
   <section class="wrap hero" aria-labelledby="heroTitle">
+    <div class="stickers" id="stickers" aria-hidden="true">
+      <span class="sticker" style="--c:var(--s-heic);left:62%;top:16%;--r:-8deg">HEIC</span>
+      <span class="sticker" style="--c:var(--s-png);left:82%;top:30%;--r:6deg;--d:-1.5s">PNG</span>
+      <span class="sticker" style="--c:var(--s-jpg);left:70%;top:52%;--r:-4deg;--d:-3s">JPG</span>
+      <span class="sticker" style="--c:var(--s-pdf);left:88%;top:62%;--r:9deg;--d:-2s">PDF</span>
+      <span class="sticker" style="--c:var(--s-webp);left:58%;top:72%;--r:4deg;--d:-4s">WEBP</span>
+      <span class="sticker" style="--c:var(--s-avif);left:78%;top:8%;--r:-3deg;--d:-5s">AVIF</span>
+    </div>
     <a class="announce" href="#changelog"><span class="tag">New in 0.2</span> Cut out, drop shelf and themes →</a>
     <h1 id="heroTitle">Convert files<br>mid-drag.</h1>
     <p class="lede">Drag a picture, PDF or document, tap Shift, and let go on a format. The new file lands next to the original. Nothing opens, nothing is uploaded.</p>
@@ -580,6 +681,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <a class="btn" href="#desk">Try it below</a>
     </div>
     <p class="req">Free · macOS 13 or later · Apple silicon and Intel · 3.4 MB</p>
+    <p class="psst" id="psst">psst: hold <kbd>⇧ Shift</kbd> anywhere on this page.</p>
     <div class="livekeys" aria-hidden="true"><kbd data-key="Shift">⇧ Shift</kbd><kbd data-key="Control">⌃</kbd><kbd data-key="Alt">⌥</kbd><kbd data-key="Meta">⌘</kbd><kbd data-key=" ">Space</kbd><span id="keysHint">press a key, they light up</span></div>
   </section>
 
@@ -604,6 +706,10 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     </div>
     <p class="demo-cap">This is the real thing, in your browser: press on a picture, drag a little, tap ⇧ Shift, let go on a format.</p>
   </div>
+  <div class="marquee" aria-hidden="true"><div class="track">
+    <span><b>0</b> permissions</span><span><i>●</i> nothing uploaded</span><span><b>12.5 MB</b> at rest</span><span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span>pdf → images · text</span><span>markdown · html · word → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span><span><b>3.4 MB</b> download</span>
+    <span><b>0</b> permissions</span><span><i>●</i> nothing uploaded</span><span><b>12.5 MB</b> at rest</span><span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span>pdf → images · text</span><span>markdown · html · word → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span><span><b>3.4 MB</b> download</span>
+  </div></div>
 
   <section class="wrap" aria-label="Measured numbers" style="padding-block: 40px 24px">
     <div class="numbers">
@@ -617,6 +723,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="how" aria-labelledby="howTitle">
+    <p class="eyebrow" data-tag="how">three moves</p>
     <h2 class="sec-title" id="howTitle">How it works.</h2>
     <p class="sec-sub">Three moves, wherever a file is: Finder, the desktop, Mail, a browser download.</p>
     <div class="story-grid">
@@ -626,7 +733,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
           <div class="st-file orig"><i></i>IMG_2041.HEIC</div>
           <div class="st-file ghost"><i></i></div>
           <div class="st-cursor"></div>
-          <img class="st-wheel" src="assets/wheel-halo.jpg" alt="" width="820" height="820">
+          <img class="st-wheel" src="assets/wheel-halo-hover-jpg.png" alt="" width="760" height="760">
           <div class="st-key"><kbd>⇧ Shift</kbd></div>
           <div class="st-file result"><i></i>IMG_2041.jpg · 1.1 MB</div>
           <div class="st-caption" id="stageCaption">Drag</div>
@@ -642,7 +749,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="ways">
     <div class="section-head">
-      <div class="eyebrow">No permissions needed</div>
+      <div class="eyebrow" data-tag="open">No permissions needed</div>
       <h2>Four ways to open the wheel</h2>
     </div>
     <div class="grid4">
@@ -670,6 +777,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="features" aria-labelledby="featTitle">
+    <p class="eyebrow" data-tag="inside">a tour</p>
     <h2 class="sec-title" id="featTitle">One wheel, a lot inside.</h2>
     <p class="sec-sub">Real pictures from the app. Pick a tab, or let them play.</p>
     <div class="explorer" id="explorer">
@@ -718,6 +826,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="uses" aria-labelledby="usesTitle">
+    <p class="eyebrow" data-tag="try">examples</p>
     <h2 class="sec-title" id="usesTitle">What will you convert?</h2>
     <p class="sec-sub">Pick one. These are typical examples, sizes included.</p>
     <div class="uses">
@@ -728,7 +837,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="new">
     <div class="section-head">
-      <div class="eyebrow">New in 0.2</div>
+      <div class="eyebrow" data-tag="new">New in 0.2</div>
       <h2>Small things that feel big</h2>
     </div>
     <div class="grid3">
@@ -743,7 +852,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="theme">
     <div class="section-head">
-      <div class="eyebrow">Theme builder</div>
+      <div class="eyebrow" data-tag="build">Theme builder</div>
       <h2>Build your wheel, then paste it into the app</h2>
       <p style="color:var(--muted)">This preview draws the app's real layouts. When you like it, copy the theme and in Circularity open Settings → Appearance → <b>Paste theme</b>.</p>
     </div>
@@ -789,7 +898,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="lab">
     <div class="section-head">
-      <div class="eyebrow">Format lab</div>
+      <div class="eyebrow" data-tag="lab">Format lab</div>
       <h2>Same picture, every format</h2>
       <p style="color:var(--muted)">Pick a picture (or drop your own on the desktop above), move the quality, then drag across the comparison to see what each format really does. Everything is encoded in your browser.</p>
     </div>
@@ -812,7 +921,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="play">
     <div class="section-head">
-      <div class="eyebrow">Physics break</div>
+      <div class="eyebrow" data-tag="play">Physics break</div>
       <h2>Fling files into the wheel</h2>
       <p style="color:var(--muted)">Grab a file and throw it into the centre. Every hit converts it and adds to the bytes you've saved. Chain hits for a combo.</p>
     </div>
@@ -825,7 +934,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="skins">
     <div class="section-head">
-      <div class="eyebrow">Themes, like the app</div>
+      <div class="eyebrow" data-tag="skin">Themes, like the app</div>
       <h2>Pick a skin. Everything follows.</h2>
       <p style="color:var(--muted)">The app ships with themes and three wheel layouts. This page does the same trick: the wheel, the game and every button redraw in the style you choose. Secret: type <span class="mono">shift</span> anywhere.</p>
     </div>
@@ -844,20 +953,36 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="privacy">
     <div class="section-head">
-      <div class="eyebrow">What it doesn't touch</div>
+      <div class="eyebrow" data-tag="trust">What it doesn't touch</div>
       <h2>Small, quiet, private</h2>
     </div>
-    <div class="privacy">
-      <div class="card"><b>0 permissions</b><p>No Accessibility, no Input Monitoring, no Screen Recording. macOS never asks.</p></div>
-      <div class="card"><b>12.5 MB at rest</b><p>Measured idle memory, 0.02 % CPU. It sleeps until you drag a file.</p></div>
-      <div class="card"><b>On your Mac</b><p>Apple's own ImageIO, PDFKit and WebKit do the work. Nothing is uploaded, ever.</p></div>
+    <div class="windows">
+      <div class="win">
+        <div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>promises.txt</span><span></span></div>
+        <div class="win-body"><ul class="checks">
+          <li>0 permissions: no Accessibility, no Input Monitoring, no Screen Recording. macOS never asks.</li>
+          <li>works on your Mac with Apple's own ImageIO, PDFKit and WebKit</li>
+          <li>never changes your original file</li>
+          <li>12.5 MB of memory at rest, 0.02 % CPU. It sleeps until you drag a file.</li>
+          <li>reads the clipboard only when you press ⌃⌥V</li>
+          <li class="no">uploads your files (it can't: there is no server)</li>
+          <li class="no">checks for updates, unless you turn that on</li>
+        </ul></div>
+      </div>
+      <div class="win">
+        <div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>why.txt</span><span></span></div>
+        <div class="win-body"><p style="font:14px/1.7 var(--mono);color:var(--muted)">converting a file usually means: open an app, find export, pick a format, pick a folder, close the app.</p>
+          <p style="font:14px/1.7 var(--mono)">circularity makes it one move, right where the file already is.</p></div>
+      </div>
     </div>
   </section>
 
   <section class="wrap" id="changelog" aria-labelledby="logTitle">
+    <p class="eyebrow" data-tag="log">what's new</p>
     <h2 class="sec-title" id="logTitle">Changelog.</h2>
     <p class="sec-sub">What changed, and when.</p>
-    <article class="release">
+    <div class="win"><div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>changelog.txt</span><span></span></div><div class="win-body">
+    <article class="release" style="border-top:0">
       <div class="rel-meta"><b>0.2.0</b><time datetime="2026-11-18">18 November 2026</time></div>
       <ul>
         <li>Cut out: remove a photo's background on your Mac (macOS 14 or later).</li>
@@ -879,6 +1004,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
         <li>Settings with themes, shortcuts and output naming; a welcome and an interactive tutorial.</li>
       </ul>
     </article>
+    </div></div>
   </section>
 
   <section class="wrap get" id="install" aria-labelledby="getTitle">
@@ -895,6 +1021,9 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     <span>Inspired by Circularity for Windows by Atharv Gogia. The Tangerine theme follows the Tangerine design by LEAP STUDIO.</span>
   </footer>
 </main>
+
+<div id="buddy" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg></div>
+<div id="mini" aria-hidden="true"><div class="ring"></div><span class="seg" data-fmt="PNG" style="--a:0deg;--c:var(--s-png)">PNG</span><span class="seg" data-fmt="JPG" style="--a:60deg;--c:var(--s-jpg)">JPG</span><span class="seg" data-fmt="WEBP" style="--a:120deg;--c:var(--s-webp)">WEBP</span><span class="seg" data-fmt="PDF" style="--a:180deg;--c:var(--s-pdf)">PDF</span><span class="seg" data-fmt="AVIF" style="--a:240deg;--c:var(--s-avif)">AVIF</span><span class="seg" data-fmt="TIFF" style="--a:300deg;--c:var(--s-tiff)">TIFF</span><div class="core" id="miniCore">let go<br>on one</div></div>
 
 <div id="wheel" aria-hidden="true"><div class="disc"></div><canvas id="wheelCanvas"></canvas></div>
 <div id="ghost"><img alt=""></div>
@@ -951,7 +1080,7 @@ $("#soundBtn").addEventListener("click", () => {
 });
 
 // ---------- Skins ----------
-const SKINS = ["studio", "halo", "aqua", "ascii", "pixel", "glass", "win95", "blueprint", "news"];
+const SKINS = ["desk", "studio", "halo", "aqua", "ascii", "pixel", "glass", "win95", "blueprint", "news"];
 const LIGHT_SKINS = ["aqua", "win95", "news"];
 // `skin` is how the wheel and game are drawn; Studio pages show the app's own (Halo) wheel.
 let skin = "halo";
@@ -959,7 +1088,7 @@ let pageStyle = "";
 function setSkin(name, announce) {
   if (!SKINS.includes(name) || name === pageStyle) return;
   const apply = () => {
-    pageStyle = name; skin = name === "studio" ? "halo" : name; root.dataset.skin = name;
+    pageStyle = name; skin = name === "studio" || name === "desk" ? "halo" : name; root.dataset.skin = name;
     $$("[data-skin-btn]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.skinBtn === name));
     store.set("circularity-style", name);
     drawWheel(); play.restyle(); if (typeof lab !== "undefined") lab.draw();
@@ -1210,7 +1339,7 @@ async function runAction(f, key, extra) {
     if (!out) return;
     converted++; if (out.bytes < f.bytes) saved += f.bytes - out.bytes;
     $("#statCount").textContent = converted; $("#statSaved").textContent = fmtBytes(saved);
-    const icon = $("#menuIcon"); icon.classList.remove("pulse"); void icon.offsetWidth; icon.classList.add("pulse");
+    for (const icon of [$("#menuIcon"), $("#navGlyph")]) { icon.classList.remove("pulse"); void icon.offsetWidth; icon.classList.add("pulse"); }
     sfx.drop();
     const change = Math.round((out.bytes / f.bytes - 1) * 100);
     toast(`${out.name} · ${fmtBytes(out.bytes)} (${change > 0 ? "+" : ""}${change}%)${r.note ? " · " + r.note : ""}`);
@@ -1626,7 +1755,7 @@ function parseCommand(q) {
   const hit = Object.keys(map).find((k) => k.startsWith(q) || q === k);
   const titles = { sqz: "Compress", size: "Resize to half", ascii: "Turn into ASCII art", pixel: "Turn into pixel art", gray: "Make it black and white" };
   if (hit) { const key = map[hit]; return { title: titles[key] || `Convert to ${ACTIONS[key].label}`, run: (f) => runAction(f, key) }; }
-  if (/^(shift|studio|halo|aqua|ascii|pixel|glass|win95|blueprint|news)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
+  if (/^(shift|desk|studio|halo|aqua|ascii|pixel|glass|win95|blueprint|news)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
   return null;
 }
 cmdInput.addEventListener("input", () => { const c = parseCommand(cmdInput.value); cmdHint.textContent = cmdInput.value ? (c ? `↩ ${c.title}${selected ? ` · ${middleTruncate(selected.name, 28)}` : ""}` : "Try webp, 50kb, 800w, ascii, pixel, pdf") : "Runs on the selected file. Press ↩."; });
@@ -2164,7 +2293,83 @@ $$(".dl").forEach((dl) => {
   });
 });
 
-// ---------- Style menu (all nine page styles) ----------
+// ---------- Menu bar clock ----------
+(() => {
+  const clock = $("#menuClock");
+  const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); };
+  tick(); setInterval(tick, 20000);
+})();
+
+// ---------- Stickers: grab one and toss it somewhere else ----------
+(() => {
+  const box = $("#stickers");
+  for (const st of $$(".sticker", box)) {
+    st.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); st.setPointerCapture(e.pointerId); st.classList.add("held"); sfx.tick();
+      const r = box.getBoundingClientRect(), s0 = st.getBoundingClientRect(), ox = e.clientX - s0.left, oy = e.clientY - s0.top;
+      const move = (ev) => {
+        st.style.left = Math.min(96, Math.max(0, (ev.clientX - ox - r.left) / r.width * 100)) + "%";
+        st.style.top = Math.min(92, Math.max(0, (ev.clientY - oy - r.top) / r.height * 100)) + "%";
+      };
+      const up = () => { st.classList.remove("held"); st.removeEventListener("pointermove", move); st.removeEventListener("pointerup", up); st.removeEventListener("pointercancel", up); };
+      st.addEventListener("pointermove", move); st.addEventListener("pointerup", up); st.addEventListener("pointercancel", up);
+    });
+  }
+})();
+
+// ---------- The page's own wheel: hold Shift anywhere, let go on a format ----------
+(() => {
+  if (!matchMedia("(pointer: fine)").matches) { $("#psst").innerHTML = "psst: on a Mac it opens around your pointer. try the demo below."; return; }
+  const buddy = $("#buddy"), mini = $("#mini"), segs = $$("#mini .seg"), core = $("#miniCore");
+  let x = -100, y = -100, bx = -100, by = -100, raf = 0, open = false, hot = null, anchor = null, seen = false, jokes = 0;
+  const typing = () => document.activeElement?.closest?.("input, textarea, select, [contenteditable]");
+  const loop = () => {
+    raf = 0; bx += (x - bx) * 0.2; by += (y - by) * 0.2;
+    buddy.style.transform = `translate(${bx + 16}px, ${by + 16}px)`;
+    if (Math.hypot(x - bx, y - by) > 0.5) raf = requestAnimationFrame(loop);
+  };
+  const pick = () => {
+    const dx = x - anchor.x, dy = y - anchor.y; let next = null;
+    if (Math.hypot(dx, dy) > 38) { let deg = Math.atan2(dx, -dy) * 180 / Math.PI; if (deg < 0) deg += 360; next = segs[Math.floor((deg + 30) / 60) % 6]; }
+    if (next === hot) return;
+    hot?.classList.remove("hot"); hot = next; hot?.classList.add("hot");
+    core.innerHTML = hot ? `make it<br>.${hot.dataset.fmt.toLowerCase()}` : "let go<br>on one";
+    if (hot) sfx.tick();
+  };
+  addEventListener("pointermove", (e) => {
+    x = e.clientX; y = e.clientY;
+    if (!seen && !reduceMotion) { seen = true; buddy.classList.add("on"); }
+    buddy.classList.toggle("on", !reduceMotion && !open && !D.active && !W.open);
+    if (open) pick();
+    if (!raf && !reduceMotion) raf = requestAnimationFrame(loop);
+  }, { passive: true });
+  addEventListener("keydown", (e) => {
+    if (e.key !== "Shift" || e.repeat || open || typing() || D.active || W.open || x < 0) return;
+    open = true; anchor = { x, y };
+    mini.style.left = x + "px"; mini.style.top = y + "px"; mini.classList.add("open"); buddy.classList.remove("on");
+    sfx.open(); pick();
+  });
+  const close = (fire) => {
+    if (!open) return; open = false; mini.classList.remove("open");
+    if (fire && hot) {
+      const c = getComputedStyle(hot).getPropertyValue("--c") || "var(--accent)";
+      for (let i = 0; i < 16; i++) {
+        const sp = document.createElement("span"), a = Math.random() * Math.PI * 2, d = 50 + Math.random() * 90;
+        sp.className = "spark"; sp.style.left = anchor.x + "px"; sp.style.top = anchor.y + "px"; sp.style.setProperty("--c", c);
+        sp.style.setProperty("--dx", Math.cos(a) * d + "px"); sp.style.setProperty("--dy", Math.sin(a) * d + "px");
+        document.body.append(sp); setTimeout(() => sp.remove(), 800);
+      }
+      const fmt = hot.dataset.fmt.toLowerCase();
+      const lines = [`this page is now a .${fmt}. (it isn't. your files can be, though.)`, `converted this page to .${fmt}. kidding. try a real file below.`, `.${fmt}! that's the gesture. in the app it works on any file.`];
+      toast(lines[jokes++ % lines.length]); sfx.drop();
+    } else sfx.cancel();
+    hot?.classList.remove("hot"); hot = null; core.innerHTML = "let go<br>on one";
+  };
+  addEventListener("keyup", (e) => { if (e.key === "Shift") close(true); });
+  addEventListener("blur", () => close(false));
+})();
+
+// ---------- Style menu (all page styles) ----------
 (() => {
   const btn = $("#styleBtn"), pop = $("#stylePop");
   const close = (focus) => { pop.hidden = true; btn.setAttribute("aria-expanded", "false"); if (focus) btn.focus(); };
@@ -2335,7 +2540,7 @@ $$(".dl").forEach((dl) => {
 
 // ---------- Start ----------
 const savedSkin = store.get("circularity-style");
-setSkin(SKINS.includes(savedSkin) ? savedSkin : "studio", "silent");
+setSkin(SKINS.includes(savedSkin) ? savedSkin : "desk", "silent");
 (async () => {
   const samples = [["Sunset over the hills.png", drawSunset], ["Screenshot 2026-11-18 at 09.41.png", drawScreenshot], ["Kitty.png", drawKitty]];
   for (const [name, draw] of samples) { const c = draw(); const blob = await toBlob(c, "image/png"); const f = await addFile({ name, blob }); if (f && !selected) select(f); }

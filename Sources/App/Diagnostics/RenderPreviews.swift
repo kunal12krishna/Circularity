@@ -300,6 +300,11 @@ enum RenderPreviews {
             ("video", [.mpeg4Movie], WheelVisualState()),
             ("batch", [.jpeg, .png], WheelVisualState(hover: .segment(2))),
         ]
+        // Transparent Halo wheels for the website's "How it works".
+        for (name, state) in [("hover-jpg", WheelVisualState(hover: .segment(1))), ("rest", WheelVisualState())] {
+            try renderWheel(kind: .halo, types: [.heic], count: 1, accent: 0xC6FF3D, backdrop: 0, state: state,
+                            to: directory.appendingPathComponent("wheel-halo-\(name)-clear@2x.png"))
+        }
         // A very long file name must stay inside the centre in every layout.
         let longName = "Family_holiday_in_the_mountains_summer_2026_final_edit_version_3_exported.HEIC"
         for kind in [WheelLayoutKind.halo, .ring, .orbit] {
@@ -341,8 +346,10 @@ enum RenderPreviews {
         CATransaction.commit()
         let size = CGSize(width: geometry.size, height: geometry.size)
         guard let image = renderImage(size: size, scale: 2, { ctx in
-            ctx.setFillColor(.hex(backdrop))
-            ctx.fill(CGRect(origin: .zero, size: size))
+            if backdrop != 0 { // 0 = transparent (for the website)
+                ctx.setFillColor(.hex(backdrop))
+                ctx.fill(CGRect(origin: .zero, size: size))
+            }
             renderer.layer.layoutIfNeeded()
             renderer.layer.render(in: ctx)
         }), let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else {
