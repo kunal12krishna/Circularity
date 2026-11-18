@@ -30,7 +30,6 @@ pkill -9 -x "$APP_NAME" 2>/dev/null || true
 
 echo "==> Deleting built apps, the generated project and caches"
 rm -rf build "$APP_NAME.xcodeproj"   # dist/ (your DMGs) is kept
-rm -rf "/Applications/$APP_NAME.app"
 rm -rf "$HOME/Library/Caches/$BUNDLE_ID" "$HOME/Library/WebKit/$BUNDLE_ID" "$HOME/Library/HTTPStorages/$BUNDLE_ID" \
        "$HOME/Library/Saved Application State/$BUNDLE_ID.savedState"
 TMP="${TMPDIR:-/tmp}"
@@ -73,5 +72,6 @@ fi
 # Make sure Finder's "Open With" and the Service point at this new copy.
 /System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP" >/dev/null 2>&1 || true
 
-echo "==> Opening $APP"
+echo "==> Opening $APP (the test build; your installed copy in /Applications is untouched)"
 open "$APP"
+echo "    To install this version into Applications: ./scripts/install.sh --fresh"
