@@ -10,7 +10,6 @@ protocol PanelHost: AnyObject {
     func panelChooseFiles(_ then: @escaping ([URL]) -> Void)
     func panelOpenWheel(files: [URL])
     func panelOpenDialog(_ action: WheelAction, files: [URL])
-    func panelSettingsMenu() -> [NSMenuItem]
     /// Shows the settings menu (Settings window arrives in milestone i).
     func panelOpenSettings()
     func panelTutorial()

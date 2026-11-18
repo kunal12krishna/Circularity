@@ -175,7 +175,6 @@ final class AppCoordinator: PanelHost {
             hoverOpenedAt = nil
             panel.toggle()
         }
-        item.menuBuilder = { [weak self] in self?.menuItems() ?? [] }
         item.onDragEntered = { [weak self] in
             guard let self, !panel.isOpen, settings.value(SettingsKeys.openOnDragOver) else { return }
             panel.open(dropMode: true)
@@ -236,7 +235,6 @@ final class AppCoordinator: PanelHost {
         openDialog(action, files: files)
     }
 
-    func panelSettingsMenu() -> [NSMenuItem] { menuItems() }
 
     func panelOpenSettings() { showSettings() }
 
@@ -305,7 +303,7 @@ final class AppCoordinator: PanelHost {
         }
     }
 
-    // MARK: Right-click menu (everything else is in Settings)
+    // MARK: Names
 
     private var triggerName: String {
         switch settings.value(SettingsKeys.triggerKey) {
@@ -313,40 +311,6 @@ final class AppCoordinator: PanelHost {
         case "control": "Control"
         default: "Shift"
         }
-    }
-
-    private func menuItems() -> [NSMenuItem] {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
-        var items: [NSMenuItem] = [
-            .info("\(AppIdentity.name) \(version)"),
-            .info(lastDrag),
-        ]
-        if let summary = jobs.lastSummary { items.append(.info("Last result: \(summary)")) }
-        let paused = settings.value(SettingsKeys.paused)
-        items += [
-            .separator(),
-            ActionMenuItem("Open Panel") { [weak self] in self?.panel.open() },
-            ActionMenuItem("Settings…", key: ",") { [weak self] in self?.showSettings() },
-            .separator(),
-            ActionMenuItem("History…") { [weak self] in self?.panelShowHistory() },
-            ActionMenuItem("Stats…") { [weak self] in self?.panelShowStats() },
-            ActionMenuItem("Watch Folders…") { [weak self] in self?.panelShowWatch() },
-            ActionMenuItem("Convert Clipboard (\(HotkeySpec(settings.value(SettingsKeys.hotkeyClipboard))?.display ?? "no shortcut"))") { [weak self] in
-                self?.panelClipboard(nil)
-            },
-            ActionMenuItem("Practice Wheel") { [weak self] in self?.showTestWheel() },
-            ActionMenuItem("Tutorial…") { [weak self] in self?.settingsShowTutorial() },
-            .separator(),
-            ActionMenuItem("Pause", checked: paused) { [weak self] in
-                guard let self else { return }
-                settings.set(!paused, for: SettingsKeys.paused)
-            },
-            .separator(),
-        ]
-        let quit = NSMenuItem(title: "Quit \(AppIdentity.name)", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        quit.target = NSApp
-        items.append(quit)
-        return items
     }
 
     /// Click-mode wheel on the last files, or a generated practice picture.

@@ -51,7 +51,7 @@ After that it opens normally. It lives in the menu bar (no Dock icon).
 | **⌃⌥Space** | The panel with ⌘K ready for typing. |
 | **⌃⌥V** | Converts the image or PDF on the clipboard. |
 | **⌃⌥C** in Finder | Converts the selected files (turn it on in Settings → General). |
-| Right-click the icon → **Settings…** | Everything else: themes, shortcuts, output folder and naming, presets, watch folders… |
+| Click the icon → the gear in the panel | Everything else: themes, shortcuts, output folder and naming, presets, watch folders… |
 
 Results are written next to the original (or a folder you choose in
 Settings → Output). Originals are never changed unless you turn on "Move the
@@ -83,6 +83,8 @@ open Circularity.xcodeproj
 | `scripts/sign.sh` | Developer ID signature — only when `DEVELOPER_ID_APP` is set, otherwise it says so and does nothing |
 | `scripts/notarize.sh` | Notarise and staple the DMG — only when `NOTARY_PROFILE` is set |
 | `scripts/release.sh` | All of the above in order |
+| `scripts/clean-rebuild.sh` | Deletes every built copy and cache, rebuilds the Debug app and opens it (`--test` runs all tests, `--reset` erases settings too) |
+| `scripts/clean-rebuild.sh` | Deletes every built copy and cache, rebuilds the Debug app and opens it (`--test` runs all tests, `--reset` erases settings too) |
 
 Tests: `xcodebuild -scheme Circularity test` (unit tests), the
 `EngineSmokeTest` target (every conversion through the real engine), and

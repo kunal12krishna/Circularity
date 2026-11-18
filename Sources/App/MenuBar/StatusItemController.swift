@@ -32,11 +32,10 @@ extension NSMenuItem {
 }
 
 /// The menu bar item (PLAN.md §3.4): board-H icon states, left click opens the
-/// panel, right click shows the settings menu, and files dropped on the icon
+/// panel (left or right click alike), and files dropped on the icon
 /// open the wheel.
 final class StatusItemController: NSObject {
     var onClick: (() -> Void)?
-    var menuBuilder: (() -> [NSMenuItem])?
     var onDragEntered: (() -> Void)?
     var onFilesDropped: (([URL]) -> Void)?
     /// The pointer rested on the icon for a moment (Settings → open on hover).
@@ -117,12 +116,6 @@ final class StatusItemController: NSObject {
 
     fileprivate func clicked() { onClick?() }
 
-    fileprivate func rightClicked() {
-        guard let items = menuBuilder?(), let button = item.button else { return }
-        let menu = NSMenu()
-        for entry in items { menu.addItem(entry) }
-        menu.popUp(positioning: nil, at: CGPoint(x: 0, y: button.bounds.height + 4), in: button)
-    }
 
     fileprivate func dragEntered() { onDragEntered?() }
     fileprivate func hovered() { onHover?() }
@@ -169,10 +162,14 @@ final class StatusDropView: NSView {
 
     override func mouseDown(with event: NSEvent) {
         hoverWork?.cancel()
-        if event.modifierFlags.contains(.control) { owner?.rightClicked() } else { owner?.clicked() }
+        owner?.clicked()
     }
 
-    override func rightMouseDown(with event: NSEvent) { owner?.rightClicked() }
+    /// Every click opens the same panel (it has Settings, Pause and Quit).
+    override func rightMouseDown(with event: NSEvent) {
+        hoverWork?.cancel()
+        owner?.clicked()
+    }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         owner?.set(.dragOver)

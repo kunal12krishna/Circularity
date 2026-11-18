@@ -94,7 +94,7 @@ an iPhone photo (HEIC), a PNG screenshot, a multi-page PDF, a `.md`, a `.docx` a
 | # | Do this | Expect |
 |---|---|---|
 | 41 | Click the menu bar icon. | The panel springs open under it (board I, in your accent). Click elsewhere or press Esc: it fades away. |
-| 42 | Right-click the icon. | A short menu: Open Panel, Settings… (⌘,), History, Stats, Watch Folders, Convert Clipboard, Practice Wheel, Tutorial, Pause, Quit. |
+| 42 | Right-click (or Control-click) the icon. | The same panel as a left click — no separate menu. Settings, Tutorial, Pause and Quit are in the panel. |
 | 43 | Convert something, watch the icon. | A progress ring while converting; a short pulse and a tick when done; back to the ring glyph after 3 s. A failed job shows a red badge until you open the panel. |
 | 44 | Drag a file over the icon and hold. | The panel opens with the drop zone ready. Drag down onto the drop zone: it turns into a mini wheel. Drop on a segment: that conversion runs. Drop on the icon itself: the full wheel opens. |
 | 45 | Drop a file on a preset tile (→ JPG, < 2 MB, 1920w, No GPS). | It runs on that file. Click a tile: it runs on the last files you used, or asks you to choose. |
@@ -119,7 +119,7 @@ Quit the app first and relaunch the new build (`open build/DerivedData/Build/Pro
 |---|---|---|
 | 58 | First launch of this build. | The welcome window: three steps (how it works, what it doesn't touch, choices). "Show me how" opens the tutorial. |
 | 59 | Tutorial: drag the picture, tap Shift, drop on JPG; then Next: More, drag again, rest on More, drop on TIFF. | Each step moves on by itself when you do it. "Show the file" opens the practice folder. |
-| 60 | Right-click the icon → **Settings…** (or the panel's gear, or ⌘, in the panel). | The Settings window with 11 pages in the sidebar. Opening the app again from Finder also opens it. |
+| 60 | Click the icon → the gear (**Settings**) in the panel footer, or ⌘, while the panel is open. | The Settings window with 11 pages in the sidebar. Opening the app again from Finder also opens it. |
 | 61 | Wheel page: switch Halo / Ring / Orbit, hover the preview chips; drag formats in the list (e.g. HEIC to the top). | The preview follows at once; the next real drag shows the new layout and HEIC on the wheel. |
 | 62 | Wheel page: Sounds → Click, press Play; Opening animation → Pop, speed 2×. Drag a file and tap Shift. | Quiet ticks on hover and a click on drop; the wheel pops in faster. Set Sounds back to Off. |
 | 63 | Appearance: try each theme, then Wheel colours → Light with Ring. Move Ring thickness, Gap, Centre size, Label size. | The preview and the next wheel follow. Text on the accent stays readable (dark on light accents, white on dark ones). Reset appearance brings the defaults back. |
