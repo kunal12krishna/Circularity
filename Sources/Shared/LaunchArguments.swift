@@ -1,7 +1,7 @@
 import Foundation
 
 /// Parses the app's command line: file paths to open, plus developer modes
-/// (`--render-previews <dir>`, `--drag-test`, `--perf-report [file.md]`).
+/// (`--render-previews <dir>`, `--drag-test`, `--perf-report [file.md]`, `--check-themes <file.json>`).
 nonisolated struct LaunchArguments: Sendable {
     let files: [URL]
     let renderPreviewsDirectory: URL?
@@ -10,6 +10,8 @@ nonisolated struct LaunchArguments: Sendable {
     /// `--perf-report [file.md]`: measure the budgets (PLAN.md §5).
     let perfReport: Bool
     let perfReportFile: URL?
+    /// `--check-themes <file.json>`: Wheel Studio exports must import intact.
+    let checkThemesFile: URL?
 
     init(_ arguments: [String], fileExists: (String) -> Bool = { FileManager.default.fileExists(atPath: $0) }) {
         var files: [URL] = []
@@ -17,11 +19,15 @@ nonisolated struct LaunchArguments: Sendable {
         var dragTest = false
         var perf = false
         var perfFile: URL?
+        var themesFile: URL?
         var i = 1 // arguments[0] is the executable
         while i < arguments.count {
             let arg = arguments[i]
             if arg == "--render-previews", i + 1 < arguments.count {
                 previews = URL(fileURLWithPath: arguments[i + 1], isDirectory: true)
+                i += 2
+            } else if arg == "--check-themes", i + 1 < arguments.count {
+                themesFile = URL(fileURLWithPath: arguments[i + 1])
                 i += 2
             } else if arg == "--drag-test" {
                 dragTest = true
@@ -51,5 +57,6 @@ nonisolated struct LaunchArguments: Sendable {
         self.dragTest = dragTest
         perfReport = perf
         perfReportFile = perfFile
+        checkThemesFile = themesFile
     }
 }

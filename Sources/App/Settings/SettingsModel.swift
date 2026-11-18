@@ -222,16 +222,16 @@ final class SettingsModel: ObservableObject {
 
     /// A theme copied from the website (or another Mac): JSON on the clipboard.
     func pasteTheme() {
-        guard let text = NSPasteboard.general.string(forType: .string), let data = text.data(using: .utf8) else {
-            flash("The clipboard has no theme. On the website, click Copy theme first.")
+        // The JSON from the Wheel Studio's "Copy for the app", or one of its share links.
+        guard let text = NSPasteboard.general.string(forType: .string), let data = StudioThemes.themeJSON(from: text) else {
+            flash("The clipboard has no theme. In the Wheel Studio, click Copy for the app (or copy a share link) first.")
             return
         }
         do {
             let result = try store.importJSON(data, only: Self.themeKeys)
-            flash(result.applied == 0 ? "That theme had nothing this version understands."
-                  : "Theme applied (\(result.applied) setting\(result.applied == 1 ? "" : "s")).")
+            flash(StudioThemes.message(applied: result.applied, skipped: result.skipped, store: store))
         } catch {
-            flash("The clipboard doesn't hold a \(AppIdentity.name) theme. On the website, click Copy theme first.")
+            flash("The clipboard doesn't hold a \(AppIdentity.name) theme. In the Wheel Studio, click Copy for the app first.")
         }
     }
 

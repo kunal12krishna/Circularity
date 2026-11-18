@@ -65,6 +65,8 @@ if [ "$RUN_TESTS" = "1" ]; then
         -derivedDataPath build/DerivedData test 2>&1 | grep -E "Executed [0-9]+ tests.*seconds$|TEST (SUCCEEDED|FAILED)" | tail -2
     echo "==> Engine checks"
     build/DerivedData/Build/Products/Debug/EngineSmokeTest 2>&1 | tail -1
+    echo "==> Wheel Studio themes (every website export must paste in intact)"
+    "$APP/Contents/MacOS/$APP_NAME" --check-themes Tests/Fixtures/studio-themes.json 2>&1 | tail -1
     echo "==> Drag test (the wheel and windows flash briefly)"
     "$APP/Contents/MacOS/$APP_NAME" --drag-test 2>&1 | grep -E "FAIL|DragTest:" || true
 fi
