@@ -19,6 +19,8 @@ mkdir -p website/public
 rm -f website/public/Circularity.dmg
 # The product pictures the page shows.
 rm -rf website/public/assets && cp -R website/assets website/public/assets
+# Wheel Studio is its own complete page.
+cp website/studio.html website/public/studio.html
 if [ "${1:-}" = "--with-dmg" ]; then
     [ -f dist/Circularity.dmg ] || { echo "build-website.sh: dist/Circularity.dmg not found. Run scripts/release.sh first." >&2; exit 1; }
     cp dist/Circularity.dmg website/public/Circularity.dmg

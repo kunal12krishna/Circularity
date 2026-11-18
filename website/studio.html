@@ -1,0 +1,1200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Wheel Studio</title>
+<meta name="description" content="Wheel Studio: design your own Circularity wheel. Shapes, colours, fonts, glow, sparks and backdrops, then paste the theme into the app or export a poster or clip.">
+<meta name="theme-color" content="#0A0C0F">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;700;800&family=Nunito:wght@400;700;800;900&family=Outfit:wght@400;700;900&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@400;700&family=Unbounded:wght@400;700;900&family=VT323&display=swap">
+<style>
+/* Wheel Studio: one big live stage, a panel of knobs. The page's accent follows the wheel's. */
+:root {
+  --bg: #0A0C0F; --panel: #12151B; --panel2: #191D25; --line: rgba(255,255,255,.09); --line2: rgba(255,255,255,.16);
+  --fg: #ECEEF2; --muted: #8E96A3; --a: #C6FF3D; --on-a: #0E1206;
+  --ui: "Geist", system-ui, sans-serif; --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 14px/1.45 var(--ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--a); outline-offset: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+[hidden] { display: none !important; }
+
+/* Top bar */
+.top { height: 58px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgba(10,12,15,.9); position: relative; z-index: 5; }
+.back { display: inline-flex; align-items: center; gap: 9px; color: var(--fg); text-decoration: none; font-weight: 650; white-space: nowrap; }
+.back svg { flex: none; }
+.back small { color: var(--muted); font-weight: 450; }
+.title { font: 700 15px var(--ui); letter-spacing: -.01em; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.knobs { font: 600 11px var(--mono); color: var(--on-a); background: var(--a); padding: 3px 8px; border-radius: 999px; letter-spacing: .02em; }
+.spacer { flex: 1; }
+.ibtn, .btn { height: 36px; border-radius: 10px; border: 1px solid var(--line2); background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; white-space: nowrap; transition: border-color .15s, background .15s, transform .1s; }
+.ibtn { width: 36px; padding: 0; }
+.ibtn:hover, .btn:hover { border-color: rgba(255,255,255,.3); }
+.ibtn:active, .btn:active { transform: translateY(1px); }
+.ibtn:disabled { opacity: .35; cursor: default; }
+.btn.primary { background: var(--a); color: var(--on-a); border-color: transparent; font-weight: 700; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 8px 24px color-mix(in srgb, var(--a) 30%, transparent); }
+.btn.dice { font-weight: 650; }
+#copyTop { gap: 0; }
+.btn kbd { font: 600 10px var(--mono); opacity: .6; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; }
+
+/* Layout */
+.studio-main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; height: calc(100vh - 58px); height: calc(100dvh - 58px); }
+.stage-wrap { position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; min-width: 0; }
+.stage { position: relative; display: grid; place-items: center; overflow: hidden; perspective: 1100px; padding: 18px; }
+.stage::before { content: ""; position: absolute; inset: 0; background: repeating-conic-gradient(#15181E 0 25%, #0F1216 0 50%) 0 0 / 22px 22px; opacity: 0; transition: opacity .3s; }
+.stage.checker::before { opacity: 1; }
+#cv { position: relative; display: block; border-radius: 22px; box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.06); transition: transform .25s cubic-bezier(.2,.8,.3,1); touch-action: none; cursor: crosshair; }
+.stage.drop #cv { box-shadow: 0 0 0 3px var(--a), 0 30px 80px rgba(0,0,0,.5); }
+.stage-bar { display: flex; align-items: center; gap: 12px; padding: 10px 18px 14px; min-height: 52px; font: 12px var(--mono); color: var(--muted); flex-wrap: wrap; }
+.stage-bar b { color: var(--fg); font-weight: 600; }
+#caption { flex: 1; min-width: 200px; }
+.keys { opacity: .8; }
+.keys kbd { border: 1px solid var(--line2); border-radius: 4px; padding: 0 4px; color: var(--fg); }
+
+/* Panel */
+.panel { border-left: 1px solid var(--line); background: var(--panel); display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; }
+.legend { padding: 12px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.legend-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+.badge { font: 600 10px var(--mono); padding: 2px 6px; border-radius: 5px; letter-spacing: .04em; white-space: nowrap; }
+.badge.app { background: color-mix(in srgb, var(--a) 18%, transparent); color: var(--a); border: 1px solid color-mix(in srgb, var(--a) 45%, transparent); }
+.badge.studio { background: rgba(255,255,255,.05); color: var(--muted); border: 1px solid var(--line2); }
+.tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--line); scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab { border: 0; background: transparent; color: var(--muted); padding: 7px 11px; border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
+.tab[aria-selected="true"] { background: var(--panel2); color: var(--fg); box-shadow: inset 0 0 0 1px var(--line2); }
+.tab:hover { color: var(--fg); }
+.panes { overflow-y: auto; min-height: 0; overscroll-behavior: contain; }
+.pane { padding: 14px 16px 40px; display: grid; gap: 14px; }
+.pane > h2 { font: 700 18px var(--ui); margin: 4px 0 -6px; letter-spacing: -.02em; }
+.pane > p.sub { margin: 0; color: var(--muted); font-size: 13px; }
+.group-h { font: 600 11px var(--mono); text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin: 10px 0 -4px; display: flex; align-items: center; gap: 8px; }
+.group-h::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+.row { display: grid; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); }
+.row.studio-hidden { display: none; }
+.row.off { opacity: .45; }
+.row-h { display: flex; align-items: center; gap: 8px; min-height: 20px; }
+.row-h label, .row-h .lbl { font-weight: 600; font-size: 13px; }
+.row-h output { margin-left: auto; font: 12px var(--mono); color: var(--muted); }
+.hint { margin: 0; color: var(--muted); font-size: 12px; }
+input[type=range] { width: 100%; accent-color: var(--a); height: 22px; }
+.seg { display: flex; flex-wrap: wrap; gap: 4px; }
+.seg button { border: 1px solid var(--line2); background: transparent; border-radius: 8px; padding: 5px 10px; font-size: 13px; color: var(--muted); }
+.seg button:hover { color: var(--fg); }
+.seg button[aria-pressed="true"] { background: var(--a); color: var(--on-a); border-color: transparent; font-weight: 650; }
+.seg button:disabled { opacity: .35; cursor: default; }
+.seg.fonts button { font-size: 15px; padding: 6px 11px; }
+.sw { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: var(--muted); }
+.sw input { appearance: none; width: 38px; height: 22px; border-radius: 999px; background: rgba(255,255,255,.14); position: relative; margin: 0; cursor: pointer; transition: background .2s; flex: none; }
+.sw input::after { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s cubic-bezier(.3,1.4,.5,1); }
+.sw input:checked { background: var(--a); }
+.sw input:checked::after { transform: translateX(16px); background: var(--on-a); }
+.colr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+input[type=color] { width: 42px; height: 32px; border: 1px solid var(--line2); border-radius: 8px; background: transparent; padding: 2px; cursor: pointer; }
+input[type=color]:disabled { opacity: .35; }
+.hex { width: 92px; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: rgba(0,0,0,.25); padding: 0 8px; font: 13px var(--mono); text-transform: uppercase; }
+.hex:disabled { opacity: .4; }
+.auto { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); cursor: pointer; }
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.swatches button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,.12); padding: 0; }
+.swatches button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #fff; }
+.contrast { font: 12px var(--mono); color: var(--muted); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line2); background: transparent; border-radius: 999px; padding: 5px 11px 5px 7px; display: inline-flex; gap: 7px; align-items: center; font-size: 13px; }
+.chip i { width: 14px; height: 14px; border-radius: 50%; display: inline-block; }
+.chip[aria-pressed="true"] { border-color: var(--a); box-shadow: inset 0 0 0 1px var(--a); }
+
+/* Presets */
+.presets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.preset { border: 1px solid var(--line); background: var(--panel2); border-radius: 12px; padding: 5px 5px 7px; display: grid; gap: 5px; text-align: center; font-size: 12px; font-weight: 600; transition: transform .15s, border-color .15s; position: relative; }
+.preset:hover { transform: translateY(-2px); border-color: var(--line2); }
+.preset[aria-pressed="true"] { border-color: var(--a); }
+.preset canvas { width: 100%; aspect-ratio: 1; border-radius: 8px; display: block; }
+.preset small { display: block; color: var(--muted); font-weight: 450; font-size: 10px; font-family: var(--mono); }
+.preset .del { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border-radius: 50%; border: 0; background: rgba(0,0,0,.7); color: #fff; font-size: 13px; line-height: 1; display: grid; place-items: center; opacity: 0; }
+.preset:hover .del, .preset:focus-within .del { opacity: 1; }
+.big-dice { display: flex; gap: 8px; }
+.big-dice .btn { flex: 1; height: 46px; font-size: 15px; }
+.labels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.labels input { width: 100%; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: rgba(0,0,0,.25); padding: 0 9px; font-size: 13px; }
+.txt { width: 100%; height: 34px; border-radius: 8px; border: 1px solid var(--line2); background: rgba(0,0,0,.25); padding: 0 10px; }
+textarea.code { width: 100%; min-height: 170px; border-radius: 10px; border: 1px solid var(--line2); background: #07080A; color: #CFD5DE; font: 12px/1.5 var(--mono); padding: 10px; resize: vertical; }
+.btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.carry { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
+.carry li::before { content: "✦ "; color: var(--muted); }
+.carry.app li::before { content: "◆ "; color: var(--a); }
+.rec { display: inline-flex; align-items: center; gap: 8px; }
+.rec i { width: 10px; height: 10px; border-radius: 50%; background: #FF4D4D; display: inline-block; }
+.recording .rec i { animation: blink .8s infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+
+.toast { position: fixed; left: 50%; bottom: 22px; translate: -50% 20px; background: #F4F6F8; color: #0B0D10; padding: 10px 16px; border-radius: 12px; font-weight: 600; box-shadow: 0 16px 40px rgba(0,0,0,.45); opacity: 0; transition: opacity .25s, translate .25s cubic-bezier(.2,1.4,.4,1); pointer-events: none; z-index: 20; max-width: calc(100vw - 32px); }
+.toast.on { opacity: 1; translate: -50% 0; }
+
+/* Phones and narrow windows: the stage on top, the knobs below it. */
+@media (max-width: 900px) {
+  body { overflow: auto; }
+  .studio-main { grid-template-columns: minmax(0, 1fr); height: auto; }
+  .stage-wrap { position: sticky; top: 0; z-index: 3; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .stage { height: 46vh; height: 46svh; padding: 10px; }
+  .stage-bar { min-height: 0; padding: 6px 14px 8px; }
+  .keys { display: none; }
+  .panel { border-left: 0; }
+  .panes { overflow: visible; }
+  .top .hide-s { display: none; }
+  .top { padding: 0 12px; gap: 8px; }
+  .back small { display: none; }
+}
+@media (max-width: 520px) { .hide-xs { display: none; } .title > span[aria-hidden] { display: none; } .ibtn { width: 32px; } .btn { padding: 0 10px; } .title .knobs { display: none; } .btn.dice span { display: none; } .presets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Embed: the landing page shows the stage alone, cycling through looks. */
+html.embed body { overflow: hidden; background: transparent; }
+html.embed .top, html.embed .panel, html.embed .stage-bar, html.embed .toast { display: none !important; }
+html.embed .studio-main { grid-template-columns: 1fr; height: 100vh; }
+html.embed .stage { padding: 0; height: 100vh; }
+html.embed .stage-wrap { position: static; border: 0; }
+html.embed #cv { border-radius: 0; box-shadow: none; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { #cv { transition: none; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="back" href="./#theme" aria-label="Back to the Circularity home page">
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="var(--a)" stroke-width="2.4" stroke-linecap="round"><path d="M12 4.5A7.5 7.5 0 0 1 19.1 9.6"/><path d="M19.3 13.4A7.5 7.5 0 0 1 12 19.5"/><path d="M9.1 18.9A7.5 7.5 0 0 1 4.8 9.9"/></g></svg>
+    <span class="hide-xs">Circularity</span> <small>← home</small>
+  </a>
+  <span class="title"><span aria-hidden="true">/</span> Wheel Studio <span class="knobs" id="knobs"></span></span>
+  <span class="spacer"></span>
+  <button class="ibtn" type="button" id="undo" aria-label="Undo (⌘Z)" title="Undo (⌘Z)" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+  <button class="ibtn" type="button" id="redo" aria-label="Redo (⇧⌘Z)" title="Redo (⇧⌘Z)" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+  <button class="btn dice" type="button" id="dice" title="Surprise me (R)">🎲 <span>Surprise me</span> <kbd class="hide-s">R</kbd></button>
+  <button class="btn hide-s" type="button" id="shareTop">Share</button>
+  <button class="btn primary" type="button" id="copyTop">Copy<span class="hide-xs">&nbsp;for the app</span></button>
+</header>
+
+<main class="studio-main">
+  <section class="stage-wrap" aria-label="Preview">
+    <div class="stage" id="stage">
+      <canvas id="cv" tabindex="0" role="img" aria-label="Preview of your wheel"></canvas>
+    </div>
+    <div class="stage-bar">
+      <span id="caption" aria-live="polite">Hover the wheel. Click a button to "convert".</span>
+      <span class="keys"><kbd>←</kbd> <kbd>→</kbd> move · <kbd>↵</kbd> convert · <kbd>R</kbd> roll · drop a picture for a backdrop</span>
+    </div>
+  </section>
+
+  <aside class="panel" aria-label="Customise">
+    <div class="legend">
+      <div class="legend-row"><span class="badge app">◆ APP</span> goes into Circularity when you paste the theme <span class="badge studio">✦ STUDIO</span> posters, clips and links</div>
+      <div class="legend-row">
+        <label class="sw"><input type="checkbox" id="appView"><span>See it as the app draws it</span></label>
+        <label class="sw"><input type="checkbox" id="hideStudio"><span>Only ◆ knobs</span></label>
+      </div>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Knobs">
+      <button class="tab" role="tab" id="t-presets" aria-controls="p-presets" aria-selected="true">Presets</button>
+      <button class="tab" role="tab" id="t-shape" aria-controls="p-shape" aria-selected="false" tabindex="-1">Shape</button>
+      <button class="tab" role="tab" id="t-colour" aria-controls="p-colour" aria-selected="false" tabindex="-1">Colour</button>
+      <button class="tab" role="tab" id="t-type" aria-controls="p-type" aria-selected="false" tabindex="-1">Type</button>
+      <button class="tab" role="tab" id="t-effects" aria-controls="p-effects" aria-selected="false" tabindex="-1">Effects</button>
+      <button class="tab" role="tab" id="t-backdrop" aria-controls="p-backdrop" aria-selected="false" tabindex="-1">Backdrop</button>
+      <button class="tab" role="tab" id="t-export" aria-controls="p-export" aria-selected="false" tabindex="-1">Export</button>
+    </div>
+    <div class="panes">
+      <section class="pane" role="tabpanel" id="p-presets" aria-labelledby="t-presets">
+        <h2>Start somewhere</h2>
+        <p class="sub">Six looks the app ships with, twelve wilder ones. Every knob stays editable afterwards.</p>
+        <div class="big-dice"><button class="btn primary" type="button" id="dice2">🎲 Surprise me</button><button class="btn" type="button" id="resetAll">Start over</button></div>
+        <div class="group-h">In the app</div>
+        <div class="presets" id="presetsApp"></div>
+        <div class="group-h">Studio originals</div>
+        <div class="presets" id="presetsStudio"></div>
+        <div class="group-h">My wheels</div>
+        <div class="btns"><button class="btn" type="button" id="saveWheel">＋ Save this wheel</button></div>
+        <div class="presets" id="presetsMine"></div>
+        <p class="hint" id="mineEmpty">Saved wheels stay in this browser.</p>
+      </section>
+
+      <section class="pane" role="tabpanel" id="p-shape" aria-labelledby="t-shape" hidden>
+        <h2>Shape</h2>
+        <p class="sub">Layout, size and geometry. Try a fan or twelve buttons.</p>
+        <div class="rows" data-tab="shape"></div>
+      </section>
+
+      <section class="pane" role="tabpanel" id="p-colour" aria-labelledby="t-colour" hidden>
+        <h2>Colour</h2>
+        <p class="sub">The accent lights the button under the pointer. Fill styles colour the rest.</p>
+        <div class="row" data-app="1" data-knob>
+          <div class="row-h"><span class="lbl">Built-in theme</span><span class="badge app">◆ APP</span></div>
+          <div class="chips" id="themeChips" role="group" aria-label="Built-in theme"></div>
+        </div>
+        <div class="row" data-app="1" data-knob>
+          <div class="row-h"><label for="accent">Accent</label><span class="badge app">◆ APP</span><output id="accentOut"></output></div>
+          <div class="swatches" id="swatches" role="group" aria-label="Accent swatches"></div>
+          <div class="colr"><input type="color" id="accent"><input class="hex" id="accentHex" maxlength="7" spellcheck="false" aria-label="Accent hex"><button class="btn" type="button" id="eyedrop" hidden>Pick from screen</button><button class="btn" type="button" id="accentRoll" title="A random accent">🎲</button></div>
+          <div class="contrast" id="contrast"></div>
+        </div>
+        <div class="rows" data-tab="colour"></div>
+      </section>
+
+      <section class="pane" role="tabpanel" id="p-type" aria-labelledby="t-type" hidden>
+        <h2>Type</h2>
+        <p class="sub">The app's three fonts, or ten display faces for posters.</p>
+        <div class="rows" data-tab="type"></div>
+        <div class="row" data-app="0" data-knob>
+          <div class="row-h"><span class="lbl">Rename the buttons</span><span class="badge studio">✦ STUDIO</span></div>
+          <div class="labels" id="labels"></div>
+          <div class="btns"><button class="btn" type="button" id="emojiLabels">Emoji everything</button><button class="btn" type="button" id="clearLabels">Back to formats</button></div>
+        </div>
+        <div class="row" data-app="0" data-knob>
+          <div class="row-h"><label for="centreText">Centre text</label><span class="badge studio">✦ STUDIO</span></div>
+          <input class="txt" id="centreText" maxlength="16" placeholder="Follows the button you hover">
+        </div>
+      </section>
+
+      <section class="pane" role="tabpanel" id="p-effects" aria-labelledby="t-effects" hidden>
+        <h2>Effects</h2>
+        <p class="sub">Glow, motion, particles and film. None of these are in the app; they're for posters and clips.</p>
+        <div class="rows" data-tab="effects"></div>
+      </section>
+
+      <section class="pane" role="tabpanel" id="p-backdrop" aria-labelledby="t-backdrop" hidden>
+        <h2>Backdrop</h2>
+        <p class="sub">What's behind the wheel. Drop any picture on the stage to use it.</p>
+        <div class="rows" data-tab="backdrop"></div>
+        <div class="row" data-app="0" data-knob>
+          <div class="row-h"><span class="lbl">Your own picture</span><span class="badge studio">✦ STUDIO</span></div>
+          <div class="btns"><label class="btn" for="photoIn">Choose a picture…</label><input type="file" id="photoIn" accept="image/*" class="sr-only"><button class="btn" type="button" id="matchBg">Match the accent</button></div>
+          <p class="hint" id="photoNote">Stays on this device; it isn't uploaded or put in share links.</p>
+        </div>
+      </section>
+
+      <section class="pane" role="tabpanel" id="p-export" aria-labelledby="t-export" hidden>
+        <h2>Take it with you</h2>
+        <div class="group-h">Into the app</div>
+        <div class="row" data-app="1">
+          <div class="row-h"><span class="lbl">Theme for Circularity</span><span class="badge app">◆ APP</span></div>
+          <p class="hint">Copy, then in Circularity: Settings → Appearance → <b>Paste theme</b>.</p>
+          <div class="btns"><button class="btn primary" type="button" id="copyApp">Copy for the app</button><button class="btn" type="button" id="showCode" aria-expanded="false" aria-controls="code">Show the code</button></div>
+          <textarea class="code" id="code" readonly hidden aria-label="Theme code"></textarea>
+          <ul class="carry app" id="carryApp"></ul>
+          <ul class="carry" id="carryStudio"></ul>
+        </div>
+        <div class="row" data-app="1">
+          <div class="row-h"><label for="importCode">Bring a theme in</label><span class="badge app">◆ APP</span></div>
+          <p class="hint">In the app: Settings → Appearance → Copy theme, then paste it here.</p>
+          <textarea class="code" id="importCode" style="min-height:80px" placeholder='{"app": "Circularity", …}'></textarea>
+          <div class="btns"><button class="btn" type="button" id="importBtn">Load it</button></div>
+        </div>
+        <div class="group-h">Show it off</div>
+        <div class="row" data-app="0">
+          <div class="row-h"><span class="lbl">Poster</span><span class="badge studio">✦ STUDIO</span></div>
+          <div class="seg" id="pngSize" role="group" aria-label="Poster size"><button type="button" data-v="1080" aria-pressed="false">1080 px</button><button type="button" data-v="2048" aria-pressed="true">2048 px</button><button type="button" data-v="4096" aria-pressed="false">4096 px</button></div>
+          <label class="sw"><input type="checkbox" id="pngClear"><span>Transparent background (a sticker)</span></label>
+          <div class="btns"><button class="btn primary" type="button" id="savePng">Download PNG</button></div>
+        </div>
+        <div class="row" data-app="0">
+          <div class="row-h"><span class="lbl">Clip</span><span class="badge studio">✦ STUDIO</span></div>
+          <p class="hint" id="clipNote">A 4-second loop of the wheel spinning through its buttons.</p>
+          <div class="btns"><button class="btn rec" type="button" id="recBtn"><i></i> Record a clip</button></div>
+        </div>
+        <div class="row" data-app="0">
+          <div class="row-h"><span class="lbl">Link</span><span class="badge studio">✦ STUDIO</span></div>
+          <p class="hint">Everything except your own picture, in one link.</p>
+          <div class="btns"><button class="btn" type="button" id="shareBtn">Copy share link</button></div>
+          <input class="txt" id="shareOut" readonly hidden aria-label="Share link">
+        </div>
+      </section>
+    </div>
+  </aside>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const EMBED = location.hash === "#embed";
+if (EMBED) document.documentElement.classList.add("embed");
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { if (EMBED) return; try { localStorage.setItem(k, v); } catch {} },
+};
+
+// ---------- Colour maths ----------
+const hexRgb = (h) => { h = String(h || "#888888").replace("#", ""); if (h.length === 3) h = [...h].map((c) => c + c).join(""); const v = parseInt(h.slice(0, 6), 16) || 0; return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; };
+const rgbHex = (r, g, b) => "#" + [r, g, b].map((x) => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("").toUpperCase();
+const rgba = (h, a) => { const [r, g, b] = hexRgb(h); return `rgba(${r},${g},${b},${a})`; };
+const mixHex = (a, b, t) => { const A = hexRgb(a), B = hexRgb(b); return rgbHex(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t); };
+const hslHex = (h, s, l) => { h = ((h % 360) + 360) % 360; s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return rgbHex(f(0) * 255, f(8) * 255, f(4) * 255); };
+const isHex = (s) => typeof s === "string" && /^#[0-9a-f]{6}$/i.test(s);
+// WCAG maths, the same rule the app uses for text on the accent.
+const lum = (hex) => { const [r, g, b] = hexRgb(hex).map((c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+const onAccent = (hex) => (contrast(hex, "#1A1206") >= contrast(hex, "#FFFFFF") ? "#1A1206" : "#FFFFFF");
+const rad = (deg) => (deg - 90) * Math.PI / 180; // 0° is the top, clockwise
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+// ---------- What a wheel is ----------
+const DEFAULT = {
+  // ◆ the app's theme settings
+  theme: "neon", accent: "#C6FF3D", layout: "halo", scheme: "auto", panel: "auto", glass: 0.55,
+  tints: { images: "", tools: "", documents: "" }, scale: 1, thick: 1, gap: 3, orb: 1, label: 1, font: "rounded", case: "title",
+  // ✦ studio
+  count: 6, spread: 360, rot: 0, round: 0, bulge: 1, btn: 1,
+  fill: "flat", accent2: "#5CE1FF", hue: 0, disc: "", ink: "",
+  display: "app", weight: 800, track: 0, captions: true, labels: [], centre: "",
+  fx: { glow: 0.6, shadow: 0.7, spin: 0, breathe: 0, sparks: true, dots: 0, tilt: 0.5, grain: 0, scan: 0, vignette: 0, autohover: true, pointer: "none", sound: false },
+  bg: { kind: "aurora", c1: "#1F4D3A", c2: "#2B2F6B", c3: "#07080B", animate: true, blur: 0, dim: 0 },
+};
+const APP_KEYS = ["theme", "accent", "layout", "scheme", "panel", "glass", "tints", "scale", "thick", "gap", "orb", "label", "font", "case"];
+const clone = (o) => JSON.parse(JSON.stringify(o));
+function merge(base, over) {
+  const out = clone(base);
+  for (const [k, v] of Object.entries(over || {})) {
+    if (v && typeof v === "object" && !Array.isArray(v) && out[k] && typeof out[k] === "object") out[k] = merge(out[k], v);
+    else if (k in out || k === "labels") out[k] = clone(v);
+  }
+  return out;
+}
+const getP = (o, p) => p.split(".").reduce((a, k) => a?.[k], o);
+const setP = (o, p, v) => { const ks = p.split("."), last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
+
+const APP_THEMES = [
+  { id: "neon", name: "Neon", sub: "the default", set: {} },
+  { id: "tangerine", name: "Tangerine", sub: "warm", set: { accent: "#FF8A00", layout: "ring", fx: { glow: 0 }, bg: { c1: "#3A2A1C", c2: "#120D09" } } },
+  { id: "glass", name: "Glass", sub: "light", set: { accent: "#7C8CFF", layout: "ring", glass: 0.3, scheme: "light", fx: { glow: 0 }, bg: { c1: "#DCD6CC", c2: "#B9C4D0" } } },
+  { id: "graphite", name: "Graphite", sub: "quiet", set: { accent: "#9BA3AF", layout: "ring", glass: 0.75, font: "default", fx: { glow: 0 } } },
+  { id: "midnight", name: "Midnight", sub: "deep blue", set: { accent: "#5C7CFA", layout: "ring", glass: 0.8, fx: { glow: 0 }, bg: { c1: "#1B2550", c2: "#06070D" } } },
+  { id: "mono", name: "Mono", sub: "black & white", set: { accent: "#F2F2F2", font: "default", fx: { glow: 0.25 }, bg: { kind: "solid", c1: "#050505" } } },
+];
+const STUDIO_PRESETS = [
+  { name: "Vaporwave", sub: "gradient · grain", set: { theme: "custom", accent: "#FF5CA8", accent2: "#5CE1FF", fill: "gradient", layout: "ring", scheme: "dark", display: "outfit", weight: 900, case: "upper", round: 0.5,
+    fx: { glow: 1, grain: 0.35, scan: 0.2, dots: 12, spin: 2 }, bg: { kind: "waves", c1: "#FF5CA8", c2: "#6B3BFF", c3: "#12082A" } } },
+  { name: "Terminal", sub: "phosphor", set: { theme: "custom", accent: "#39FF6A", font: "mono", display: "vt323", case: "upper", fill: "outline", ink: "#39FF6A", disc: "#020804",
+    fx: { glow: 1.2, scan: 0.6, vignette: 0.7, pointer: "arrow" }, bg: { kind: "solid", c1: "#020804" } } },
+  { name: "Sticker bomb", sub: "chunky", set: { theme: "custom", accent: "#FFFFFF", fill: "stickers", layout: "ring", scheme: "light", round: 1, gap: 8, thick: 1.2, bulge: 2, display: "hand", weight: 700,
+    fx: { glow: 0, shadow: 1.2 }, bg: { kind: "dots", c1: "#C9BFAE", c3: "#F4EFE6" } } },
+  { name: "Arcade", sub: "8-bit", set: { theme: "custom", accent: "#FFFFFF", fill: "rainbow", count: 8, display: "press", case: "upper", captions: false,
+    fx: { glow: 1.2, scan: 0.3, spin: 4 }, bg: { kind: "grid", c1: "#FF2BD6", c3: "#0B0420" } } },
+  { name: "Blueprint", sub: "drafted", set: { theme: "custom", accent: "#FFFFFF", fill: "outline", layout: "ring", display: "grotesk", ink: "#DCEBFF", disc: "#0F3F8C", count: 8,
+    fx: { glow: 0, shadow: 0.3 }, bg: { kind: "grid", c1: "#6FA8FF", c3: "#0F3F8C" } } },
+  { name: "Noir", sub: "film", set: { theme: "custom", accent: "#EDEDED", layout: "ring", scheme: "dark", display: "playfair", weight: 900, round: 0.15,
+    fx: { glow: 0, grain: 0.6, vignette: 0.85 }, bg: { kind: "solid", c1: "#151515" } } },
+  { name: "Sunset", sub: "warm glow", set: { theme: "custom", accent: "#FF6A3D", accent2: "#FFD23F", fill: "gradient", display: "unbounded", round: 0.35,
+    fx: { glow: 0.9, breathe: 0.5 }, bg: { kind: "aurora", c1: "#FF6A3D", c2: "#9B6BFF", c3: "#1A0B1E" } } },
+  { name: "Candy", sub: "orbit · pastel", set: { theme: "custom", accent: "#FF6FB5", layout: "orbit", scheme: "light", fill: "stickers", display: "outfit", count: 8,
+    fx: { glow: 0.3, shadow: 0.6, dots: 8 }, bg: { kind: "mesh", c1: "#FFD6EC", c2: "#C9F0FF", c3: "#FFF4C2" } } },
+  { name: "Swiss", sub: "grid · red", set: { theme: "custom", accent: "#FF2B2B", layout: "ring", scheme: "light", display: "grotesk", weight: 700, case: "upper", gap: 1, glass: 0.9,
+    fx: { glow: 0, shadow: 0.3 }, bg: { kind: "solid", c1: "#F2F0EA" } } },
+  { name: "Half moon", sub: "a fan", set: { theme: "custom", accent: "#5CE1FF", spread: 200, count: 8, round: 0.4, fill: "shades",
+    fx: { glow: 0.8 }, bg: { kind: "waves", c1: "#0E5A6B", c2: "#0A2B44", c3: "#04121B" } } },
+  { name: "Chrome", sub: "Y2K", set: { theme: "custom", accent: "#D9E2EC", accent2: "#8FA3B8", fill: "glass", layout: "ring", display: "unbounded", round: 0.6, thick: 1.15,
+    fx: { glow: 0.5, shadow: 1.3 }, bg: { kind: "mesh", c1: "#8796A8", c2: "#2D3540", c3: "#C7D0DA" } } },
+  { name: "Lava", sub: "molten", set: { theme: "custom", accent: "#FF3D2E", accent2: "#FFB020", fill: "duo", count: 10, round: 0.3,
+    fx: { glow: 1.5, breathe: 1, spin: 2 }, bg: { kind: "aurora", c1: "#FF3D2E", c2: "#FF8A00", c3: "#120402" } } },
+];
+
+// The buttons around the wheel; 8, 10 and 12 add more formats.
+const SEG = {
+  png: { label: "PNG", mono: "PNG", cap: "LOSSLESS", kind: "images", kicker: "CONVERT TO", hint: "lossless, keeps transparency", sticker: "#35D0E6", emoji: "🖼️" },
+  jpg: { label: "JPG", mono: "JPG", cap: "PHOTO", kind: "images", kicker: "CONVERT TO", hint: "small, best for photos", sticker: "#FF6FB5", emoji: "📷" },
+  heic: { label: "HEIC", mono: "HEIC", cap: "IPHONE", kind: "images", kicker: "CONVERT TO", hint: "half the size of JPG", sticker: "#FF9A3D", emoji: "📱" },
+  webp: { label: "WebP", mono: "WEBP", cap: "WEB", kind: "images", kicker: "CONVERT TO", hint: "small, for the web", sticker: "#9B6BFF", emoji: "🌐" },
+  avif: { label: "AVIF", mono: "AVIF", cap: "TINY", kind: "images", kicker: "CONVERT TO", hint: "the smallest of all", sticker: "#FFD23F", emoji: "🪶" },
+  tiff: { label: "TIFF", mono: "TIFF", cap: "PRINT", kind: "images", kicker: "CONVERT TO", hint: "uncompressed, for print", sticker: "#3ECF8E", emoji: "🖨️" },
+  pdf: { label: "PDF", mono: "PDF", cap: "DOCUMENT", kind: "documents", kicker: "MAKE A", hint: "one page per picture", sticker: "#FF5E5B", emoji: "📄" },
+  cut: { label: "Cut out", mono: "CUT", cap: "NO BG", kind: "tools", kicker: "CUT OUT THE", hint: "background made transparent", sticker: "#3ECF8E", emoji: "✂️" },
+  crop: { label: "Crop", mono: "CROP", cap: "TRIM", kind: "tools", kicker: "OPEN", hint: "trim the edges", sticker: "#FF8AD8", emoji: "📐" },
+  more: { label: "More", mono: "•••", cap: "MORE", kind: null, kicker: "REST HERE FOR", hint: "the rest of the formats", sticker: "#E8E8EE", emoji: "✨" },
+  sqz: { label: "Compress", mono: "SQZ", cap: "COMPRESS", kind: "tools", kicker: "OPEN", hint: "quality or target size", sticker: "#FFD23F", emoji: "🗜️" },
+  size: { label: "Resize", mono: "SIZE", cap: "RESIZE", kind: "tools", kicker: "OPEN", hint: "width × height", sticker: "#9B6BFF", emoji: "↔️" },
+};
+const ORDER = { 6: ["png", "jpg", "cut", "more", "sqz", "size"], 8: ["png", "jpg", "heic", "pdf", "cut", "more", "sqz", "size"],
+  10: ["png", "jpg", "heic", "webp", "pdf", "cut", "more", "sqz", "size", "crop"],
+  12: ["png", "jpg", "heic", "webp", "avif", "tiff", "pdf", "cut", "more", "sqz", "size", "crop"] };
+const segsFor = (n) => (ORDER[n] || ORDER[6]).map((id) => ({ id, ...SEG[id] }));
+
+const FONTS = {
+  app: { name: "App font", fam: null, k: 1 },
+  geist: { name: "Geist", fam: '"Geist", system-ui, sans-serif', k: 1 },
+  unbounded: { name: "Unbounded", fam: '"Unbounded", sans-serif', k: 0.82 },
+  grotesk: { name: "Space Grotesk", fam: '"Space Grotesk", sans-serif', k: 1 },
+  outfit: { name: "Outfit", fam: '"Outfit", sans-serif', k: 1 },
+  playfair: { name: "Playfair", fam: '"Playfair Display", serif', k: 1.02 },
+  instrument: { name: "Instrument", fam: '"Instrument Serif", serif', k: 1.25 },
+  silkscreen: { name: "Silkscreen", fam: '"Silkscreen", monospace', k: 0.88 },
+  press: { name: "Press Start", fam: '"Press Start 2P", monospace', k: 0.58 },
+  vt323: { name: "VT323", fam: '"VT323", monospace', k: 1.4 },
+  hand: { name: "Handwritten", fam: '"Architects Daughter", cursive', k: 1.05 },
+};
+const appFont = (f) => (f === "mono" ? '"JetBrains Mono", ui-monospace, monospace' : f === "default" ? '-apple-system, system-ui, "Geist", sans-serif' : '"Nunito", ui-rounded, system-ui, sans-serif');
+
+// ---------- State, history, storage ----------
+let st = (() => {
+  if (location.hash.startsWith("#w=")) { try { return merge(DEFAULT, JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3).replace(/-/g, "+").replace(/_/g, "/")))))); } catch {} }
+  try { const v = JSON.parse(store.get("circularity-studio") || "null"); if (v) return merge(DEFAULT, v); } catch {}
+  // Carry over a theme made in the old builder on the home page.
+  try { const o = JSON.parse(store.get("circularity-theme-builder") || "null");
+    if (o && o.accent) return merge(DEFAULT, { theme: o.theme, accent: o.accent, layout: o.layout, scheme: o.scheme, panel: o.panel, glass: o.glass, tints: o.tints,
+      scale: o.scale, thick: o.thick, gap: o.gap, orb: o.orb, label: o.label, font: o.font, case: o.case }); } catch {}
+  return clone(DEFAULT);
+})();
+if (EMBED) st = merge(DEFAULT, STUDIO_PRESETS[0].set);
+let appView = false, hideStudio = false, photo = null, recording = false;
+let hist = [JSON.stringify(st)], hi = 0, histTimer = 0;
+function pushHist() { const j = JSON.stringify(st); if (j === hist[hi]) return; hist = hist.slice(0, hi + 1); hist.push(j); if (hist.length > 100) hist.shift(); hi = hist.length - 1; updUndo(); }
+function updUndo() { $("#undo").disabled = hi <= 0; $("#redo").disabled = hi >= hist.length - 1; }
+function restore(j) { st = JSON.parse(j); save(); syncUI(); kick(); }
+function undo() { clearTimeout(histTimer); pushHist(); if (hi > 0) { hi--; restore(hist[hi]); updUndo(); toast("Undone"); } }
+function redo() { if (hi < hist.length - 1) { hi++; restore(hist[hi]); updUndo(); toast("Redone"); } }
+function save() { store.set("circularity-studio", JSON.stringify(st)); }
+function commit(now) { save(); syncUI(); kick(); clearTimeout(histTimer); if (now) pushHist(); else histTimer = setTimeout(pushHist, 400); }
+function set(path, v) {
+  setP(st, path, v);
+  if (path === "accent") st.theme = APP_THEMES.find((t) => (t.set.accent || DEFAULT.accent) === v)?.id || "custom";
+  commit();
+}
+
+// The app view: only ◆ settings, everything else as the app draws it.
+function effective() {
+  if (!appView) return st;
+  const e = clone(DEFAULT);
+  for (const k of APP_KEYS) e[k] = clone(st[k]);
+  e.fx.glow = st.layout === "halo" ? 0.6 : 0; e.fx.autohover = st.fx.autohover; e.fx.tilt = 0;
+  const light = isLight(e); e.bg.kind = "desktop"; e.bg.c1 = light ? "#DCD6CC" : "#2B3242"; e.bg.c2 = light ? "#B9C4D0" : "#14171E";
+  return e;
+}
+function isLight(S) {
+  if (S.layout === "halo") return false;
+  if (S.scheme === "light") return true;
+  if (S.scheme === "dark") return false;
+  if (S.scheme === "system") return matchMedia("(prefers-color-scheme: light)").matches;
+  return S.layout === "orbit";
+}
+
+// ---------- Drawing ----------
+function geometry(S) {
+  const halo = S.layout === "halo", n = S.count, step = S.spread / n;
+  if (S.layout === "orbit") {
+    const fit = Math.min(1, (2 * Math.PI * 165 * (S.spread / 360) / n) / 100);
+    return { n, step, orb: 150 * S.orb, buttonR: 165 * (n > 8 ? 1.06 : 1), buttonD: 88 * S.btn * Math.max(0.55, fit), disc: 436 };
+  }
+  const base = halo ? { rin: 120, rout: 188, bulge: 10, orb: 230, disc: 424 } : { rin: 98, rout: 204, bulge: 12, orb: 180, disc: 436 };
+  const g = { ...base, n, step };
+  g.rout = g.rin + (base.rout - base.rin) * S.thick;
+  g.span = Math.max(3, step - S.gap * (halo ? 2 / 3 : 1) * Math.min(1, 6 / n * 1.4));
+  g.orb = Math.min(base.orb * S.orb, g.rin * 2 - 8);
+  g.disc = Math.max(base.disc, (g.rout + g.bulge * S.bulge + 2) * 2);
+  return g;
+}
+const segAngle = (S, i, spin) => S.rot + (spin || 0) + (S.spread >= 360 ? i * 360 / S.count : -S.spread / 2 + (i + 0.5) * S.spread / S.count);
+
+// An annular sector with rounded corners (round 0…1).
+function sector(ctx, rin, rout, a0, a1, round) {
+  ctx.beginPath(); rin = Math.max(1, rin); rout = Math.max(rin + 1, rout);
+  const rr = round * Math.min((rout - rin) / 2, (a1 - a0) * rin / 2) * 0.96;
+  if (rr < 0.5) { ctx.arc(0, 0, rout, a0, a1); ctx.arc(0, 0, rin, a1, a0, true); ctx.closePath(); return; }
+  const P = (r, a) => [Math.cos(a) * r, Math.sin(a) * r];
+  const dO = rr / rout, dI = rr / rin;
+  const [osx, osy] = P(rout, a0), [oex, oey] = P(rout, a1), [iex, iey] = P(rin, a1), [isx, isy] = P(rin, a0);
+  const [mx, my] = P((rin + rout) / 2, a0);
+  ctx.moveTo(mx, my);
+  ctx.arcTo(osx, osy, osx - Math.sin(a0) * rr * 2, osy + Math.cos(a0) * rr * 2, rr);
+  ctx.arc(0, 0, rout, a0 + dO, a1 - dO);
+  ctx.arcTo(oex, oey, iex, iey, rr);
+  ctx.arcTo(iex, iey, iex + Math.sin(a1) * rr * 2, iey - Math.cos(a1) * rr * 2, rr);
+  ctx.arc(0, 0, rin, a1 - dI, a0 + dI, true);
+  ctx.arcTo(isx, isy, osx, osy, rr);
+  ctx.closePath();
+}
+
+function setFont(ctx, weight, px, fam) { ctx.font = `${weight} ${Math.max(1, px).toFixed(1)}px ${fam}`; }
+function fitText(ctx, text, maxW, weight, px, fam) { setFont(ctx, weight, px, fam); const w = ctx.measureText(text).width; if (w > maxW && w > 0) setFont(ctx, weight, px * maxW / w, fam); }
+function track(ctx, S, px) { if ("letterSpacing" in ctx) ctx.letterSpacing = (S.track * px).toFixed(2) + "px"; }
+function labelFam(S, halo) { return S.display !== "app" ? FONTS[S.display].fam : (halo ? '"JetBrains Mono", ui-monospace, monospace' : appFont(S.font)); }
+const fontK = (S) => (FONTS[S.display] || FONTS.app).k;
+function labelText(S, seg, i, halo) {
+  const custom = S.labels[i];
+  if (custom) return custom;
+  const t = halo && S.display === "app" ? seg.mono : seg.label;
+  return S.case === "upper" ? t.toUpperCase() : t;
+}
+
+function segStyle(S, seg, i, n, hot, light, halo, rin, rout, mid, ctx) {
+  const tint = seg.kind && S.tints[seg.kind];
+  let ink = S.ink || (halo ? "#ECEEF2" : light ? "#1D1B18" : "#F4F1EC");
+  let cap = S.ink ? rgba(S.ink, 0.62) : (halo ? "#9097A6" : light ? "#4A453E" : "#C9C3B9");
+  let fill, stroke = null, lw = 1;
+  const grad = (c0, c1) => { const a = rad(mid), g = ctx.createLinearGradient(Math.cos(a) * rin, Math.sin(a) * rin, Math.cos(a) * rout, Math.sin(a) * rout); g.addColorStop(0, c0); g.addColorStop(1, c1); return g; };
+  const dark = "#0B0D10";
+  if (hot) {
+    if (S.fill === "stickers") { fill = seg.sticker; ink = dark; cap = "rgba(0,0,0,.6)"; stroke = "#FFFFFF"; lw = 3; }
+    else if (S.fill === "rainbow") { fill = hslHex(i / n * 360 + S.hue, 95, 66); ink = dark; cap = "rgba(0,0,0,.6)"; stroke = "#FFFFFF"; lw = 3; }
+    else { fill = S.fill === "gradient" || S.fill === "duo" ? grad(S.accent, S.accent2) : S.accent; ink = onAccent(S.accent); cap = rgba(ink, 0.72); }
+    return { fill, ink, cap, stroke, lw };
+  }
+  switch (S.fill) {
+    case "gradient": fill = grad(rgba(tint || S.accent, 0.1), rgba(S.accent2, 0.34)); stroke = rgba(S.accent2, 0.25); break;
+    case "stickers": fill = seg.sticker; ink = dark; cap = "rgba(0,0,0,.55)"; break;
+    case "rainbow": fill = hslHex(i / n * 360 + S.hue, 85, 60); ink = dark; cap = "rgba(0,0,0,.55)"; break;
+    case "outline": fill = "rgba(0,0,0,0)"; stroke = rgba(tint || S.accent, 0.7); lw = 2; break;
+    case "glass": fill = grad(light ? "rgba(255,255,255,.65)" : "rgba(255,255,255,.2)", light ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.04)"); stroke = light ? "rgba(255,255,255,.9)" : "rgba(255,255,255,.35)"; lw = 1.2; break;
+    case "duo": fill = rgba(tint || (i % 2 ? S.accent2 : S.accent), 0.24); break;
+    case "shades": fill = rgba(tint || S.accent, 0.08 + 0.34 * (i / Math.max(1, n - 1))); break;
+    default:
+      fill = tint ? rgba(tint, halo ? 0.2 : 0.22) : halo ? "#1B1D23" : light ? "rgba(0,0,0,.06)" : "rgba(255,255,255,.07)";
+      if (!halo) stroke = light ? "rgba(0,0,0,.1)" : "rgba(255,255,255,.1)";
+  }
+  return { fill, ink, cap, stroke, lw };
+}
+
+function discColours(S, light, halo) {
+  const disc = S.disc || (halo ? "#0D0F14" : light ? `rgba(255,255,255,${S.glass})` : `rgba(24,24,28,${S.glass})`);
+  const orbHex = S.disc ? mixHex(S.disc, light ? "#000000" : "#FFFFFF", 0.06) : light ? "#F4F2EF" : halo ? "#1A1D24" : "#141416";
+  const orb = S.disc ? orbHex : halo ? "#1A1D24" : light ? "rgba(255,255,255,.86)" : "rgba(14,14,16,.78)";
+  return { disc, orb, orbHex };
+}
+
+function drawOrb(ctx, S, g, segs, hover, light, halo) {
+  const { orb, orbHex } = discColours(S, light, halo);
+  ctx.fillStyle = orb; ctx.beginPath(); ctx.arc(0, 0, g.orb / 2, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = light ? "rgba(60,40,20,.15)" : "rgba(255,255,255,.16)"; ctx.lineWidth = 1.5; ctx.stroke();
+  const seg = segs[hover] || segs[0];
+  const ink = S.ink || (light ? "#1D1B18" : "#ECEEF2");
+  const big = contrast(S.accent, orbHex) >= 3 ? S.accent : ink;
+  const f = g.orb / (halo ? 230 : S.layout === "orbit" ? 150 : 180), ls = S.label, fam = labelFam(S, halo), k = fontK(S);
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const word = S.centre || (S.labels[hover] || (halo && S.display === "app" ? seg.mono : (S.case === "upper" ? seg.label.toUpperCase() : seg.label)));
+  if (!S.centre) { ctx.fillStyle = S.ink ? rgba(S.ink, 0.6) : light ? "#5A544B" : "#A9AFBC"; setFont(ctx, 600, 10 * f * ls, appFont(S.font)); track(ctx, S, 10 * f * ls); ctx.fillText(seg.kicker, 0, -30 * f); }
+  ctx.fillStyle = big; track(ctx, S, 32 * f * ls * k);
+  fitText(ctx, word, g.orb * 0.8, S.weight, (halo ? 34 : 30) * f * ls * k, fam);
+  ctx.save(); if (S.fx.glow > 0 && big === S.accent) { ctx.shadowColor = S.accent; ctx.shadowBlur = 18 * S.fx.glow; } ctx.fillText(word, 0, S.centre ? 0 : 0); ctx.restore();
+  if (!S.centre) { ctx.fillStyle = S.ink ? rgba(S.ink, 0.8) : light ? "#2A2622" : "#D5D9E1"; track(ctx, S, 0); fitText(ctx, seg.hint, g.orb * 0.82, 600, 11 * f * ls, appFont(S.font)); ctx.fillText(seg.hint, 0, 28 * f); }
+  track(ctx, S, 0);
+}
+
+function drawSectors(ctx, S, g, segs, hover, light, spin) {
+  const halo = S.layout === "halo", n = segs.length;
+  const { disc } = discColours(S, light, halo);
+  ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 57 * S.fx.shadow; ctx.shadowOffsetY = 28 * S.fx.shadow;
+  ctx.fillStyle = disc; ctx.beginPath(); ctx.arc(0, 0, g.disc / 2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+  ctx.strokeStyle = halo ? rgba(S.accent, 0.22) : light ? "rgba(0,0,0,.1)" : "rgba(255,255,255,.12)"; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(0, 0, g.disc / 2 - (halo ? 4 : 0.5), 0, Math.PI * 2); ctx.stroke();
+  const order = [...segs.keys()].sort((a, b) => (a === hover) - (b === hover)); // the hot one on top
+  for (const i of order) {
+    const seg = segs[i], hot = i === hover, mid = segAngle(S, i, spin), half = g.span / 2;
+    const pop = hot ? S.bulge : 0, rout = g.rout + g.bulge * pop, rin = g.rin - 6 * pop;
+    sector(ctx, rin, rout, rad(mid - half), rad(mid + half), S.round);
+    const s = segStyle(S, seg, i, n, hot, light, halo, rin, rout, mid, ctx);
+    ctx.save();
+    if (hot && S.fx.glow > 0) { ctx.shadowColor = S.fill === "stickers" ? seg.sticker : S.accent; ctx.shadowBlur = 36 * S.fx.glow; }
+    ctx.fillStyle = s.fill; ctx.fill(); ctx.restore();
+    if (s.stroke) { ctx.strokeStyle = s.stroke; ctx.lineWidth = s.lw; ctx.stroke(); }
+    const r = (rin + rout) / 2 + (hot ? 2 : 0), a = rad(mid), x = Math.cos(a) * r, y = Math.sin(a) * r;
+    const chord = 2 * r * Math.sin(Math.min(Math.PI / 2, (g.span * Math.PI / 180) / 2)) * 0.84;
+    const ls = S.label * Math.min(1, 7 / n + 0.2), fam = labelFam(S, halo), k = fontK(S), txt = labelText(S, seg, i, halo);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const capY = S.captions && !S.labels[i] ? 11 * ls : 0;
+    ctx.fillStyle = s.ink; track(ctx, S, 15 * ls * k);
+    fitText(ctx, txt, Math.min(chord, rout - rin + 30), S.weight > 700 ? 700 : S.weight, 15 * ls * k, fam);
+    ctx.fillText(txt, x, y - capY * 0.64);
+    if (capY) { ctx.fillStyle = s.cap; track(ctx, S, 0); fitText(ctx, seg.cap, chord, 600, 10 * ls, appFont(S.font)); ctx.fillText(seg.cap, x, y + capY); }
+    track(ctx, S, 0);
+  }
+  drawOrb(ctx, S, g, segs, hover, light, halo);
+}
+
+function drawOrbit(ctx, S, g, segs, hover, light, spin) {
+  const n = segs.length, halo = false;
+  ctx.strokeStyle = S.ink ? rgba(S.ink, 0.25) : light ? "rgba(60,40,20,.16)" : "rgba(255,255,255,.16)"; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(0, 0, g.buttonR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  const order = [...segs.keys()].sort((a, b) => (a === hover) - (b === hover));
+  for (const i of order) {
+    const seg = segs[i], hot = i === hover, a = rad(segAngle(S, i, spin)), x = Math.cos(a) * g.buttonR, y = Math.sin(a) * g.buttonR;
+    const r = g.buttonD / 2 * (hot ? 1 + 0.16 * S.bulge : 1), tint = seg.kind && S.tints[seg.kind];
+    let fill, ink = S.ink || (light ? "#1D1B18" : "#F4F1EC"), stroke = null;
+    if (S.fill === "stickers") { fill = seg.sticker; ink = "#0B0D10"; if (hot) stroke = "#FFFFFF"; }
+    else if (S.fill === "rainbow") { fill = hslHex(i / n * 360 + S.hue, 88, hot ? 68 : 60); ink = "#0B0D10"; if (hot) stroke = "#FFFFFF"; }
+    else if (hot) { fill = S.accent; ink = onAccent(S.accent); }
+    else if (S.fill === "outline") { fill = "rgba(0,0,0,0)"; stroke = rgba(tint || S.accent, 0.75); }
+    else if (S.fill === "glass") { fill = light ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.12)"; stroke = "rgba(255,255,255,.45)"; }
+    else if (S.fill === "gradient" || S.fill === "duo") { fill = rgba(i % 2 && S.fill === "duo" ? S.accent2 : (tint || S.accent2), 0.3); }
+    else if (S.fill === "shades") { fill = rgba(tint || S.accent, 0.1 + 0.4 * i / Math.max(1, n - 1)); }
+    else fill = S.disc ? mixHex(S.disc, light ? "#000000" : "#FFFFFF", 0.1) : light ? "rgba(255,255,255,.72)" : "rgba(38,38,43,.88)";
+    ctx.save(); ctx.shadowColor = hot && S.fx.glow > 0 ? (S.fill === "stickers" ? seg.sticker : S.accent) : "rgba(20,15,10,.3)";
+    ctx.shadowBlur = hot && S.fx.glow > 0 ? 34 * S.fx.glow : 22 * S.fx.shadow; ctx.shadowOffsetY = hot ? 0 : 10 * S.fx.shadow;
+    ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = hot ? 3 : 2; ctx.stroke(); }
+    const f = g.buttonD / 88;
+    ctx.fillStyle = hot ? "rgba(255,255,255,.85)" : (S.fill === "stickers" || S.fill === "rainbow") ? "rgba(0,0,0,.14)" : (tint || (light ? "#E4E0DA" : "#3A3A40"));
+    ctx.beginPath(); ctx.arc(x, y - 10 * f, 15 * f, 0, Math.PI * 2); ctx.fill();
+    const fam = labelFam(S, halo), k = fontK(S), txt = labelText(S, seg, i, false);
+    ctx.fillStyle = ink; ctx.textAlign = "center"; ctx.textBaseline = "middle"; track(ctx, S, 12 * S.label * k * f);
+    fitText(ctx, txt, r * 1.7, Math.min(800, S.weight), 12 * S.label * k * f, fam); ctx.fillText(txt, x, y + 20 * f); track(ctx, S, 0);
+  }
+  drawOrb(ctx, S, g, segs, hover, light, false);
+}
+
+function drawPointer(ctx, kind) {
+  if (kind === "none") return;
+  ctx.save(); ctx.translate(6, 8);
+  if (kind === "file") {
+    ctx.save(); ctx.translate(14, 18); ctx.rotate(-0.08);
+    ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(2, 3, 34, 42);
+    ctx.fillStyle = "#F4F1EC"; ctx.fillRect(0, 0, 34, 42); ctx.fillStyle = "#FF9A3D"; ctx.fillRect(4, 24, 26, 12);
+    ctx.fillStyle = "#0B0D10"; ctx.font = "700 7px Geist, system-ui"; ctx.textAlign = "center"; ctx.fillText("HEIC", 17, 31); ctx.restore();
+  }
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 22); ctx.lineTo(5.5, 17); ctx.lineTo(9.5, 26); ctx.lineTo(13, 24.5); ctx.lineTo(9, 15.5); ctx.lineTo(16, 15.5); ctx.closePath();
+  ctx.fillStyle = "#0B0D10"; ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.6; ctx.lineJoin = "round"; ctx.stroke(); ctx.fill();
+  ctx.restore();
+}
+
+// Backdrops
+let noise = null;
+function noiseCanvas() {
+  if (noise) return noise;
+  noise = document.createElement("canvas"); noise.width = noise.height = 160;
+  const c = noise.getContext("2d"), d = c.createImageData(160, 160);
+  for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
+  c.putImageData(d, 0, 0); return noise;
+}
+function drawBackdrop(ctx, S, W, t) {
+  const b = S.bg, accent = S.accent;
+  const lin = (c0, c1) => { const g = ctx.createLinearGradient(0, 0, W, W); g.addColorStop(0, c0); g.addColorStop(1, c1); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); };
+  const blob = (x, y, r, c, a) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(c, a)); g.addColorStop(1, rgba(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); };
+  switch (b.kind) {
+    case "solid": ctx.fillStyle = b.c1; ctx.fillRect(0, 0, W, W); break;
+    case "aurora":
+      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
+      [[b.c1, 0], [b.c2, 2.1], [accent, 4.2]].forEach(([c, p], i) =>
+        blob(W * (0.5 + 0.32 * Math.sin(t * 0.21 + p)), W * (0.5 + 0.3 * Math.cos(t * 0.17 + p * 1.3)), W * (0.55 + 0.08 * i), c, 0.55));
+      break;
+    case "waves":
+      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath(); ctx.moveTo(0, W);
+        for (let j = 0; j <= 48; j++) { const x = W * j / 48; ctx.lineTo(x, W * (0.3 + i * 0.12) + Math.sin(x / W * Math.PI * 2 * 1.1 + t * 0.35 + i * 0.9) * W * 0.05 + Math.sin(x / W * 9 + i) * W * 0.008); }
+        ctx.lineTo(W, W); ctx.closePath(); ctx.fillStyle = rgba(mixHex(b.c1, b.c2, i / 5), 0.55 + i * 0.07); ctx.fill();
+      }
+      break;
+    case "mesh":
+      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
+      blob(W * (0.1 + 0.05 * Math.sin(t * 0.3)), W * 0.1, W * 0.9, b.c1, 0.85); blob(W * 0.95, W * (0.9 + 0.05 * Math.cos(t * 0.25)), W * 0.9, b.c2, 0.85);
+      blob(W * 0.9, W * 0.1, W * 0.6, accent, 0.35); blob(W * 0.1, W * 0.95, W * 0.6, mixHex(b.c1, b.c2, 0.5), 0.6); break;
+    case "grid": {
+      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
+      const step = W / 16, off = (t * W * 0.01) % step; ctx.lineWidth = Math.max(1, W / 900);
+      for (let i = -1; i <= 17; i++) { ctx.strokeStyle = rgba(b.c1, i % 4 === 0 ? 0.42 : 0.18);
+        ctx.beginPath(); ctx.moveTo(i * step + off, 0); ctx.lineTo(i * step + off, W); ctx.moveTo(0, i * step + off); ctx.lineTo(W, i * step + off); ctx.stroke(); }
+      break; }
+    case "dots": {
+      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W); ctx.fillStyle = rgba(b.c1, 0.6);
+      const step = W / 26, r = Math.max(1, W / 380);
+      for (let x = step / 2; x < W; x += step) for (let y = step / 2; y < W; y += step) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
+      break; }
+    case "photo":
+      if (photo) {
+        const s = Math.max(W / photo.width, W / photo.height), w = photo.width * s, h = photo.height * s;
+        ctx.save(); if (b.blur > 0) ctx.filter = `blur(${(b.blur * W / 30).toFixed(1)}px)`;
+        ctx.drawImage(photo, (W - w) / 2 - (b.blur ? W * 0.05 : 0), (W - h) / 2 - (b.blur ? W * 0.05 : 0), w + (b.blur ? W * 0.1 : 0), h + (b.blur ? W * 0.1 : 0)); ctx.restore();
+        if (b.dim > 0) { ctx.fillStyle = `rgba(0,0,0,${b.dim * 0.8})`; ctx.fillRect(0, 0, W, W); }
+        break;
+      }
+      // no picture yet: fall through to the desktop
+    default: lin(b.c1, b.c2);
+  }
+}
+function drawOverlays(ctx, S, W, clear) {
+  const fx = S.fx;
+  if (fx.vignette > 0 && !clear) { const g = ctx.createRadialGradient(W / 2, W / 2, W * 0.28, W / 2, W / 2, W * 0.75); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(0,0,0,${fx.vignette * 0.85})`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); }
+  if (fx.scan > 0) { ctx.save(); if (clear) ctx.globalCompositeOperation = "source-atop"; ctx.fillStyle = `rgba(0,0,0,${fx.scan * 0.38})`; const s = Math.max(2, W / 260); for (let y = 0; y < W; y += s * 1.6) ctx.fillRect(0, y, W, s * 0.6); ctx.restore(); }
+  if (fx.grain > 0) { ctx.save(); if (clear) ctx.globalCompositeOperation = "source-atop"; ctx.globalAlpha = fx.grain * 0.22; ctx.fillStyle = ctx.createPattern(noiseCanvas(), "repeat"); ctx.fillRect(0, 0, W, W); ctx.restore(); }
+}
+
+// One frame of the whole scene at W×W.
+function render(ctx, W, S, o) {
+  ctx.save(); ctx.clearRect(0, 0, W, W);
+  if (!o.clear) drawBackdrop(ctx, S, W, o.t);
+  const segs = segsFor(S.count), g = geometry(S), light = isLight(S);
+  const k = W * 0.92 / (470 * 1.4) * S.scale * (1 + 0.035 * S.fx.breathe * Math.sin(o.t * 2.2));
+  ctx.translate(W / 2, W / 2); ctx.scale(k, k);
+  if (S.fx.dots > 0) {
+    const n = Math.round(S.fx.dots), R = (g.disc / 2 + 18);
+    ctx.save(); ctx.fillStyle = S.accent; ctx.shadowColor = S.accent; ctx.shadowBlur = 10 * (S.fx.glow + 0.3);
+    for (let i = 0; i < n; i++) { const a = o.t * 0.5 + i * Math.PI * 2 / n; ctx.globalAlpha = 0.45 + 0.55 * (i % 3 === 0); ctx.beginPath(); ctx.arc(Math.cos(a) * R, Math.sin(a) * R, i % 3 === 0 ? 4 : 2.5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+  }
+  if (S.layout === "orbit") drawOrbit(ctx, S, g, segs, o.hover, light, o.spin); else drawSectors(ctx, S, g, segs, o.hover, light, o.spin);
+  ctx.save(); ctx.translate(0, (S.layout === "orbit" ? 150 * S.orb : g.orb) * 0.17); drawPointer(ctx, S.fx.pointer); ctx.restore();
+  ctx.restore();
+  if (o.parts) for (const p of o.parts) {
+    ctx.globalAlpha = Math.max(0, p.life);
+    if (p.ring) { ctx.strokeStyle = p.c; ctx.lineWidth = 3 * p.life; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.stroke(); }
+    else { ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * p.life + 0.6, 0, Math.PI * 2); ctx.fill(); }
+  }
+  ctx.globalAlpha = 1;
+  drawOverlays(ctx, S, W, o.clear);
+}
+
+// ---------- The live stage ----------
+const cv = $("#cv"), cx = cv.getContext("2d"), stage = $("#stage");
+let CSS = 400, DPR = 1, vis = clone(effective()), hover = 1, userHover = false, T = 0, spin = 0, parts = [], raf = 0, last = 0, moving = false, kbHover = false;
+const NO_TWEEN = new Set(["count", "fx.dots", "weight", "fx.spin"]);
+function approach(v, s, f, path) {
+  let mv = false;
+  for (const k of Object.keys(s)) {
+    const p = path ? path + "." + k : k, a = v[k], b = s[k];
+    if (typeof b === "number" && typeof a === "number" && !NO_TWEEN.has(p)) {
+      const d = b - a; if (Math.abs(d) > 0.002 * (Math.abs(b) + 1)) { v[k] = a + d * f; mv = true; } else v[k] = b;
+    } else if (isHex(b) && isHex(a)) {
+      if (a.toUpperCase() !== b.toUpperCase()) { const m = mixHex(a, b, Math.max(f, 0.08)); v[k] = m === a.toUpperCase() ? b : m; mv = true; }
+    } else if (b && typeof b === "object" && !Array.isArray(b)) { if (!v[k] || typeof v[k] !== "object") v[k] = {}; mv = approach(v[k], b, f, p) || mv; }
+    else v[k] = Array.isArray(b) ? b.slice() : b;
+  }
+  return mv;
+}
+function size() {
+  const r = stage.getBoundingClientRect(), pad = EMBED ? 0 : (innerWidth <= 900 ? 20 : 36);
+  CSS = Math.max(160, Math.floor(Math.min(r.width - pad, r.height - pad)));
+  if (EMBED) CSS = Math.floor(Math.max(r.width, r.height));
+  DPR = Math.min(2, devicePixelRatio || 1);
+  cv.style.width = cv.style.height = CSS + "px"; cv.width = cv.height = Math.round(CSS * DPR);
+  kick();
+}
+function animated(S) { return !RM && (S.fx.spin > 0 || S.fx.breathe > 0 || S.fx.dots > 0 || (S.bg.animate && ["aurora", "waves", "mesh", "grid"].includes(S.bg.kind))); }
+function frame(now) {
+  raf = 0;
+  // rAF's timestamp can be a hair older than the kick; never let time run backwards.
+  const dt = clamp((now - last) / 1000, 0.001, 0.05); last = Math.max(last, now);
+  const eff = effective();
+  moving = approach(vis, eff, RM ? 1 : 1 - Math.pow(0.0015, dt));
+  if (!RM) { T += dt; spin = (spin + (vis.fx.spin + (recording ? 6 : 0)) * 6 * dt) % 360; }
+  for (const p of parts) { p.life -= dt * (p.ring ? 1.6 : 1.1); if (p.ring) p.r += dt * CSS * 0.9; else { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 260 * dt; p.vx *= 0.985; } }
+  parts = parts.filter((p) => p.life > 0);
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  render(cx, CSS, vis, { t: T, hover, spin, parts });
+  if (moving || parts.length || animated(vis) || recording) raf = requestAnimationFrame(frame);
+}
+function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
+new ResizeObserver(size).observe(stage);
+
+// Pointer → which button.
+function hitTest(px, py) {
+  const S = vis, g = geometry(S), k = CSS * 0.92 / (470 * 1.4) * S.scale, x = (px - CSS / 2) / k, y = (py - CSS / 2) / k, r = Math.hypot(x, y), n = S.count;
+  if (S.layout === "orbit") {
+    let best = -1, bd = Infinity;
+    for (let i = 0; i < n; i++) { const a = rad(segAngle(S, i, spin)), d = Math.hypot(x - Math.cos(a) * g.buttonR, y - Math.sin(a) * g.buttonR); if (d < bd) { bd = d; best = i; } }
+    return bd < g.buttonD * 0.8 ? best : -1;
+  }
+  if (r < g.orb / 2 || r > g.disc / 2 + 30) return -1;
+  let deg = Math.atan2(x, -y) * 180 / Math.PI;
+  let best = -1, bd = Infinity;
+  for (let i = 0; i < n; i++) { const d = Math.abs(((deg - segAngle(S, i, spin)) % 360 + 540) % 360 - 180); if (d < bd) { bd = d; best = i; } }
+  return bd <= S.spread / n / 2 + 1 ? best : -1;
+}
+function segCentre(i) {
+  const S = vis, g = geometry(S), k = CSS * 0.92 / (470 * 1.4) * S.scale, a = rad(segAngle(S, i, spin));
+  const r = S.layout === "orbit" ? g.buttonR : (g.rin + g.rout) / 2;
+  return [CSS / 2 + Math.cos(a) * r * k, CSS / 2 + Math.sin(a) * r * k];
+}
+function sparks(i, many) {
+  if (RM || !vis.fx.sparks) return;
+  const [x, y] = segCentre(i), seg = segsFor(vis.count)[i];
+  const cols = vis.fill === "stickers" ? [seg.sticker, "#FFFFFF"] : vis.fill === "rainbow" ? [hslHex(Math.random() * 360, 90, 65), "#FFFFFF"] : [vis.accent, vis.accent2, "#FFFFFF"];
+  const n = many ? 46 : 12;
+  for (let j = 0; j < n; j++) { const a = Math.random() * Math.PI * 2, sp = (many ? 160 : 70) + Math.random() * (many ? 340 : 120);
+    parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (many ? 120 : 30), r: 1.5 + Math.random() * (many ? 3.5 : 2), life: 0.7 + Math.random() * 0.5, c: cols[j % cols.length] }); }
+  if (many) parts.push({ ring: true, x: CSS / 2, y: CSS / 2, r: CSS * 0.1, life: 1, c: vis.accent });
+  if (parts.length > 400) parts.splice(0, parts.length - 400);
+  kick();
+}
+function setHover(i, why) {
+  if (i < 0 || i === hover) return;
+  hover = i; const seg = segsFor(vis.count)[i];
+  if (why !== "auto") { sparks(i, false); tick(660 + i * 70); }
+  $("#caption").innerHTML = `<b>${esc(st.labels[i] || seg.label)}</b> · ${esc(seg.hint)}`;
+  kick();
+}
+function convert() {
+  const seg = segsFor(vis.count)[hover];
+  sparks(hover, true); tick(1046, 0.09, "triangle");
+  $("#caption").innerHTML = seg.kind ? `<b>IMG_2041.${seg.id === "cut" || seg.id === "sqz" || seg.id === "size" || seg.id === "crop" ? "png" : seg.id}</b> is ready (pretend) ✓` : "<b>More</b> fans out in the app";
+}
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+cv.addEventListener("pointermove", (e) => {
+  const r = cv.getBoundingClientRect(); userHover = true; setHover(hitTest(e.clientX - r.left, e.clientY - r.top));
+});
+cv.addEventListener("pointerdown", (e) => { const r = cv.getBoundingClientRect(), i = hitTest(e.clientX - r.left, e.clientY - r.top); if (i >= 0) { setHover(i); convert(); } });
+cv.addEventListener("pointerleave", () => { userHover = false; });
+cv.addEventListener("keydown", (e) => {
+  const n = vis.count;
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); kbHover = true; setHover((hover + 1) % n); }
+  else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); kbHover = true; setHover((hover + n - 1) % n); }
+  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); convert(); }
+});
+cv.addEventListener("blur", () => { kbHover = false; });
+// 3D tilt toward the pointer.
+stage.addEventListener("pointermove", (e) => {
+  const tilt = effective().fx.tilt; if (RM || !tilt || e.pointerType === "touch") return;
+  const r = stage.getBoundingClientRect(), dx = (e.clientX - r.left) / r.width - 0.5, dy = (e.clientY - r.top) / r.height - 0.5;
+  cv.style.transform = `rotateX(${(-dy * 16 * tilt).toFixed(2)}deg) rotateY(${(dx * 16 * tilt).toFixed(2)}deg)`;
+});
+stage.addEventListener("pointerleave", () => { cv.style.transform = ""; });
+// The wheel hovers by itself when nobody is touching it.
+setInterval(() => {
+  if (userHover || kbHover || !vis.fx.autohover || RM || document.hidden) return;
+  setHover((hover + 1) % vis.count, "auto");
+}, recording ? 400 : 1300);
+
+// Little sounds (off by default).
+let audio = null;
+function tick(freq, gain = 0.04, type = "sine") {
+  if (!st.fx.sound || EMBED) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audio.createOscillator(), g = audio.createGain(), t0 = audio.currentTime;
+    o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(gain, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+    o.connect(g).connect(audio.destination); o.start(t0); o.stop(t0 + 0.13);
+  } catch {}
+}
+
+// ---------- Knobs ----------
+const pct = (v) => Math.round(v * 100) + " %";
+const C = [];
+const K = (tab, o) => C.push({ tab, ...o });
+const notOrbit = (S) => S.layout !== "orbit";
+// Shape
+K("shape", { key: "layout", label: "Layout", app: true, type: "seg", options: [["halo", "Halo"], ["ring", "Ring"], ["orbit", "Orbit"]] });
+K("shape", { key: "scale", label: "Wheel size", app: true, type: "range", min: 0.7, max: 1.4, step: 0.05, fmt: pct });
+K("shape", { key: "thick", label: "Ring thickness", app: true, type: "range", min: 0.8, max: 1.2, step: 0.05, fmt: pct, when: notOrbit });
+K("shape", { key: "gap", label: "Gap between buttons", app: true, type: "range", min: 1, max: 8, step: 1, fmt: (v) => Math.round(v) + "°", when: notOrbit });
+K("shape", { key: "orb", label: "Centre size", app: true, type: "range", min: 0.85, max: 1.15, step: 0.05, fmt: pct });
+K("shape", { key: "count", label: "Buttons", app: false, type: "seg", num: true, options: [[6, "6"], [8, "8"], [10, "10"], [12, "12"]], hint: "The app has six; more adds HEIC, PDF, WebP, AVIF, TIFF and Crop." });
+K("shape", { key: "spread", label: "Fan", app: false, type: "range", min: 120, max: 360, step: 5, fmt: (v) => Math.round(v) >= 360 ? "full circle" : Math.round(v) + "°" });
+K("shape", { key: "rot", label: "Turn", app: false, type: "range", min: -180, max: 180, step: 1, fmt: (v) => Math.round(v) + "°" });
+K("shape", { key: "round", label: "Corner rounding", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: notOrbit });
+K("shape", { key: "bulge", label: "Hover pop", app: false, type: "range", min: 0, max: 2.5, step: 0.1, fmt: (v) => v.toFixed(1) + "×" });
+K("shape", { key: "btn", label: "Button size", app: false, type: "range", min: 0.7, max: 1.3, step: 0.05, fmt: pct, when: (S) => S.layout === "orbit" });
+// Colour
+K("colour", { key: "scheme", label: "Wheel colours", app: true, type: "seg", options: [["auto", "Automatic"], ["dark", "Dark"], ["light", "Light"], ["system", "Match macOS"]], disabled: (S) => S.layout === "halo", hint: "Halo is always dark." });
+K("colour", { key: "glass", label: "Glass", app: true, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.layout === "ring" });
+K("colour", { key: "tints.images", label: "Tint image formats", app: true, type: "color", auto: "Off" });
+K("colour", { key: "tints.tools", label: "Tint tools", app: true, type: "color", auto: "Off" });
+K("colour", { key: "tints.documents", label: "Tint PDF and documents", app: true, type: "color", auto: "Off" });
+K("colour", { key: "panel", label: "Menu bar panel", app: true, type: "seg", options: [["auto", "Automatic"], ["dark", "Dark"], ["light", "Light"]], hint: "The panel under the menu bar icon (not drawn here)." });
+K("colour", { key: "fill", label: "Fill style", app: false, type: "seg", options: [["flat", "App"], ["gradient", "Gradient"], ["duo", "Duotone"], ["shades", "Shades"], ["stickers", "Stickers"], ["rainbow", "Rainbow"], ["outline", "Outline"], ["glass", "Glass"]] });
+K("colour", { key: "accent2", label: "Second colour", app: false, type: "color", when: (S) => ["gradient", "duo"].includes(S.fill) });
+K("colour", { key: "hue", label: "Rainbow turn", app: false, type: "range", min: 0, max: 360, step: 5, fmt: (v) => Math.round(v) + "°", when: (S) => S.fill === "rainbow" });
+K("colour", { key: "disc", label: "Disc colour", app: false, type: "color", auto: "Auto" });
+K("colour", { key: "ink", label: "Text colour", app: false, type: "color", auto: "Auto" });
+// Type
+K("type", { key: "font", label: "App font", app: true, type: "seg", font: true, options: [["rounded", "Rounded"], ["default", "System"], ["mono", "Mono"]], hint: "Halo keeps mono in the app." });
+K("type", { key: "case", label: "Case", app: true, type: "seg", options: [["title", "Title case"], ["upper", "UPPER"]] });
+K("type", { key: "label", label: "Label size", app: true, type: "range", min: 0.85, max: 1.3, step: 0.05, fmt: pct });
+K("type", { key: "display", label: "Display face", app: false, type: "seg", font: true, options: Object.entries(FONTS).map(([k, f]) => [k, f.name]) });
+K("type", { key: "weight", label: "Weight", app: false, type: "seg", num: true, options: [[400, "Regular"], [700, "Bold"], [900, "Black"]] });
+K("type", { key: "track", label: "Letter spacing", app: false, type: "range", min: -0.06, max: 0.3, step: 0.01, fmt: (v) => v.toFixed(2) + " em" });
+K("type", { key: "captions", label: "Small captions", app: false, type: "toggle", hint: "LOSSLESS, PHOTO… under each label" });
+// Effects
+K("effects", { key: "fx.glow", label: "Neon glow", app: false, type: "range", min: 0, max: 1.5, step: 0.05, fmt: pct });
+K("effects", { key: "fx.shadow", label: "Shadow depth", app: false, type: "range", min: 0, max: 1.5, step: 0.05, fmt: pct });
+K("effects", { key: "fx.sparks", label: "Sparks", app: false, type: "toggle", hint: "on hover, and a burst when you click" });
+K("effects", { key: "fx.spin", label: "Spin", app: false, type: "range", min: 0, max: 20, step: 1, fmt: (v) => v ? v + " rpm" : "still" });
+K("effects", { key: "fx.breathe", label: "Breathe", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
+K("effects", { key: "fx.dots", label: "Orbiting dots", app: false, type: "range", min: 0, max: 36, step: 1, fmt: (v) => Math.round(v) || "none" });
+K("effects", { key: "fx.tilt", label: "3D tilt", app: false, type: "range", min: 0, max: 1.5, step: 0.05, fmt: pct, hint: "the stage leans toward your pointer" });
+K("effects", { key: "fx.grain", label: "Film grain", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
+K("effects", { key: "fx.scan", label: "Scanlines", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
+K("effects", { key: "fx.vignette", label: "Vignette", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
+K("effects", { key: "fx.pointer", label: "Pointer", app: false, type: "seg", options: [["none", "Hidden"], ["arrow", "Arrow"], ["file", "Dragging a file"]] });
+K("effects", { key: "fx.autohover", label: "Hover by itself", app: false, type: "toggle", hint: "walks round the buttons when you're not pointing" });
+K("effects", { key: "fx.sound", label: "Sound", app: false, type: "toggle", hint: "little ticks as you move" });
+// Backdrop
+K("backdrop", { key: "bg.kind", label: "Kind", app: false, type: "seg", options: [["desktop", "Desktop"], ["aurora", "Aurora"], ["waves", "Waves"], ["mesh", "Mesh"], ["grid", "Grid"], ["dots", "Dots"], ["solid", "Solid"], ["photo", "Picture"], ["none", "Transparent"]] });
+K("backdrop", { key: "bg.c1", label: "Colour one", app: false, type: "color", when: (S) => !["none", "photo"].includes(S.bg.kind) });
+K("backdrop", { key: "bg.c2", label: "Colour two", app: false, type: "color", when: (S) => ["desktop", "aurora", "waves", "mesh"].includes(S.bg.kind) });
+K("backdrop", { key: "bg.c3", label: "Base", app: false, type: "color", when: (S) => ["aurora", "waves", "mesh", "grid", "dots"].includes(S.bg.kind) });
+K("backdrop", { key: "bg.animate", label: "Drift", app: false, type: "toggle", hint: "slow movement in aurora, waves, mesh and grid", when: (S) => ["aurora", "waves", "mesh", "grid"].includes(S.bg.kind) });
+K("backdrop", { key: "bg.blur", label: "Blur the picture", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.bg.kind === "photo" });
+K("backdrop", { key: "bg.dim", label: "Dim the picture", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.bg.kind === "photo" });
+
+const badge = (app) => app ? '<span class="badge app">◆ APP</span>' : '<span class="badge studio">✦ STUDIO</span>';
+function buildKnobs() {
+  for (const c of C) {
+    const id = "k_" + c.key.replace(/\./g, "_"), el = document.createElement("div");
+    el.className = "row"; el.dataset.app = c.app ? "1" : "0"; el.dataset.knob = "";
+    let head = `<div class="row-h">${c.type === "seg" ? `<span class="lbl" id="${id}_l">${c.label}</span>` : `<label for="${id}">${c.label}</label>`}${badge(c.app)}<output id="${id}_o"></output></div>`, body = "";
+    if (c.type === "range") body = `<input type="range" id="${id}" min="${c.min}" max="${c.max}" step="${c.step}">`;
+    if (c.type === "seg") body = `<div class="seg${c.font ? " fonts" : ""}" role="group" aria-labelledby="${id}_l" id="${id}">${c.options.map(([v, l]) =>
+      `<button type="button" data-v="${v}"${c.font ? ` style="font-family:${c.key === "font" ? appFont(v) : (FONTS[v].fam || "var(--ui)").replace(/"/g, "'")}"` : ""}>${l}</button>`).join("")}</div>`;
+    if (c.type === "toggle") body = `<label class="sw"><input type="checkbox" id="${id}"><span>${c.hint || ""}</span></label>`;
+    if (c.type === "color") body = `<div class="colr">${c.auto ? `<label class="auto"><input type="checkbox" id="${id}_a"> ${c.auto}</label>` : ""}<input type="color" id="${id}" aria-label="${c.label}"><input class="hex" id="${id}_h" maxlength="7" spellcheck="false" aria-label="${c.label} hex"></div>`;
+    if (c.hint && c.type !== "toggle") body += `<p class="hint">${c.hint}</p>`;
+    el.innerHTML = head + body;
+    $(`.rows[data-tab="${c.tab}"]`).append(el);
+    c.el = el; c.out = $(`#${id}_o`, el);
+    if (c.type === "range") { c.input = $("#" + id, el); c.input.addEventListener("input", () => set(c.key, parseFloat(c.input.value))); }
+    if (c.type === "seg") $$("button", el).forEach((b) => b.addEventListener("click", () => set(c.key, c.num ? +b.dataset.v : b.dataset.v)));
+    if (c.type === "toggle") { c.input = $("#" + id, el); c.input.addEventListener("change", () => set(c.key, c.input.checked)); }
+    if (c.type === "color") {
+      c.input = $("#" + id, el); c.hex = $(`#${id}_h`, el); c.autoBox = $(`#${id}_a`, el);
+      c.input.addEventListener("input", () => set(c.key, c.input.value.toUpperCase()));
+      c.hex.addEventListener("change", () => { let v = c.hex.value.trim(); if (!v.startsWith("#")) v = "#" + v; if (isHex(v)) set(c.key, v.toUpperCase()); else syncUI(); });
+      c.autoBox?.addEventListener("change", () => set(c.key, c.autoBox.checked ? "" : (c.input.value || "#888888").toUpperCase()));
+    }
+  }
+}
+function syncKnob(c) {
+  const v = getP(st, c.key);
+  c.el.hidden = !!(c.when && !c.when(st));
+  c.el.classList.toggle("studio-hidden", hideStudio && !c.app);
+  if (c.type === "range") { c.input.value = v; const f = c.fmt(v); c.out.textContent = f; c.input.setAttribute("aria-valuetext", f); }
+  if (c.type === "seg") { const dis = c.disabled?.(st); $$("button", c.el).forEach((b) => { b.setAttribute("aria-pressed", String(String(b.dataset.v) === String(v))); b.disabled = !!dis; }); }
+  if (c.type === "toggle") c.input.checked = !!v;
+  if (c.type === "color") {
+    const on = !!v; if (c.autoBox) c.autoBox.checked = !on;
+    c.input.disabled = c.hex.disabled = !on && !!c.autoBox;
+    c.input.value = (v || c.input.value || "#888888").toLowerCase(); c.hex.value = v || ""; c.hex.placeholder = c.auto ? c.auto.toLowerCase() : "";
+  }
+}
+
+// Custom knobs: themes, accent, labels, centre text.
+const SWATCHES = ["#C6FF3D", "#FF8A00", "#FF5E3A", "#FFB020", "#FF5CA8", "#9B6BFF", "#7C8CFF", "#5CE1FF", "#3ECF8E", "#F2F2F2", "#9BA3AF", "#FF2B2B"];
+function buildCustom() {
+  for (const t of APP_THEMES) {
+    const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.dataset.id = t.id;
+    b.innerHTML = `<i style="background:${t.set.accent || DEFAULT.accent}"></i>${t.name}`;
+    b.addEventListener("click", () => { const keep = { accent: t.set.accent || DEFAULT.accent, glass: t.set.glass ?? DEFAULT.glass, font: t.set.font || DEFAULT.font };
+      Object.assign(st, keep); st.theme = t.id; commit(); toast(`${t.name} colours`); });
+    $("#themeChips").append(b);
+  }
+  for (const hex of SWATCHES) {
+    const b = document.createElement("button"); b.type = "button"; b.style.background = hex; b.dataset.hex = hex; b.setAttribute("aria-label", "Accent " + hex);
+    b.addEventListener("click", () => set("accent", hex)); $("#swatches").append(b);
+  }
+  $("#accent").addEventListener("input", (e) => set("accent", e.target.value.toUpperCase()));
+  $("#accentHex").addEventListener("change", (e) => { let v = e.target.value.trim(); if (!v.startsWith("#")) v = "#" + v; if (isHex(v)) set("accent", v.toUpperCase()); else syncUI(); });
+  $("#accentRoll").addEventListener("click", () => set("accent", hslHex(Math.random() * 360, 85 + Math.random() * 15, 55 + Math.random() * 12)));
+  if ("EyeDropper" in window) { const b = $("#eyedrop"); b.hidden = false; b.addEventListener("click", async () => { try { const r = await new EyeDropper().open(); set("accent", r.sRGBHex.toUpperCase()); } catch {} }); }
+  $("#centreText").addEventListener("input", (e) => { st.centre = e.target.value; commit(); });
+  $("#emojiLabels").addEventListener("click", () => { st.labels = segsFor(st.count).map((x) => x.emoji); commit(true); toast("Emoji everything ✨"); });
+  $("#clearLabels").addEventListener("click", () => { st.labels = []; st.centre = ""; commit(true); });
+}
+function syncLabels() {
+  const box = $("#labels"), segs = segsFor(st.count);
+  if (box.childElementCount !== segs.length || box.dataset.n !== String(st.count)) {
+    box.textContent = ""; box.dataset.n = st.count;
+    segs.forEach((seg, i) => { const inp = document.createElement("input"); inp.maxLength = 10; inp.placeholder = seg.label; inp.setAttribute("aria-label", `Label for ${seg.label}`);
+      inp.addEventListener("input", () => { st.labels[i] = inp.value; commit(); }); box.append(inp); });
+  }
+  $$("input", box).forEach((inp, i) => { if (document.activeElement !== inp) inp.value = st.labels[i] || ""; });
+  if (document.activeElement !== $("#centreText")) $("#centreText").value = st.centre || "";
+}
+
+function syncUI() {
+  for (const c of C) syncKnob(c);
+  $$(".row[data-knob]").forEach((el) => { if (!C.some((c) => c.el === el)) el.classList.toggle("studio-hidden", hideStudio && el.dataset.app === "0"); });
+  $$("#themeChips .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === st.theme)));
+  $$("#swatches button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hex === st.accent.toUpperCase())));
+  $("#accent").value = st.accent.toLowerCase(); $("#accentHex").value = st.accent; $("#accentOut").textContent = st.theme === "custom" ? "custom" : st.theme;
+  const on = onAccent(st.accent), ratio = contrast(st.accent, on);
+  $("#contrast").textContent = `Text on it: ${on === "#FFFFFF" ? "white" : "dark"} · ${ratio.toFixed(1)}:1 ${ratio >= 4.5 ? "✓ easy to read" : ratio >= 3 ? "· fine for big text" : "· hard to read"}`;
+  syncLabels();
+  // The page wears the wheel's accent.
+  document.documentElement.style.setProperty("--a", st.accent); document.documentElement.style.setProperty("--on-a", onAccent(st.accent));
+  stage.classList.toggle("checker", st.bg.kind === "none");
+  syncExport();
+}
+
+// ---------- Presets, dice, my wheels ----------
+function thumb(S, px) {
+  const c = document.createElement("canvas"), d = Math.min(2, devicePixelRatio || 1); c.width = c.height = Math.round(px * d);
+  const x = c.getContext("2d"); x.scale(d, d); render(x, px, S, { t: 1.2, hover: 1, spin: 0 }); return c;
+}
+const presetState = (p) => merge(DEFAULT, p.set);
+function presetButton(name, sub, S, onPick, onDelete) {
+  const b = document.createElement("div"); b.className = "preset"; b.setAttribute("role", "button"); b.tabIndex = 0; b.dataset.preset = name;
+  b.append(thumb(S, 120)); const l = document.createElement("div"); l.innerHTML = `${esc(name)}<small>${esc(sub)}</small>`; b.append(l);
+  b.addEventListener("click", (e) => { if (!e.target.closest(".del")) onPick(); });
+  b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(); } });
+  if (onDelete) { const d = document.createElement("button"); d.className = "del"; d.type = "button"; d.textContent = "×"; d.setAttribute("aria-label", "Delete " + name); d.addEventListener("click", onDelete); b.append(d); }
+  return b;
+}
+function applyState(S, msg) { clearTimeout(histTimer); pushHist(); const keepSound = st.fx.sound; st = clone(S); st.fx.sound = keepSound; commit(true); if (msg) toast(msg); }
+function buildPresets() {
+  const a = $("#presetsApp"), s = $("#presetsStudio"); a.textContent = s.textContent = "";
+  APP_THEMES.forEach((p) => a.append(presetButton(p.name, p.sub, presetState(p), () => applyState(merge(presetState(p), { theme: p.id }), p.name))));
+  STUDIO_PRESETS.forEach((p) => s.append(presetButton(p.name, p.sub, presetState(p), () => applyState(presetState(p), p.name))));
+  buildMine();
+}
+const mine = () => { try { return JSON.parse(store.get("circularity-studio-saved") || "[]"); } catch { return []; } };
+function buildMine() {
+  const box = $("#presetsMine"), list = mine(); box.textContent = "";
+  list.forEach((w, i) => box.append(presetButton(w.name, w.when, merge(DEFAULT, w.st), () => applyState(merge(DEFAULT, w.st), w.name), () => {
+    const l = mine(); l.splice(i, 1); store.set("circularity-studio-saved", JSON.stringify(l)); buildMine(); toast("Deleted"); })));
+  $("#mineEmpty").hidden = list.length > 0;
+}
+$("#saveWheel").addEventListener("click", () => {
+  const l = mine(); l.unshift({ name: `Wheel ${l.length + 1}`, when: new Date().toLocaleDateString(undefined, { day: "numeric", month: "short" }), st });
+  store.set("circularity-studio-saved", JSON.stringify(l.slice(0, 24))); buildMine(); toast("Saved to My wheels");
+});
+const pick = (a) => a[Math.floor(Math.random() * a.length)], rr = (a, b, s = 0.05) => Math.round((a + Math.random() * (b - a)) / s) * s;
+function surprise() {
+  const h = Math.random() * 360, dark = Math.random() < 0.72, accent = hslHex(h, 88 + Math.random() * 12, 58 + Math.random() * 8);
+  const kind = pick(["desktop", "aurora", "aurora", "waves", "waves", "mesh", "grid", "dots", "solid"]);
+  const S = merge(DEFAULT, {
+    theme: "custom", accent, accent2: hslHex(h + pick([40, 150, 180, 210, 300]), 90, 62), layout: pick(["halo", "halo", "ring", "ring", "orbit"]), scheme: dark ? "dark" : "light",
+    count: pick([6, 6, 6, 8, 8, 10, 12]), spread: pick([360, 360, 360, 360, 240, 200]), rot: pick([0, 0, 0, 15, 30]), round: pick([0, 0.2, 0.4, 0.7, 1]),
+    gap: Math.round(rr(1, 8, 1)), thick: rr(0.8, 1.2), orb: rr(0.85, 1.15), label: rr(0.95, 1.2), scale: rr(0.9, 1.1), bulge: rr(0.6, 2.2, 0.1),
+    fill: pick(["flat", "gradient", "gradient", "duo", "shades", "stickers", "rainbow", "outline", "glass"]),
+    display: pick(Object.keys(FONTS)), weight: pick([700, 900, 900]), case: pick(["title", "upper"]), font: pick(["rounded", "default", "mono"]), hue: Math.round(Math.random() * 360),
+    fx: { glow: rr(0, 1.4), shadow: rr(0.3, 1.2), spin: pick([0, 0, 0, 2, 5]), breathe: pick([0, 0, 0.5]), dots: pick([0, 0, 0, 8, 16]), grain: pick([0, 0, 0.3]), scan: pick([0, 0, 0, 0.35]), vignette: pick([0, 0, 0.5]), sound: st.fx.sound },
+    bg: { kind, c1: hslHex(h + Math.random() * 60, 70, dark ? 32 : 78), c2: hslHex(h + 180, 60, dark ? 16 : 88), c3: dark ? hslHex(h, 35, 6) : hslHex(h, 35, 95) },
+  });
+  if (S.layout === "halo") S.scheme = "auto";
+  applyState(S, "🎲 " + pick(["Fresh one", "Oh, nice", "Bold choice", "Rolled", "That's new", "Spicy"]));
+}
+$("#dice").addEventListener("click", surprise); $("#dice2").addEventListener("click", surprise);
+$("#resetAll").addEventListener("click", () => applyState(clone(DEFAULT), "Back to Neon"));
+
+// ---------- Export ----------
+function appJSON() {
+  const r2 = (n) => Math.round(n * 100) / 100;
+  const themeId = APP_THEMES.some((t) => t.id === st.theme && (t.set.accent || DEFAULT.accent) === st.accent) ? st.theme : "custom";
+  return JSON.stringify({ app: "Circularity", schemaVersion: 2, values: {
+    "appearance.theme": themeId, "appearance.accentHex": st.accent.toUpperCase(), "appearance.glassStrength": r2(st.glass),
+    "appearance.wheelScheme": st.scheme, "menubar.colorScheme": st.panel, "wheel.layout": st.layout,
+    "appearance.tint.images": (st.tints.images || "").toUpperCase(), "appearance.tint.documents": (st.tints.documents || "").toUpperCase(),
+    "appearance.tint.tools": (st.tints.tools || "").toUpperCase(),
+    "wheel.scale": r2(st.scale), "appearance.ringThickness": r2(st.thick), "appearance.segmentGap": Math.round(st.gap),
+    "appearance.orbScale": r2(st.orb), "appearance.labelScale": r2(st.label), "appearance.font": st.font, "appearance.labelCase": st.case,
+  } }, null, 2);
+}
+function syncExport() {
+  const code = $("#code"); if (code) code.value = appJSON();
+  const app = [`${st.layout[0].toUpperCase() + st.layout.slice(1)} layout, accent ${st.accent}`, `size ${pct(st.scale)}, ${st.font} font, ${st.case === "upper" ? "UPPER" : "Title"} case`];
+  if (st.tints.images || st.tints.tools || st.tints.documents) app.push("your tints");
+  $("#carryApp").innerHTML = app.map((x) => `<li>${esc(x)}</li>`).join("");
+  const diff = C.filter((c) => !c.app && JSON.stringify(getP(st, c.key)) !== JSON.stringify(getP(DEFAULT, c.key))).map((c) => c.label);
+  if (st.labels.some(Boolean)) diff.push("renamed buttons"); if (st.centre) diff.push("centre text");
+  $("#carryStudio").innerHTML = diff.length ? `<li>Stays here (the app doesn't have these): ${esc(diff.slice(0, 8).join(", "))}${diff.length > 8 ? ` and ${diff.length - 8} more` : ""}</li>` : "";
+}
+async function copyText(text, okMsg, fallbackEl) {
+  try { await navigator.clipboard.writeText(text); toast(okMsg); return true; }
+  catch { if (fallbackEl) { fallbackEl.hidden = false; fallbackEl.value = text; fallbackEl.focus(); fallbackEl.select(); } toast("Selected it for you: press ⌘C"); return false; }
+}
+const copyApp = () => { tick(880); copyText(appJSON(), "Copied. In Circularity: Settings → Appearance → Paste theme.", $("#code")); if (!$("#code").hidden) $("#showCode").setAttribute("aria-expanded", "true"); };
+$("#copyApp").addEventListener("click", copyApp); $("#copyTop").addEventListener("click", copyApp);
+$("#showCode").addEventListener("click", (e) => { const c = $("#code"); c.hidden = !c.hidden; e.target.setAttribute("aria-expanded", String(!c.hidden)); e.target.textContent = c.hidden ? "Show the code" : "Hide the code"; });
+$("#importBtn").addEventListener("click", () => {
+  try {
+    const v = JSON.parse($("#importCode").value).values; if (!v) throw 0;
+    const S = clone(st), map = { "appearance.theme": "theme", "appearance.accentHex": "accent", "appearance.glassStrength": "glass", "appearance.wheelScheme": "scheme", "menubar.colorScheme": "panel",
+      "wheel.layout": "layout", "wheel.scale": "scale", "appearance.ringThickness": "thick", "appearance.segmentGap": "gap", "appearance.orbScale": "orb", "appearance.labelScale": "label", "appearance.font": "font", "appearance.labelCase": "case" };
+    for (const [k, p] of Object.entries(map)) if (v[k] !== undefined) S[p] = v[k];
+    for (const kind of ["images", "documents", "tools"]) if (v["appearance.tint." + kind] !== undefined) S.tints[kind] = v["appearance.tint." + kind];
+    applyState(merge(DEFAULT, S), "Loaded your theme from the app");
+  } catch { toast("That doesn't look like a Circularity theme"); }
+});
+const b64 = (s) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+const shareLink = () => location.href.split("#")[0] + "#w=" + b64(JSON.stringify({ ...st, fx: { ...st.fx, sound: false } }));
+$("#shareBtn").addEventListener("click", () => copyText(shareLink(), "Link copied: anyone who opens it gets this wheel", $("#shareOut")));
+$("#shareTop").addEventListener("click", () => copyText(shareLink(), "Link copied: anyone who opens it gets this wheel", null));
+let pngSize = 2048;
+$$("#pngSize button").forEach((b) => b.addEventListener("click", () => { pngSize = +b.dataset.v; $$("#pngSize button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
+function download(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+$("#savePng").addEventListener("click", () => {
+  const c = document.createElement("canvas"); c.width = c.height = pngSize;
+  const clear = $("#pngClear").checked || st.bg.kind === "none";
+  render(c.getContext("2d"), pngSize, effective(), { t: T, hover, spin, clear });
+  c.toBlob((b) => { if (b) { download(b, "circularity-wheel.png"); toast(`Saved a ${pngSize} px PNG`); } else toast("Your browser couldn't make the PNG"); }, "image/png");
+});
+(() => {
+  const types = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+  const type = window.MediaRecorder && cv.captureStream ? types.find((t) => MediaRecorder.isTypeSupported(t)) : null;
+  const btn = $("#recBtn");
+  if (!type) { btn.disabled = true; $("#clipNote").textContent = "This browser can't record the canvas. Try Chrome or Safari."; return; }
+  btn.addEventListener("click", () => {
+    if (recording) return;
+    const rec = new MediaRecorder(cv.captureStream(60), { mimeType: type, videoBitsPerSecond: 8e6 }), chunks = [];
+    rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+    rec.onstop = () => { recording = false; document.body.classList.remove("recording"); btn.lastChild.textContent = " Record a clip";
+      download(new Blob(chunks, { type }), "circularity-wheel." + (type.includes("mp4") ? "mp4" : "webm")); toast("Clip saved"); };
+    recording = true; document.body.classList.add("recording"); btn.lastChild.textContent = " Recording… 4 s"; kick();
+    let n = 0; const walk = setInterval(() => { setHover((hover + 1) % vis.count, n++ % 2 ? "auto" : "rec"); }, 450);
+    rec.start(); setTimeout(() => { clearInterval(walk); rec.stop(); }, 4000);
+  });
+})();
+
+// Your own picture as the backdrop: choose it, or drop it on the stage.
+function usePhoto(file) {
+  if (!file || !file.type.startsWith("image/")) { toast("That isn't a picture"); return; }
+  const img = new Image(); img.onload = () => { photo = img; st.bg.kind = "photo"; commit(true); toast("Backdrop set (it stays on this device)"); };
+  img.onerror = () => toast("Couldn't open that picture"); img.src = URL.createObjectURL(file);
+}
+$("#photoIn").addEventListener("change", (e) => usePhoto(e.target.files[0]));
+stage.addEventListener("dragover", (e) => { e.preventDefault(); stage.classList.add("drop"); });
+stage.addEventListener("dragleave", () => stage.classList.remove("drop"));
+stage.addEventListener("drop", (e) => { e.preventDefault(); stage.classList.remove("drop"); usePhoto(e.dataTransfer.files[0]); });
+$("#matchBg").addEventListener("click", () => {
+  const [r, g, b] = hexRgb(st.accent), max = Math.max(r, g, b), min = Math.min(r, g, b); let h = 0;
+  if (max !== min) { const d = max - min; h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
+  const light = isLight(st);
+  Object.assign(st.bg, { c1: hslHex(h + 20, 60, light ? 80 : 30), c2: hslHex(h - 40, 55, light ? 90 : 14), c3: light ? hslHex(h, 30, 95) : hslHex(h, 40, 6) });
+  if (st.bg.kind === "photo" && !photo) st.bg.kind = "aurora";
+  commit(true); toast("Backdrop matched to the accent");
+});
+
+// ---------- Tabs, toggles, keys ----------
+const tabs = $$(".tab");
+function openTab(t) {
+  tabs.forEach((x) => { const on = x === t; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; $("#" + x.getAttribute("aria-controls")).hidden = !on; });
+  $(".panes").scrollTop = 0; store.set("circularity-studio-tab", t.id);
+}
+tabs.forEach((t, i) => {
+  t.addEventListener("click", () => openTab(t));
+  t.addEventListener("keydown", (e) => { const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0; if (d) { e.preventDefault(); const n = tabs[(i + d + tabs.length) % tabs.length]; openTab(n); n.focus(); } });
+});
+$("#appView").addEventListener("change", (e) => { appView = e.target.checked; cv.style.transform = ""; kick(); toast(appView ? "Now drawn as the app draws it" : "Studio view"); });
+$("#hideStudio").addEventListener("change", (e) => { hideStudio = e.target.checked; syncUI(); });
+$("#undo").addEventListener("click", undo); $("#redo").addEventListener("click", redo);
+addEventListener("keydown", (e) => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !["range", "checkbox", "color"].includes(e.target.type);
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !typing) { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if (!typing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === "r") surprise();
+});
+let toastTimer = 0;
+function toast(msg) { if (EMBED) return; const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("on"), 2200); }
+
+// ---------- Start ----------
+buildKnobs(); buildCustom();
+$("#knobs").textContent = `${C.length + 5} knobs`;
+syncUI(); updUndo(); size();
+if (!EMBED) {
+  buildPresets();
+  const savedTab = $("#" + (store.get("circularity-studio-tab") || "t-presets")); if (savedTab) openTab(savedTab);
+  if (location.hash.startsWith("#w=")) { toast("Loaded a shared wheel"); history.replaceState(null, "", location.pathname + location.search); }
+}
+// Canvas text needs the fonts loaded; ask for every face, then redraw.
+Promise.all(['700 20px "JetBrains Mono"', '800 20px "Nunito"', ...Object.values(FONTS).filter((f) => f.fam).flatMap((f) => [`400 20px ${f.fam}`, `700 20px ${f.fam}`, `900 20px ${f.fam}`])]
+  .map((f) => document.fonts.load(f).catch(() => {}))).then(() => { kick(); if (!EMBED) buildPresets(); });
+
+// Embed: cycle through the looks for the home page.
+if (EMBED) {
+  const looks = [...STUDIO_PRESETS.map(presetState), merge(DEFAULT, {})]; let i = 0;
+  st.fx.autohover = true;
+  setInterval(() => { if (document.hidden) return; i = (i + 1) % looks.length; st = merge(looks[i], { fx: { tilt: 0 } }); kick(); }, 2600);
+}
+</script>
+</body>
+</html>
