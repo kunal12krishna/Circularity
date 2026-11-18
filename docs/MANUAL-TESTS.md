@@ -141,3 +141,15 @@ Quit the app first and relaunch the new build (`open build/DerivedData/Build/Pro
 - `--drag-test` drives the real wheel, panel, Settings and jobs, but it hands the wheel its drop and clicks directly (level 1, no permission needed). It cannot press keys in other apps or make a real system drag.
 - **Level 2 (real events)** needs the test runner to have Accessibility permission, which the app itself never asks for. Do it by hand with rows 1–10 and 55–57 above, or script it with a tool that posts mouse events (for example `cliclick` from Homebrew, run from a Terminal that has Accessibility permission): press on a file in Finder, drag 40 pt, tap Shift, move onto a segment, release — then check the result file and the log line "Wheel choice: …".
 - `--perf-report docs/PERF-REPORT.md` measures memory, CPU and timings (see docs/PERF-REPORT.md and docs/INSTRUMENTS.md).
+
+## 0.2 features
+
+| # | Do this | Expect |
+|---|---|---|
+| 75 | Drag a photo of a person, pet or object, tap Shift, rest on More → **CUT** (Cut out). | `name (cut out).png` with a transparent background. macOS 13 shows no Cut out. |
+| 76 | Convert anything with the wheel. | A small shelf appears by the pointer with the result. Drag it into Mail or Finder: it goes away. **Copy** puts the file on the clipboard; **Show** opens Finder; it fades after ~8 s. Off: Settings → Output → "Show it on a shelf". |
+| 77 | Drag a photo, tap Shift, hover **JPG**, then **Compress**. | A close-up appears beside the segment: left half as it is, right half re-encoded (JPG at your quality; Compress at 60). Off: Settings → Wheel → Before/after close-up. |
+| 78 | Settings → Wheel → Wheel buttons: put Cut out at Top, Crop at Bottom right. | The next wheel has them there; Compress/Resize move under More. Picking a button already used swaps the two. "Back to the built-in buttons" restores. |
+| 79 | Convert your 10th file (or 100 MB saved in all). | The panel says "✦ 10 files converted!", the icon pulses; Stats → Milestones shows it lit. |
+| 80 | Settings → General → Updates. | Says the build has no update address (until UPDATE_FEED_URL is set, docs/UPDATES.md). Once set: Check now reports newest or offers Download. Off by default. |
+| 81 | On the website: Theme builder → choose a look → **Copy theme**. In the app: Settings → Appearance → **Paste theme**. | The wheel takes the accent, layout, sizes and fonts; nothing else changes. |

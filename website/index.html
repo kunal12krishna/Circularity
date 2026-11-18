@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Outfit:wght@300;500;800&family=Press+Start+2P&family=Sora:wght@400;600&family=Unbounded:wght@500;800&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=Outfit:wght@300;500;800&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Sora:wght@400;600&family=Unbounded:wght@500;800&family=VT323&display=swap">
 <style>
 /* Layout: a working "desktop" demo is the hero; every section reskins live (Halo · Aqua · ASCII · Pixel · Glass). */
 :root {
@@ -39,6 +39,25 @@
   --radius: 22px; --shadow: 0 30px 80px rgba(5,6,30,.55); --glow: 0 0 30px rgba(143,227,255,.55); --display-case: none; --display-track: -.02em; color-scheme: dark;
 }
 
+:root[data-skin="win95"] {
+  --bg: #C0C0C0; --bg2: #FFFFFF; --panel: #C0C0C0; --panel2: #D4D0C8; --line: #808080;
+  --fg: #000000; --muted: #2A2A2A; --accent: #000080; --on-accent: #FFFFFF; --danger: #A00000;
+  --display: "Tahoma", "Verdana", "Segoe UI", sans-serif; --body: "Tahoma", "Verdana", "Segoe UI", sans-serif; --mono: "Lucida Console", "JetBrains Mono", monospace;
+  --body-size: 15px; --radius: 0px; --shadow: 1px 1px 0 #000; --glow: none; --display-case: none; --display-track: 0; color-scheme: light;
+}
+:root[data-skin="blueprint"] {
+  --bg: #123E7C; --bg2: #0F3569; --panel: rgba(255,255,255,.05); --panel2: rgba(255,255,255,.09); --line: rgba(255,255,255,.6);
+  --fg: #F1F6FF; --muted: #BFD2F0; --accent: #FFFFFF; --on-accent: #123E7C; --danger: #FFC2C2;
+  --display: "Architects Daughter", "Comic Sans MS", cursive; --body: "JetBrains Mono", ui-monospace, monospace; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --body-size: 15px; --radius: 2px; --shadow: none; --glow: none; --display-case: uppercase; --display-track: .03em; color-scheme: dark;
+}
+:root[data-skin="news"] {
+  --bg: #EEECE6; --bg2: #E4E1D8; --panel: #F6F4EF; --panel2: #E9E6DE; --line: #1A1A1A;
+  --fg: #141414; --muted: #46423A; --accent: #B3001B; --on-accent: #FFFFFF; --danger: #B3001B;
+  --display: "Playfair Display", Georgia, serif; --body: "Old Standard TT", Georgia, serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+  --body-size: 17px; --radius: 0px; --shadow: none; --glow: none; --display-case: none; --display-track: -.01em; color-scheme: light;
+}
+
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
@@ -57,7 +76,42 @@ body {
 .blobs i:nth-child(3) { background: #00C2FF; left: 30%; bottom: 0; animation-delay: -12s; }
 @keyframes drift { to { transform: translate(8vmax, -6vmax) scale(1.15); } }
 
+/* Windows 95: bevelled grey, a teal desktop, a navy title bar */
+:root[data-skin="win95"] :is(.card, .desk, .play, .pill, .btn, .skin-card, .icon-btn, .cmd, .lab-card, .tb-card, .copy) {
+  border: 2px solid; border-color: #FFFFFF #808080 #808080 #FFFFFF; box-shadow: 1px 1px 0 #000; border-radius: 0; }
+:root[data-skin="win95"] :is(.pill, .lab-card, .btn)[aria-pressed="true"] { border-color: #808080 #FFFFFF #FFFFFF #808080; box-shadow: inset 1px 1px 0 #000; }
+:root[data-skin="win95"] .desk-bar { background: linear-gradient(90deg, #000080, #1084D0); color: #FFFFFF; font-weight: 700; }
+:root[data-skin="win95"] .desk-bar .menu-icon, :root[data-skin="win95"] .menu-icon svg { color: #FFFFFF; }
+:root[data-skin="win95"] .files { background: #008080; }
+:root[data-skin="win95"] .files .fname, :root[data-skin="win95"] .files .fsize { color: #FFFFFF; }
+:root[data-skin="win95"] .files .fsize .down, :root[data-skin="win95"] .files .fsize .up { color: #FFFF00; }
+:root[data-skin="win95"] .drop-note { color: #FFFFFF; border-color: #FFFFFF; }
+:root[data-skin="win95"] .drop-note .link-btn { color: #FFFF00; }
+:root[data-skin="win95"] .lights { display: none; }
+:root[data-skin="win95"] .thumb { border-radius: 0; }
+/* Blueprint: drafting grid, dashed lines, hand lettering */
+:root[data-skin="blueprint"] body { background-image: linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px),
+  linear-gradient(rgba(255,255,255,.14) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.14) 1px, transparent 1px);
+  background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px; }
+:root[data-skin="blueprint"] :is(.card, .desk, .play, .skin-card, .lab-card, .tb-card) { border-style: dashed; }
+:root[data-skin="blueprint"] .thumb { border-radius: 2px; box-shadow: none; border: 1px solid var(--line); }
+:root[data-skin="blueprint"] .thumb img { filter: grayscale(1) brightness(1.2) sepia(1) hue-rotate(180deg) saturate(2.4); }
+/* Newspaper: rules, serif headlines, red ink */
+:root[data-skin="news"] h1 { font-weight: 900; letter-spacing: -.02em; }
+:root[data-skin="news"] :is(.card, .tb-card) { background: transparent; border: 0; border-top: 3px double var(--line); border-radius: 0; padding-inline: 0; }
+:root[data-skin="news"] :is(.desk, .play) { border: 1.5px solid var(--line); box-shadow: none; }
+:root[data-skin="news"] .section-head { border-bottom: 1px solid var(--line); padding-bottom: 14px; }
+:root[data-skin="news"] .eyebrow { font-family: var(--body); font-style: italic; text-transform: none; letter-spacing: 0; font-size: 15px; }
+:root[data-skin="news"] .thumb img { filter: grayscale(1) contrast(1.15); }
+
 a { color: var(--accent); }
+.skip { position: absolute; left: -9999px; top: 8px; z-index: 100; padding: 8px 14px; background: var(--accent); color: var(--on-accent); }
+.skip:focus { left: max(16px, env(safe-area-inset-left, 0px)); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.links { display: flex; gap: 14px; font-family: var(--mono); font-size: 12px; letter-spacing: .04em; }
+.links a { color: var(--muted); text-decoration: none; }
+.links a:hover, .links a:focus-visible { color: var(--fg); }
+:root[data-skin="pixel"] .links { font-size: 16px; }
 button, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .wrap { max-width: 1180px; margin: 0 auto; }
@@ -202,7 +256,45 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 :root[data-skin="pixel"] .play-hud { font-size: 17px; }
 .play-hud b { color: var(--accent); font-size: 1.3em; }
 
-.skin-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.skin-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.grid3 .card h3 { display: flex; gap: 10px; align-items: baseline; }
+.tag { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; background: var(--accent); color: var(--on-accent); }
+:root[data-skin="pixel"] .tag, :root[data-skin="ascii"] .tag, :root[data-skin="win95"] .tag, :root[data-skin="news"] .tag { border-radius: 0; }
+
+/* Theme builder */
+.builder { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.tb-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.tb-preview canvas { width: 100%; max-width: 560px; aspect-ratio: 1; display: block; margin: 0 auto; border-radius: calc(var(--radius) - 2px); touch-action: none; }
+.tb-caption { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; min-height: 18px; }
+:root[data-skin="pixel"] .tb-caption { font-size: 16px; }
+.tb-group { display: grid; gap: 8px; }
+.tb-group > .lbl { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+:root[data-skin="pixel"] .tb-group > .lbl { font-size: 15px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); cursor: pointer; padding: 0; }
+.swatch[aria-pressed="true"] { outline: 3px solid var(--fg); outline-offset: 2px; }
+:root[data-skin="pixel"] .swatch, :root[data-skin="ascii"] .swatch, :root[data-skin="win95"] .swatch { border-radius: 0; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+input[type="color"] { width: 38px; height: 30px; padding: 0; border: 1px solid var(--line); background: transparent; cursor: pointer; }
+.tint-row { display: flex; align-items: center; gap: 10px; font-size: .9em; }
+.tint-row label { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; }
+.tb-export { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+#tbJSON { width: 100%; min-height: 180px; font-family: var(--mono); font-size: 12px; background: var(--bg2); color: var(--fg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; resize: vertical; }
+.tb-status { font-size: .9em; color: var(--muted); min-height: 1.4em; }
+
+/* Format lab */
+.lab { display: grid; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); gap: 20px; align-items: start; }
+.lab-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.lab-card { text-align: left; border: 1px solid var(--line); background: var(--panel2); color: var(--fg); border-radius: calc(var(--radius) - 2px); padding: 12px; cursor: pointer; display: grid; gap: 4px; min-width: 0; }
+.lab-card[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.lab-card[disabled] { opacity: .5; cursor: not-allowed; }
+.lab-card .fmt { font-family: var(--mono); font-weight: 700; font-size: 15px; }
+.lab-card .sz { font-family: var(--mono); font-size: 13px; }
+.lab-card .chg { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+:root[data-skin="pixel"] .lab-card .fmt, :root[data-skin="pixel"] .lab-card .sz, :root[data-skin="pixel"] .lab-card .chg { font-size: 17px; }
+.lab-view canvas { width: 100%; height: clamp(260px, 36vw, 380px); display: block; background: var(--bg2); border-radius: calc(var(--radius) - 2px); touch-action: none; cursor: ew-resize; }
+select { font: inherit; color: var(--fg); background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; max-width: 100%; }
 .skin-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; cursor: pointer; background: var(--panel); text-align: left; padding: 0; color: var(--fg); transition: transform .2s; }
 .skin-card:hover { transform: translateY(-4px) rotate(-1deg); }
 .skin-card[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -215,6 +307,10 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 .sw-ascii { background: #040704; color: #39FF6A; font-family: "VT323", monospace; font-size: 30px; } .sw-ascii span { display: none; }
 .sw-pixel { background: #1B1135; } .sw-pixel span { border-radius: 0; background: #FFCC33; box-shadow: 6px 6px 0 #8A5A00; clip-path: polygon(30% 0, 70% 0, 70% 10%, 90% 10%, 90% 30%, 100% 30%, 100% 70%, 90% 70%, 90% 90%, 70% 90%, 70% 100%, 30% 100%, 30% 90%, 10% 90%, 10% 70%, 0 70%, 0 30%, 10% 30%, 10% 10%, 30% 10%); }
 .sw-glass { background: linear-gradient(135deg, #5B4BFF, #FF4FB0 55%, #00C2FF); } .sw-glass span { background: rgba(255,255,255,.25); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,.6); }
+.sw-win95 { background: #008080; } .sw-win95 span { border-radius: 0; width: 64px; height: 46px; background: #C0C0C0; border: 2px solid; border-color: #FFF #808080 #808080 #FFF; box-shadow: inset 0 12px 0 #000080; }
+.sw-blueprint { background-color: #123E7C; background-image: linear-gradient(rgba(255,255,255,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.12) 1px, transparent 1px); background-size: 12px 12px; }
+.sw-blueprint span { border: 1.5px dashed #FFFFFF; background: transparent; }
+.sw-news { background: #EEECE6; color: #141414; font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 34px; } .sw-news span { display: none; }
 
 .privacy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .privacy .card b { font-family: var(--mono); color: var(--accent); }
@@ -242,13 +338,17 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 :root[data-skin="pixel"] .toast, :root[data-skin="ascii"] .toast { border-radius: 0; font-size: 16px; }
 
 @media (max-width: 960px) {
-  .hero, .install { grid-template-columns: minmax(0, 1fr); }
+  .hero, .install, .builder, .lab { grid-template-columns: minmax(0, 1fr); }
+  .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .links { display: none; }
   .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .skin-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .privacy { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 560px) {
-  .grid4, .skin-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid4, .skin-cards, .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid3 { grid-template-columns: minmax(0, 1fr); }
+  .skins { overflow-x: auto; flex-wrap: nowrap; max-width: 100%; padding-bottom: 2px; }
   .skins { margin-left: 0; }
   .files { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 }
@@ -258,6 +358,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 }
 </style>
 
+<a class="skip" href="#desk">Skip to the demo</a>
 <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
 
 <header class="top">
@@ -268,12 +369,18 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       </svg>
       Circularity
     </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#desk">Try it</a><a href="#theme">Theme builder</a><a href="#lab">Format lab</a><a href="#play">Game</a>
+    </nav>
     <nav class="skins" aria-label="Skin">
       <button class="pill" data-skin-btn="halo">Halo</button>
       <button class="pill" data-skin-btn="aqua">Aqua</button>
       <button class="pill" data-skin-btn="ascii">ASCII</button>
       <button class="pill" data-skin-btn="pixel">Pixel</button>
       <button class="pill" data-skin-btn="glass">Glass</button>
+      <button class="pill" data-skin-btn="win95">Win95</button>
+      <button class="pill" data-skin-btn="blueprint">Blueprint</button>
+      <button class="pill" data-skin-btn="news">Paper</button>
     </nav>
     <button class="icon-btn" id="soundBtn" aria-pressed="false" title="Sound" aria-label="Sound off">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWaves" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" opacity=".25"/></svg>
@@ -330,7 +437,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
         <p>While dragging from Finder, the desktop or any app. Option or Control work too.</p>
       </div>
       <div class="card">
-        <div class="shake-pad" id="shakePad"><span id="shakeText">shake your pointer here ↔</span><div class="meter" id="shakeMeter"></div></div>
+        <div class="shake-pad" id="shakePad" tabindex="0" role="group" aria-label="Shake pad: wiggle the pointer here, or press the left and right arrow keys quickly"><span id="shakeText" aria-live="polite">shake your pointer here ↔</span><div class="meter" id="shakeMeter"></div></div>
         <h3>Shake</h3>
         <p>Wiggle left and right a few times mid-drag. Try it on the pad above.</p>
       </div>
@@ -347,6 +454,90 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     </div>
   </section>
 
+  <section class="wrap" id="new">
+    <div class="section-head">
+      <div class="eyebrow">New in 0.2</div>
+      <h2>Small things that feel big</h2>
+    </div>
+    <div class="grid3">
+      <div class="card"><h3>Cut out <span class="tag">macOS 14+</span></h3><p>Removes the background from a photo with Apple's on-device subject lifting and saves a transparent PNG.</p></div>
+      <div class="card"><h3>Drop shelf</h3><p>The result floats next to your pointer. Drag it straight into Mail, Slack or a chat, or copy it with one click.</p></div>
+      <div class="card"><h3>Before and after</h3><p>Hover JPG, HEIC or Compress and a magnifier shows a piece of your picture, half as it is and half as it will be.</p></div>
+      <div class="card"><h3>Your own buttons</h3><p>Choose what sits in each of the six spots on the wheel. Everything else waits under More.</p></div>
+      <div class="card"><h3>Milestones</h3><p>Your first conversion, 1 GB saved, 10,000 files. A small celebration in the menu bar each time.</p></div>
+      <div class="card"><h3>Themes from here</h3><p>Build a theme below, copy it, and paste it into the app in one click.</p></div>
+    </div>
+  </section>
+
+  <section class="wrap" id="theme">
+    <div class="section-head">
+      <div class="eyebrow">Theme builder</div>
+      <h2>Build your wheel, then paste it into the app</h2>
+      <p style="color:var(--muted)">This preview draws the app's real layouts. When you like it, copy the theme and in Circularity open Settings → Appearance → <b>Paste theme</b>.</p>
+    </div>
+    <div class="builder">
+      <div class="tb-card tb-preview">
+        <canvas id="tbCanvas" width="560" height="560" tabindex="0" role="img" aria-label="Preview of the wheel"></canvas>
+        <div class="tb-caption" id="tbCaption" aria-live="polite">Hover the wheel, or use the arrow keys</div>
+      </div>
+      <div class="tb-card" id="tbControls">
+        <div class="tb-group"><div class="lbl" id="tbThemeLbl">Start from a theme</div><div class="chips" role="group" aria-labelledby="tbThemeLbl" id="tbThemes"></div></div>
+        <div class="tb-group"><div class="lbl" id="tbAccentLbl">Accent</div>
+          <div class="chips" role="group" aria-labelledby="tbAccentLbl" id="tbSwatches"></div>
+          <label class="tint-row"><input type="color" id="tbAccent" value="#c6ff3d"> Any colour</label></div>
+        <div class="tb-group"><div class="lbl" id="tbLayoutLbl">Layout</div><div class="chips" role="group" aria-labelledby="tbLayoutLbl">
+          <button class="pill" type="button" data-tb-layout="halo">Halo</button><button class="pill" type="button" data-tb-layout="ring">Ring</button><button class="pill" type="button" data-tb-layout="orbit">Orbit</button></div></div>
+        <div class="tb-group"><div class="lbl" id="tbSchemeLbl">Wheel colours <span>Halo is always dark</span></div><div class="chips" role="group" aria-labelledby="tbSchemeLbl">
+          <button class="pill" type="button" data-tb-scheme="auto">Automatic</button><button class="pill" type="button" data-tb-scheme="dark">Dark</button><button class="pill" type="button" data-tb-scheme="light">Light</button><button class="pill" type="button" data-tb-scheme="system">Match macOS</button></div></div>
+        <div class="tb-group"><label class="lbl" for="tbGlass">Glass (Ring) <output id="tbGlassOut"></output></label><input type="range" id="tbGlass" min="0" max="1" step="0.05"></div>
+        <div class="tb-group"><div class="lbl">Tint by kind</div>
+          <div class="tint-row"><label><input type="checkbox" id="tbTintImagesOn"> Image formats</label><input type="color" id="tbTintImages" value="#5ce1ff" aria-label="Image formats tint"></div>
+          <div class="tint-row"><label><input type="checkbox" id="tbTintToolsOn"> Tools (compress, resize)</label><input type="color" id="tbTintTools" value="#ff5ca8" aria-label="Tools tint"></div>
+          <div class="tint-row"><label><input type="checkbox" id="tbTintDocsOn"> PDF and document formats</label><input type="color" id="tbTintDocs" value="#ffb020" aria-label="PDF and document formats tint"></div></div>
+        <div class="tb-group"><label class="lbl" for="tbScale">Wheel size <output id="tbScaleOut"></output></label><input type="range" id="tbScale" min="0.7" max="1.4" step="0.05"></div>
+        <div class="tb-group"><label class="lbl" for="tbThick">Ring thickness <output id="tbThickOut"></output></label><input type="range" id="tbThick" min="0.8" max="1.2" step="0.05"></div>
+        <div class="tb-group"><label class="lbl" for="tbGap">Gap between buttons <output id="tbGapOut"></output></label><input type="range" id="tbGap" min="1" max="8" step="1"></div>
+        <div class="tb-group"><label class="lbl" for="tbOrb">Centre size <output id="tbOrbOut"></output></label><input type="range" id="tbOrb" min="0.85" max="1.15" step="0.05"></div>
+        <div class="tb-group"><label class="lbl" for="tbLabel">Label size <output id="tbLabelOut"></output></label><input type="range" id="tbLabel" min="0.85" max="1.3" step="0.05"></div>
+        <div class="tb-group"><div class="lbl" id="tbFontLbl">Font <span>Halo keeps mono</span></div><div class="chips" role="group" aria-labelledby="tbFontLbl">
+          <button class="pill" type="button" data-tb-font="rounded">Rounded</button><button class="pill" type="button" data-tb-font="default">System</button><button class="pill" type="button" data-tb-font="mono">Mono</button>
+          <button class="pill" type="button" data-tb-case="title">Title case</button><button class="pill" type="button" data-tb-case="upper">UPPER</button></div></div>
+        <div class="tb-group"><div class="lbl" id="tbPanelLbl">Menu bar panel</div><div class="chips" role="group" aria-labelledby="tbPanelLbl">
+          <button class="pill" type="button" data-tb-panel="auto">Automatic</button><button class="pill" type="button" data-tb-panel="dark">Dark</button><button class="pill" type="button" data-tb-panel="light">Light</button></div></div>
+        <div class="tb-export">
+          <button class="btn primary" type="button" id="tbCopy">Copy theme</button>
+          <button class="btn" type="button" id="tbShow" aria-expanded="false" aria-controls="tbJSON">Show the code</button>
+          <button class="btn" type="button" id="tbReset">Reset</button>
+        </div>
+        <p class="tb-status" id="tbStatus" role="status"></p>
+        <textarea id="tbJSON" readonly hidden aria-label="Theme code to paste into Circularity"></textarea>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="lab">
+    <div class="section-head">
+      <div class="eyebrow">Format lab</div>
+      <h2>Same picture, every format</h2>
+      <p style="color:var(--muted)">Pick a picture (or drop your own on the desktop above), move the quality, then drag across the comparison to see what each format really does. Everything is encoded in your browser.</p>
+    </div>
+    <div class="lab">
+      <div class="tb-card">
+        <div class="tb-group"><label class="lbl" for="labSource">Picture</label><select id="labSource"></select></div>
+        <div class="tb-group"><label class="lbl" for="labQuality">Quality <output id="labQualityOut"></output></label><input type="range" id="labQuality" min="10" max="100" step="1" value="72"></div>
+        <div class="lab-cards" id="labCards" role="group" aria-label="Formats: pick one to compare"></div>
+        <p class="tb-status" id="labNote" role="status"></p>
+      </div>
+      <div class="tb-card lab-view">
+        <canvas id="labCanvas" tabindex="0" role="img" aria-label="Comparison: original on the left, the chosen format on the right"></canvas>
+        <div class="tb-group"><label class="lbl" for="labSplit">Divider <span>tap the picture to zoom there</span></label><input type="range" id="labSplit" min="0" max="100" value="50"></div>
+        <div class="chips" role="group" aria-label="Zoom">
+          <button class="pill" type="button" data-lab-zoom="1">Fit</button><button class="pill" type="button" data-lab-zoom="2">2×</button><button class="pill" type="button" data-lab-zoom="4">4×</button><button class="pill" type="button" data-lab-zoom="8">8×</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="wrap" id="play">
     <div class="section-head">
       <div class="eyebrow">Physics break</div>
@@ -354,7 +545,8 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <p style="color:var(--muted)">Grab a file and throw it into the centre. Every hit converts it and adds to the bytes you've saved. Chain hits for a combo.</p>
     </div>
     <div class="play">
-      <canvas id="playCanvas" aria-label="Fling game: throw file bubbles into the wheel"></canvas>
+      <canvas id="playCanvas" tabindex="0" aria-label="Fling game: throw file bubbles into the wheel. With the keyboard, press Space to throw one." aria-describedby="playHelp"></canvas>
+      <p class="sr-only" id="playHelp">Press Space or Enter to throw the nearest file into the wheel.</p>
       <div class="play-hud"><span>saved <b id="playSaved">0 MB</b></span><span id="playCombo">combo ×1</span><span>converted <b id="playCount">0</b></span></div>
     </div>
   </section>
@@ -371,6 +563,9 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <button class="skin-card" data-skin-btn="ascii"><div class="sw sw-ascii">[(o)]<span></span></div><div class="lbl">ASCII · tty</div></button>
       <button class="skin-card" data-skin-btn="pixel"><div class="sw sw-pixel"><span></span></div><div class="lbl">Pixel · 8-bit</div></button>
       <button class="skin-card" data-skin-btn="glass"><div class="sw sw-glass"><span></span></div><div class="lbl">Liquid glass</div></button>
+      <button class="skin-card" data-skin-btn="win95"><div class="sw sw-win95"><span></span></div><div class="lbl">Windows 95</div></button>
+      <button class="skin-card" data-skin-btn="blueprint"><div class="sw sw-blueprint"><span></span></div><div class="lbl">Blueprint</div></button>
+      <button class="skin-card" data-skin-btn="news"><div class="sw sw-news">Aa<span></span></div><div class="lbl">Newspaper</div></button>
     </div>
   </section>
 
@@ -414,6 +609,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 <button class="shift-touch" id="shiftTouch" type="button">⇧ Shift</button>
 <div class="modal" id="modal" hidden><div class="modal-box"><div class="modal-head"><span id="modalTitle"></span><button class="copy" id="modalClose" type="button">close</button></div><div id="modalBody"></div></div></div>
 <div class="toast" id="toast" role="status"></div>
+<div class="sr-only" id="sr" aria-live="polite"></div>
 
 <script>
 (() => {
@@ -432,6 +628,7 @@ const fmtBytes = (n) => {
   return (n / 1048576).toFixed(n < 10485760 ? 1 : 0) + " MB";
 };
 const toast = (() => { let t; return (msg) => { const el = $("#toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(t); t = setTimeout(() => el.classList.remove("show"), 2600); }; })();
+const announce = (msg) => { const el = $("#sr"); el.textContent = ""; setTimeout(() => (el.textContent = msg), 30); };
 const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 
 // ---------- Sound (off until asked) ----------
@@ -461,7 +658,8 @@ $("#soundBtn").addEventListener("click", () => {
 });
 
 // ---------- Skins ----------
-const SKINS = ["halo", "aqua", "ascii", "pixel", "glass"];
+const SKINS = ["halo", "aqua", "ascii", "pixel", "glass", "win95", "blueprint", "news"];
+const LIGHT_SKINS = ["aqua", "win95", "news"];
 let skin = "halo";
 function setSkin(name, announce) {
   if (!SKINS.includes(name) || name === skin && root.dataset.skin) return;
@@ -469,7 +667,7 @@ function setSkin(name, announce) {
     skin = name; root.dataset.skin = name;
     $$("[data-skin-btn]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.skinBtn === name));
     store.set("circularity-skin", name);
-    drawWheel(); play.restyle();
+    drawWheel(); play.restyle(); if (typeof lab !== "undefined") lab.draw();
   };
   if (document.startViewTransition && !reduceMotion && announce !== "silent") document.startViewTransition(apply); else apply();
   if (announce === true) { toast("Skin: " + name.toUpperCase()); sfx.skin(); }
@@ -489,6 +687,7 @@ document.addEventListener("keydown", (e) => {
 
 // ---------- Files on the pretend desktop ----------
 const files = [];
+let onFilesChanged = () => {};
 let selected = null, saved = 0, converted = 0;
 let nextId = 1;
 
@@ -549,6 +748,7 @@ async function addFile({ name, blob, kind = "image", text = null, from = null, w
   const file = { id: nextId++, name, blob, url, img, kind, text, bytes: blob.size, from, w, h, preview };
   files.push(file);
   renderFile(file);
+  onFilesChanged();
   return file;
 }
 
@@ -765,6 +965,7 @@ function openWheel(f, x, y, mode) {
   W.open = true;
   wheelEl.classList.toggle("click", mode === "click");
   drawWheel();
+  if (mode === "click") announce(`Wheel open for ${f.name}. Arrow keys choose, Return converts, Escape cancels.`);
   requestAnimationFrame(() => wheelEl.classList.add("open"));
   $("#hint").style.display = "none"; $("#shiftTouch").classList.remove("show");
   sfx.open();
@@ -803,6 +1004,7 @@ function setHover(h) {
   if (h.t !== "none") sfx.tick();
   const key = keyFor(h);
   if (key && ACTIONS[key].run && !(key in W.est)) estimate(key);
+  if (W.mode === "click") announce(h.t === "centre" ? "Cancel" : key ? `${ACTIONS[key].label}: ${ACTIONS[key].hint}` : "");
   drawWheel();
 }
 function keyFor(h) { return h.t === "seg" ? W.ring[h.i] : h.t === "chip" ? W.fan[h.k] : null; }
@@ -853,6 +1055,9 @@ function segColors(i, hot, style) {
   switch (skin) {
     case "aqua": return { fill: hot ? ["#9BD3FF", "#2C83F2", "#1559C2"] : ["#FFFFFF", "#E2EAF4", "#C5D2E2"], text: hot ? "#FFFFFF" : "#1A2433", cap: hot ? "rgba(255,255,255,.85)" : "#5B6779", stroke: hot ? "#0E4AA6" : "rgba(40,70,110,.35)" };
     case "glass": return { fill: hot ? style.accent : "rgba(255,255,255,.16)", text: hot ? style.onAccent : "#FFFFFF", cap: hot ? style.onAccent : "rgba(255,255,255,.75)", stroke: "rgba(255,255,255,.45)" };
+    case "win95": return { fill: hot ? "#000080" : "#C0C0C0", text: hot ? "#FFFFFF" : "#000000", cap: hot ? "#C8D0FF" : "#303030", stroke: "#808080", bevel: !hot };
+    case "blueprint": return { fill: hot ? "rgba(255,255,255,.92)" : "rgba(255,255,255,.04)", text: hot ? "#123E7C" : "#F1F6FF", cap: hot ? "#123E7C" : "#BFD2F0", stroke: "rgba(255,255,255,.9)", dashed: !hot };
+    case "news": return { fill: hot ? "#B3001B" : "#F6F4EF", text: hot ? "#FFFFFF" : "#141414", cap: hot ? "#FFE1E1" : "#46423A", stroke: "#141414", halftone: !hot };
     default: return { fill: hot ? style.accent : "#1B1D23", text: hot ? style.onAccent : "#ECEEF2", cap: hot ? "#2A3300" : "#9097A6", stroke: null };
   }
 }
@@ -866,6 +1071,18 @@ function drawSmoothWheel(ctx, c, style) {
     ctx.shadowColor = "transparent"; ctx.strokeStyle = style.accent; ctx.globalAlpha = .25; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 6, 0, Math.PI * 2); ctx.stroke(); }
   if (skin === "aqua") { const g = ctx.createRadialGradient(c, c - 40, 20, c, c, G.rout + 30); g.addColorStop(0, "#F7FAFE"); g.addColorStop(1, "#AEBFD3"); ctx.shadowColor = "rgba(20,50,90,.35)"; ctx.shadowBlur = 28; ctx.shadowOffsetY = 10; ctx.fillStyle = g; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 12, 0, Math.PI * 2); ctx.fill(); }
   if (skin === "glass") { ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 13, 0, Math.PI * 2); ctx.stroke(); }
+  if (skin === "win95") { ctx.fillStyle = "#D4D0C8"; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 12, 0, Math.PI * 2); ctx.fill(); ctx.lineWidth = 2;
+    ctx.strokeStyle = "#FFFFFF"; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 11, Math.PI * .75, Math.PI * 1.75); ctx.stroke();
+    ctx.strokeStyle = "#808080"; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 11, Math.PI * 1.75, Math.PI * 2.75); ctx.stroke(); }
+  if (skin === "blueprint") { // drafting marks: crosshair, a dimension line, dashed outer circle
+    ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1; ctx.setLineDash([6, 5]);
+    ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 12, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(c - G.rout - 26, c); ctx.lineTo(c - G.orb - 6, c); ctx.moveTo(c + G.orb + 6, c); ctx.lineTo(c + G.rout + 26, c);
+    ctx.moveTo(c, c - G.rout - 26); ctx.lineTo(c, c - G.orb - 6); ctx.moveTo(c, c + G.orb + 6); ctx.lineTo(c, c + G.rout + 26); ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,.8)"; ctx.font = `12px ${style.display}`; ctx.textAlign = "left"; ctx.fillText(`r ${G.rout}`, c + G.rout - 6, c - 8);
+    ctx.fillText(`r ${G.rin}`, c + G.rin - 30, c + 14); }
+  if (skin === "news") { ctx.strokeStyle = "#141414"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 12, 0, Math.PI * 2); ctx.stroke();
+    ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(c, c, G.rout + G.bulge + 7, 0, Math.PI * 2); ctx.stroke(); }
   ctx.restore();
   // Segments
   W.ring.forEach((key, i) => {
@@ -879,7 +1096,11 @@ function drawSmoothWheel(ctx, c, style) {
     if (hot && skin !== "aqua") { ctx.shadowColor = style.accent; ctx.shadowBlur = skin === "glass" ? 30 : 22; }
     ctx.fill();
     ctx.shadowColor = "transparent";
-    if (col.stroke) { ctx.strokeStyle = col.stroke; ctx.lineWidth = 1; ctx.stroke(); }
+    if (col.halftone) { ctx.fillStyle = halftone(); ctx.fill(); }
+    if (col.dashed) ctx.setLineDash([5, 4]);
+    if (col.stroke) { ctx.strokeStyle = col.stroke; ctx.lineWidth = skin === "blueprint" ? 1.3 : 1; ctx.stroke(); }
+    ctx.setLineDash([]);
+    if (col.bevel) { ctx.save(); ctx.clip(); ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 3; ctx.translate(1.5, 1.5); ctx.stroke(); ctx.restore(); }
     if (skin === "aqua") { // the gel highlight
       ctx.clip(); const p = polar(c, (rin + rout) / 2 + 18, mid); const g = ctx.createRadialGradient(p.x, p.y - 8, 2, p.x, p.y, 60);
       g.addColorStop(0, "rgba(255,255,255,.75)"); g.addColorStop(1, "rgba(255,255,255,0)"); ctx.fillStyle = g; ctx.fillRect(0, 0, G.size, G.size);
@@ -898,6 +1119,12 @@ function drawSmoothWheel(ctx, c, style) {
   drawOrb(ctx, c, style);
 }
 
+let halftoneCache = null;
+function halftone() {
+  if (halftoneCache) return halftoneCache;
+  const t = makeCanvas(8, 8), x = t.getContext("2d"); x.fillStyle = "rgba(20,20,20,.22)"; x.beginPath(); x.arc(4, 4, 1.4, 0, Math.PI * 2); x.fill();
+  halftoneCache = wx.createPattern(t, "repeat"); return halftoneCache;
+}
 function polar(c, r, deg) { const a = rad(deg); return { x: c + Math.cos(a) * r, y: c + Math.sin(a) * r }; }
 
 function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
@@ -908,7 +1135,7 @@ function drawFan(ctx, c, style) {
     const p = chipCenter(k), hot = W.hover.t === "chip" && W.hover.k === k;
     const x = c + p.x - G.chipW / 2, y = c + p.y - G.chipH / 2;
     ctx.save();
-    roundRect(ctx, x, y, G.chipW, G.chipH, skin === "pixel" || skin === "ascii" ? 0 : (skin === "aqua" ? 15 : 8));
+    roundRect(ctx, x, y, G.chipW, G.chipH, ["pixel", "ascii", "win95", "news"].includes(skin) ? 0 : (skin === "aqua" ? 15 : skin === "blueprint" ? 2 : 8));
     const col = segColors(0, hot, style);
     if (Array.isArray(col.fill)) { const g = ctx.createLinearGradient(0, y, 0, y + G.chipH); g.addColorStop(0, col.fill[0]); g.addColorStop(.5, col.fill[1]); g.addColorStop(1, col.fill[2]); ctx.fillStyle = g; } else ctx.fillStyle = col.fill;
     if (hot) { ctx.shadowColor = style.accent; ctx.shadowBlur = 16; }
@@ -925,15 +1152,20 @@ function drawOrb(ctx, c, style) {
   ctx.save();
   if (skin === "aqua") { const g = ctx.createRadialGradient(c, c - 20, 4, c, c, G.orb); g.addColorStop(0, "#FFFFFF"); g.addColorStop(1, "#D4DEEA"); ctx.fillStyle = g; }
   else if (skin === "glass") ctx.fillStyle = "rgba(255,255,255,.14)";
+  else if (skin === "win95") ctx.fillStyle = "#FFFFFF";
+  else if (skin === "blueprint") ctx.fillStyle = "#0F3569";
+  else if (skin === "news") ctx.fillStyle = "#F6F4EF";
   else ctx.fillStyle = "#1A1D24";
   ctx.beginPath(); ctx.arc(c, c, G.orb, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = t.cancel ? css("--danger") : (skin === "aqua" ? "rgba(30,60,100,.3)" : "rgba(255,255,255,.14)"); ctx.lineWidth = t.cancel ? 2 : 1; ctx.stroke();
+  ctx.strokeStyle = t.cancel ? css("--danger") : (LIGHT_SKINS.includes(skin) ? "rgba(20,20,20,.5)" : "rgba(255,255,255,.3)"); ctx.lineWidth = t.cancel ? 2 : 1; ctx.stroke();
   // the file's picture, faint, behind the text
-  if (W.file.img && skin !== "aqua") { ctx.save(); ctx.beginPath(); ctx.arc(c, c, G.orb - 2, 0, Math.PI * 2); ctx.clip(); ctx.globalAlpha = .22; const s = Math.max((G.orb * 2) / W.file.w, (G.orb * 2) / W.file.h); ctx.drawImage(W.file.img, c - W.file.w * s / 2, c - W.file.h * s / 2, W.file.w * s, W.file.h * s); ctx.restore(); }
-  const ink = skin === "aqua" ? "#1A2433" : "#ECEEF2", sub = skin === "aqua" ? "#4E5B6E" : "#A9AFBC";
+  if (W.file.img && !LIGHT_SKINS.includes(skin)) { ctx.save(); ctx.beginPath(); ctx.arc(c, c, G.orb - 2, 0, Math.PI * 2); ctx.clip(); ctx.globalAlpha = .22; const s = Math.max((G.orb * 2) / W.file.w, (G.orb * 2) / W.file.h); ctx.drawImage(W.file.img, c - W.file.w * s / 2, c - W.file.h * s / 2, W.file.w * s, W.file.h * s); ctx.restore(); }
+  const light = LIGHT_SKINS.includes(skin);
+  const ink = light ? "#1A2433" : "#ECEEF2", sub = light ? "#4E5B6E" : "#A9AFBC";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
   ctx.fillStyle = sub; ctx.font = `600 8.5px ${style.mono}`; ctx.fillText(t.k, c, c - 26);
   ctx.fillStyle = t.cancel ? css("--danger") : (skin === "aqua" ? "#1C6FE0" : style.accent);
+  if (skin === "win95" && !t.cancel) ctx.fillStyle = "#000080";
   const bigFont = skin === "halo" ? style.mono : style.display;
   let size = 24; ctx.font = `800 ${size}px ${bigFont}`;
   while (ctx.measureText(t.big).width > G.orb * 1.6 && size > 12) { size -= 1; ctx.font = `800 ${size}px ${bigFont}`; }
@@ -1099,7 +1331,7 @@ function parseCommand(q) {
   const hit = Object.keys(map).find((k) => k.startsWith(q) || q === k);
   const titles = { sqz: "Compress", size: "Resize to half", ascii: "Turn into ASCII art", pixel: "Turn into pixel art", gray: "Make it black and white" };
   if (hit) { const key = map[hit]; return { title: titles[key] || `Convert to ${ACTIONS[key].label}`, run: (f) => runAction(f, key) }; }
-  if (/^(shift|halo|aqua|ascii|pixel|glass)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
+  if (/^(shift|halo|aqua|ascii|pixel|glass|win95|blueprint|news)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
   return null;
 }
 cmdInput.addEventListener("input", () => { const c = parseCommand(cmdInput.value); cmdHint.textContent = cmdInput.value ? (c ? `↩ ${c.title}${selected ? ` · ${middleTruncate(selected.name, 28)}` : ""}` : "Try webp, 50kb, 800w, ascii, pixel, pdf") : "Runs on the selected file. Press ↩."; });
@@ -1127,6 +1359,12 @@ document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.
       setTimeout(() => { pad.classList.remove("hit"); text.textContent = "shake your pointer here ↔"; meter.style.width = "0"; }, 1100); }
   });
   pad.addEventListener("pointerleave", () => { lastX = null; samples = []; meter.style.width = "0"; });
+  pad.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    e.preventDefault();
+    const r = pad.getBoundingClientRect(); lastX = lastX ?? r.left + r.width / 2;
+    pad.dispatchEvent(new PointerEvent("pointermove", { clientX: lastX + (e.key === "ArrowRight" ? 30 : -30), bubbles: true }));
+  });
 })();
 
 // ---------- The fling game ----------
@@ -1176,6 +1414,7 @@ const play = (() => {
     const before = b.mb, out = before * (0.2 + Math.random() * 0.4); b.done = 0.001; b.label = "JPG"; b.mb = out;
     savedMB += before - out; count++;
     $("#playSaved").textContent = savedMB < 1000 ? savedMB.toFixed(1) + " MB" : (savedMB / 1000).toFixed(2) + " GB"; $("#playCount").textContent = count; $("#playCombo").textContent = `combo ×${combo}`;
+    if (document.activeElement === canvas) announce(`Converted. ${count} so far, combo ${combo}.`);
     const wh = wheel(); for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, s = 120 + Math.random() * 260; parts.push({ x: wh.x, y: wh.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 120, life: .6 + Math.random() * .5 }); }
     sfx.drop();
   }
@@ -1186,10 +1425,10 @@ const play = (() => {
     for (let i = 0; i < 6; i++) {
       const a0 = angle + i * Math.PI / 3 + .06, a1 = a0 + Math.PI / 3 - .12;
       sector(c, wh.x, wh.y, wh.r * .55, wh.r, a0, a1);
-      c.fillStyle = i === 0 ? colors.accent : (skin === "aqua" ? "#C9D6E6" : skin === "glass" ? "rgba(255,255,255,.18)" : colors.panel);
+      c.fillStyle = i === 0 ? colors.accent : (skin === "aqua" ? "#C9D6E6" : skin === "glass" ? "rgba(255,255,255,.18)" : skin === "win95" ? "#D4D0C8" : colors.panel);
       c.fill(); if (!pixel) { c.strokeStyle = colors.line; c.lineWidth = 1; c.stroke(); }
     }
-    c.fillStyle = skin === "aqua" ? "#FFFFFF" : (skin === "glass" ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.35)");
+    c.fillStyle = LIGHT_SKINS.includes(skin) ? "#FFFFFF" : (skin === "glass" ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.35)");
     c.beginPath(); c.arc(wh.x, wh.y, wh.r * .45, 0, Math.PI * 2); c.fill();
     c.fillStyle = colors.accent; c.textAlign = "center"; c.textBaseline = "middle"; c.font = `800 ${Math.round(wh.r * .2)}px ${colors.display}`;
     c.fillText(ascii ? "[ IN ]" : "DROP", wh.x, wh.y);
@@ -1241,11 +1480,378 @@ const play = (() => {
   });
   const release = () => { if (!grab) return; grab.b.vx = Math.max(-2200, Math.min(2200, grab.vx)); grab.b.vy = Math.max(-2200, Math.min(2200, grab.vy)); grab = null; };
   canvas.addEventListener("pointerup", release); canvas.addEventListener("pointercancel", release);
+  // Keyboard: Space or Enter throws the file nearest the wheel straight at it.
+  canvas.addEventListener("keydown", (e) => {
+    if (e.key !== " " && e.key !== "Enter") return;
+    e.preventDefault();
+    const wh = wheel(), free = bodies.filter((b) => !b.done);
+    if (!free.length) { spawn(); return; }
+    const b = free.reduce((a, x) => Math.hypot(x.x - wh.x, x.y - wh.y) < Math.hypot(a.x - wh.x, a.y - wh.y) ? x : a);
+    const dx = wh.x - b.x, dy = wh.y - b.y, d = Math.hypot(dx, dy) || 1, sp = 900;
+    b.vx = dx / d * sp; b.vy = dy / d * sp - 120; sfx.tick();
+    if (!running) { visible = true; start(); }
+  });
   new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; if (visible) { resize(); start(); } else stop(); }).observe(canvas);
   addEventListener("resize", () => { resize(); });
   resize(); restyle();
   for (let i = 0; i < 5; i++) { spawn(); bodies[bodies.length - 1].y = 40 + i * 20; }
   return { restyle };
+})();
+
+// ---------- Theme builder (exports the app's own theme format) ----------
+const builder = (() => {
+  const THEMES = [
+    { id: "neon", name: "Neon", accent: "#C6FF3D", glass: 0.55, font: "rounded" },
+    { id: "tangerine", name: "Tangerine", accent: "#FF8A00", glass: 0.55, font: "rounded" },
+    { id: "glass", name: "Glass", accent: "#7C8CFF", glass: 0.3, font: "rounded" },
+    { id: "graphite", name: "Graphite", accent: "#9BA3AF", glass: 0.75, font: "default" },
+    { id: "midnight", name: "Midnight", accent: "#5C7CFA", glass: 0.8, font: "rounded" },
+    { id: "mono", name: "Mono", accent: "#F2F2F2", glass: 0.6, font: "default" },
+  ];
+  const SWATCHES = ["#FF8A00", "#FF5E3A", "#FFB020", "#7C8CFF", "#C6FF3D", "#5CE1FF", "#FF5CA8", "#9BA3AF"];
+  const DEFAULT = { theme: "neon", accent: "#C6FF3D", layout: "halo", scheme: "auto", panel: "auto", glass: 0.55,
+    tints: { images: "", tools: "", documents: "" }, scale: 1, thick: 1, gap: 3, orb: 1, label: 1, font: "rounded", case: "title" };
+  let st = (() => { try { const v = JSON.parse(store.get("circularity-theme-builder") || "null"); return v && v.tints ? { ...DEFAULT, ...v } : structuredClone(DEFAULT); } catch { return structuredClone(DEFAULT); } })();
+  const canvas = $("#tbCanvas"), ctx = canvas.getContext("2d");
+  let hover = 1, userHover = false, visible = false;
+
+  // WCAG maths, the same rule the app uses for text on the accent.
+  const rgb = (hex) => { const v = parseInt(hex.slice(1), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255].map((c) => c / 255); };
+  const lum = (hex) => { const [r, g, b] = rgb(hex).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  const onAccent = (hex) => (contrast(hex, "#1A1206") >= contrast(hex, "#FFFFFF") ? "#1A1206" : "#FFFFFF");
+  const alpha = (hex, a) => { const [r, g, b] = rgb(hex); return `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`; };
+
+  const SEGMENTS = [
+    { label: "PNG", mono: "PNG", cap: "LOSSLESS", kind: "images", kicker: "CONVERT TO", hint: "lossless, keeps transparency" },
+    { label: "JPG", mono: "JPG", cap: "PHOTO", kind: "images", kicker: "CONVERT TO", hint: "small, best for photos" },
+    { label: "Cut out", mono: "CUT", cap: "NO BG", kind: "tools", kicker: "CUT OUT THE", hint: "background made transparent" },
+    { label: "More", mono: "•••", cap: "MORE", kind: null, kicker: "REST HERE FOR", hint: "8 more options" },
+    { label: "Compress", mono: "SQZ", cap: "COMPRESS", kind: "tools", kicker: "OPEN", hint: "quality or target size" },
+    { label: "Resize", mono: "SIZE", cap: "RESIZE", kind: "tools", kicker: "OPEN", hint: "width × height" },
+  ];
+
+  function isLight() {
+    if (st.layout === "halo") return false;
+    if (st.scheme === "light") return true;
+    if (st.scheme === "dark") return false;
+    if (st.scheme === "system") return matchMedia("(prefers-color-scheme: light)").matches;
+    return st.layout === "orbit";
+  }
+  // The app's geometry (WheelGeometry + WheelTweaks), in app points.
+  function geometry() {
+    const base = { ring: { rin: 98, rout: 204, bulge: 12, orb: 180, disc: 436, gap: 3 }, halo: { rin: 120, rout: 188, bulge: 10, orb: 230, disc: 424, gap: 2 },
+      orbit: { buttonR: 165, buttonD: 88, orb: 150 } }[st.layout];
+    const g = { ...base };
+    if (st.layout === "orbit") { g.orb = base.orb * st.orb; return g; }
+    g.rout = g.rin + (base.rout - base.rin) * st.thick;
+    g.span = 60 - st.gap * (st.layout === "halo" ? 2 / 3 : 1);
+    g.orb = Math.min(base.orb * st.orb, g.rin * 2 - 8);
+    g.disc = Math.max(base.disc, (g.rout + g.bulge + 2) * 2);
+    return g;
+  }
+  const fontFamily = (mono) => (mono || st.font === "mono" ? '"JetBrains Mono", ui-monospace, monospace' : st.font === "default" ? "system-ui, -apple-system, sans-serif" : '"Nunito", ui-rounded, system-ui, sans-serif');
+  const text = (t) => (st.case === "upper" ? t.toUpperCase() : t);
+
+  function draw() {
+    const dpr = Math.min(2, devicePixelRatio || 1), cssW = canvas.clientWidth || 480;
+    if (canvas.width !== Math.round(cssW * dpr)) { canvas.width = Math.round(cssW * dpr); canvas.height = canvas.width; }
+    const W2 = canvas.width / dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const light = isLight(), g = geometry(), c = W2 / 2;
+    // Desktop-like backdrop.
+    const bg = ctx.createLinearGradient(0, 0, W2, W2);
+    bg.addColorStop(0, light ? "#DCD6CC" : "#2B3242"); bg.addColorStop(1, light ? "#B9C4D0" : "#14171E");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W2, W2);
+    const k = (W2 * 0.92) / (470 * 1.4) * st.scale; // app points → preview px (1.4× fits)
+    ctx.save(); ctx.translate(c, c); ctx.scale(k, k);
+    // 100 % reference ring
+    ctx.strokeStyle = light ? "rgba(0,0,0,.18)" : "rgba(255,255,255,.14)"; ctx.setLineDash([4 / k, 6 / k]); ctx.lineWidth = 1 / k;
+    ctx.beginPath(); ctx.arc(0, 0, 218 / st.scale, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    const accent = st.accent, on = onAccent(accent);
+    const ls = st.label;
+    if (st.layout === "orbit") drawOrbit(g, light, accent, on, ls); else drawSectors(g, light, accent, on, ls);
+    ctx.restore();
+    ctx.fillStyle = light ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.55)"; ctx.font = `11px ${fontFamily(true)}`; ctx.textAlign = "left";
+    ctx.fillText(`${Math.round(st.scale * 100)} % · dashed ring = 100 %`, 12, W2 - 12);
+  }
+
+  function orbBlock(g, light, accent, on, ls, orbFill) {
+    const seg = SEGMENTS[hover];
+    ctx.fillStyle = orbFill; ctx.beginPath(); ctx.arc(0, 0, g.orb / 2, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = light ? "rgba(60,40,20,.15)" : "rgba(255,255,255,.16)"; ctx.lineWidth = 1.5; ctx.stroke();
+    const orbHex = light ? "#F4F2EF" : (st.layout === "halo" ? "#1A1D24" : "#141416");
+    const ink = light ? "#1D1B18" : "#ECEEF2";
+    const big = contrast(accent, orbHex) >= 3 ? accent : ink;
+    const f = g.orb / (st.layout === "halo" ? 230 : 180);
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillStyle = light ? "#5A544B" : "#A9AFBC"; ctx.font = `600 ${10 * f * ls}px ${fontFamily(false)}`; ctx.fillText(seg.kicker, 0, -30 * f);
+    ctx.fillStyle = big; ctx.font = `800 ${(st.layout === "halo" ? 34 : 30) * f * ls}px ${fontFamily(st.layout === "halo")}`;
+    ctx.fillText(st.layout === "halo" ? seg.mono : text(seg.label), 0, 0);
+    ctx.fillStyle = light ? "#2A2622" : "#D5D9E1"; ctx.font = `600 ${11 * f * ls}px ${fontFamily(false)}`; ctx.fillText(seg.hint, 0, 28 * f);
+  }
+
+  function drawSectors(g, light, accent, on, ls) {
+    const halo = st.layout === "halo";
+    const discFill = halo ? "#0D0F14" : (light ? `rgba(255,255,255,${st.glass})` : `rgba(24,24,28,${st.glass})`);
+    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 20;
+    ctx.fillStyle = discFill; ctx.beginPath(); ctx.arc(0, 0, g.disc / 2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    if (halo) { ctx.strokeStyle = alpha(accent, 0.22); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, g.disc / 2 - 4, 0, Math.PI * 2); ctx.stroke(); }
+    else { ctx.strokeStyle = light ? "rgba(0,0,0,.1)" : "rgba(255,255,255,.12)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, g.disc / 2 - .5, 0, Math.PI * 2); ctx.stroke(); }
+    SEGMENTS.forEach((seg, i) => {
+      const hot = i === hover, mid = i * 60, half = g.span / 2;
+      const rout = g.rout + (hot ? g.bulge : 0), rin = g.rin - (hot ? 6 : 0);
+      ctx.beginPath(); ctx.arc(0, 0, rout, rad(mid - half), rad(mid + half)); ctx.arc(0, 0, rin, rad(mid + half), rad(mid - half), true); ctx.closePath();
+      const tint = seg.kind && st.tints[seg.kind];
+      let fill = halo ? "#1B1D23" : (light ? "rgba(0,0,0,.06)" : "rgba(255,255,255,.07)");
+      if (tint) fill = alpha(tint, halo ? 0.2 : 0.22);
+      ctx.save();
+      if (hot) { fill = accent; if (halo) { ctx.shadowColor = accent; ctx.shadowBlur = 22; } }
+      ctx.fillStyle = fill; ctx.fill(); ctx.restore();
+      if (!halo) { ctx.strokeStyle = hot ? (light ? "rgba(0,0,0,.25)" : "rgba(255,255,255,.35)") : (light ? "rgba(0,0,0,.1)" : "rgba(255,255,255,.1)"); ctx.lineWidth = 1; ctx.stroke(); }
+      const r = (g.rin + g.rout) / 2 + (hot ? 4 : 0), a = rad(mid), x = Math.cos(a) * r, y = Math.sin(a) * r;
+      const fg = hot ? on : (halo ? "#ECEEF2" : light ? "#1D1B18" : "#F4F1EC");
+      ctx.fillStyle = fg; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = `700 ${15 * ls}px ${fontFamily(halo)}`; ctx.fillText(halo ? seg.mono : text(seg.label), x, y - 7 * ls);
+      ctx.fillStyle = hot ? alpha(on, 0.75) : (halo ? "#9097A6" : light ? "#4A453E" : "#C9C3B9");
+      ctx.font = `600 ${10 * ls}px ${fontFamily(false)}`; ctx.fillText(seg.cap, x, y + 11 * ls);
+    });
+    orbBlock(g, light, accent, on, ls, halo ? "#1A1D24" : (light ? "rgba(255,255,255,.86)" : "rgba(14,14,16,.78)"));
+  }
+
+  function drawOrbit(g, light, accent, on, ls) {
+    ctx.strokeStyle = light ? "rgba(60,40,20,.16)" : "rgba(255,255,255,.16)"; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(0, 0, g.buttonR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    SEGMENTS.forEach((seg, i) => {
+      const hot = i === hover, a = rad(i * 60), x = Math.cos(a) * g.buttonR, y = Math.sin(a) * g.buttonR, r = g.buttonD / 2 * (hot ? 1.16 : 1);
+      ctx.save(); ctx.shadowColor = "rgba(60,40,20,.25)"; ctx.shadowBlur = 16; ctx.shadowOffsetY = 8;
+      ctx.fillStyle = hot ? accent : (light ? "rgba(255,255,255,.72)" : "rgba(38,38,43,.88)");
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      const tint = seg.kind && st.tints[seg.kind];
+      ctx.fillStyle = hot ? "rgba(255,255,255,.85)" : (tint || (light ? "#E4E0DA" : "#3A3A40"));
+      ctx.beginPath(); ctx.arc(x, y - 10, 15, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = hot ? on : (light ? "#1D1B18" : "#F4F1EC"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.font = `700 ${12 * ls}px ${fontFamily(false)}`; ctx.fillText(text(seg.label), x, y + 20);
+    });
+    orbBlock(g, light, accent, on, ls, light ? "rgba(255,255,255,.78)" : "rgba(30,30,34,.88)");
+  }
+
+  function json() {
+    const r2 = (n) => Math.round(n * 100) / 100;
+    const themeId = THEMES.some((t) => t.id === st.theme && t.accent === st.accent) ? st.theme : "custom";
+    return JSON.stringify({ app: "Circularity", schemaVersion: 2, values: {
+      "appearance.theme": themeId, "appearance.accentHex": st.accent.toUpperCase(), "appearance.glassStrength": r2(st.glass),
+      "appearance.wheelScheme": st.scheme, "menubar.colorScheme": st.panel, "wheel.layout": st.layout,
+      "appearance.tint.images": (st.tints.images || "").toUpperCase(), "appearance.tint.documents": (st.tints.documents || "").toUpperCase(),
+      "appearance.tint.tools": (st.tints.tools || "").toUpperCase(),
+      "wheel.scale": r2(st.scale), "appearance.ringThickness": r2(st.thick), "appearance.segmentGap": st.gap,
+      "appearance.orbScale": r2(st.orb), "appearance.labelScale": r2(st.label), "appearance.font": st.font, "appearance.labelCase": st.case,
+    } }, null, 2);
+  }
+
+  function describe() {
+    const t = THEMES.find((x) => x.accent === st.accent);
+    return `Preview: ${st.layout} layout, ${t ? t.name : "custom " + st.accent} accent, ${isLight() ? "light" : "dark"}, hovering ${SEGMENTS[hover].label}`;
+  }
+
+  function sync() {
+    $$("#tbThemes .pill").forEach((b) => b.setAttribute("aria-pressed", b.dataset.id === st.theme && THEMES.find((t) => t.id === st.theme)?.accent === st.accent));
+    $$("#tbSwatches .swatch").forEach((b) => b.setAttribute("aria-pressed", b.dataset.hex === st.accent));
+    $("#tbAccent").value = st.accent.toLowerCase();
+    $$("[data-tb-layout]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tbLayout === st.layout));
+    $$("[data-tb-scheme]").forEach((b) => { b.setAttribute("aria-pressed", b.dataset.tbScheme === st.scheme); b.disabled = st.layout === "halo"; });
+    $$("[data-tb-panel]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tbPanel === st.panel));
+    $$("[data-tb-font]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tbFont === st.font));
+    $$("[data-tb-case]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tbCase === st.case));
+    const ranges = { tbGlass: ["glass", (v) => Math.round(v * 100) + " %"], tbScale: ["scale", (v) => Math.round(v * 100) + " %"],
+      tbThick: ["thick", (v) => Math.round(v * 100) + " %"], tbGap: ["gap", (v) => v + "°"], tbOrb: ["orb", (v) => Math.round(v * 100) + " %"],
+      tbLabel: ["label", (v) => Math.round(v * 100) + " %"] };
+    for (const [id, [key, fmt]] of Object.entries(ranges)) { $("#" + id).value = st[key]; $("#" + id + "Out").textContent = fmt(st[key]); $("#" + id).setAttribute("aria-valuetext", fmt(st[key])); }
+    $("#tbGlass").disabled = st.layout !== "ring";
+    for (const [kind, id] of [["images", "tbTintImages"], ["tools", "tbTintTools"], ["documents", "tbTintDocs"]]) {
+      $("#" + id + "On").checked = !!st.tints[kind]; if (st.tints[kind]) $("#" + id).value = st.tints[kind].toLowerCase();
+    }
+    const code = $("#tbJSON"); code.value = json();
+    canvas.setAttribute("aria-label", describe());
+    store.set("circularity-theme-builder", JSON.stringify(st));
+    draw();
+  }
+
+  // Controls
+  THEMES.forEach((t) => { const b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.dataset.id = t.id; b.textContent = t.name;
+    b.addEventListener("click", () => { Object.assign(st, { theme: t.id, accent: t.accent, glass: t.glass, font: t.font }); sync(); }); $("#tbThemes").append(b); });
+  SWATCHES.forEach((hex) => { const b = document.createElement("button"); b.type = "button"; b.className = "swatch"; b.dataset.hex = hex; b.style.background = hex;
+    b.setAttribute("aria-label", "Accent " + hex); b.addEventListener("click", () => { st.accent = hex; st.theme = THEMES.find((t) => t.accent === hex)?.id || "custom"; sync(); }); $("#tbSwatches").append(b); });
+  $("#tbAccent").addEventListener("input", (e) => { st.accent = e.target.value.toUpperCase(); st.theme = "custom"; sync(); });
+  for (const [attr, key] of [["tbLayout", "layout"], ["tbScheme", "scheme"], ["tbPanel", "panel"], ["tbFont", "font"], ["tbCase", "case"]]) {
+    $$(`[data-${attr.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())}]`).forEach((b) => b.addEventListener("click", () => { st[key] = b.dataset[attr]; sync(); }));
+  }
+  for (const [id, key] of [["tbGlass", "glass"], ["tbScale", "scale"], ["tbThick", "thick"], ["tbGap", "gap"], ["tbOrb", "orb"], ["tbLabel", "label"]]) {
+    $("#" + id).addEventListener("input", (e) => { st[key] = parseFloat(e.target.value); sync(); });
+  }
+  for (const [kind, id] of [["images", "tbTintImages"], ["tools", "tbTintTools"], ["documents", "tbTintDocs"]]) {
+    $("#" + id + "On").addEventListener("change", (e) => { st.tints[kind] = e.target.checked ? $("#" + id).value.toUpperCase() : ""; sync(); });
+    $("#" + id).addEventListener("input", (e) => { st.tints[kind] = e.target.value.toUpperCase(); sync(); });
+  }
+  $("#tbCopy").addEventListener("click", async () => {
+    const status = $("#tbStatus");
+    try { await navigator.clipboard.writeText(json()); status.textContent = "Copied. In Circularity: Settings → Appearance → Paste theme."; sfx.drop(); }
+    catch { const code = $("#tbJSON"); code.hidden = false; $("#tbShow").setAttribute("aria-expanded", "true"); code.focus(); code.select(); status.textContent = "Selected the code below. Press ⌘C, then Paste theme in the app."; }
+  });
+  $("#tbShow").addEventListener("click", () => { const code = $("#tbJSON"); code.hidden = !code.hidden; $("#tbShow").setAttribute("aria-expanded", String(!code.hidden)); $("#tbShow").textContent = code.hidden ? "Show the code" : "Hide the code"; });
+  $("#tbReset").addEventListener("click", () => { st = structuredClone(DEFAULT); sync(); $("#tbStatus").textContent = "Back to the defaults."; });
+
+  // Hover with the pointer, the keyboard, or by itself.
+  function pick(e) {
+    const r = canvas.getBoundingClientRect(), x = e.clientX - r.left - r.width / 2, y = e.clientY - r.top - r.height / 2;
+    let deg = Math.atan2(x, -y) * 180 / Math.PI; if (deg < 0) deg += 360;
+    const i = Math.floor((deg + 30) / 60) % 6;
+    if (i !== hover) { hover = i; userHover = true; $("#tbCaption").textContent = `${SEGMENTS[i].label}: ${SEGMENTS[i].hint}`; draw(); canvas.setAttribute("aria-label", describe()); }
+  }
+  canvas.addEventListener("pointermove", pick);
+  canvas.addEventListener("pointerdown", pick);
+  canvas.addEventListener("pointerleave", () => { userHover = false; });
+  canvas.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+    e.preventDefault(); userHover = true; hover = (hover + (e.key === "ArrowRight" ? 1 : 5)) % 6;
+    $("#tbCaption").textContent = `${SEGMENTS[hover].label}: ${SEGMENTS[hover].hint}`; draw(); canvas.setAttribute("aria-label", describe());
+  });
+  new IntersectionObserver((en) => { visible = en[0].isIntersecting; if (visible) draw(); }).observe(canvas);
+  if (!reduceMotion) setInterval(() => { if (visible && !userHover && document.activeElement !== canvas) { hover = (hover + 1) % 6; draw(); } }, 1600);
+  addEventListener("resize", draw);
+  sync();
+  return { draw };
+})();
+
+// ---------- Format lab ----------
+const lab = (() => {
+  const FORMATS = [
+    { key: "jpg", name: "JPG", mime: "image/jpeg", lossy: true },
+    { key: "webp", name: "WebP", mime: "image/webp", lossy: true },
+    { key: "avif", name: "AVIF", mime: "image/avif", lossy: true },
+    { key: "png", name: "PNG", mime: "image/png", lossy: false },
+  ];
+  const sel = $("#labSource"), q = $("#labQuality"), cards = $("#labCards"), canvas = $("#labCanvas"), split = $("#labSplit"), note = $("#labNote");
+  const ctx = canvas.getContext("2d");
+  const supported = {};
+  let file = null, results = {}, chosen = "jpg", zoom = 2, focus = { x: 0.5, y: 0.5 }, splitPos = 0.5, timer = 0, runId = 0;
+
+  async function detect() {
+    const c = makeCanvas(4, 4); c.getContext("2d").fillRect(0, 0, 4, 4);
+    for (const f of FORMATS) { const b = await toBlob(c, f.mime, 0.8); supported[f.key] = !!b && b.type === f.mime; }
+    renderCards();
+  }
+
+  function refreshSources() {
+    const images = files.filter((f) => f.kind === "image");
+    const current = sel.value;
+    sel.textContent = "";
+    for (const f of images) { const o = document.createElement("option"); o.value = f.id; o.textContent = `${middleTruncate(f.name, 40)} · ${fmtBytes(f.bytes)}`; sel.append(o); }
+    if (images.some((f) => String(f.id) === current)) sel.value = current;
+    const next = images.find((f) => String(f.id) === sel.value) || images[0];
+    if (next && next !== file) { file = next; schedule(0); }
+  }
+
+  function renderCards() {
+    cards.textContent = "";
+    for (const f of FORMATS) {
+      const b = document.createElement("button"); b.type = "button"; b.className = "lab-card"; b.dataset.key = f.key;
+      const r = results[f.key], ok = supported[f.key];
+      b.disabled = ok === false;
+      b.setAttribute("aria-pressed", String(chosen === f.key));
+      let size = ok === false ? "not in this browser" : r ? fmtBytes(r.size) : "…";
+      let change = "";
+      if (r && file) { const pct = Math.round((r.size / file.bytes - 1) * 100); change = `${pct > 0 ? "+" : ""}${pct}% vs original`; }
+      if (ok === false) change = "the Mac app can write it";
+      b.innerHTML = `<span class="fmt">${f.name}${f.lossy ? "" : " · lossless"}</span><span class="sz">${size}</span><span class="chg">${change}</span>`;
+      b.setAttribute("aria-label", `${f.name}: ${size}${change ? ", " + change : ""}`);
+      b.addEventListener("click", () => { chosen = f.key; renderCards(); draw(); announce(`Comparing ${f.name}`); });
+      cards.append(b);
+    }
+  }
+
+  function schedule(delay = 250) { clearTimeout(timer); timer = setTimeout(run, delay); }
+
+  async function run() {
+    if (!file?.img) return;
+    const id = ++runId, quality = parseInt(q.value, 10) / 100;
+    $("#labQualityOut").textContent = q.value;
+    note.textContent = "Encoding…";
+    for (const f of FORMATS) {
+      if (!supported[f.key]) continue;
+      const canvasIn = f.key === "jpg" ? opaqueCanvas(file) : alphaCanvas(file);
+      const blob = await toBlob(canvasIn, f.mime, quality);
+      if (id !== runId) return; // a newer run started
+      if (!blob) continue;
+      const old = results[f.key]; if (old) URL.revokeObjectURL(old.url);
+      const url = URL.createObjectURL(blob);
+      let img = null; try { img = await loadImage(url); } catch {}
+      results[f.key] = { size: blob.size, url, img };
+      renderCards(); draw();
+    }
+    const best = Object.entries(results).filter(([k]) => supported[k]).sort((a, b) => a[1].size - b[1].size)[0];
+    note.textContent = best ? `Smallest at quality ${q.value}: ${FORMATS.find((f) => f.key === best[0]).name} (${fmtBytes(best[1].size)}). Original ${fmtBytes(file.bytes)}.` : "";
+  }
+
+  function draw() {
+    const dpr = Math.min(2, devicePixelRatio || 1), w = canvas.clientWidth, h = canvas.clientHeight;
+    if (!w || !h) return;
+    canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = css("--bg2") || "#111"; ctx.fillRect(0, 0, w, h);
+    if (!file?.img) return;
+    const iw = file.w, ih = file.h, fit = Math.min(w / iw, h / ih), scale = fit * zoom;
+    const cx = focus.x * iw, cy = focus.y * ih;
+    let ox = w / 2 - cx * scale, oy = h / 2 - cy * scale;
+    if (zoom === 1) { ox = (w - iw * scale) / 2; oy = (h - ih * scale) / 2; }
+    ctx.imageSmoothingEnabled = zoom <= 2;
+    ctx.drawImage(file.img, ox, oy, iw * scale, ih * scale);
+    const r = results[chosen], sx = Math.round(w * splitPos);
+    if (r?.img) { ctx.save(); ctx.beginPath(); ctx.rect(sx, 0, w - sx, h); ctx.clip(); ctx.drawImage(r.img, ox, oy, iw * scale, ih * scale); ctx.restore(); }
+    ctx.fillStyle = "#FFFFFF"; ctx.fillRect(sx - 1, 0, 2, h);
+    ctx.beginPath(); ctx.arc(sx, h / 2, 12, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#000"; ctx.font = "700 11px ui-monospace, monospace"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("⇆", sx, h / 2 + 1);
+    const f = FORMATS.find((x) => x.key === chosen);
+    pill(`BEFORE · ${fmtBytes(file.bytes)}`, 10, h - 12, "left");
+    pill(r ? `AFTER · ${f.name}${f.lossy ? " " + q.value : ""} · ${fmtBytes(r.size)}` : `AFTER · ${f.name}`, w - 10, h - 12, "right");
+    canvas.setAttribute("aria-label", `Comparison at ${zoom === 1 ? "fit" : zoom + "×"}: original ${fmtBytes(file.bytes)} on the left, ${f.name}${r ? " " + fmtBytes(r.size) : ""} on the right`);
+  }
+  function pill(t, x, y, align) {
+    ctx.font = "700 11px ui-monospace, monospace"; const tw = ctx.measureText(t).width + 14;
+    const left = align === "left" ? x : x - tw;
+    ctx.fillStyle = "rgba(0,0,0,.65)"; ctx.fillRect(left, y - 11, tw, 20);
+    ctx.fillStyle = "#FFFFFF"; ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(t, left + 7, y);
+  }
+
+  sel.addEventListener("change", () => { file = files.find((f) => String(f.id) === sel.value) || file; results = {}; renderCards(); schedule(0); });
+  q.addEventListener("input", () => { $("#labQualityOut").textContent = q.value; schedule(); });
+  split.addEventListener("input", () => { splitPos = split.value / 100; draw(); });
+  $$("[data-lab-zoom]").forEach((b) => b.addEventListener("click", () => { zoom = parseInt(b.dataset.labZoom, 10); $$("[data-lab-zoom]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); draw(); }));
+  let down = null;
+  canvas.addEventListener("pointerdown", (e) => { down = { x: e.clientX, y: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener("pointermove", (e) => {
+    if (!down) return; if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 4) down.moved = true;
+    if (down.moved) { const r = canvas.getBoundingClientRect(); splitPos = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); split.value = Math.round(splitPos * 100); draw(); }
+  });
+  canvas.addEventListener("pointerup", (e) => {
+    if (down && !down.moved && file) { // a tap zooms there
+      const r = canvas.getBoundingClientRect(), w = r.width, h = r.height, iw = file.w, ih = file.h, fit = Math.min(w / iw, h / ih);
+      const scale = fit * zoom;
+      const ox = zoom === 1 ? (w - iw * scale) / 2 : w / 2 - focus.x * iw * scale, oy = zoom === 1 ? (h - ih * scale) / 2 : h / 2 - focus.y * ih * scale;
+      focus = { x: Math.min(1, Math.max(0, (e.clientX - r.left - ox) / scale / iw)), y: Math.min(1, Math.max(0, (e.clientY - r.top - oy) / scale / ih)) };
+      if (zoom === 1) { zoom = 4; $$("[data-lab-zoom]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.labZoom === "4"))); }
+      draw();
+    }
+    down = null;
+  });
+  canvas.addEventListener("keydown", (e) => {
+    const step = { ArrowLeft: [-0.05, 0], ArrowRight: [0.05, 0], ArrowUp: [0, -0.05], ArrowDown: [0, 0.05] }[e.key];
+    if (!step) return; e.preventDefault(); focus = { x: Math.min(1, Math.max(0, focus.x + step[0])), y: Math.min(1, Math.max(0, focus.y + step[1])) }; draw();
+  });
+  addEventListener("resize", draw);
+  $$("[data-lab-zoom]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.labZoom === "2")));
+  onFilesChanged = refreshSources;
+  detect().then(refreshSources);
+  return { draw };
 })();
 
 // ---------- Install bits ----------

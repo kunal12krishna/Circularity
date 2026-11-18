@@ -461,6 +461,8 @@ Each milestone follows the same steps: implement it, run `xcodegen generate`, `x
 - **Budget missed, reported honestly:** after first use the wheel leaves ~23–27 MB, the panel ~38 MB, Settings ~66 MB (framework caches; no growth over repeated use). Options for later in PERF-REPORT.md.
 - Tests: 114 unit tests, 60 engine checks (62 with `--large`), `--drag-test`; real-event level 2 documented in MANUAL-TESTS.md. Docs: PERF-REPORT.md, INSTRUMENTS.md, README demo-GIF checklist, `scripts/clean-rebuild.sh`.
 
+**0.2 additions (after (k)):** Cut out (Vision subject lifting, macOS 14+, on device), drop shelf (AppKit, drag results onward; Copy/Show for keyboard and VoiceOver), before/after close-up for JPG/HEIC/Compress (JPEG/HEIC only so no heavy encoder loads), milestones (Stats badges, panel note, notification), user-chosen image wheel buttons (`wheel.imageSlots`, swap-on-conflict editor), opt-in once-a-day update check against `appcast.json` (the app's only network use; docs/UPDATES.md), and Paste/Copy theme so the website's theme builder feeds Settings → Appearance. The website (`website/index.html`) gained a theme builder that draws the app's real layouts and exports the app's theme JSON, a format lab (real browser encodes, before/after slider, zoom), Windows 95 / Blueprint / Newspaper skins, a skip link, live announcements and keyboard play for every interactive part.
+
 ---
 
 ## 5. Performance budget and how it is enforced
