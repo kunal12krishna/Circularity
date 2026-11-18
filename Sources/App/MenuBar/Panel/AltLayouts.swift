@@ -136,7 +136,7 @@ struct TabsView: View {
                 HStack(spacing: 10) {
                     RingProgress(fraction: job.fraction, accent: model.accent, track: Color(hex: 0xEDE8E1)).frame(width: 40, height: 40)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(job.title).font(PanelTokens.rounded(13, .bold)).foregroundStyle(palette.primary).lineLimit(1)
+                        Text(job.title).font(PanelTokens.rounded(13, .bold)).foregroundStyle(palette.primary).lineLimit(1).truncationMode(.middle)
                         Text(job.meta).font(PanelTokens.rounded(11)).foregroundStyle(palette.meta)
                     }
                     Spacer()
@@ -275,7 +275,7 @@ struct MiniView: View {
                 HStack(spacing: 12) {
                     RingProgress(fraction: job.fraction, accent: model.accent, lineWidth: 4).frame(width: 34, height: 34)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(job.title.replacingOccurrences(of: "Compress", with: "SQZ")).font(Halo.mono(13)).foregroundStyle(Halo.text).lineLimit(1)
+                        Text(job.title.replacingOccurrences(of: "Compress", with: "SQZ")).font(Halo.mono(13)).foregroundStyle(Halo.text).lineLimit(1).truncationMode(.middle)
                         Text(job.meta).font(Halo.rounded(12)).foregroundStyle(Halo.secondary).lineLimit(1).minimumScaleFactor(0.8)
                     }
                     Spacer()

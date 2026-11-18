@@ -136,7 +136,8 @@ final class OrbLayer {
         let previous = current
         current = text
         let s = scaleFactor
-        kicker.set(text.kicker, font: tokens.kickerFont, color: tokens.kickerColor, kern: tokens.kickerKern)
+        kicker.set(text.kicker, font: tokens.kickerFont, color: tokens.kickerColor, kern: tokens.kickerKern,
+                   maxWidth: tokens.diameter * 0.74)
         big.set(text.big, font: tokens.bigFont, color: text.cancelHot ? cancelColor : bigColor,
                 kern: tokens.bigKern, maxWidth: tokens.bigMaxWidth)
         detail.set(text.detail, font: WheelFont.rounded(12 * s * labelScale, .semibold), color: tokens.detailColor,

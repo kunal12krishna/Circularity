@@ -67,10 +67,34 @@ extension CATextLayer {
             let factor = max(minScale, maxWidth / attributed.size().width)
             font = NSFont(descriptor: font.fontDescriptor, size: font.pointSize * factor) ?? font
             attributed = CATextLayer.attributed(text, font: font, color: color, kern: kern * factor)
+            // Still too wide at the smallest size: shorten in the middle, so a
+            // long file name keeps its start, its extension and the size.
+            if attributed.size().width > maxWidth {
+                let fitted = CATextLayer.middleTruncated(text, toFit: maxWidth) { candidate in
+                    CATextLayer.attributed(candidate, font: font, color: color, kern: kern * factor).size().width
+                }
+                attributed = CATextLayer.attributed(fitted, font: font, color: color, kern: kern * factor)
+            }
         }
         string = attributed
         let size = attributed.size()
         bounds = CGRect(x: 0, y: 0, width: ceil(size.width) + 2, height: ceil(size.height))
+    }
+
+    /// The longest "start…end" form of `text` whose width fits.
+    static func middleTruncated(_ text: String, toFit maxWidth: CGFloat, width: (String) -> CGFloat) -> String {
+        let chars = Array(text)
+        func candidate(_ keep: Int) -> String {
+            let tail = keep / 2
+            return String(chars.prefix(keep - tail)) + "…" + String(chars.suffix(tail))
+        }
+        var low = 0, high = chars.count - 1, best = "…"
+        while low <= high {
+            let mid = (low + high) / 2
+            let c = candidate(mid)
+            if width(c) <= maxWidth { best = c; low = mid + 1 } else { high = mid - 1 }
+        }
+        return best
     }
 
     fileprivate static func attributed(_ text: String, font: NSFont, color: CGColor, kern: CGFloat) -> NSAttributedString {

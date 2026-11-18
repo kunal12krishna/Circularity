@@ -261,7 +261,7 @@ struct JobCard: View {
         HStack(spacing: 10) {
             FileThumb(url: job.firstInput, size: 42, corner: 9)
             VStack(alignment: .leading, spacing: 6) {
-                Text(job.title).font(PanelTokens.rounded(13, .bold)).foregroundStyle(palette.primary).lineLimit(1).truncationMode(.tail)
+                Text(job.title).font(PanelTokens.rounded(13, .bold)).foregroundStyle(palette.primary).lineLimit(1).truncationMode(.middle)
                 GeometryReader { g in
                     ZStack(alignment: .leading) {
                         Capsule().fill(Color.white.opacity(0.12))

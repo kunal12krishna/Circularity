@@ -94,7 +94,7 @@ struct DialogFrame<Content: View>: View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title.uppercased()).font(Halo.mono(26, .heavy)).tracking(1.2).foregroundStyle(accent)
-                Text(subtitle).font(Halo.rounded(12, .semibold)).foregroundStyle(Halo.secondary).lineLimit(1)
+                Text(subtitle).font(Halo.rounded(12, .semibold)).foregroundStyle(Halo.secondary).lineLimit(1).truncationMode(.middle)
             }
             content()
             if let addButton {

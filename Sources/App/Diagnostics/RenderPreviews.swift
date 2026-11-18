@@ -273,6 +273,13 @@ enum RenderPreviews {
             ("video", [.mpeg4Movie], WheelVisualState()),
             ("batch", [.jpeg, .png], WheelVisualState(hover: .segment(2))),
         ]
+        // A very long file name must stay inside the centre in every layout.
+        let longName = "Family_holiday_in_the_mountains_summer_2026_final_edit_version_3_exported.HEIC"
+        for kind in [WheelLayoutKind.halo, .ring, .orbit] {
+            try renderWheel(kind: kind, types: [.heic], count: 1, accent: kind == .halo ? 0xC6FF3D : 0xFF8A00, backdrop: 0x1F2228,
+                            state: WheelVisualState(), fileName: longName,
+                            to: directory.appendingPathComponent("wheel-\(kind.rawValue)-long-name@2x.png"))
+        }
         for (name, types, state) in extra {
             try renderWheel(kind: .ring, types: types, count: types.count, accent: 0xFF8A00, backdrop: 0x1F2228,
                             state: state, to: directory.appendingPathComponent("wheel-ring-\(name)@2x.png"))
@@ -280,7 +287,7 @@ enum RenderPreviews {
     }
 
     private static func renderWheel(kind: WheelLayoutKind, types: [UTType], count: Int, accent: UInt32, backdrop: UInt32,
-                                    state: WheelVisualState, to url: URL) throws {
+                                    state: WheelVisualState, fileName: String = "IMG_2041.HEIC", to url: URL) throws {
         let renderer: WheelRenderer = switch kind {
         case .ring: SectorRenderer(style: .ring)
         case .halo: SectorRenderer(style: .halo)
@@ -289,8 +296,8 @@ enum RenderPreviews {
         renderer.allowsTilt = false // render(in:) skips 3D transforms
         let menu = SlotProvider.menu(for: types, canWrite: { FormatSupport.current.canWrite($0) })
         let single = count == 1
-        let content = OrbContent(fileLine: single ? "IMG_2041.HEIC · 3.2 MB" : "\(count) images · 8.7 MB",
-                                 title: single ? "IMG_2041.HEIC" : "\(count) images",
+        let content = OrbContent(fileLine: single ? "\(fileName) · 3.2 MB" : "\(count) images · 8.7 MB",
+                                 title: single ? fileName : "\(count) images",
                                  detail: single ? "3.2 MB" : "8.7 MB total", count: count,
                                  thumbnail: samplePicture(size: 240, scale: 2), clickMode: false)
         let geometry = WheelGeometry.make(kind)
