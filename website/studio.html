@@ -5,22 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wheel Studio</title>
 <meta name="description" content="Wheel Studio: design your own Circularity wheel. Shapes, colours, fonts, glow, sparks and backdrops, then paste the theme into the app or export a poster or clip.">
-<meta name="theme-color" content="#0A0C0F">
+<meta name="theme-color" content="#F3EEE4">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;700;800&family=Nunito:wght@400;700;800;900&family=Outfit:wght@400;700;900&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@400;700&family=Unbounded:wght@400;700;900&family=VT323&display=swap">
 <style>
-/* Wheel Studio: one big live stage, a panel of knobs. The page's accent follows the wheel's. */
+/* Wheel Studio: one big live stage, a panel of knobs, printed on the site's Riso paper.
+   The page's accent follows the wheel's. */
 :root {
-  --bg: #0A0C0F; --panel: #12151B; --panel2: #191D25; --line: rgba(255,255,255,.09); --line2: rgba(255,255,255,.16);
-  --fg: #ECEEF2; --muted: #8E96A3; --a: #C6FF3D; --on-a: #0E1206;
+  --bg: #F3EEE4; --panel: #FBF8F2; --panel2: #F1EBE0; --line: rgba(23,20,15,.12); --line2: rgba(23,20,15,.22);
+  --fg: #17140F; --muted: #645C51; --a: #FF4FA0; --on-a: #17140F; --blue: #2F5BFF;
+  --bar: rgba(243,238,228,.92); --field: rgba(23,20,15,.04); --track: rgba(23,20,15,.16); --hover: rgba(23,20,15,.45);
+  --check1: #E9E2D5; --check2: #F5F0E7; --toast-bg: #17140F; --toast-fg: #F3EEE4; --offset: #17140F;
   --ui: "Geist", system-ui, sans-serif; --mono: "Geist Mono", ui-monospace, Menlo, monospace;
-  color-scheme: dark;
+  color-scheme: light;
 }
+:root[data-theme="dark"] {
+  --bg: #14110D; --panel: #1A1611; --panel2: #221E18; --line: rgba(243,238,228,.1); --line2: rgba(243,238,228,.18);
+  --fg: #F3EEE4; --muted: #ABA295; --blue: #6F8CFF; --bar: rgba(20,17,13,.9); --field: rgba(0,0,0,.25); --track: rgba(243,238,228,.16); --hover: rgba(243,238,228,.4);
+  --check1: #1E1A15; --check2: #16130F; --toast-bg: #F3EEE4; --toast-fg: #17140F; --offset: #6F8CFF; color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
-body { background: var(--bg); color: var(--fg); font: 14px/1.45 var(--ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
+body { background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .09 0 0 0 0 .08 0 0 0 0 .06 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E"); color: var(--fg); font: 14px/1.45 var(--ui); -webkit-font-smoothing: antialiased; overflow: hidden; }
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--a); outline-offset: 2px; }
@@ -28,7 +35,7 @@ button { cursor: pointer; }
 [hidden] { display: none !important; }
 
 /* Top bar */
-.top { height: 58px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line); background: rgba(10,12,15,.9); position: relative; z-index: 5; }
+.top { height: 58px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--bar); position: relative; z-index: 5; }
 .back { display: inline-flex; align-items: center; gap: 9px; color: var(--fg); text-decoration: none; font-weight: 650; white-space: nowrap; }
 .back svg { flex: none; }
 .back small { color: var(--muted); font-weight: 450; }
@@ -37,10 +44,12 @@ button { cursor: pointer; }
 .spacer { flex: 1; }
 .ibtn, .btn { height: 36px; border-radius: 10px; border: 1px solid var(--line2); background: var(--panel2); display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 0 12px; white-space: nowrap; transition: border-color .15s, background .15s, transform .1s; }
 .ibtn { width: 36px; padding: 0; }
-.ibtn:hover, .btn:hover { border-color: rgba(255,255,255,.3); }
+.ibtn:hover, .btn:hover { border-color: var(--hover); }
 .ibtn:active, .btn:active { transform: translateY(1px); }
 .ibtn:disabled { opacity: .35; cursor: default; }
-.btn.primary { background: var(--a); color: var(--on-a); border-color: transparent; font-weight: 700; box-shadow: 0 0 0 1px rgba(255,255,255,.08), 0 8px 24px color-mix(in srgb, var(--a) 30%, transparent); }
+.btn.primary { background: var(--a); color: var(--on-a); border: 1.5px solid var(--fg); font-weight: 700; box-shadow: 3px 3px 0 var(--offset); }
+.btn.primary:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--offset); }
+.btn.primary:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--offset); }
 .btn.dice { font-weight: 650; }
 #copyTop { gap: 0; }
 .btn kbd { font: 600 10px var(--mono); opacity: .6; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; }
@@ -49,9 +58,9 @@ button { cursor: pointer; }
 .studio-main { display: grid; grid-template-columns: minmax(0, 1fr) 420px; height: calc(100vh - 58px); height: calc(100dvh - 58px); }
 .stage-wrap { position: relative; display: grid; grid-template-rows: minmax(0, 1fr) auto; min-width: 0; }
 .stage { position: relative; display: grid; place-items: center; overflow: hidden; perspective: 1100px; padding: 18px; }
-.stage::before { content: ""; position: absolute; inset: 0; background: repeating-conic-gradient(#15181E 0 25%, #0F1216 0 50%) 0 0 / 22px 22px; opacity: 0; transition: opacity .3s; }
+.stage::before { content: ""; position: absolute; inset: 0; background: repeating-conic-gradient(var(--check1) 0 25%, var(--check2) 0 50%) 0 0 / 22px 22px; opacity: 0; transition: opacity .3s; }
 .stage.checker::before { opacity: 1; }
-#cv { position: relative; display: block; border-radius: 22px; box-shadow: 0 30px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.06); transition: transform .25s cubic-bezier(.2,.8,.3,1); touch-action: none; cursor: crosshair; }
+#cv { position: relative; display: block; border-radius: 22px; box-shadow: 0 30px 70px rgba(23,20,15,.28), 0 0 0 1px var(--line); transition: transform .25s cubic-bezier(.2,.8,.3,1); touch-action: none; cursor: crosshair; }
 .stage.drop #cv { box-shadow: 0 0 0 3px var(--a), 0 30px 80px rgba(0,0,0,.5); }
 .stage-bar { display: flex; align-items: center; gap: 12px; padding: 10px 18px 14px; min-height: 52px; font: 12px var(--mono); color: var(--muted); flex-wrap: wrap; }
 .stage-bar b { color: var(--fg); font-weight: 600; }
@@ -64,8 +73,8 @@ button { cursor: pointer; }
 .legend { padding: 12px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
 .legend-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .badge { font: 600 10px var(--mono); padding: 2px 6px; border-radius: 5px; letter-spacing: .04em; white-space: nowrap; }
-.badge.app { background: color-mix(in srgb, var(--a) 18%, transparent); color: var(--a); border: 1px solid color-mix(in srgb, var(--a) 45%, transparent); }
-.badge.studio { background: rgba(255,255,255,.05); color: var(--muted); border: 1px solid var(--line2); }
+.badge.app { background: color-mix(in srgb, var(--a) 22%, transparent); color: color-mix(in srgb, var(--a) 50%, var(--fg)); border: 1px solid color-mix(in srgb, var(--a) 45%, transparent); }
+.badge.studio { background: var(--field); color: var(--muted); border: 1px solid var(--line2); }
 .tabs { display: flex; flex-wrap: wrap; gap: 4px; padding: 10px 12px; border-bottom: 1px solid var(--line); scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { border: 0; background: transparent; color: var(--muted); padding: 7px 11px; border-radius: 8px; font-weight: 600; font-size: 13px; white-space: nowrap; }
@@ -89,23 +98,23 @@ input[type=range] { width: 100%; accent-color: var(--a); height: 22px; }
 .seg { display: flex; flex-wrap: wrap; gap: 4px; }
 .seg button { border: 1px solid var(--line2); background: transparent; border-radius: 8px; padding: 5px 10px; font-size: 13px; color: var(--muted); }
 .seg button:hover { color: var(--fg); }
-.seg button[aria-pressed="true"] { background: var(--a); color: var(--on-a); border-color: transparent; font-weight: 650; }
+.seg button[aria-pressed="true"] { background: var(--a); color: var(--on-a); border-color: var(--fg); font-weight: 650; }
 .seg button:disabled { opacity: .35; cursor: default; }
 .seg.fonts button { font-size: 15px; padding: 6px 11px; }
 .sw { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: var(--muted); }
-.sw input { appearance: none; width: 38px; height: 22px; border-radius: 999px; background: rgba(255,255,255,.14); position: relative; margin: 0; cursor: pointer; transition: background .2s; flex: none; }
-.sw input::after { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .2s cubic-bezier(.3,1.4,.5,1); }
+.sw input { appearance: none; width: 38px; height: 22px; border-radius: 999px; background: var(--track); position: relative; margin: 0; cursor: pointer; transition: background .2s; flex: none; }
+.sw input::after { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .2s cubic-bezier(.3,1.4,.5,1); }
 .sw input:checked { background: var(--a); }
 .sw input:checked::after { transform: translateX(16px); background: var(--on-a); }
 .colr { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 input[type=color] { width: 42px; height: 32px; border: 1px solid var(--line2); border-radius: 8px; background: transparent; padding: 2px; cursor: pointer; }
 input[type=color]:disabled { opacity: .35; }
-.hex { width: 92px; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: rgba(0,0,0,.25); padding: 0 8px; font: 13px var(--mono); text-transform: uppercase; }
+.hex { width: 92px; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: var(--field); padding: 0 8px; font: 13px var(--mono); text-transform: uppercase; }
 .hex:disabled { opacity: .4; }
 .auto { display: inline-flex; gap: 6px; align-items: center; font-size: 12px; color: var(--muted); cursor: pointer; }
 .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
-.swatches button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid rgba(255,255,255,.12); padding: 0; }
-.swatches button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px #fff; }
+.swatches button { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--line2); padding: 0; }
+.swatches button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--fg); }
 .contrast { font: 12px var(--mono); color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { border: 1px solid var(--line2); background: transparent; border-radius: 999px; padding: 5px 11px 5px 7px; display: inline-flex; gap: 7px; align-items: center; font-size: 13px; }
@@ -124,8 +133,8 @@ input[type=color]:disabled { opacity: .35; }
 .big-dice { display: flex; gap: 8px; }
 .big-dice .btn { flex: 1; height: 46px; font-size: 15px; }
 .labels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.labels input { width: 100%; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: rgba(0,0,0,.25); padding: 0 9px; font-size: 13px; }
-.txt { width: 100%; height: 34px; border-radius: 8px; border: 1px solid var(--line2); background: rgba(0,0,0,.25); padding: 0 10px; }
+.labels input { width: 100%; height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: var(--field); padding: 0 9px; font-size: 13px; }
+.txt { width: 100%; height: 34px; border-radius: 8px; border: 1px solid var(--line2); background: var(--field); padding: 0 10px; }
 textarea.code { width: 100%; min-height: 170px; border-radius: 10px; border: 1px solid var(--line2); background: #07080A; color: #CFD5DE; font: 12px/1.5 var(--mono); padding: 10px; resize: vertical; }
 .btns { display: flex; flex-wrap: wrap; gap: 8px; }
 .carry { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 12.5px; color: var(--muted); }
@@ -136,7 +145,7 @@ textarea.code { width: 100%; min-height: 170px; border-radius: 10px; border: 1px
 .recording .rec i { animation: blink .8s infinite; }
 @keyframes blink { 50% { opacity: .2; } }
 
-.toast { position: fixed; left: 50%; bottom: 22px; translate: -50% 20px; background: #F4F6F8; color: #0B0D10; padding: 10px 16px; border-radius: 12px; font-weight: 600; box-shadow: 0 16px 40px rgba(0,0,0,.45); opacity: 0; transition: opacity .25s, translate .25s cubic-bezier(.2,1.4,.4,1); pointer-events: none; z-index: 20; max-width: calc(100vw - 32px); }
+.toast { position: fixed; left: 50%; bottom: 22px; translate: -50% 20px; background: var(--toast-bg); color: var(--toast-fg); padding: 10px 16px; border-radius: 12px; font-weight: 600; box-shadow: 0 16px 40px rgba(0,0,0,.45); opacity: 0; transition: opacity .25s, translate .25s cubic-bezier(.2,1.4,.4,1); pointer-events: none; z-index: 20; max-width: calc(100vw - 32px); }
 .toast.on { opacity: 1; translate: -50% 0; }
 
 /* Phones and narrow windows: the stage on top, the knobs below it. */
@@ -168,7 +177,7 @@ html.embed #cv { border-radius: 0; box-shadow: none; pointer-events: none; }
 <body>
 <header class="top">
   <a class="back" href="./#theme" aria-label="Back to the Circularity home page">
-    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="var(--a)" stroke-width="2.4" stroke-linecap="round"><path d="M12 4.5A7.5 7.5 0 0 1 19.1 9.6"/><path d="M19.3 13.4A7.5 7.5 0 0 1 12 19.5"/><path d="M9.1 18.9A7.5 7.5 0 0 1 4.8 9.9"/></g></svg>
+    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="var(--fg)" stroke-width="2.4" stroke-linecap="round"><path d="M12 4.5A7.5 7.5 0 0 1 19.1 9.6"/><path d="M19.3 13.4A7.5 7.5 0 0 1 12 19.5"/><path d="M9.1 18.9A7.5 7.5 0 0 1 4.8 9.9"/></g></svg>
     <span class="hide-xs">Circularity</span> <small>← home</small>
   </a>
   <span class="title"><span aria-hidden="true">/</span> Wheel Studio <span class="knobs" id="knobs"></span></span>
@@ -211,7 +220,7 @@ html.embed #cv { border-radius: 0; box-shadow: none; pointer-events: none; }
     <div class="panes">
       <section class="pane" role="tabpanel" id="p-presets" aria-labelledby="t-presets">
         <h2>Start somewhere</h2>
-        <p class="sub">Six looks the app ships with, twelve wilder ones. Every knob stays editable afterwards.</p>
+        <p class="sub">Seven looks the app ships with, twelve wilder ones. Every knob stays editable afterwards.</p>
         <div class="big-dice"><button class="btn primary" type="button" id="dice2">🎲 Surprise me</button><button class="btn" type="button" id="resetAll">Start over</button></div>
         <div class="group-h">In the app</div>
         <div class="presets" id="presetsApp"></div>
@@ -347,14 +356,14 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 // ---------- What a wheel is ----------
 const DEFAULT = {
   // ◆ the app's theme settings
-  theme: "neon", accent: "#C6FF3D", layout: "halo", scheme: "auto", panel: "auto", glass: 0.55,
+  theme: "riso", accent: "#FF4FA0", layout: "halo", scheme: "auto", panel: "auto", glass: 0.55,
   tints: { images: "", tools: "", documents: "" }, scale: 1, thick: 1, gap: 3, orb: 1, label: 1, font: "rounded", case: "title",
   // ✦ studio
   count: 6, spread: 360, rot: 0, round: 0, bulge: 1, btn: 1,
-  fill: "flat", accent2: "#5CE1FF", hue: 0, disc: "", ink: "",
+  fill: "flat", accent2: "#2F5BFF", hue: 0, disc: "", ink: "",
   display: "app", weight: 800, track: 0, captions: true, labels: [], centre: "",
   fx: { glow: 0.6, shadow: 0.7, spin: 0, breathe: 0, sparks: true, dots: 0, tilt: 0.5, grain: 0, scan: 0, vignette: 0, autohover: true, pointer: "none", sound: false },
-  bg: { kind: "aurora", c1: "#1F4D3A", c2: "#2B2F6B", c3: "#07080B", animate: true, blur: 0, dim: 0 },
+  bg: { kind: "paper", c1: "#FF4FA0", c2: "#2F5BFF", c3: "#F3EEE4", animate: true, blur: 0, dim: 0 },
 };
 const APP_KEYS = ["theme", "accent", "layout", "scheme", "panel", "glass", "tints", "scale", "thick", "gap", "orb", "label", "font", "case"];
 const clone = (o) => JSON.parse(JSON.stringify(o));
@@ -370,11 +379,12 @@ const getP = (o, p) => p.split(".").reduce((a, k) => a?.[k], o);
 const setP = (o, p, v) => { const ks = p.split("."), last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
 
 const APP_THEMES = [
-  { id: "neon", name: "Neon", sub: "the default", set: {} },
-  { id: "tangerine", name: "Tangerine", sub: "warm", set: { accent: "#FF8A00", layout: "ring", fx: { glow: 0 }, bg: { c1: "#3A2A1C", c2: "#120D09" } } },
-  { id: "glass", name: "Glass", sub: "light", set: { accent: "#7C8CFF", layout: "ring", glass: 0.3, scheme: "light", fx: { glow: 0 }, bg: { c1: "#DCD6CC", c2: "#B9C4D0" } } },
-  { id: "graphite", name: "Graphite", sub: "quiet", set: { accent: "#9BA3AF", layout: "ring", glass: 0.75, font: "default", fx: { glow: 0 } } },
-  { id: "midnight", name: "Midnight", sub: "deep blue", set: { accent: "#5C7CFA", layout: "ring", glass: 0.8, fx: { glow: 0 }, bg: { c1: "#1B2550", c2: "#06070D" } } },
+  { id: "riso", name: "Riso", sub: "the default", set: {} },
+  { id: "neon", name: "Neon", sub: "lime", set: { accent: "#C6FF3D", accent2: "#5CE1FF", bg: { kind: "aurora", c1: "#1F4D3A", c2: "#2B2F6B", c3: "#07080B" } } },
+  { id: "tangerine", name: "Tangerine", sub: "warm", set: { accent: "#FF8A00", layout: "ring", fx: { glow: 0 }, bg: { kind: "desktop", c1: "#3A2A1C", c2: "#120D09" } } },
+  { id: "glass", name: "Glass", sub: "light", set: { accent: "#7C8CFF", layout: "ring", glass: 0.3, scheme: "light", fx: { glow: 0 }, bg: { kind: "desktop", c1: "#DCD6CC", c2: "#B9C4D0" } } },
+  { id: "graphite", name: "Graphite", sub: "quiet", set: { accent: "#9BA3AF", layout: "ring", glass: 0.75, font: "default", fx: { glow: 0 }, bg: { kind: "desktop", c1: "#2B3242", c2: "#14171E" } } },
+  { id: "midnight", name: "Midnight", sub: "deep blue", set: { accent: "#5C7CFA", layout: "ring", glass: 0.8, fx: { glow: 0 }, bg: { kind: "desktop", c1: "#1B2550", c2: "#06070D" } } },
   { id: "mono", name: "Mono", sub: "black & white", set: { accent: "#F2F2F2", font: "default", fx: { glow: 0.25 }, bg: { kind: "solid", c1: "#050505" } } },
 ];
 const STUDIO_PRESETS = [
@@ -442,10 +452,10 @@ const appFont = (f) => (f === "mono" ? '"JetBrains Mono", ui-monospace, monospac
 // ---------- State, history, storage ----------
 let st = (() => {
   if (location.hash.startsWith("#w=")) { try { return merge(DEFAULT, JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3).replace(/-/g, "+").replace(/_/g, "/")))))); } catch {} }
-  try { const v = JSON.parse(store.get("circularity-studio") || "null"); if (v) return merge(DEFAULT, v); } catch {}
-  // Carry over a theme made in the old builder on the home page.
+  try { const v = JSON.parse(store.get("circularity-studio-v2") || "null"); if (v) return merge(DEFAULT, v); } catch {}
+  // Carry over a theme made in the old builder on the home page (only if it isn't the old lime default).
   try { const o = JSON.parse(store.get("circularity-theme-builder") || "null");
-    if (o && o.accent) return merge(DEFAULT, { theme: o.theme, accent: o.accent, layout: o.layout, scheme: o.scheme, panel: o.panel, glass: o.glass, tints: o.tints,
+    if (o && o.accent && o.accent.toUpperCase() !== "#C6FF3D") return merge(DEFAULT, { theme: o.theme, accent: o.accent, layout: o.layout, scheme: o.scheme, panel: o.panel, glass: o.glass, tints: o.tints,
       scale: o.scale, thick: o.thick, gap: o.gap, orb: o.orb, label: o.label, font: o.font, case: o.case }); } catch {}
   return clone(DEFAULT);
 })();
@@ -457,7 +467,7 @@ function updUndo() { $("#undo").disabled = hi <= 0; $("#redo").disabled = hi >= 
 function restore(j) { st = JSON.parse(j); save(); syncUI(); kick(); }
 function undo() { clearTimeout(histTimer); pushHist(); if (hi > 0) { hi--; restore(hist[hi]); updUndo(); toast("Undone"); } }
 function redo() { if (hi < hist.length - 1) { hi++; restore(hist[hi]); updUndo(); toast("Redone"); } }
-function save() { store.set("circularity-studio", JSON.stringify(st)); }
+function save() { store.set("circularity-studio-v2", JSON.stringify(st)); }
 function commit(now) { save(); syncUI(); kick(); clearTimeout(histTimer); if (now) pushHist(); else histTimer = setTimeout(pushHist, 400); }
 function set(path, v) {
   setP(st, path, v);
@@ -673,6 +683,16 @@ function drawBackdrop(ctx, S, W, t) {
   const lin = (c0, c1) => { const g = ctx.createLinearGradient(0, 0, W, W); g.addColorStop(0, c0); g.addColorStop(1, c1); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); };
   const blob = (x, y, r, c, a) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(c, a)); g.addColorStop(1, rgba(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); };
   switch (b.kind) {
+    case "paper": {
+      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
+      ctx.save(); ctx.globalCompositeOperation = "multiply";
+      const dx = Math.sin(t * 0.3) * W * 0.01;
+      ctx.fillStyle = rgba(b.c1, 0.85); ctx.beginPath(); ctx.arc(W * 0.3 + dx, W * 0.34, W * 0.26, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = rgba(b.c2, 0.85); ctx.beginPath(); ctx.arc(W * 0.72 - dx, W * 0.7, W * 0.3, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = rgba(b.c2, 0.55); ctx.fillRect(W * 0.08, W * 0.78, W * 0.3, W * 0.05); ctx.fillStyle = rgba(b.c1, 0.6); ctx.fillRect(W * 0.1 + W * 0.012, W * 0.8, W * 0.3, W * 0.05);
+      ctx.restore();
+      ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = ctx.createPattern(noiseCanvas(), "repeat"); ctx.fillRect(0, 0, W, W); ctx.restore();
+      break; }
     case "solid": ctx.fillStyle = b.c1; ctx.fillRect(0, 0, W, W); break;
     case "aurora":
       ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
@@ -920,10 +940,10 @@ K("effects", { key: "fx.pointer", label: "Pointer", app: false, type: "seg", opt
 K("effects", { key: "fx.autohover", label: "Hover by itself", app: false, type: "toggle", hint: "walks round the buttons when you're not pointing" });
 K("effects", { key: "fx.sound", label: "Sound", app: false, type: "toggle", hint: "little ticks as you move" });
 // Backdrop
-K("backdrop", { key: "bg.kind", label: "Kind", app: false, type: "seg", options: [["desktop", "Desktop"], ["aurora", "Aurora"], ["waves", "Waves"], ["mesh", "Mesh"], ["grid", "Grid"], ["dots", "Dots"], ["solid", "Solid"], ["photo", "Picture"], ["none", "Transparent"]] });
+K("backdrop", { key: "bg.kind", label: "Kind", app: false, type: "seg", options: [["paper", "Riso paper"], ["desktop", "Desktop"], ["aurora", "Aurora"], ["waves", "Waves"], ["mesh", "Mesh"], ["grid", "Grid"], ["dots", "Dots"], ["solid", "Solid"], ["photo", "Picture"], ["none", "Transparent"]] });
 K("backdrop", { key: "bg.c1", label: "Colour one", app: false, type: "color", when: (S) => !["none", "photo"].includes(S.bg.kind) });
-K("backdrop", { key: "bg.c2", label: "Colour two", app: false, type: "color", when: (S) => ["desktop", "aurora", "waves", "mesh"].includes(S.bg.kind) });
-K("backdrop", { key: "bg.c3", label: "Base", app: false, type: "color", when: (S) => ["aurora", "waves", "mesh", "grid", "dots"].includes(S.bg.kind) });
+K("backdrop", { key: "bg.c2", label: "Colour two", app: false, type: "color", when: (S) => ["paper", "desktop", "aurora", "waves", "mesh"].includes(S.bg.kind) });
+K("backdrop", { key: "bg.c3", label: "Base", app: false, type: "color", when: (S) => ["paper", "aurora", "waves", "mesh", "grid", "dots"].includes(S.bg.kind) });
 K("backdrop", { key: "bg.animate", label: "Drift", app: false, type: "toggle", hint: "slow movement in aurora, waves, mesh and grid", when: (S) => ["aurora", "waves", "mesh", "grid"].includes(S.bg.kind) });
 K("backdrop", { key: "bg.blur", label: "Blur the picture", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.bg.kind === "photo" });
 K("backdrop", { key: "bg.dim", label: "Dim the picture", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.bg.kind === "photo" });
@@ -1065,7 +1085,7 @@ function surprise() {
   applyState(S, "🎲 " + pick(["Fresh one", "Oh, nice", "Bold choice", "Rolled", "That's new", "Spicy"]));
 }
 $("#dice").addEventListener("click", surprise); $("#dice2").addEventListener("click", surprise);
-$("#resetAll").addEventListener("click", () => applyState(clone(DEFAULT), "Back to Neon"));
+$("#resetAll").addEventListener("click", () => applyState(clone(DEFAULT), "Back to Riso"));
 
 // ---------- Export ----------
 function appJSON() {
