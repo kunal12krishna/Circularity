@@ -202,6 +202,33 @@ section { padding-block: clamp(56px, 8vw, 96px); }
 .livekeys kbd.down { transform: translateY(2px); border-bottom-width: 1px; background: var(--accent); color: var(--on-accent); }
 .livekeys span { color: var(--muted); font-size: 13px; }
 .demo-wrap { padding-bottom: 12px; }
+/* Morph: format cards scatter, line up, ring like the wheel, then sweep into an arc as you scroll */
+.morph { height: 320vh; position: relative; padding-block: 0;
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px))); }
+.morph-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; perspective: 1000px; }
+.morph-intro { position: absolute; left: 50%; top: 50%; translate: -50% -50%; text-align: center; pointer-events: none; z-index: 1;
+  width: min(calc(var(--r, 240px) * 1.45), 88vw); opacity: 0; transition: opacity .8s, filter .8s; filter: blur(8px); }
+.morph-intro.on { opacity: var(--io, 1); filter: blur(0); }
+.morph-intro h2 { font-size: clamp(24px, 3.8vw, 48px); line-height: 1; margin: 10px 0 12px; }
+@media (max-width: 767px) { .morph-intro { width: calc(var(--r, 160px) * 1.25); } .morph-intro .eyebrow { display: none; } .morph-intro h2 { font-size: 22px; } }
+.morph-hint { font: 12px var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.morph-copy { position: absolute; left: 50%; top: max(13%, 92px); width: min(620px, calc(100% - 32px)); text-align: center; pointer-events: none; z-index: 1;
+  opacity: var(--co, 0); transform: translate(-50%, calc((1 - var(--co, 0)) * 20px)); }
+.morph-copy h3 { font: var(--display-weight) clamp(26px, 4vw, 48px)/1.05 var(--display); letter-spacing: var(--display-track); margin-bottom: 12px; }
+.morph-copy p { color: var(--muted); font-size: 16px; line-height: 1.6; }
+.morph-cards { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
+.mc { position: absolute; left: 50%; top: 50%; width: 60px; height: 85px; margin: -42.5px 0 0 -30px; perspective: 600px; cursor: pointer; will-change: transform, opacity; opacity: 0; }
+.mc-in { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3,1.5,.5,1); }
+.mc:hover .mc-in, .mc.flip .mc-in { transform: rotateY(180deg); }
+.mc-f, .mc-b { position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+.mc-f { background: var(--c); color: #0B0D10; }
+.mc-f b { font: 800 13px/1 var(--mono); letter-spacing: -.02em; word-break: break-all; }
+.mc-f i { font: 500 7px/1 var(--mono); text-transform: uppercase; letter-spacing: .12em; font-style: normal; opacity: .7; align-self: flex-end; }
+.mc-f::after { content: ""; position: absolute; right: 0; top: 0; width: 14px; height: 14px; background: linear-gradient(225deg, rgba(0,0,0,.0) 50%, rgba(0,0,0,.22) 50%); }
+.mc-b { background: var(--panel2); color: var(--fg); border: 1px solid var(--c); transform: rotateY(180deg); justify-content: center; text-align: center; gap: 4px; }
+.mc-b b { font: 700 8px/1 var(--mono); color: var(--c); letter-spacing: .1em; }
+.mc-b span { font-size: 7.5px; line-height: 1.25; }
+:root:is([data-skin="pixel"], [data-skin="ascii"], [data-skin="win95"]) :is(.mc-f, .mc-b) { border-radius: 0; }
 /* Container scroll: the demo tips back in its bezel and straightens as you scroll to it */
 .cs { padding-block: clamp(24px, 6vw, 72px) 12px; }
 .cs-title { text-align: center; max-width: 18ch; margin: 0 auto clamp(20px, 3vw, 36px); font-size: clamp(30px, 4.6vw, 58px); transform: translateY(var(--ty, 0px)); will-change: transform; }
@@ -726,6 +753,21 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
         <li class="story-step" data-step="2"><span class="n">02</span><h3>Tap Shift.</h3><p>A wheel of formats opens around your pointer. Shaking the pointer works too. No Accessibility permission, no key logging.</p></li>
         <li class="story-step" data-step="3"><span class="n">03</span><h3>Let go.</h3><p>Release on JPG and IMG_2041.jpg appears next to the original a moment later. The original is never changed.</p></li>
       </ol>
+    </div>
+  </section>
+
+  <section class="morph" id="orbit" aria-labelledby="orbitTitle">
+    <div class="morph-pin" id="morphPin">
+      <div class="morph-intro" id="morphIntro">
+        <p class="eyebrow" data-tag="formats">twenty ways out</p>
+        <h2 id="orbitTitle">One wheel.<br><span class="hl">Every way out.</span></h2>
+        <p class="morph-hint">scroll ↓</p>
+      </div>
+      <div class="morph-copy" id="morphCopy">
+        <h3>Twenty ways out of every file.</h3>
+        <p>Images, PDFs and documents, plus Compress, Resize, Crop, Combine and Cut out. Hover or tap a card to flip it.</p>
+      </div>
+      <ul class="morph-cards" id="morphCards" aria-label="Formats and tools"></ul>
     </div>
   </section>
 
@@ -2399,6 +2441,94 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
   addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
   addEventListener("resize", update);
   update();
+})();
+
+// ---------- Morph: scatter → line → circle (the wheel) → arc on scroll ----------
+(() => {
+  const sec = $("#orbit"), pin = $("#morphPin"), list = $("#morphCards"), intro = $("#morphIntro"), copy = $("#morphCopy");
+  const CARDS = [
+    ["HEIC", "image", "--s-heic", "iPhone photos at half the size"], ["PNG", "image", "--s-png", "lossless, keeps transparency"],
+    ["JPG", "image", "--s-jpg", "opens everywhere"], ["PDF", "image", "--s-pdf", "one page per picture"],
+    ["WEBP", "image", "--s-webp", "small, for the web"], ["AVIF", "image", "--s-avif", "the smallest of all"],
+    ["TIFF", "image", "--s-tiff", "uncompressed, for print"], ["GIF", "image", "--s-png", "256 colours"],
+    ["BMP", "image", "--s-tiff", "for old software"], ["MD", "doc", "--s-webp", "Markdown to PDF, HTML, Word"],
+    ["HTML", "doc", "--s-heic", "a web page to PDF"], ["RTF", "doc", "--s-jpg", "rich text, to and fro"],
+    ["DOCX", "doc", "--s-png", "Word to PDF and back"], ["TXT", "doc", "--s-avif", "plain text out of anything"],
+    ["SHRINK", "tool", "--accent", "Compress to a quality or a size: < 2 MB"], ["RESIZE", "tool", "--accent", "1920w, A4, Letter or a scale"],
+    ["CROP", "tool", "--accent", "trim pictures and PDF pages"], ["MERGE", "tool", "--accent", "Combine many files into one PDF"],
+    ["CUT", "tool", "--accent", "Cut out: lift the subject off its background"], ["PAGES", "tool", "--accent", "PDF pages to images"],
+  ];
+  const N = CARDS.length, rnd = (a) => (Math.random() - 0.5) * a;
+  const cards = CARDS.map(([name, kind, color, what]) => {
+    const li = document.createElement("li");
+    li.className = "mc"; li.style.setProperty("--c", `var(${color})`);
+    li.innerHTML = `<div class="mc-in"><div class="mc-f"><b>${name}</b><i>${kind}</i></div><div class="mc-b"><b>${name}</b><span>${what}</span></div></div>`;
+    li.addEventListener("click", () => li.classList.toggle("flip"));
+    list.append(li);
+    return { el: li, x: rnd(1500), y: rnd(1000), r: rnd(180), s: 0.6, o: 0, scatter: { x: rnd(1500), y: rnd(1000), r: rnd(180), s: 0.6, o: 0 } };
+  });
+  let phase = reduceMotion ? "circle" : "scatter", W = 0, H = 0, raf = 0, near = false, started = false;
+  let morph = 0, rot = 0, par = 0, morphT = 0, rotT = 0, parT = 0;
+  const K = reduceMotion ? 1 : 0.075, clamp = (v) => Math.min(1, Math.max(0, v)), lerp = (a, b, t) => a + (b - a) * t;
+
+  const ringRadius = () => W < 768 ? Math.min(W * 0.42, H * 0.3) : Math.min(Math.min(W, H) * 0.35, 350);
+  function measure() {
+    W = pin.clientWidth; H = pin.clientHeight;
+    pin.style.setProperty("--r", ringRadius() + "px");
+    readScroll();
+  }
+  function readScroll() {
+    const r = sec.getBoundingClientRect(), p = clamp(-r.top / Math.max(1, r.height - innerHeight));
+    morphT = clamp(p / 0.3); rotT = clamp((p - 0.3) / 0.7);
+  }
+  function target(i) {
+    if (phase === "scatter") return cards[i].scatter;
+    if (phase === "line") { const gap = Math.min(70, (W - 32) / N); return { x: (i - (N - 1) / 2) * gap, y: 0, r: 0, s: gap / 70, o: 1 }; }
+    const mobile = W < 768, cr = ringRadius(), ca = (i / N) * 360, cad = ca * Math.PI / 180;
+    const circ = { x: Math.cos(cad) * cr, y: Math.sin(cad) * cr, r: ca + 90, s: mobile ? 0.62 : 1 };
+    const ar = mobile ? W * 1.25 : Math.min(W, H * 1.5) * 1.1, apex = H * (mobile ? 0.1 : 0.22), spread = mobile ? 130 : 130;
+    const a = -90 - spread / 2 + i * (spread / (N - 1)) - rot * spread * 0.6, ad = a * Math.PI / 180;
+    // Turn the short way round, so no card spins upside down on the way to the arc.
+    const ra = a + 90 + 360 * Math.round((circ.r - (a + 90)) / 360);
+    const arc = { x: Math.cos(ad) * ar + par, y: Math.sin(ad) * ar + apex + ar, r: ra, s: mobile ? 0.95 : 1.8 };
+    return { x: lerp(circ.x, arc.x, morph), y: lerp(circ.y, arc.y, morph), r: lerp(circ.r, arc.r, morph), s: lerp(circ.s, arc.s, morph), o: 1 };
+  }
+  function frame() {
+    raf = 0;
+    morph = lerp(morph, morphT, K * 1.2); rot = lerp(rot, rotT, K * 1.2); par = lerp(par, parT, K * 0.8);
+    let moving = Math.abs(morph - morphT) + Math.abs(rot - rotT) + Math.abs(par - parT) > 0.002;
+    const k = phase === "circle" ? K : K * 0.7;
+    cards.forEach((c, i) => {
+      const t = target(i);
+      c.x = lerp(c.x, t.x, k); c.y = lerp(c.y, t.y, k); c.r = lerp(c.r, t.r, k); c.s = lerp(c.s, t.s, k); c.o = lerp(c.o, t.o, k);
+      if (Math.abs(c.x - t.x) + Math.abs(c.y - t.y) + Math.abs(c.r - t.r) > 0.3 || Math.abs(c.o - t.o) > 0.01) moving = true;
+      c.el.style.transform = `translate(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px) rotate(${c.r.toFixed(2)}deg) scale(${c.s.toFixed(3)})`;
+      c.el.style.opacity = c.o.toFixed(3);
+    });
+    intro.classList.toggle("on", phase === "circle");
+    intro.style.setProperty("--io", clamp(1 - morph * 2).toFixed(3));
+    copy.style.setProperty("--co", clamp((morph - 0.8) / 0.2).toFixed(3));
+    if (moving && near) raf = requestAnimationFrame(frame);
+  }
+  const wake = () => { if (!raf && near) raf = requestAnimationFrame(frame); };
+  const go = (ph) => { phase = ph; wake(); };
+
+  new IntersectionObserver(([e]) => {
+    near = e.isIntersecting;
+    if (near && !started) {
+      started = true;
+      if (phase === "scatter") { setTimeout(() => go("line"), 300); setTimeout(() => go("circle"), 2100); }
+    }
+    if (near) { measure(); wake(); }
+  }, { rootMargin: "100px 0px" }).observe(sec);
+  addEventListener("scroll", () => { if (near) { readScroll(); wake(); } }, { passive: true });
+  addEventListener("resize", () => { if (near) { measure(); wake(); } });
+  pin.addEventListener("pointermove", (e) => {
+    if (reduceMotion || e.pointerType === "touch") return;
+    const r = pin.getBoundingClientRect(); parT = ((e.clientX - r.left) / r.width * 2 - 1) * 100; wake();
+  });
+  pin.addEventListener("pointerleave", () => { parT = 0; wake(); });
+  measure(); frame();
 })();
 
 // ---------- Menu bar clock ----------
