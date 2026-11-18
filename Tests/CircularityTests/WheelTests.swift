@@ -77,14 +77,14 @@ final class SlotProviderTests: XCTestCase {
     func testImageMenuMatchesBoardD() {
         let menu = SlotProvider.menu(for: [.heic], canWrite: everything)
         XCTAssertEqual(labels(menu.ring), ["PNG", "JPG", "WebP", "More", "Compress", "Resize"])
-        XCTAssertEqual(menu.fan.map(\.label), ["AVIF", "TIFF", "GIF", "BMP", "PDF", "Crop"],
+        XCTAssertEqual(menu.fan.map(\.label), ["AVIF", "TIFF", "GIF", "BMP", "PDF", "Cut out", "Crop"],
                        "HEIC is the source, so BMP fills the fan")
     }
 
     func testFanForANonHEICSourceIsBoardDExactly() {
         let menu = SlotProvider.menu(for: [.bmp], canWrite: everything)
         XCTAssertEqual(labels(menu.ring), ["PNG", "JPG", "WebP", "More", "Compress", "Resize"])
-        XCTAssertEqual(menu.fan.map(\.label), ["HEIC", "AVIF", "TIFF", "GIF", "PDF", "Crop"])
+        XCTAssertEqual(menu.fan.map(\.label), ["HEIC", "AVIF", "TIFF", "GIF", "PDF", "Cut out", "Crop"])
     }
 
     func testSourceFormatIsSkipped() {
@@ -95,7 +95,7 @@ final class SlotProviderTests: XCTestCase {
     func testWebPUnavailableMovesUpTheNextFormatAndBMPJoinsTheFan() {
         let menu = SlotProvider.menu(for: [.jpeg], canWrite: noWebP)
         XCTAssertEqual(labels(menu.ring), ["PNG", "HEIC", "AVIF", "More", "Compress", "Resize"])
-        XCTAssertEqual(menu.fan.map(\.label), ["TIFF", "GIF", "BMP", "PDF", "Crop"])
+        XCTAssertEqual(menu.fan.map(\.label), ["TIFF", "GIF", "BMP", "PDF", "Cut out", "Crop"])
     }
 
     func testToolsAndMoreNeverMoveWithSmartOrdering() {
@@ -183,5 +183,42 @@ final class FormatOrderTests: XCTestCase {
         let menu = SlotProvider.menu(for: [.png], canWrite: { _ in true }, presets: [],
                                      formatOrder: SlotProvider.imageFormatOrder("avif,heic,jpg"))
         XCTAssertEqual(menu.ring.prefix(3).map { $0?.action }, [.convert(.avif), .convert(.heic), .convert(.jpg)])
+    }
+}
+
+final class CustomSlotsTests: XCTestCase {
+    func testParse() {
+        XCTAssertEqual(SlotProvider.parseSlots("png, jpg,cutout,more,compress,resize"), ["png", "jpg", "cutout", "more", "compress", "resize"])
+        XCTAssertNil(SlotProvider.parseSlots(""), "empty = built-in layout")
+        XCTAssertNil(SlotProvider.parseSlots("png,jpg,webp,compress,resize,crop"), "More is required")
+        XCTAssertNil(SlotProvider.parseSlots("png,png,webp,more,compress,resize"), "no duplicates")
+        XCTAssertNil(SlotProvider.parseSlots("png,jpg,mp4,more,compress,resize"), "unknown token")
+    }
+
+    func testCustomRingAndFan() {
+        let menu = SlotProvider.menu(for: [.heic], canWrite: { _ in true }, presets: [],
+                                     slots: ["cutout", "jpg", "png", "more", "crop", "compress"], cutout: true)
+        XCTAssertEqual(menu.ring.map { $0?.action }, [.cutout, .convert(.jpg), .convert(.png), .more, .crop, .compress])
+        XCTAssertTrue(menu.fan.contains { $0.action == .resize }, "tools not on the ring go into the fan")
+        XCTAssertFalse(menu.fan.contains { $0.action == .crop }, "no duplicates between ring and fan")
+        XCTAssertFalse(menu.fan.contains { $0.action == .convert(.heic) }, "not the file's own format")
+    }
+
+    func testOwnFormatAndUnwritableAreReplaced() {
+        let menu = SlotProvider.menu(for: [.png], canWrite: { $0 != .webp }, presets: [],
+                                     slots: ["png", "webp", "jpg", "more", "compress", "resize"], cutout: true)
+        let formats = menu.ring.prefix(3).compactMap { $0?.action }
+        XCTAssertEqual(formats.count, 3, "every slot is filled")
+        XCTAssertFalse(formats.contains(.convert(.png)), "the file is already PNG")
+        XCTAssertFalse(formats.contains(.convert(.webp)), "this Mac can't write WebP")
+        XCTAssertEqual(Set(formats).count, 3, "no format twice")
+    }
+
+    func testCutoutOnlyWhereAvailable() {
+        let old = SlotProvider.menu(for: [.jpeg], canWrite: { _ in true }, presets: [],
+                                    slots: ["cutout", "png", "webp", "more", "compress", "resize"], cutout: false)
+        XCTAssertFalse(old.ring.contains { $0?.action == .cutout } || old.fan.contains { $0.action == .cutout })
+        let builtIn = SlotProvider.menu(for: [.jpeg], canWrite: { _ in true }, presets: [], cutout: true)
+        XCTAssertTrue(builtIn.fan.contains { $0.action == .cutout }, "the built-in wheel has Cut out under More")
     }
 }

@@ -41,6 +41,8 @@ final class WheelController {
     private var finishing = false
     private var lastDragPoint: CGPoint?
     private(set) var isVisible = false
+    private let loupe = BeforeAfterLoupe()
+    private var contentsScale: CGFloat = 2
     /// Bumped by every show(), so a delayed hide meant for an earlier wheel
     /// never closes a newer one.
     private var generation = 0
@@ -68,6 +70,8 @@ final class WheelController {
 
         let screen = NSScreen.screens.first { NSMouseInRect(screenPoint, $0.frame, false) } ?? NSScreen.main
         let contentsScale = screen?.backingScaleFactor ?? 2
+        self.contentsScale = contentsScale
+        loupe.reset()
         let (renderer, kind) = prepareRenderer()
         geometry = Appearance.geometry(settings, layout: kind)
         let look = Appearance.wheelStyle(settings, layout: kind)
@@ -77,7 +81,8 @@ final class WheelController {
                                  usage: settings.value(SettingsKeys.wheelUsage),
                                  smartOrdering: settings.value(SettingsKeys.smartOrdering),
                                  presets: Preset.decodeList(settings.value(SettingsKeys.presetsJSON)),
-                                 formatOrder: SlotProvider.imageFormatOrder(settings.value(SettingsKeys.imageFormatOrder)))
+                                 formatOrder: SlotProvider.imageFormatOrder(settings.value(SettingsKeys.imageFormatOrder)),
+                                 slots: SlotProvider.parseSlots(settings.value(SettingsKeys.imageSlots)))
 
         var center = screenPoint
         if mode == .click, let visible = screen?.visibleFrame {
@@ -137,6 +142,7 @@ final class WheelController {
         guard isVisible, let panel else { return }
         isVisible = false
         moreTimer?.cancel()
+        loupe.reset()
         removeOutsideClickMonitor()
         let duration = animated ? 0.12 : 0
         NSAnimationContext.runAnimationGroup({ ctx in
@@ -414,12 +420,33 @@ final class WheelController {
         let changedTarget = next.hover != state.hover
         state = next
         renderer?.apply(state, animated: true)
+        if changedTarget { updateLoupe() }
         if changedTarget, newTarget != .none, settings.value(SettingsKeys.haptics) {
             NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         }
         if changedTarget, newTarget != .none { WheelSounds.play(.hover, pack: settings.value(SettingsKeys.soundPack)) }
         if changedTarget, let host { NSAccessibility.post(element: host, notification: .layoutChanged) }
     }
+
+    /// The before/after close-up beside a hovered JPG / HEIC / Compress segment.
+    private func updateLoupe() {
+        guard settings.value(SettingsKeys.beforeAfter), !state.fanOpen, files.urls.count == 1, let url = files.urls.first,
+              case let .segment(i) = state.hover, let slot = menu.ring[i],
+              let spec = BeforeAfterLoupe.spec(for: slot.action, url: url, settings: settings) else {
+            loupe.hide()
+            return
+        }
+        if loupe.layer.superlayer == nil || loupe.layer.superlayer?.sublayers?.last !== loupe.layer {
+            layerView?.layer?.addSublayer(loupe.layer) // on top of the renderer
+        }
+        let s = geometry.scale, size = geometry.size, half = 68 * s + 6
+        let o = WheelGeometry.offset(radius: geometry.outerExtent + 70 * s, angle: WheelGeometry.midAngle(ofSlot: i))
+        let center = CGPoint(x: min(max(size / 2 + o.x, half), size - half), y: min(max(size / 2 - o.y, half), size - half))
+        loupe.show(url: url, spec: spec, at: center, scale: s, accent: Appearance.accent(settings), contentsScale: contentsScale)
+    }
+
+    /// For tests: whether the before/after close-up is showing.
+    var isLoupeVisible: Bool { loupe.layer.opacity > 0.5 && loupe.layer.superlayer != nil }
 
     /// For tests: whether the More fan is open.
     var isFanOpen: Bool { state.fanOpen }

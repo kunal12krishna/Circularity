@@ -25,6 +25,8 @@ final class AppCoordinator: PanelHost {
     private let dialogs = DialogPresenter()
     private let windows = WindowPresenter()
     private let hud = DevHUD()
+    private let shelf = DropShelf()
+    private lazy var updates = UpdateChecker(settings: settings)
     private var tutorial: TutorialModel?
     private var bag: Set<AnyCancellable> = []
 
@@ -51,6 +53,7 @@ final class AppCoordinator: PanelHost {
         if settings.value(SettingsKeys.showInMenuBar) { installStatusItem() }
         panel.anchor = { [weak self] in self?.statusItem?.screenFrame }
         panel.onOpenChange = { [weak self] open in
+            if open { self?.updates.checkIfDue() }
             self?.statusItem?.setHighlighted(open)
             if open { self?.jobs.lastError = nil }
             self?.refreshIcon()
@@ -80,7 +83,23 @@ final class AppCoordinator: PanelHost {
         jobs.completed.receive(on: RunLoop.main).sink { [weak self] event in
             guard let self else { return }
             Notifier.shared.jobFinished(title: event.title, result: event.result, settings: settings)
-            if case let .success(r) = event.result { tutorial?.jobFinished(r) }
+            if case let .success(r) = event.result {
+                tutorial?.jobFinished(r)
+                if event.interactive, !r.outputs.isEmpty, settings.value(SettingsKeys.afterShelf) {
+                    shelf.show(r.outputs, accent: Appearance.accentNS(settings))
+                }
+            }
+        }.store(in: &bag)
+        jobs.milestones.receive(on: RunLoop.main).sink { [weak self] ids in
+            guard let self, let id = ids.last else { return }
+            let title = Milestone.title(id)
+            panelModel.notice = "✦ \(title)! \(Self.milestoneLine(stats: jobs.stats))"
+            statusItem?.set(.done)
+            if settings.value(SettingsKeys.notifyEnabled) {
+                Notifier.shared.post(title: "✦ \(title)", body: Self.milestoneLine(stats: jobs.stats), outputs: [],
+                                     sound: settings.value(SettingsKeys.notifySound))
+            }
+            Log.app.notice("Milestone: \(id, privacy: .public)")
         }.store(in: &bag)
         jobs.finished.receive(on: RunLoop.main).sink { [weak self] _ in
             guard let self else { return }
@@ -95,6 +114,15 @@ final class AppCoordinator: PanelHost {
         _ = applyHotkeys()
         if settings.value(SettingsKeys.pinned) { pinned.pin() }
         if settings.value(SettingsKeys.devHUD) { settingsSetDevHUD(true) }
+        updates.onAvailable = { [weak self] feed, automatic in
+            guard let self else { return }
+            panelModel.notice = "Version \(feed.version) is available. Settings → General → Updates."
+            if automatic, settings.value(SettingsKeys.notifyEnabled) {
+                Notifier.shared.post(title: "\(AppIdentity.name) \(feed.version) is available", body: feed.notes ?? "Open Settings → General to download it.",
+                                     outputs: [], sound: false)
+            }
+        }
+        updates.checkIfDue()
         if !settings.value(SettingsKeys.onboardingCompleted) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.settingsShowOnboarding() }
         }
@@ -121,6 +149,10 @@ final class AppCoordinator: PanelHost {
             installStatusItem()
         }
         showSettings()
+    }
+
+    static func milestoneLine(stats: StatsStore) -> String {
+        "\(stats.allTimeFiles) files converted, \(ByteCountFormatter.string(fromByteCount: stats.allTimeSaved, countStyle: .file)) saved in all."
     }
 
     // MARK: Shortcuts
@@ -428,6 +460,7 @@ extension AppCoordinator: SettingsHost {
     }
 
     var settingsWatch: WatchFolderService { watch }
+    var settingsUpdates: UpdateChecker { updates }
     var settingsJobs: JobCenter { jobs }
 }
 

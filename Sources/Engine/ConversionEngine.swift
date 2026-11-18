@@ -116,6 +116,15 @@ public final class ConversionEngine: Sendable {
             try ImageBackend.resize(image, spec: spec, format: format, policy: policy, output: out)
             return try await finish(out, format: format)
 
+        case .removeBackground:
+            guard isImage else { throw JobError.unsupported("cutting out \(input.lastPathComponent)") }
+            guard #available(macOS 14.0, *) else { throw JobError.unsupported("cutting out on macOS 13 (it needs macOS 14)") }
+            let image = try ImageInput.open(input)
+            let out = staging.scratch("png")
+            try Cutout.removeBackground(image, policy: policy, output: out)
+            progress(0.9, "")
+            return try await finish(out, format: .png)
+
         case let .cropImage(rect):
             guard isImage else { throw JobError.unsupported("cropping \(input.lastPathComponent)") }
             let image = try ImageInput.open(input)

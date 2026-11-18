@@ -20,6 +20,7 @@ protocol SettingsHost: AnyObject {
     func settingsSetDevHUD(_ on: Bool)
     func settingsDiagnostics() -> String
     var settingsWatch: WatchFolderService { get }
+    var settingsUpdates: UpdateChecker { get }
     var settingsJobs: JobCenter { get }
 }
 
@@ -194,6 +195,10 @@ final class SettingsModel: ObservableObject {
         SettingsKeys.labelScale.erased, SettingsKeys.fontStyle.erased, SettingsKeys.labelCase.erased,
     ]
 
+    /// What a theme carries (the website's theme builder writes these): the
+    /// appearance settings plus the wheel layout.
+    static let themeKeys: Set<String> = Set(appearanceKeys.map(\.name) + [SettingsKeys.wheelLayout.name])
+
     func resetAppearance() {
         for key in Self.appearanceKeys { store.remove(key.name) }
         flash("Appearance reset.")
@@ -213,6 +218,30 @@ final class SettingsModel: ObservableObject {
         } catch {
             flash("Couldn't save: \(error.localizedDescription)")
         }
+    }
+
+    /// A theme copied from the website (or another Mac): JSON on the clipboard.
+    func pasteTheme() {
+        guard let text = NSPasteboard.general.string(forType: .string), let data = text.data(using: .utf8) else {
+            flash("The clipboard has no theme. On the website, click Copy theme first.")
+            return
+        }
+        do {
+            let result = try store.importJSON(data, only: Self.themeKeys)
+            flash(result.applied == 0 ? "That theme had nothing this version understands."
+                  : "Theme applied (\(result.applied) setting\(result.applied == 1 ? "" : "s")).")
+        } catch {
+            flash("The clipboard doesn't hold a \(AppIdentity.name) theme. On the website, click Copy theme first.")
+        }
+    }
+
+    /// Copies the current look as JSON, to paste on another Mac or share.
+    func copyTheme() {
+        guard let data = try? store.exportJSON(only: Self.themeKeys),
+              let text = String(data: data, encoding: .utf8) else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+        flash("Theme copied. Paste it on another Mac with Paste theme.")
     }
 
     func importSettings() {

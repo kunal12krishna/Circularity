@@ -10,6 +10,10 @@ ARCHS = arm64 x86_64
 MARKETING_VERSION = 0.1.0
 CURRENT_PROJECT_VERSION = 1
 
+// Where the opt-in update check looks for appcast.json (https only). Empty = no
+// update checks in this build. See docs/UPDATES.md.
+UPDATE_FEED_URL =
+
 // Ad-hoc signing with hardened runtime (see PLAN.md §0 and BRIEF.md decision 2).
 CODE_SIGN_STYLE = Manual
 CODE_SIGN_IDENTITY = -

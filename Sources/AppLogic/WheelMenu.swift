@@ -17,6 +17,8 @@ nonisolated enum WheelAction: Sendable, Hashable {
     case extractText
     case combinePDF
     case compress, resize, crop
+    /// Background removal (macOS 14+).
+    case cutout
     case more
     /// A saved one-click button (id of a `Preset`).
     case preset(String)
@@ -31,6 +33,7 @@ nonisolated enum WheelAction: Sendable, Hashable {
         case .compress: "compress"
         case .resize: "resize"
         case .crop: "crop"
+        case .cutout: "cutout"
         case .more: "more"
         case let .preset(id): "preset.\(id)"
         }
@@ -116,8 +119,10 @@ nonisolated enum SlotProvider {
 
     /// Adds matching saved buttons to the front of the More fan (at most three).
     static func menu(for types: [UTType], canWrite: (OutputFormat) -> Bool, usage: [String: Int] = [:],
-                     smartOrdering: Bool = false, presets: [Preset], formatOrder: [OutputFormat] = ringImageCandidates) -> WheelMenu {
-        var menu = menu(for: types, canWrite: canWrite, usage: usage, smartOrdering: smartOrdering, formatOrder: formatOrder)
+                     smartOrdering: Bool = false, presets: [Preset], formatOrder: [OutputFormat] = ringImageCandidates,
+                     slots: [String]? = nil, cutout: Bool = Cutout.isAvailable) -> WheelMenu {
+        var menu = menu(for: types, canWrite: canWrite, usage: usage, smartOrdering: smartOrdering, formatOrder: formatOrder,
+                        slots: slots, cutout: cutout)
         let kinds = Set(types.map { kind(of: $0) })
         let applies: Preset.Applies? = kinds == [.image] ? .images : (kinds == [.pdf] ? .pdfs : nil)
         guard let applies, let moreIndex = menu.ring.firstIndex(where: { $0?.action == .more }) else { return menu }
@@ -136,7 +141,8 @@ nonisolated enum SlotProvider {
 
     static func menu(for types: [UTType], canWrite: (OutputFormat) -> Bool,
                      usage: [String: Int] = [:], smartOrdering: Bool = false,
-                     formatOrder: [OutputFormat] = ringImageCandidates) -> WheelMenu {
+                     formatOrder: [OutputFormat] = ringImageCandidates,
+                     slots: [String]? = nil, cutout: Bool = Cutout.isAvailable) -> WheelMenu {
         let count = types.count
         let kinds = types.map(kind(of:))
         guard let first = kinds.first else {
@@ -152,8 +158,12 @@ nonisolated enum SlotProvider {
         if kinds.allSatisfy({ $0 == .image }) {
             let formats = Set(types.compactMap(imageFormat(of:)))
             let source = formats.count == 1 && types.allSatisfy({ imageFormat(of: $0) != nil }) ? formats.first : nil
+            if let slots, let custom = customImageMenu(slots, count: count, source: source, canWrite: canWrite,
+                                                         formatOrder: formatOrder, cutout: cutout) {
+                return custom
+            }
             return imageMenu(count: count, source: source, canWrite: canWrite, usage: usage, smartOrdering: smartOrdering,
-                             formatOrder: formatOrder)
+                             formatOrder: formatOrder, cutout: cutout)
         }
         if kinds.allSatisfy({ $0 == .pdf }) { return pdfMenu(count: count) }
         if kinds.allSatisfy({ $0 == .image || $0 == .pdf }) {
@@ -171,7 +181,7 @@ nonisolated enum SlotProvider {
 
     static func imageMenu(count: Int, source: OutputFormat?, canWrite: (OutputFormat) -> Bool,
                           usage: [String: Int], smartOrdering: Bool,
-                          formatOrder: [OutputFormat] = ringImageCandidates) -> WheelMenu {
+                          formatOrder: [OutputFormat] = ringImageCandidates, cutout: Bool = Cutout.isAvailable) -> WheelMenu {
         let candidates = formatOrder.filter { ringImageCandidates.contains($0) }
         let available = candidates.filter { $0 != source && canWrite($0) }
         var ordered = available
@@ -198,6 +208,7 @@ nonisolated enum SlotProvider {
         } else {
             fan.append(formatSlot(.pdf, count: count))
         }
+        if cutout { fan.append(cutoutSlot(count: count)) }
         fan.append(cropSlot(count: count))
 
         var ring: [WheelSlot?] = ringFormats.map { formatSlot($0, count: count) }
@@ -304,6 +315,82 @@ nonisolated enum SlotProvider {
         WheelSlot(action: .resize, category: .tool, label: "Resize", monoLabel: "SIZE", caption: "RESIZE",
                   symbol: "arrow.down.left.and.arrow.up.right", kicker: "OPEN", big: "Resize",
                   hint: pdf ? "page size" : "width × height", verb: "Resize\(many(count))…")
+    }
+
+    static func cutoutSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .cutout, category: .tool, label: "Cut out", monoLabel: "CUT", caption: "NO BG",
+                  symbol: "scissors", kicker: "CUT OUT THE", big: "Subject", hint: "background made transparent (PNG)",
+                  verb: "Remove the background\(many(count))")
+    }
+
+    // MARK: Your own wheel buttons (Settings → Wheel)
+
+    /// What each of the six image ring positions can hold.
+    static let slotTokens = ["png", "jpg", "webp", "heic", "avif", "tiff", "gif", "bmp", "pdf",
+                             "compress", "resize", "crop", "cutout", "more"]
+    static let defaultSlots = ["png", "jpg", "webp", "more", "compress", "resize"]
+
+    /// "png,jpg,…" → six known tokens with exactly one More, else nil (= the built-in layout).
+    static func parseSlots(_ setting: String) -> [String]? {
+        let tokens = setting.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+        guard tokens.count == 6, tokens.allSatisfy(slotTokens.contains), tokens.filter({ $0 == "more" }).count == 1,
+              Set(tokens).count == 6 else { return nil }
+        return tokens
+    }
+
+    /// The image wheel with the user's six buttons. Formats this Mac can't
+    /// write (or the file's own format) are replaced by the next free format;
+    /// everything not on the ring goes into the More fan.
+    static func customImageMenu(_ tokens: [String], count: Int, source: OutputFormat?, canWrite: (OutputFormat) -> Bool,
+                                formatOrder: [OutputFormat], cutout: Bool) -> WheelMenu? {
+        guard tokens.count == 6 else { return nil }
+        let candidates = formatOrder.filter { ringImageCandidates.contains($0) && $0 != source && canWrite($0) }
+        let chosenFormats = tokens.compactMap { t in ringImageCandidates.first { $0.fileExtension == t } }
+        var spare = candidates.filter { !chosenFormats.contains($0) }
+        var used: [OutputFormat] = []
+        var tools: Set<String> = []
+        var ring: [WheelSlot?] = []
+        for token in tokens {
+            if let f = ringImageCandidates.first(where: { $0.fileExtension == token }) {
+                let pick = candidates.contains(f) && !used.contains(f) ? f : (spare.isEmpty ? nil : spare.removeFirst())
+                if let pick { used.append(pick) }
+                ring.append(pick.map { formatSlot($0, count: count) })
+                continue
+            }
+            switch token {
+            case "pdf": ring.append(count > 1 ? combine(count: count) : formatSlot(.pdf, count: count))
+            case "compress": ring.append(compressSlot(count: count, pdf: false))
+            case "resize": ring.append(resizeSlot(count: count, pdf: false))
+            case "crop": ring.append(cropSlot(count: count))
+            case "cutout":
+                if cutout {
+                    ring.append(cutoutSlot(count: count))
+                } else {
+                    let pick = spare.isEmpty ? nil : spare.removeFirst()
+                    if let pick { used.append(pick) }
+                    ring.append(pick.map { formatSlot($0, count: count) })
+                }
+            default: ring.append(nil) // "more", filled below
+            }
+            tools.insert(token)
+        }
+        // Fan: up to four formats not on the ring, the PDF choices, then the tools that aren't.
+        var fanFormats = candidates.filter { !used.contains($0) }
+        if fanFormats.filter({ $0 != .bmp }).count >= 4 { fanFormats.removeAll { $0 == .bmp } }
+        var fan = fanFormats.prefix(4).map { formatSlot($0, count: count) }
+        if count > 1 {
+            if !tools.contains("pdf") { fan.append(combineChip(count: count)) }
+            fan.append(separatePDFsChip(count: count))
+        } else if !tools.contains("pdf") {
+            fan.append(formatSlot(.pdf, count: count))
+        }
+        if !tools.contains("compress") { fan.append(compressSlot(count: count, pdf: false)) }
+        if !tools.contains("resize") { fan.append(resizeSlot(count: count, pdf: false)) }
+        if cutout && !tools.contains("cutout") { fan.append(cutoutSlot(count: count)) }
+        if !tools.contains("crop") { fan.append(cropSlot(count: count)) }
+        guard let moreIndex = tokens.firstIndex(of: "more") else { return nil }
+        ring[moreIndex] = moreSlot(fanCount: fan.count)
+        return WheelMenu(ring: ring, fan: fan, notice: nil)
     }
 
     static func cropSlot(count: Int) -> WheelSlot {

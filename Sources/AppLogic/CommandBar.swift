@@ -215,3 +215,65 @@ nonisolated enum PanelSections {
         return stored.trimmingCharacters(in: .whitespaces).isEmpty ? all : out
     }
 }
+
+/// Celebrated thresholds (Stats): files converted and space saved, all time.
+nonisolated struct Milestone: Equatable, Sendable, Identifiable {
+    let id: String
+    let title: String
+    let detail: String
+
+    static let all: [(id: String, files: Int?, bytes: Int64?, title: String)] = [
+        ("files.1", 1, nil, "First conversion"),
+        ("files.10", 10, nil, "10 files converted"),
+        ("files.100", 100, nil, "100 files converted"),
+        ("files.1000", 1000, nil, "1,000 files converted"),
+        ("files.10000", 10000, nil, "10,000 files converted"),
+        ("saved.100MB", nil, 100_000_000, "100 MB saved"),
+        ("saved.1GB", nil, 1_000_000_000, "1 GB saved"),
+        ("saved.10GB", nil, 10_000_000_000, "10 GB saved"),
+        ("saved.100GB", nil, 100_000_000_000, "100 GB saved"),
+    ]
+
+    /// Milestones reached by these totals, in order.
+    static func reached(files: Int, saved: Int64) -> [String] {
+        all.filter { m in (m.files.map { files >= $0 } ?? false) || (m.bytes.map { saved >= $0 } ?? false) }.map(\.id)
+    }
+
+    /// Newly reached since `celebrated` (only the highest of each kind, so a
+    /// first run with old history doesn't pop five banners at once).
+    static func new(files: Int, saved: Int64, celebrated: [String]) -> [String] {
+        let fresh = reached(files: files, saved: saved).filter { !celebrated.contains($0) }
+        let lastFiles = fresh.last { $0.hasPrefix("files.") }
+        let lastSaved = fresh.last { $0.hasPrefix("saved.") }
+        return [lastFiles, lastSaved].compactMap { $0 }
+    }
+
+    static func title(_ id: String) -> String { all.first { $0.id == id }?.title ?? id }
+}
+
+/// "1.10.0" > "1.9.2" (numeric parts; missing parts are 0; anything after a
+/// "-" such as "-beta" sorts before the plain release).
+nonisolated enum VersionCompare {
+    static func isNewer(_ candidate: String, than current: String) -> Bool {
+        func parts(_ v: String) -> ([Int], Bool) {
+            let trimmed = v.trimmingCharacters(in: .whitespaces).lowercased().replacingOccurrences(of: "v", with: "")
+            let main = trimmed.split(separator: "-", maxSplits: 1)
+            let numbers = (main.first ?? "").split(separator: ".").map { Int($0) ?? 0 }
+            return (numbers, main.count > 1)
+        }
+        let (a, aPre) = parts(candidate), (b, bPre) = parts(current)
+        for i in 0..<max(a.count, b.count) {
+            let x = i < a.count ? a[i] : 0, y = i < b.count ? b[i] : 0
+            if x != y { return x > y }
+        }
+        return !aPre && bPre
+    }
+}
+
+/// The update feed (`appcast.json`, written by scripts/release.sh).
+nonisolated struct UpdateFeed: Codable, Equatable, Sendable {
+    var version: String
+    var url: String
+    var notes: String?
+    var minimumSystem: String?
+}

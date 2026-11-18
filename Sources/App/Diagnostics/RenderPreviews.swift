@@ -15,6 +15,17 @@ enum RenderPreviews {
             try renderPanels(into: directory)
             try renderIcons(into: directory)
             try renderSettings(into: directory)
+            // The before/after close-up for a photo at JPG quality 40 (artefacts visible).
+            let photo = directory.appendingPathComponent("loupe-source.png")
+            if let picture = samplePicture(size: 1200, scale: 1),
+               let data = NSBitmapImageRep(cgImage: picture).representation(using: .png, properties: [:]) {
+                try data.write(to: photo)
+                if let loupe = BeforeAfter.image(photo, format: .jpg, quality: 0.4),
+                   let png = NSBitmapImageRep(cgImage: loupe).representation(using: .png, properties: [:]) {
+                    try png.write(to: directory.appendingPathComponent("loupe-jpg40.png"))
+                }
+                try? FileManager.default.removeItem(at: photo)
+            }
             let variants: [(name: String, bar: NSColor, glyph: NSColor)] = [
                 ("light-mono", NSColor(hex: 0xE4E0DA), NSColor(hex: 0x1D1B18)),
                 ("dark-mono", NSColor(hex: 0x26272C), NSColor(hex: 0xF2F2F2)),
@@ -135,7 +146,11 @@ enum RenderPreviews {
     private final class PreviewSettingsHost: SettingsHost {
         let settingsWatch: WatchFolderService
         let settingsJobs: JobCenter
-        init(watch: WatchFolderService, jobs: JobCenter) { settingsWatch = watch; settingsJobs = jobs }
+        let settingsUpdates: UpdateChecker
+        init(watch: WatchFolderService, jobs: JobCenter) {
+            settingsWatch = watch; settingsJobs = jobs
+            settingsUpdates = UpdateChecker(settings: SettingsStore(defaults: UserDefaults(suiteName: "\(AppIdentity.bundleID).previews-updates")!))
+        }
         func settingsApplyHotkeys() -> Set<UInt32> { [] }
         func settingsApplyStored(includingLoginItem: Bool) -> Set<UInt32> { [] }
         func settingsSuspendHotkeys() {}

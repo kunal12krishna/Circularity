@@ -107,6 +107,21 @@ struct StatsWindowView: View {
                 tile("ALL TIME SAVED", Bytes.text(model.stats.allTimeSaved), accent: true)
                 tile("ALL TIME", "\(model.stats.allTimeFiles) files")
             }
+            SectionLabel(text: "Milestones")
+            let reached = Set(Milestone.reached(files: model.stats.allTimeFiles, saved: model.stats.allTimeSaved))
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 6) {
+                    ForEach(Milestone.all, id: \.id) { m in
+                        let on = reached.contains(m.id)
+                        Text((on ? "✦ " : "") + m.title)
+                            .font(Halo.mono(11, .bold))
+                            .foregroundStyle(on ? model.accent.readableText : Halo.secondary)
+                            .padding(.horizontal, 9).frame(height: 26)
+                            .background(RoundedRectangle(cornerRadius: 7).fill(on ? model.accent : Halo.control))
+                            .accessibilityLabel("\(m.title), \(on ? "reached" : "not yet")")
+                    }
+                }
+            }
             SectionLabel(text: "Files per day · last 30 days")
             Chart(Array(days.enumerated()), id: \.offset) { index, day in
                 BarMark(x: .value("Day", index), y: .value("Files", day.stats.files))

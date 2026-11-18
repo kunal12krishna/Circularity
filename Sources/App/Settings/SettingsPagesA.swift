@@ -50,6 +50,9 @@ struct GeneralPage: View {
                               serviceInstalled = ServiceShortcut.isInstalled
                           }), accent: a)
             }
+            if let updates = model.host?.settingsUpdates {
+                UpdatesCard(model: model, updates: updates)
+            }
             SettingsCard(title: "Help") {
                 HStack(spacing: 8) {
                     HaloButton(title: "Interactive tutorial", primary: true, accent: a) { model.host?.settingsShowTutorial() }
@@ -141,6 +144,41 @@ struct GesturePage: View {
     }
 }
 
+struct UpdatesCard: View {
+    @ObservedObject var model: SettingsModel
+    @ObservedObject var updates: UpdateChecker
+
+    var body: some View {
+        let a = model.accent
+        SettingsCard(title: "Updates", footer: "Checking for updates is the only time \(AppIdentity.name) uses the network. It asks one small file which version is newest and sends nothing about you or your files.") {
+            ToggleRow(title: "Check for updates automatically", detail: "About once a day, when the app starts or the panel opens.",
+                      isOn: model.binding(SettingsKeys.updatesAutomatic), accent: a)
+                .disabled(UpdateChecker.feedURL == nil)
+            HStack(spacing: 10) {
+                Text(statusText).font(Halo.rounded(12)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                if case let .available(feed) = updates.status {
+                    HaloButton(title: "Download \(feed.version)", primary: true, accent: a) { UpdateChecker.download(feed) }
+                }
+                HaloButton(title: updates.status == .checking ? "Checking…" : "Check now", accent: a) { updates.check() }
+                    .disabled(UpdateChecker.feedURL == nil || updates.status == .checking)
+            }
+        }
+    }
+
+    private var statusText: String {
+        if UpdateChecker.feedURL == nil { return "Version \(UpdateChecker.currentVersion). This build has no update address, so it can't check." }
+        switch updates.status {
+        case .idle: return "Version \(UpdateChecker.currentVersion)."
+        case .checking: return "Checking…"
+        case .upToDate: return "Version \(UpdateChecker.currentVersion) is the newest."
+        case let .available(feed): return "Version \(feed.version) is available\(feed.notes.map { ": \($0)" } ?? ".")"
+        case let .failed(message): return "Couldn't check: \(message)"
+        case .noFeed: return "This build has no update address."
+        }
+    }
+}
+
 /// A picture you can drag out of Settings to try the gesture.
 struct PracticePicture: View {
     static var url: URL? {
@@ -182,6 +220,10 @@ struct WheelPage: View {
                 ChipRow(title: "Layout", options: [("halo", "Halo"), ("ring", "Ring"), ("orbit", "Orbit")],
                         selection: model.binding(SettingsKeys.wheelLayout), accent: a)
             }
+            SettingsCard(title: "Wheel buttons for pictures",
+                         footer: "Choose what sits where. Picking a button that is already used swaps the two. Everything else goes under More.") {
+                SlotEditor(model: model)
+            }
             SettingsCard(title: "Image formats", footer: "The first formats sit on the wheel; the rest are under More. Drag to reorder.") {
                 FormatOrderList(model: model)
                 HStack {
@@ -194,6 +236,9 @@ struct WheelPage: View {
                           format: { $0 == 0 ? "At once" : "\(Int($0)) ms" }, accent: a)
                 ToggleRow(title: "Haptic tick", detail: "On a Force Touch trackpad, as you move between buttons.",
                           isOn: model.binding(SettingsKeys.haptics), accent: a)
+                ToggleRow(title: "Before/after close-up",
+                          detail: "Hovering JPG, HEIC or Compress shows a magnified piece of the picture, half as it is and half as it will be.",
+                          isOn: model.binding(SettingsKeys.beforeAfter), accent: a)
                 VStack(alignment: .leading, spacing: 8) {
                     SettingRow(title: "Sounds", detail: "Quiet system sounds. Off by default.") {
                         if model.store.value(SettingsKeys.soundPack) != "off" {
@@ -215,6 +260,48 @@ struct WheelPage: View {
                 HaloButton(title: "Try it on the practice wheel", accent: a) { model.host?.settingsPracticeWheel() }
             }
         }
+    }
+}
+
+/// The six image ring positions, clockwise from the top (Settings → Wheel).
+struct SlotEditor: View {
+    @ObservedObject var model: SettingsModel
+    static let positions = ["Top", "Top right", "Bottom right", "Bottom", "Bottom left", "Top left"]
+    static let names: [String: String] = [
+        "png": "PNG", "jpg": "JPG", "webp": "WebP", "heic": "HEIC", "avif": "AVIF", "tiff": "TIFF", "gif": "GIF", "bmp": "BMP",
+        "pdf": "PDF (combine for several)", "compress": "Compress", "resize": "Resize", "crop": "Crop",
+        "cutout": Cutout.isAvailable ? "Cut out" : "Cut out (needs macOS 14)", "more": "••• More",
+    ]
+
+    var body: some View {
+        let slots = SlotProvider.parseSlots(model.store.value(SettingsKeys.imageSlots)) ?? SlotProvider.defaultSlots
+        VStack(alignment: .leading, spacing: 10) {
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
+                ForEach(0..<6, id: \.self) { i in
+                    HStack(spacing: 8) {
+                        Text(Self.positions[i]).font(Halo.rounded(12)).foregroundStyle(Halo.secondary).frame(width: 84, alignment: .leading)
+                        Picker(Self.positions[i], selection: Binding(get: { slots[i] }, set: { set($0, at: i, in: slots) })) {
+                            ForEach(SlotProvider.slotTokens, id: \.self) { token in Text(Self.names[token] ?? token).tag(token) }
+                        }
+                        .labelsHidden()
+                        .accessibilityLabel("\(Self.positions[i]) button")
+                    }
+                }
+            }
+            if !model.store.value(SettingsKeys.imageSlots).isEmpty {
+                Button("Back to the built-in buttons") { model.store.set("", for: SettingsKeys.imageSlots) }
+                    .buttonStyle(.plain).font(Halo.rounded(12, .semibold)).foregroundStyle(model.accent)
+            }
+        }
+    }
+
+    /// Sets a position; a token already used elsewhere swaps places, so there
+    /// is always exactly one More and no duplicates.
+    private func set(_ token: String, at i: Int, in slots: [String]) {
+        var next = slots
+        if let j = next.firstIndex(of: token), j != i { next.swapAt(i, j) } else { next[i] = token }
+        guard SlotProvider.parseSlots(next.joined(separator: ",")) != nil else { return }
+        model.store.set(next.joined(separator: ","), for: SettingsKeys.imageSlots)
     }
 }
 
@@ -319,6 +406,9 @@ struct OutputPage: View {
                 ToggleRow(title: "Open the result", detail: "At most five files from a batch.", isOn: model.binding(SettingsKeys.afterOpen), accent: a)
                 ToggleRow(title: "Show it in Finder", isOn: model.binding(SettingsKeys.afterReveal), accent: a)
                 ToggleRow(title: "Copy it to the clipboard", isOn: model.binding(SettingsKeys.afterCopy), accent: a)
+                ToggleRow(title: "Show it on a shelf by the pointer",
+                          detail: "Drag the result straight into Mail, Slack or a chat. It goes away by itself after a few seconds.",
+                          isOn: model.binding(SettingsKeys.afterShelf), accent: a)
                 ToggleRow(title: "Move the original to the Trash",
                           detail: "Only when one file becomes one new file. You can put it back from the Trash.",
                           isOn: Binding(get: { model.store.value(SettingsKeys.replaceOriginal) }, set: { on in

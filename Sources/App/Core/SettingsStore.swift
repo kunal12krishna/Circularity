@@ -101,12 +101,12 @@ final class SettingsStore {
     /// Applies known keys whose type matches the default; returns how many
     /// were applied and the names that were skipped.
     @discardableResult
-    func importJSON(_ data: Data) throws -> (applied: Int, skipped: [String]) {
+    func importJSON(_ data: Data, only: Set<String>? = nil) throws -> (applied: Int, skipped: [String]) {
         let snapshot = try JSONDecoder().decode(Snapshot.self, from: data)
         var applied = 0
         var skipped: [String] = []
         for (name, value) in snapshot.values {
-            guard let key = SettingsKeys.all.first(where: { $0.name == name }), !key.reserved,
+            guard only.map({ $0.contains(name) }) ?? true, let key = SettingsKeys.all.first(where: { $0.name == name }), !key.reserved,
                   !SettingsValidation.notImported.contains(name),
                   let object = value.matching(key.defaultValue), SettingsValidation.isValid(name, object) else {
                 skipped.append(name)
@@ -171,6 +171,9 @@ enum SettingsValidation {
         case SettingsKeys.hotkeyPanel.name, SettingsKeys.hotkeyClipboard.name:
             guard let s = value as? String else { return false }
             return s.isEmpty || HotkeySpec(s)?.isAllowed == true
+        case SettingsKeys.imageSlots.name:
+            guard let s = value as? String else { return false }
+            return s.isEmpty || SlotProvider.parseSlots(s) != nil
         case SettingsKeys.accentHex.name:
             return (value as? String).flatMap(RGB.init(hexString:)) != nil
         case SettingsKeys.tintImages.name, SettingsKeys.tintDocuments.name, SettingsKeys.tintTools.name:

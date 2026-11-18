@@ -60,7 +60,8 @@ original to the Trash".
 ## Privacy
 
 Circularity needs no special permission: no Accessibility, no Input
-Monitoring, no Screen Recording, no network. It sees mouse movements only to
+Monitoring, no Screen Recording. Nothing is uploaded; the only network use is
+the update check, which is off unless you turn it on (Settings → General). It sees mouse movements only to
 notice a file drag, reads the clipboard only when you press ⌃⌥V, and converts
 everything on your Mac with Apple's own frameworks.
 

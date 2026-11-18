@@ -404,6 +404,31 @@ func runAll() async {
     if case let .failure(error) = await cancelledDoc.value { check(error is CancellationError, "cancelling a document job at once (\(error))") }
     else { check(true, "cancelling a document job at once finished cleanly") }
 
+    // 13. Cut out (background removal, macOS 14+): a subject on a plain background.
+    if Cutout.isAvailable {
+        let subject = root.appendingPathComponent("subject.png")
+        let w = 900, h = 700
+        if let ctx = CGContext(data: nil, width: w, height: h, bitsPerComponent: 8, bytesPerRow: 0,
+                               space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) {
+            ctx.setFillColor(CGColor(srgbRed: 0.93, green: 0.93, blue: 0.91, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: w, height: h))
+            ctx.setFillColor(CGColor(srgbRed: 0.85, green: 0.35, blue: 0.1, alpha: 1)); ctx.fillEllipse(in: CGRect(x: 300, y: 180, width: 300, height: 340))
+            ctx.setFillColor(CGColor(srgbRed: 0.2, green: 0.25, blue: 0.6, alpha: 1)); ctx.fill(CGRect(x: 360, y: 60, width: 180, height: 160))
+            if let image = ctx.makeImage() { writeImage(image, .png, to: subject) }
+        }
+        let cut = await run([subject], .removeBackground)
+        switch cut {
+        case let .success(r):
+            if let out = r.outputs.first {
+                let corner = pixel(out, x: 5, y: 5), centre = pixel(out, x: 450, y: 350)
+                check(out.pathExtension == "png" && corner.count == 4 && corner[3] < 20 && centre[3] > 200,
+                      "cut out: background transparent, subject kept (\(out.lastPathComponent), corner α \(corner.last ?? 255), centre α \(centre.last ?? 0))")
+            } else { check(false, "cut out wrote nothing (\(r.notes))") }
+        case let .failure(error):
+            // Vision found no subject: the error must say so plainly.
+            check(error.localizedDescription.contains("subject"), "cut out: \(error.localizedDescription)")
+        }
+    }
+
     // 11. Large files (performance report)
     if large {
         let huge = root.appendingPathComponent("huge.png")

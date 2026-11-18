@@ -268,7 +268,10 @@ struct AppearancePage: View {
                     .font(Halo.rounded(11)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: 8) {
-                HaloButton(title: "Export theme…", accent: a) { model.exportSettings(appearanceOnly: true) }
+                HaloButton(title: "Paste theme", primary: true, accent: a) { model.pasteTheme() }
+                    .help("Apply a theme copied from the Circularity website")
+                HaloButton(title: "Copy theme", accent: a) { model.copyTheme() }
+                HaloButton(title: "Export…", accent: a) { model.exportSettings(appearanceOnly: true) }
                 HaloButton(title: "Import…", accent: a) { model.importSettings() }
                 Spacer()
                 HaloButton(title: "Reset appearance", accent: a) { model.resetAppearance() }

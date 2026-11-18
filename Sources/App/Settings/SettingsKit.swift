@@ -257,7 +257,7 @@ final class WheelPreviewRenderer {
 
     /// Everything the preview depends on; other settings changes reuse the last image.
     private static let keys: [AnySettingsKey] = SettingsModel.appearanceKeys + [
-        SettingsKeys.wheelLayout.erased, SettingsKeys.imageFormatOrder.erased, SettingsKeys.presetsJSON.erased,
+        SettingsKeys.wheelLayout.erased, SettingsKeys.imageFormatOrder.erased, SettingsKeys.presetsJSON.erased, SettingsKeys.imageSlots.erased,
     ]
 
     func image(store: SettingsStore, hover: WheelTarget, fanOpen: Bool) -> NSImage? {
@@ -284,7 +284,8 @@ final class WheelPreviewRenderer {
         let style = Appearance.wheelStyle(store, layout: layout)
         let menu = SlotProvider.menu(for: [.heic], canWrite: { FormatSupport.current.canWrite($0) },
                                      presets: Preset.decodeList(store.value(SettingsKeys.presetsJSON)),
-                                     formatOrder: SlotProvider.imageFormatOrder(store.value(SettingsKeys.imageFormatOrder)))
+                                     formatOrder: SlotProvider.imageFormatOrder(store.value(SettingsKeys.imageFormatOrder)),
+                                     slots: SlotProvider.parseSlots(store.value(SettingsKeys.imageSlots)))
         let content = OrbContent(fileLine: "IMG_2041.HEIC · 3.2 MB", title: "IMG_2041.HEIC", detail: "3.2 MB", count: 1,
                                  thumbnail: thumbnail, clickMode: false)
         CATransaction.begin()

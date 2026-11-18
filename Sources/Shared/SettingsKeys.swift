@@ -55,10 +55,14 @@ nonisolated enum SettingsKeys {
     static let moreHoverDelayMs = SettingsKey("wheel.moreHoverDelayMs", 150)
     static let smartOrdering = SettingsKey("wheel.smartOrdering", true)
     static let haptics = SettingsKey("wheel.haptics", true)
+    static let beforeAfter = SettingsKey("wheel.beforeAfter", true)             // close-up loupe for JPG/HEIC/Compress
     static let soundPack = SettingsKey("wheel.soundPack", "off")                // off | soft | click | glass
     static let animationStyle = SettingsKey("wheel.animation", "bloom")         // bloom | pop | fade | instant
     static let animationSpeed = SettingsKey("wheel.animationSpeed", 1.0)        // 0.5 … 2
     static let imageFormatOrder = SettingsKey("wheel.imageFormatOrder", "")     // comma-separated extensions; "" = default
+    static let imageSlots = SettingsKey("wheel.imageSlots", "")                 // six buttons for images, e.g. "png,jpg,cutout,more,compress,resize"; "" = built-in
+    static let milestones = SettingsKey("stats.milestones", [String]())          // milestones already celebrated
+    static let updatesLastCheck = SettingsKey("updates.lastCheck", 0.0)          // seconds since 1970
     static let wheelUsage = SettingsKey("wheel.usage", [String: Int]())          // smart-ordering counts
 
     // MARK: Output
@@ -72,6 +76,7 @@ nonisolated enum SettingsKeys {
     static let afterOpen = SettingsKey("output.after.open", false)
     static let afterReveal = SettingsKey("output.after.reveal", false)
     static let afterCopy = SettingsKey("output.after.copy", false)
+    static let afterShelf = SettingsKey("output.after.shelf", true)            // results float by the pointer to drag onward
     static let metadata = SettingsKey("output.metadata", "keep")                // keep | stripGPS | stripAll
     static let qualityJPG = SettingsKey("output.quality.jpg", 0.85)
     static let qualityHEIC = SettingsKey("output.quality.heic", 0.8)
@@ -128,7 +133,7 @@ nonisolated enum SettingsKeys {
     static let mediaPackEnabled = SettingsKey("media.packEnabled", false, reserved: true)
     static let mediaBundleMode = SettingsKey("media.bundleMode", "download", reserved: true)
     static let updatesChannel = SettingsKey("updates.channel", "stable", reserved: true)
-    static let updatesAutomatic = SettingsKey("updates.automatic", true, reserved: true)
+    static let updatesAutomatic = SettingsKey("updates.automatic", false)          // opt-in: the only network use
     static let cliInstalled = SettingsKey("cli.installed", false, reserved: true)
     static let urlSchemeEnabled = SettingsKey("urlScheme.enabled", false, reserved: true)
     static let shortcutsEnabled = SettingsKey("shortcuts.enabled", false, reserved: true)
@@ -140,10 +145,11 @@ nonisolated enum SettingsKeys {
         paused.erased, showInMenuBar.erased, launchAtLogin.erased, onboardingCompleted.erased, hotkeyPanel.erased, hotkeyClipboard.erased,
         triggerKey.erased, triggerMode.erased, triggerDelayMs.erased, shakeEnabled.erased, shakeSensitivity.erased,
         skipFullScreen.erased, serviceShortcutInstalled.erased, excludedApps.erased,
-        wheelLayout.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased, soundPack.erased,
-        animationStyle.erased, animationSpeed.erased, imageFormatOrder.erased, wheelUsage.erased,
+        wheelLayout.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased, beforeAfter.erased, soundPack.erased,
+        animationStyle.erased, animationSpeed.erased, imageFormatOrder.erased, imageSlots.erased, milestones.erased,
+        updatesLastCheck.erased, wheelUsage.erased,
         destination.erased, outputFolder.erased, folderImages.erased, folderPDFs.erased, folderDocuments.erased,
-        namingTemplate.erased, collisionStyle.erased, afterOpen.erased, afterReveal.erased, afterCopy.erased, metadata.erased,
+        namingTemplate.erased, collisionStyle.erased, afterOpen.erased, afterReveal.erased, afterCopy.erased, afterShelf.erased, metadata.erased,
         qualityJPG.erased, qualityHEIC.erased, qualityAVIF.erased, qualityWebP.erased, replaceOriginal.erased,
         theme.erased, accentHex.erased, glassStrength.erased, wheelScheme.erased, panelScheme.erased,
         tintImages.erased, tintDocuments.erased, tintTools.erased, wheelScale.erased, ringThickness.erased, segmentGap.erased,

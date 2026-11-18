@@ -51,3 +51,21 @@ final class LaunchArgumentsTests: XCTestCase {
         XCTAssertEqual(args.files.map(\.path), ["/a/photo.png"])
     }
 }
+
+final class UpdateLogicTests: XCTestCase {
+    func testVersionOrder() {
+        XCTAssertTrue(VersionCompare.isNewer("0.2.0", than: "0.1.0"))
+        XCTAssertTrue(VersionCompare.isNewer("1.10", than: "1.9.9"))
+        XCTAssertFalse(VersionCompare.isNewer("0.1.0", than: "0.1"))
+        XCTAssertFalse(VersionCompare.isNewer("0.2.0-beta", than: "0.2.0"))
+        XCTAssertTrue(VersionCompare.isNewer("0.2.0", than: "0.2.0-beta"))
+        XCTAssertTrue(VersionCompare.isNewer("v1.0.0", than: "0.9"))
+    }
+
+    func testFeedDecodes() throws {
+        let json = #"{"version":"0.2.0","url":"https://example.com/Circularity-0.2.0.dmg","notes":"Cut out"}"#
+        let feed = try JSONDecoder().decode(UpdateFeed.self, from: Data(json.utf8))
+        XCTAssertEqual(feed.version, "0.2.0")
+        XCTAssertNil(feed.minimumSystem)
+    }
+}

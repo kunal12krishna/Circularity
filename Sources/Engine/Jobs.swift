@@ -72,6 +72,8 @@ public enum Operation: Sendable, Equatable {
     case resizePDF(PDFResize)
     /// Normalised rect (0…1, top-left origin) applied to every page's crop box.
     case cropPDF(CGRect)
+    /// Keeps the subject and makes the background transparent (PNG). macOS 14+.
+    case removeBackground
 
     public var kind: OperationKind {
         switch self {
@@ -82,6 +84,7 @@ public enum Operation: Sendable, Equatable {
         case .pdfPages: .pdfToImages
         case .extractText: .extractText
         case .combinePDF: .combine
+        case .removeBackground: .cutout
         }
     }
 }

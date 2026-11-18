@@ -261,6 +261,17 @@ enum DragTest {
             jobs.stats.reset()
         }
 
+        // A theme from the website's theme builder applies (same JSON as "Copy theme" there).
+        let websiteTheme = ##"{"app":"Circularity","schemaVersion":2,"values":{"appearance.theme":"custom","appearance.accentHex":"#FF5CA8","wheel.layout":"ring","appearance.wheelScheme":"light","appearance.glassStrength":0.4,"appearance.tint.tools":"#5CE1FF","wheel.scale":1.1,"appearance.ringThickness":1.15,"appearance.segmentGap":4,"appearance.orbScale":0.95,"appearance.labelScale":1.05,"appearance.font":"mono","appearance.labelCase":"upper","menubar.colorScheme":"dark","general.paused":true}}"##
+        if let applied = try? settings.importJSON(Data(websiteTheme.utf8), only: SettingsModel.themeKeys) {
+            check(applied.applied == 14 && settings.value(SettingsKeys.accentHex) == "#FF5CA8" && settings.value(SettingsKeys.wheelLayout) == "ring"
+                  && !settings.value(SettingsKeys.paused),
+                  "a website theme applies its 14 look settings and nothing else (skipped \(applied.skipped))")
+        } else {
+            check(false, "a website theme applies")
+        }
+        for key in SettingsModel.themeKeys { settings.remove(key) }
+
         // Shortcuts: a rebound one registers, and a taken one is reported (not silently lost).
         let combo = HotkeySpec(keyCode: 111, modifiers: HotkeySpec.control | HotkeySpec.option | HotkeySpec.shift) // ⌃⌥⇧F12
         check(HotkeyCenter.shared.register(id: 90, keyCode: combo.keyCode, modifiers: combo.modifiers) {}, "a rebound shortcut registers")
@@ -303,6 +314,17 @@ enum DragTest {
               "reopening the tutorial shows a fresh window that stays filled")
         presenter.close("tutorial")
         settings.remove(SettingsKeys.wheelLayout.name)
+
+        // The before/after close-up appears beside JPG for a photo.
+        await show()
+        wheel.dragPointer(at: segment(1))
+        for _ in 0..<20 where !wheel.isLoupeVisible { try? await Task.sleep(nanoseconds: 100_000_000) }
+        check(wheel.isLoupeVisible, "hovering JPG shows the before/after close-up")
+        wheel.dragPointer(at: segment(5)) // Resize: nothing to compare
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        check(!wheel.isLoupeVisible, "it goes away on Resize, which has none")
+        wheel.hide(animated: false)
+        try? await Task.sleep(nanoseconds: 200_000_000)
 
         // 2. Drop on the centre cancels.
         await show()

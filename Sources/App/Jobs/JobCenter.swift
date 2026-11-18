@@ -42,7 +42,9 @@ final class JobCenter: ObservableObject {
     /// Fires when a job finishes successfully (icon "done" pulse).
     let finished = PassthroughSubject<Void, Never>()
     /// Every finished job with its result (notifications).
-    let completed = PassthroughSubject<(title: String, result: Result<JobResult, Error>), Never>()
+    let completed = PassthroughSubject<(title: String, result: Result<JobResult, Error>, interactive: Bool), Never>()
+    /// Milestones just reached (ids), for the panel banner and a notification.
+    let milestones = PassthroughSubject<[String], Never>()
 
     var runningCount: Int { active.count }
     var overallProgress: Double? { active.isEmpty ? nil : active.map(\.fraction).reduce(0, +) / Double(active.count) }
@@ -88,7 +90,7 @@ final class JobCenter: ObservableObject {
             } catch { result = .failure(error) }
             self.finish(id, operation: operation, result, record: !practice)
             if interactive, case let .success(r) = result { self.afterConversion(r) }
-            self.completed.send((Self.title(operation, files: files), result))
+            self.completed.send((Self.title(operation, files: files), result, interactive))
             completion?(result)
         }
     }
@@ -117,7 +119,10 @@ final class JobCenter: ObservableObject {
         case let .success(r):
             lastOutputs = r.outputs
             lastSummary = Self.summary(r)
-            if shouldRecord { record(r, operation: operation) }
+            if shouldRecord {
+                record(r, operation: operation)
+                checkMilestones()
+            }
             if !r.outputs.isEmpty { finished.send() }
             Log.app.notice("Job \(id.uuidString.prefix(8), privacy: .public) done: \(r.outputs.count, privacy: .public) output(s), \(r.bytesIn, privacy: .public) → \(r.bytesOut, privacy: .public) bytes")
         case let .failure(error) where error is CancellationError:
@@ -130,6 +135,16 @@ final class JobCenter: ObservableObject {
         if active.isEmpty { MemoryFootprint.relieve() }
     }
 
+    private func checkMilestones() {
+        let celebrated = settings.value(SettingsKeys.milestones)
+        let fresh = Milestone.new(files: stats.allTimeFiles, saved: stats.allTimeSaved, celebrated: celebrated)
+        // Everything reached so far counts as celebrated, so lower ones never pop later.
+        let reached = Milestone.reached(files: stats.allTimeFiles, saved: stats.allTimeSaved)
+        let union = Array(Set(celebrated).union(reached)).sorted()
+        if union != celebrated.sorted() { settings.set(union, for: SettingsKeys.milestones) }
+        if !fresh.isEmpty { milestones.send(fresh) }
+    }
+
     private func record(_ r: JobResult, operation: CircularityEngine.Operation) {
         for outcome in r.outcomes where !outcome.outputs.isEmpty {
             let from = outcome.inputs.first?.pathExtension.uppercased() ?? ""
@@ -140,6 +155,7 @@ final class JobCenter: ObservableObject {
             case .compress: "Compressed"
             case .crop: "Cropped"
             case .combine: "Combined \(outcome.inputs.count) files"
+            case .cutout: "Cut out"
             }
             history.add(HistoryItem(id: UUID().uuidString, date: Date(), inputs: outcome.inputs.map(\.path),
                                     outputs: outcome.outputs.map(\.path), bytesIn: outcome.bytesIn, bytesOut: outcome.bytesOut,
@@ -158,6 +174,7 @@ final class JobCenter: ObservableObject {
         case .resize, .resizePDF: "Resize"
         case .compressImage: "Compress"
         case let .compressPDF(level): "Compress · \(level.rawValue)"
+        case .removeBackground: "Cut out"
         case .cropImage, .cropPDF: "Crop"
         }
         return "\(name) → \(target)"
@@ -206,7 +223,7 @@ final class JobCenter: ObservableObject {
     static func outputGroup(_ operation: CircularityEngine.Operation) -> OutputGroup {
         switch operation {
         case let .convert(f): f == .pdf ? .pdfs : (f.imageTypeIdentifier != nil ? .images : .documents)
-        case .pdfPages, .resize, .compressImage, .cropImage: .images
+        case .pdfPages, .resize, .compressImage, .cropImage, .removeBackground: .images
         case .combinePDF, .resizePDF, .compressPDF, .cropPDF: .pdfs
         case .extractText: .documents
         }
@@ -267,6 +284,7 @@ final class JobCenter: ObservableObject {
         case let .pdfPages(format): .pdfPages(format, scale: 2)
         case .extractText: .extractText
         case .combinePDF: .combinePDF
+        case .cutout: .removeBackground
         case let .preset(id): presets.first { $0.id == id }?.operation
         case .compress, .resize, .crop, .more: nil
         }

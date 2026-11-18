@@ -116,7 +116,7 @@ struct OnboardingView: View {
             VStack(alignment: .leading, spacing: 10) {
                 privacyLine("keyboard", "No Accessibility or Input Monitoring — it never sees what you type.")
                 privacyLine("rectangle.dashed", "No Screen Recording — it never reads what's on screen.")
-                privacyLine("network.slash", "No network — conversions happen on this Mac and nothing is uploaded.")
+                privacyLine("network.slash", "No uploads — conversions happen on this Mac. The only network use is the update check, and it's off unless you turn it on.")
                 privacyLine("folder", "Only the files you hand it. Originals are never changed.")
                 privacyLine("doc.on.clipboard", "The clipboard only when you press ⌃⌥V.")
             }

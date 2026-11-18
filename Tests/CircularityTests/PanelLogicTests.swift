@@ -106,3 +106,13 @@ final class PanelSectionsTests: XCTestCase {
         XCTAssertEqual(PanelSections.parse(SettingsKeys.panelSections.defaultValue), PanelSections.all)
     }
 }
+
+final class MilestoneTests: XCTestCase {
+    func testReachedAndNew() {
+        XCTAssertEqual(Milestone.reached(files: 12, saved: 150_000_000), ["files.1", "files.10", "saved.100MB"])
+        XCTAssertEqual(Milestone.new(files: 12, saved: 150_000_000, celebrated: []), ["files.10", "saved.100MB"],
+                       "only the highest of each kind pops")
+        XCTAssertEqual(Milestone.new(files: 12, saved: 150_000_000, celebrated: ["files.1", "files.10", "saved.100MB"]), [])
+        XCTAssertEqual(Milestone.new(files: 100, saved: 0, celebrated: ["files.1", "files.10"]), ["files.100"])
+    }
+}
