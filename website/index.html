@@ -1343,7 +1343,7 @@ $("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") $("#
 
 // ---------- The wheel ----------
 const wheelEl = $("#wheel"), wc = $("#wheelCanvas"), wx = wc.getContext("2d"), disc = $(".disc", wheelEl);
-const G = { size: 400, rin: 62, rout: 150, bulge: 10, orb: 54, span: 56, fanR: 206, chipW: 70, chipH: 30, step: 23 };
+const G = { size: 540, rin: 62, rout: 150, bulge: 10, orb: 54, span: 58, fanR: 206, chipW: 70, chipH: 30, step: 23, ring: 360 };
 const W = { open: false, mode: "drag", file: null, cx: 0, cy: 0, scale: 1, ring: [], fan: [], hover: { t: "none" }, fanOpen: false, flipped: false, fanTimer: 0, est: {} };
 
 function menuFor(f) {
@@ -1357,8 +1357,8 @@ function openWheel(f, x, y, mode) {
   if (W.open) return;
   const m = menuFor(f);
   W.file = f; W.mode = mode; W.ring = m.ring; W.fan = m.fan; W.hover = { t: "none" }; W.fanOpen = false; W.est = {};
-  W.scale = Math.min(1, (innerWidth - 16) / G.size);
-  const half = G.size * W.scale / 2;
+  W.scale = Math.min(1, (innerWidth - 16) / G.ring); // fit the ring; the fan may reach past a phone's edge
+  const half = G.ring * W.scale / 2;
   W.cx = mode === "click" ? Math.min(Math.max(x, half), innerWidth - half) : x;
   W.cy = mode === "click" ? Math.min(Math.max(y, half), innerHeight - half) : y;
   W.flipped = W.cy + (G.fanR + 30) * W.scale > innerHeight;
