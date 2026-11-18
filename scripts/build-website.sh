@@ -3,21 +3,30 @@
 # for the Claude preview) into a complete page in website/public/ with an icon
 # and link-preview tags. Upload that folder to GitHub Pages or any static host.
 #
-#   scripts/build-website.sh
-#   DOWNLOAD_URL=https://github.com/you/circularity/releases/latest/download/Circularity.dmg scripts/build-website.sh
+#   scripts/build-website.sh              page only
+#   scripts/build-website.sh --with-dmg   also copies dist/Circularity.dmg into the
+#                                         site, and the Download button links to it
+#                                         (Cloudflare Pages allows files up to 25 MB)
+#   DOWNLOAD_URL=https://… scripts/build-website.sh   link to a DMG hosted elsewhere
 #
-# Without DOWNLOAD_URL, a GitHub "origin" remote is used to make that link;
-# with neither, the Download button says the release is coming soon.
+# Without either, a GitHub "origin" remote is used to make a "latest release"
+# link; with none of these, the Download button says the release is coming soon.
 set -eu
 cd "$(dirname "$0")/.."
 
 URL="${DOWNLOAD_URL:-}"
+mkdir -p website/public
+rm -f website/public/Circularity.dmg
+if [ "${1:-}" = "--with-dmg" ]; then
+    [ -f dist/Circularity.dmg ] || { echo "build-website.sh: dist/Circularity.dmg not found. Run scripts/release.sh first." >&2; exit 1; }
+    cp dist/Circularity.dmg website/public/Circularity.dmg
+    URL="${URL:-Circularity.dmg}"
+fi
 if [ -z "$URL" ] && REMOTE=$(git remote get-url origin 2>/dev/null); then
     SLUG=$(printf '%s' "$REMOTE" | sed -E 's#^(git@github\.com:|https://github\.com/)##; s#\.git$##')
     case "$REMOTE" in *github.com*) URL="https://github.com/$SLUG/releases/latest/download/Circularity.dmg" ;; esac
 fi
 
-mkdir -p website/public
 python3 - "$URL" <<'PY'
 import re, sys
 url = sys.argv[1]

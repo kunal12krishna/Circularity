@@ -29,7 +29,7 @@ for _ in 1 2 3 4 5; do pgrep -x "$APP_NAME" >/dev/null || break; sleep 1; done
 pkill -9 -x "$APP_NAME" 2>/dev/null || true
 
 echo "==> Deleting built apps, the generated project and caches"
-rm -rf build dist "$APP_NAME.xcodeproj"
+rm -rf build "$APP_NAME.xcodeproj"   # dist/ (your DMGs) is kept
 rm -rf "/Applications/$APP_NAME.app"
 rm -rf "$HOME/Library/Caches/$BUNDLE_ID" "$HOME/Library/WebKit/$BUNDLE_ID" "$HOME/Library/HTTPStorages/$BUNDLE_ID" \
        "$HOME/Library/Saved Application State/$BUNDLE_ID.savedState"

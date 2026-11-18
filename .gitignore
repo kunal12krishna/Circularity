@@ -4,3 +4,4 @@ DerivedData/
 *.xcuserstate
 Circularity.xcodeproj/
 dist/
+website/public/*.dmg
