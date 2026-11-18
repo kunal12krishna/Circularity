@@ -82,7 +82,25 @@ final class PanelModel: ObservableObject {
     var accentNS: NSColor { Appearance.accentNS(settings) }
     var accent: Color { Color(nsColor: accentNS) }
     /// Text links: the accent mixed 40 % toward white (board I's #FFB366 for tangerine).
-    var link: Color { Color(nsColor: accentNS.blended(withFraction: 0.4, of: .white) ?? accentNS) }
+    /// Whether the panel is light: Settings → Menu Bar → Colours (Automatic = Tabs light, others dark).
+    var isLight: Bool { Appearance.isLight(settings.value(SettingsKeys.panelScheme), auto: layout == .tabs) }
+
+    /// The accent as readable text on the panel: darkened on light panels and
+    /// lightened on dark ones until it reaches 4.5:1 (a neon accent on a light
+    /// panel was nearly invisible).
+    var link: Color { Color(rgb: Self.readable(Appearance.accentRGB(settings), light: isLight, minimum: 4.5)) }
+    /// Big numbers: large text needs 3:1.
+    var accentText: Color { Color(rgb: Self.readable(Appearance.accentRGB(settings), light: isLight, minimum: 3)) }
+
+    static func readable(_ accent: RGB, light: Bool, minimum: Double) -> RGB {
+        let background = light ? RGB(hex: 0xF1EEE8) : RGB(hex: 0x26262A)
+        let toward = light ? RGB.black : RGB.white
+        for step in 0...20 {
+            let candidate = accent.mixed(with: toward, Double(step) * 0.05)
+            if candidate.contrast(with: background) >= minimum { return candidate }
+        }
+        return light ? RGB(hex: 0x1D1B18) : RGB(hex: 0xF4F1EC)
+    }
     var layout: PanelLayout { PanelLayout(rawValue: settings.value(SettingsKeys.panelLayout)) ?? .stackPlus }
 
     // MARK: Header
@@ -310,7 +328,9 @@ final class PanelModel: ObservableObject {
         case .document: .plainText
         default: .rawImage // a neutral image type: no format is hidden as "the source"
         }
-        return SlotProvider.menu(for: [type], canWrite: { FormatSupport.current.canWrite($0) }).ring
+        return SlotProvider.menu(for: [type], canWrite: { FormatSupport.current.canWrite($0) },
+                                 formatOrder: SlotProvider.imageFormatOrder(settings.value(SettingsKeys.imageFormatOrder)),
+                                 slots: SlotProvider.parseSlots(settings.value(SettingsKeys.imageSlots))).ring
     }
 
     static func miniLabel(_ slot: WheelSlot?) -> String {

@@ -30,7 +30,7 @@ struct StackPlusView: View {
         case "stats":
             HStack(spacing: 8) {
                 StatTile(label: "TODAY", value: model.todayText) { model.host?.panelShowStats() }
-                StatTile(label: "SAVED · WEEK", value: model.savedWeekText, valueColor: model.accent) { model.host?.panelShowStats() }
+                StatTile(label: "SAVED · WEEK", value: model.savedWeekText, valueColor: model.accentText) { model.host?.panelShowStats() }
                 StatTile(label: "WATCHING", value: model.watchingText) { model.host?.panelShowWatch() }
             }
         case "progress":

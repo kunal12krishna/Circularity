@@ -153,3 +153,5 @@ Quit the app first and relaunch the new build (`open build/DerivedData/Build/Pro
 | 79 | Convert your 10th file (or 100 MB saved in all). | The panel says "✦ 10 files converted!", the icon pulses; Stats → Milestones shows it lit. |
 | 80 | Settings → General → Updates. | Says the build has no update address (until UPDATE_FEED_URL is set, docs/UPDATES.md). Once set: Check now reports newest or offers Download. Off by default. |
 | 81 | On the website: Theme builder → choose a look → **Copy theme**. In the app: Settings → Appearance → **Paste theme**. | The wheel takes the accent, layout, sizes and fonts; nothing else changes. |
+| 82 | Settings → Menu Bar → Layout Tabs, then Colours Automatic / Dark / Light / Match macOS (with the neon accent). | Every combination is readable: the frosted window, cards and text change together, live while the panel is open. Links and "Space saved" stay readable on light. |
+| 83 | Build the website: `./scripts/build-website.sh`, open `website/public/index.html`. | A complete page with an icon; the Download button uses DOWNLOAD_URL (or the GitHub remote). |

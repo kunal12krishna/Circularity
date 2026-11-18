@@ -8,12 +8,16 @@ final class DropShelf {
     private var panel: NSPanel?
     private var view: ShelfView?
     private var hideWork: DispatchWorkItem?
+    /// Bumped by show(), so a fade-out that started earlier never hides new results.
+    private var generation = 0
 
     func show(_ urls: [URL], accent: NSColor) {
         let files = urls.filter { FileManager.default.fileExists(atPath: $0.path) }
         guard !files.isEmpty else { return }
         let panel = self.panel ?? makePanel()
+        generation += 1
         view?.configure(files, accent: accent)
+        view?.resetPointerState() // the pointer may have left while it was hidden
         let size = CGSize(width: 252, height: 108)
         let mouse = NSEvent.mouseLocation
         let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) }?.visibleFrame ?? NSScreen.main?.visibleFrame ?? .zero
@@ -34,10 +38,17 @@ final class DropShelf {
     func hide() {
         hideWork?.cancel()
         guard let panel, panel.isVisible else { return }
+        let shown = generation
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = Motion.reduceMotion ? 0 : 0.15
             panel.animator().alphaValue = 0
-        }, completionHandler: { MainActor.assumeIsolated { panel.orderOut(nil) } })
+        }, completionHandler: { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.generation == shown else { return }
+                panel.orderOut(nil)
+                self.view?.resetPointerState()
+            }
+        })
     }
 
     /// Stays while the pointer is over it; otherwise goes after 8 s.
@@ -125,6 +136,12 @@ private final class ShelfView: NSView, NSDraggingSource {
         return b
     }
 
+    func resetPointerState() {
+        isHovered = false
+        isDragging = false
+        downPoint = nil
+    }
+
     func configure(_ files: [URL], accent: NSColor) {
         self.files = files
         self.accent = accent
@@ -166,11 +183,17 @@ private final class ShelfView: NSView, NSDraggingSource {
         let p = convert(event.locationInWindow, from: nil)
         guard hypot(p.x - start.x, p.y - start.y) > 4 else { return }
         isDragging = true
+        // Pictures only for the first three items: a 200-file batch must not
+        // make 200 thumbnails before the drag can start.
+        let generic = NSWorkspace.shared.icon(for: .data)
         let items = files.enumerated().map { i, url -> NSDraggingItem in
             let item = NSDraggingItem(pasteboardWriter: url as NSURL)
-            let image = NSWorkspace.shared.icon(forFile: url.path)
-            if let thumb = Thumbnails.image(url, maxPixel: 128) { item.setDraggingFrame(CGRect(x: 12 + CGFloat(i) * 4, y: 20, width: 56, height: 56), contents: NSImage(cgImage: thumb, size: .zero)) }
-            else { item.setDraggingFrame(CGRect(x: 12, y: 20, width: 56, height: 56), contents: image) }
+            let frame = CGRect(x: 12 + CGFloat(min(i, 3)) * 4, y: 20, width: 56, height: 56)
+            if i < 3, let thumb = Thumbnails.image(url, maxPixel: 128) {
+                item.setDraggingFrame(frame, contents: NSImage(cgImage: thumb, size: .zero))
+            } else {
+                item.setDraggingFrame(frame, contents: i < 3 ? NSWorkspace.shared.icon(forFile: url.path) : generic)
+            }
             return item
         }
         beginDraggingSession(with: items, event: event, source: self)

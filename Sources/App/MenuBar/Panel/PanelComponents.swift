@@ -22,6 +22,9 @@ enum PanelTokens {
 struct PanelPalette {
     var primary, strong2, secondary, meta, tertiary, placeholder, onAccent, smaller: Color
     var surface, surfaceHover, field, hairline, docThumb: Color
+    /// Small fills for chips and segmented controls, the selected segment, and progress tracks.
+    var chip = Color.white.opacity(0.10), selected = Color.white.opacity(0.16), track = Color.white.opacity(0.12)
+    var isLight = false
 
     static let dark = PanelPalette(
         primary: PanelTokens.primary, strong2: PanelTokens.strong2, secondary: PanelTokens.secondary, meta: PanelTokens.meta,
@@ -34,7 +37,8 @@ struct PanelPalette {
         primary: Color(hex: 0x1D1B18), strong2: Color(hex: 0x4A443B), secondary: Color(hex: 0x5E574D), meta: Color(hex: 0x6B645A),
         tertiary: Color(hex: 0x6B645A), placeholder: Color(hex: 0x8A8378), onAccent: Color(hex: 0x1A1206), smaller: Color(hex: 0x2E9E5B),
         surface: Color.white, surfaceHover: Color.black.opacity(0.05), field: Color.white,
-        hairline: Color.black.opacity(0.08), docThumb: Color(hex: 0xEDE8E1))
+        hairline: Color.black.opacity(0.08), docThumb: Color(hex: 0xEDE8E1),
+        chip: Color.black.opacity(0.07), selected: Color.white, track: Color(hex: 0xE4DED4), isLight: true)
 }
 
 extension PanelPalette {
@@ -148,7 +152,7 @@ struct CommandBar: View {
                     .accessibilityLabel("Command bar")
                 Text("⌘K").font(PanelTokens.rounded(10, .bold)).foregroundStyle(Color(hex: 0xD9D3CA))
                     .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(RoundedRectangle(cornerRadius: 5).fill(Color.white.opacity(0.10)))
+                    .background(RoundedRectangle(cornerRadius: 5).fill(palette.chip))
             }
             .padding(.horizontal, 12)
             .frame(height: 38)
@@ -264,7 +268,7 @@ struct JobCard: View {
                 Text(job.title).font(PanelTokens.rounded(13, .bold)).foregroundStyle(palette.primary).lineLimit(1).truncationMode(.middle)
                 GeometryReader { g in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.12))
+                        Capsule().fill(palette.track)
                         Capsule().fill(accent).frame(width: max(5, g.size.width * job.fraction))
                     }
                 }
@@ -274,7 +278,7 @@ struct JobCard: View {
             }
             Button(action: cancel) {
                 Image(systemName: "xmark").font(.system(size: 11, weight: .bold)).foregroundStyle(palette.strong2)
-                    .frame(width: 28, height: 28).background(Circle().fill(Color.white.opacity(0.08)))
+                    .frame(width: 28, height: 28).background(Circle().fill(palette.chip))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Cancel \(job.title)")
@@ -351,14 +355,14 @@ struct DropZone: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 14)
-                .fill(model.dropTargeted ? model.accent.opacity(0.08) : Color.white.opacity(0.03))
+                .fill(model.dropTargeted ? model.accent.opacity(0.08) : palette.chip.opacity(0.4))
             RoundedRectangle(cornerRadius: 14)
-                .stroke(model.dropTargeted ? model.accent : Color.white.opacity(0.22), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+                .stroke(model.dropTargeted ? model.link : (palette.isLight ? Color.black.opacity(0.28) : Color.white.opacity(0.22)), style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
             if model.dropTargeted || model.dropMode {
                 MiniWheel(slots: model.miniSlots, hover: model.miniHover, accent: model.accent)
             } else {
                 VStack(spacing: 8) {
-                    Image(systemName: "arrow.down.to.line").font(.system(size: 24, weight: .medium)).foregroundStyle(model.accent)
+                    Image(systemName: "arrow.down.to.line").font(.system(size: 24, weight: .medium)).foregroundStyle(model.link)
                     Text(compactHint ? "Drop here for the full wheel" : "Drop files to convert").font(PanelTokens.rounded(13, .bold)).foregroundStyle(palette.strong2)
                     if !compactHint {
                         Text("or click to choose · works on the menu bar icon too").font(PanelTokens.rounded(11)).foregroundStyle(palette.meta)
@@ -497,7 +501,7 @@ struct RecentRow: View {
     private func rowButton(_ symbol: String, _ label: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.primary)
-                .frame(width: 26, height: 26).background(RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.10)))
+                .frame(width: 26, height: 26).background(RoundedRectangle(cornerRadius: 7).fill(palette.chip))
         }
         .buttonStyle(.plain)
         .help(label)
@@ -521,7 +525,7 @@ struct PanelFooter: View {
                 .keyboardShortcut("q", modifiers: .command)
         }
         .padding(.top, 10)
-        .overlay(alignment: .top) { Rectangle().fill(Color.white.opacity(0.10)).frame(height: 1) }
+        .overlay(alignment: .top) { Rectangle().fill(palette.hairline).frame(height: 1) }
     }
 
     private func footerButton(_ symbol: String, _ title: String, _ action: @escaping () -> Void) -> some View {

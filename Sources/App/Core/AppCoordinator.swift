@@ -92,7 +92,7 @@ final class AppCoordinator: PanelHost {
         }.store(in: &bag)
         jobs.milestones.receive(on: RunLoop.main).sink { [weak self] ids in
             guard let self, let id = ids.last else { return }
-            let title = Milestone.title(id)
+            let title = ids.map(Milestone.title).joined(separator: "! ✦ ")
             panelModel.notice = "✦ \(title)! \(Self.milestoneLine(stats: jobs.stats))"
             statusItem?.set(.done)
             if settings.value(SettingsKeys.notifyEnabled) {

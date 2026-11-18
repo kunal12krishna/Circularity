@@ -44,7 +44,8 @@ final class SettingsStore {
     /// "Reset all settings" (Settings → General). Keeps onboarding done,
     /// history/stats files and watch rules are separate and not touched here.
     func resetAll() {
-        let keep: Set<String> = [SettingsKeys.onboardingCompleted.name, SettingsKeys.schemaVersionKey, SettingsKeys.watchRulesJSON.name]
+        let keep: Set<String> = [SettingsKeys.onboardingCompleted.name, SettingsKeys.schemaVersionKey, SettingsKeys.watchRulesJSON.name,
+                                 SettingsKeys.milestones.name, SettingsKeys.updatesLastCheck.name]
         for key in SettingsKeys.all where !keep.contains(key.name) { defaults.removeObject(forKey: key.name) }
         changes.send("")
     }
@@ -124,8 +125,10 @@ final class SettingsStore {
 /// must not leave the app in a state its own controls can't produce).
 enum SettingsValidation {
     /// State that lives outside our defaults (the Finder service, onboarding).
+    /// Network use is only ever switched on by the user on this Mac, never by a file.
     static let notImported: Set<String> = [SettingsKeys.serviceShortcutInstalled.name, SettingsKeys.onboardingCompleted.name,
-                                           SettingsKeys.schemaVersionKey]
+                                           SettingsKeys.schemaVersionKey, SettingsKeys.milestones.name,
+                                           SettingsKeys.updatesLastCheck.name, SettingsKeys.updatesAutomatic.name]
 
     static let choices: [String: Set<String>] = [
         SettingsKeys.triggerKey.name: ["shift", "option", "control"],

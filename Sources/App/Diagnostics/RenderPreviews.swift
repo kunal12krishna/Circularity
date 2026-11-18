@@ -92,6 +92,18 @@ enum RenderPreviews {
             try snapshot(PanelRoot(model: model, width: width), background: layout == "tabs" ? 0xDCD6CC : 0x1E2E36,
                          to: directory.appendingPathComponent("\(name)@2x.png"))
         }
+        // Every layout in every colour setting, with the default neon accent (readability check).
+        settings.set("#C6FF3D", for: SettingsKeys.accentHex)
+        for (layout, scheme) in [("tabs", "auto"), ("tabs", "dark"), ("stackPlus", "light"), ("mini", "light"), ("stackPlus", "auto")] {
+            settings.set(layout, for: SettingsKeys.panelLayout)
+            settings.set(scheme, for: SettingsKeys.panelScheme)
+            let light = model.isLight
+            try snapshot(PanelRoot(model: model, width: layout == "mini" ? 340 : 380),
+                         background: light ? 0xE9E7E3 : 0x1E2128, // roughly the frosted window behind it
+                         to: directory.appendingPathComponent("panel-\(layout)-\(scheme)-neon@2x.png"))
+        }
+        settings.remove(SettingsKeys.panelScheme.name)
+        settings.remove(SettingsKeys.accentHex.name)
         try snapshot(StatsWindowView(model: model).frame(width: 540, height: 560), background: 0x0D0F14,
                      to: directory.appendingPathComponent("window-stats@2x.png"))
     }

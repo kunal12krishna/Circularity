@@ -34,8 +34,9 @@ public enum Cutout {
         }
         let ciImage = CIImage(cvPixelBuffer: buffer)
         let context = CIContext(options: [.cacheIntermediates: false])
-        guard let cut = context.createCGImage(ciImage, from: ciImage.extent, format: .RGBA8,
-                                              colorSpace: image.colorSpace ?? CGColorSpace(name: CGColorSpace.sRGB)!) else {
+        // Always RGB: gray, CMYK or palette pictures can't be an RGBA8 bitmap in their own space.
+        let rgb = image.colorSpace.flatMap { $0.model == .rgb ? $0 : nil } ?? CGColorSpace(name: CGColorSpace.sRGB)!
+        guard let cut = context.createCGImage(ciImage, from: ciImage.extent, format: .RGBA8, colorSpace: rgb) else {
             throw JobError.encodeFailed("the cut-out image")
         }
         try ImageOps.write(cut, as: .png, quality: 1, properties: input.outputProperties(policy: policy.metadata), to: output)

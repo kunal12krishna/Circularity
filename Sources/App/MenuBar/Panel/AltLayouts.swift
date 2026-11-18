@@ -24,7 +24,7 @@ struct PanelRoot: View {
     var sizing: PanelSizing?
 
     var body: some View {
-        let light = Appearance.isLight(model.settings.value(SettingsKeys.panelScheme), auto: model.layout == .tabs)
+        let light = model.isLight
         let palette = (light ? PanelPalette.light : .dark).with(onAccent: model.accent.readableText)
         Group {
             if let sizing {
@@ -84,7 +84,7 @@ struct TabsView: View {
                 Text(model.paused ? "Paused" : "Ready").font(PanelTokens.rounded(12)).foregroundStyle(palette.secondary)
                 Button { model.paused.toggle() } label: {
                     Image(systemName: model.paused ? "play.fill" : "pause.fill").font(.system(size: 11)).foregroundStyle(palette.primary)
-                        .frame(width: 30, height: 30).background(Circle().fill(Color.black.opacity(0.06)))
+                        .frame(width: 30, height: 30).background(Circle().fill(palette.chip))
                 }
                 .buttonStyle(.plain).accessibilityLabel(model.paused ? "Resume" : "Pause")
             }
@@ -93,7 +93,7 @@ struct TabsView: View {
                     Button { model.tab = i } label: {
                         Text(title).font(PanelTokens.rounded(13, model.tab == i ? .bold : .medium)).foregroundStyle(palette.primary)
                             .frame(maxWidth: .infinity, minHeight: 30)
-                            .background(RoundedRectangle(cornerRadius: 8).fill(model.tab == i ? Color.white : .clear)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(model.tab == i ? palette.selected : .clear)
                                 .shadow(color: .black.opacity(model.tab == i ? 0.08 : 0), radius: 2, y: 1))
                     }
                     .buttonStyle(.plain)
@@ -101,7 +101,7 @@ struct TabsView: View {
                 }
             }
             .padding(3)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.07)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(palette.chip))
 
             switch model.tab {
             case 1: recentTab
@@ -130,11 +130,11 @@ struct TabsView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 10) {
                 bigStat("TODAY", model.todayText, detail: todayDetail, color: palette.primary)
-                bigStat("SPACE SAVED", model.savedWeekText, detail: "this week", color: Color(nsColor: model.accentNS.blended(withFraction: 0.35, of: .black) ?? model.accentNS))
+                bigStat("SPACE SAVED", model.savedWeekText, detail: "this week", color: model.accentText)
             }
             ForEach(model.jobs.active) { job in
                 HStack(spacing: 10) {
-                    RingProgress(fraction: job.fraction, accent: model.accent, track: Color(hex: 0xEDE8E1)).frame(width: 40, height: 40)
+                    RingProgress(fraction: job.fraction, accent: model.accent, track: palette.track).frame(width: 40, height: 40)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(job.title).font(PanelTokens.rounded(13, .bold)).foregroundStyle(palette.primary).lineLimit(1).truncationMode(.middle)
                         Text(job.meta).font(PanelTokens.rounded(11)).foregroundStyle(palette.meta)
@@ -142,9 +142,9 @@ struct TabsView: View {
                     Spacer()
                     Button("Cancel") { model.jobs.cancel(job.id) }.buttonStyle(.plain)
                         .font(PanelTokens.rounded(12, .semibold)).foregroundStyle(palette.primary)
-                        .padding(.horizontal, 10).frame(height: 28).background(RoundedRectangle(cornerRadius: 8).fill(Color.black.opacity(0.06)))
+                        .padding(.horizontal, 10).frame(height: 28).background(RoundedRectangle(cornerRadius: 8).fill(palette.chip))
                 }
-                .padding(10).background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+                .padding(10).background(RoundedRectangle(cornerRadius: 14).fill(palette.surface))
             }
             SectionHeader(title: "Quick presets · drop on one", action: model.editing ? "Done" : "Edit", link: linkColor) { model.editing.toggle() }
             tileGrid(height: 74)
@@ -158,13 +158,14 @@ struct TabsView: View {
                 Image(systemName: "magnifyingglass").font(.system(size: 12, weight: .semibold)).foregroundStyle(palette.meta)
                 TextField("Search name, format or folder", text: $search).textFieldStyle(.plain).font(PanelTokens.rounded(12))
             }
-            .padding(.horizontal, 10).frame(height: 32).background(RoundedRectangle(cornerRadius: 9).fill(Color.white))
+            .padding(.horizontal, 10).frame(height: 32).background(RoundedRectangle(cornerRadius: 9).fill(palette.field))
             HStack(spacing: 6) {
                 ForEach(Array(["All", "Images", "PDFs", "Docs"].enumerated()), id: \.offset) { i, title in
                     Button(title) { filter = i }.buttonStyle(.plain)
-                        .font(PanelTokens.rounded(11, .bold)).foregroundStyle(filter == i ? Color.white : palette.primary)
+                        .font(PanelTokens.rounded(11, .bold)).foregroundStyle(filter == i ? model.accent.readableText : palette.primary)
                         .padding(.horizontal, 10).frame(height: 26)
-                        .background(Capsule().fill(filter == i ? palette.primary : Color.black.opacity(0.07)))
+                        .background(Capsule().fill(filter == i ? model.accent : palette.chip))
+                        .accessibilityAddTraits(filter == i ? .isSelected : [])
                 }
             }
             ScrollView {
@@ -190,7 +191,7 @@ struct TabsView: View {
         }
     }
 
-    private var linkColor: Color { Color(nsColor: model.accentNS.blended(withFraction: 0.35, of: .black) ?? model.accentNS) }
+    private var linkColor: Color { model.link }
 
     private var todayDetail: String {
         let f = model.stats.today.byFormat
@@ -226,7 +227,7 @@ struct TabsView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white))
+        .background(RoundedRectangle(cornerRadius: 14).fill(palette.surface))
         .onTapGesture { model.host?.panelShowStats() }
     }
 }

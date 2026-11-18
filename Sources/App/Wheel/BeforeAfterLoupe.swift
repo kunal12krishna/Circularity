@@ -28,6 +28,9 @@ final class BeforeAfterLoupe {
 
     /// What a hovered action would look like, or nil for no loupe.
     static func spec(for action: WheelAction?, url: URL, settings: SettingsStore) -> (format: OutputFormat, quality: Double, label: String)? {
+        // Pictures only: a PDF's Compress is a different thing entirely.
+        let type = DraggedFiles.type(of: url)
+        guard type.conforms(to: .image), !type.conforms(to: .pdf) else { return nil }
         switch action {
         case .convert(.jpg)?: let q = settings.value(SettingsKeys.qualityJPG); return (.jpg, q, "JPG \(Int(q * 100))")
         case .convert(.heic)?: let q = settings.value(SettingsKeys.qualityHEIC); return (.heic, q, "HEIC \(Int(q * 100))")
@@ -81,6 +84,8 @@ final class BeforeAfterLoupe {
             present(cached)
             return
         }
+        // Not ready yet: hide the old picture rather than show it under the new label.
+        transact(0, animated: false) { layer.opacity = 0; image.contents = nil }
         Task.detached(priority: .userInitiated) {
             let made = BeforeAfter.image(url, format: spec.format, quality: spec.quality)
             await MainActor.run { [weak self] in

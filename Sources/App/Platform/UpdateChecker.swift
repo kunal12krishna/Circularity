@@ -35,7 +35,6 @@ final class UpdateChecker: ObservableObject {
         guard let url = Self.feedURL else { status = .noFeed; return }
         guard status != .checking else { return }
         status = .checking
-        settings.set(Date().timeIntervalSince1970, for: SettingsKeys.updatesLastCheck)
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
         request.setValue("\(AppIdentity.name)/\(Self.currentVersion)", forHTTPHeaderField: "User-Agent")
         Task {
@@ -49,6 +48,10 @@ final class UpdateChecker: ObservableObject {
                 status = .failed(error.localizedDescription)
             }
             self.status = status
+            // Success waits a day; a failure (offline at login, a timeout) retries in about an hour.
+            let now = Date().timeIntervalSince1970
+            if case .failed = status { settings.set(now - 23 * 3600, for: SettingsKeys.updatesLastCheck) }
+            else { settings.set(now, for: SettingsKeys.updatesLastCheck) }
             Log.app.notice("Update check: \(String(describing: status), privacy: .public)")
             if case let .available(feed) = status { onAvailable?(feed, automatic) }
         }

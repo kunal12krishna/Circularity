@@ -429,6 +429,21 @@ func runAll() async {
         }
     }
 
+    // Cut out on a black-and-white picture (gray colour space).
+    if Cutout.isAvailable {
+        let grayURL = root.appendingPathComponent("gray subject.png")
+        if let ctx = CGContext(data: nil, width: 800, height: 600, bitsPerComponent: 8, bytesPerRow: 0,
+                               space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue) {
+            ctx.setFillColor(gray: 0.92, alpha: 1); ctx.fill(CGRect(x: 0, y: 0, width: 800, height: 600))
+            ctx.setFillColor(gray: 0.15, alpha: 1); ctx.fillEllipse(in: CGRect(x: 260, y: 160, width: 280, height: 320))
+            if let image = ctx.makeImage() { writeImage(image, .png, to: grayURL) }
+        }
+        switch await run([grayURL], .removeBackground) {
+        case let .success(r): check(r.outputs.first?.pathExtension == "png", "cut out works on a black-and-white picture")
+        case let .failure(error): check(error.localizedDescription.contains("subject"), "cut out on gray: \(error.localizedDescription)")
+        }
+    }
+
     // 11. Large files (performance report)
     if large {
         let huge = root.appendingPathComponent("huge.png")

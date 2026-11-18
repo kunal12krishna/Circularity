@@ -25,9 +25,16 @@ final class MenuPanelController {
     var anchor: () -> CGRect? = { nil }
     var onOpenChange: ((Bool) -> Void)?
 
+    private var materialWatch: AnyCancellable?
+
     init(model: PanelModel, settings: SettingsStore) {
         self.model = model
         self.settings = settings
+        // Colours or layout changed in Settings while the panel is open.
+        materialWatch = settings.changes.receive(on: RunLoop.main).sink { [weak self] _ in
+            guard let self, let effect = panel?.contentView as? NSVisualEffectView else { return }
+            Self.applyMaterial(effect, light: model.isLight)
+        }
     }
 
     var isOpen: Bool { panel?.isVisible == true }
@@ -62,10 +69,9 @@ final class MenuPanelController {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
 
         let effect = NSVisualEffectView()
-        effect.material = model.layout == .tabs ? .popover : .hudWindow
         effect.blendingMode = .behindWindow
         effect.state = .active
-        effect.appearance = NSAppearance(named: model.layout == .tabs ? .aqua : .darkAqua)
+        Self.applyMaterial(effect, light: model.isLight)
         effect.maskImage = Self.roundedMask(radius: 16)
         sizing.contentHeight = 0
         sizing.height = nil
@@ -221,6 +227,13 @@ final class MenuPanelController {
         monitors.removeAll()
     }
 
+    /// The frosted background matches the panel's colours (light or dark), so
+    /// light text never sits on a light window or the other way round.
+    static func applyMaterial(_ effect: NSVisualEffectView, light: Bool) {
+        effect.material = light ? .popover : .hudWindow
+        effect.appearance = NSAppearance(named: light ? .aqua : .darkAqua)
+    }
+
     static func roundedMask(radius: CGFloat) -> NSImage {
         let size = CGSize(width: radius * 2 + 1, height: radius * 2 + 1)
         let image = NSImage(size: size, flipped: false) { rect in
@@ -245,9 +258,16 @@ final class PinnedPanelController: NSObject, NSWindowDelegate {
     private var resize: AnyCancellable?
     private let sizing = PanelSizing()
 
+    private var materialWatch: AnyCancellable?
+
     init(model: PanelModel, settings: SettingsStore) {
         self.model = model
         self.settings = settings
+        super.init()
+        materialWatch = settings.changes.receive(on: RunLoop.main).sink { [weak self] _ in
+            guard let self, let effect = window?.contentView as? NSVisualEffectView else { return }
+            MenuPanelController.applyMaterial(effect, light: model.isLight)
+        }
     }
 
     var isPinned: Bool { window != nil }
@@ -274,10 +294,9 @@ final class PinnedPanelController: NSObject, NSWindowDelegate {
         w.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         w.delegate = self
         let effect = NSVisualEffectView()
-        effect.material = model.layout == .tabs ? .popover : .hudWindow
         effect.blendingMode = .behindWindow
         effect.state = .active
-        effect.appearance = NSAppearance(named: model.layout == .tabs ? .aqua : .darkAqua)
+        MenuPanelController.applyMaterial(effect, light: model.isLight)
         effect.maskImage = MenuPanelController.roundedMask(radius: 16)
         sizing.contentHeight = 0
         sizing.height = nil
