@@ -31,7 +31,7 @@ final class MenuPanelController {
         self.model = model
         self.settings = settings
         // Colours or layout changed in Settings while the panel is open.
-        materialWatch = settings.changes.receive(on: RunLoop.main).sink { [weak self] _ in
+        materialWatch = settings.changes.receive(on: RunLoop.main).filter(Self.affectsMaterial).sink { [weak self] _ in
             guard let self, let effect = panel?.contentView as? NSVisualEffectView else { return }
             Self.applyMaterial(effect, light: model.isLight)
         }
@@ -230,8 +230,16 @@ final class MenuPanelController {
     /// The frosted background matches the panel's colours (light or dark), so
     /// light text never sits on a light window or the other way round.
     static func applyMaterial(_ effect: NSVisualEffectView, light: Bool) {
-        effect.material = light ? .popover : .hudWindow
-        effect.appearance = NSAppearance(named: light ? .aqua : .darkAqua)
+        let material: NSVisualEffectView.Material = light ? .popover : .hudWindow
+        let name: NSAppearance.Name = light ? .aqua : .darkAqua
+        // Only touch the window when something changes (it would redraw the panel).
+        if effect.material != material { effect.material = material }
+        if effect.appearance?.name != name { effect.appearance = NSAppearance(named: name) }
+    }
+
+    /// Only the colour and layout settings (or a bulk change) can change the material.
+    nonisolated static func affectsMaterial(_ name: String) -> Bool {
+        name.isEmpty || name == SettingsKeys.panelScheme.name || name == SettingsKeys.panelLayout.name
     }
 
     static func roundedMask(radius: CGFloat) -> NSImage {
@@ -264,7 +272,7 @@ final class PinnedPanelController: NSObject, NSWindowDelegate {
         self.model = model
         self.settings = settings
         super.init()
-        materialWatch = settings.changes.receive(on: RunLoop.main).sink { [weak self] _ in
+        materialWatch = settings.changes.receive(on: RunLoop.main).filter(MenuPanelController.affectsMaterial).sink { [weak self] _ in
             guard let self, let effect = window?.contentView as? NSVisualEffectView else { return }
             MenuPanelController.applyMaterial(effect, light: model.isLight)
         }
