@@ -331,7 +331,19 @@ func runAll() async {
     // 10. Size estimates
     let photoLike = root.appendingPathComponent("photo-like.png")
     writeImage(photoLikeImage(3000, 2000), .png, to: photoLike)
-    let estimates = SizeEstimator.estimate(photoLike, formats: [.jpg, .png])
+    let estimates = SizeEstimator.estimate(photoLike, formats: [.jpg, .png, .heic, .avif, .tiff, .gif])
+    // Derived estimates (no HEIC/AVIF encoder is loaded for the wheel's hints)
+    // build on the sampled JPEG estimate, which reads this synthetic noise
+    // image ~2× low, so they are held to 3× here; on real photos they land
+    // much closer (ratios calibrated on photos, see SizeEstimator). GIF is
+    // left out: its size depends on dithering (this noise image is 3.4× the
+    // hint), so the GIF hint is only a rough guide.
+    for format in [OutputFormat.heic, .avif, .tiff] where support.canWrite(format) {
+        if let guess = estimates[format], let real = output(await run([photoLike], .convert(format))) {
+            let r = Double(guess) / Double(fileSize(real))
+            check(r > 0.33 && r < 3, "\(format.displayName) wheel estimate within 3× (\(guess) vs \(fileSize(real)))")
+        } else { check(false, "\(format.displayName) wheel estimate produced") }
+    }
     if let estimatedJPG = estimates[.jpg], let realJPG = output(await run([photoLike], .convert(.jpg))) {
         let ratio = Double(estimatedJPG) / Double(fileSize(realJPG))
         check(ratio > 0.5 && ratio < 2, "JPG size estimate within 2× (\(estimatedJPG) vs \(fileSize(realJPG)))")

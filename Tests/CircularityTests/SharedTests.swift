@@ -34,6 +34,10 @@ final class LaunchArgumentsTests: XCTestCase {
     func testDragTestFlag() {
         XCTAssertTrue(LaunchArguments(["Circularity", "--drag-test"]) { _ in false }.dragTest)
         XCTAssertFalse(LaunchArguments(["Circularity"]) { _ in false }.dragTest)
+        let perf = LaunchArguments(["Circularity", "--perf-report", "docs/PERF-REPORT.md"]) { _ in false }
+        XCTAssertTrue(perf.perfReport)
+        XCTAssertEqual(perf.perfReportFile?.lastPathComponent, "PERF-REPORT.md")
+        XCTAssertNil(LaunchArguments(["Circularity", "--perf-report"]) { _ in false }.perfReportFile)
     }
 
     func testRenderPreviews() {

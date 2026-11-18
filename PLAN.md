@@ -455,6 +455,12 @@ Each milestone follows the same steps: implement it, run `xcodegen generate`, `x
 - Complete the unit tests (gesture state machine, ring and More-arc layout, output naming, fuzzy matcher, watch rules, settings migration, theme contrast, slot ordering), finish `EngineSmokeTest` (every conversion, resize, crop and compress through the real queue; batches; cancellation; unsupported formats), real-event `--drag-test` level 2 documented, and `--perf-report` + `docs/PERF-REPORT.md` with measured numbers.
 - Fix anything that misses budget. Write `docs/INSTRUMENTS.md`, `docs/MANUAL-TESTS.md`, README (with a GIF-recording checklist), LICENSE (MIT), THIRD-PARTY-NOTICES and `docs/RELEASE-CHECKLIST.md` (ad-hoc DMG now; later Developer ID, notarise, staple, appcast and Homebrew cask).
 
+**Built (k) — notes and measured results:**
+- `--perf-report [file.md]` starts the real app at idle with throwaway settings and measures launch, idle memory and CPU, each wheel layout, the panel and Settings (with repeated open/close to tell leaks from caches), two large jobs, and bundle/DMG sizes → `docs/PERF-REPORT.md` (Release build, this Mac: 743 ms launch, 12.5 MB / 0.02 % idle, 6.2 MB app, 3.5 MB DMG).
+- **Fixed from the measurements:** the wheel's size hints loaded the HEIC/AVIF encoders (~35 MB kept for good) → only JPEG and PNG are encoded, the rest derived with photo-calibrated ratios (wheel now ~25 MB instead of ~65 MB); full-size decodes went through the thumbnail API (100 MP peaked at 1.2 GB) → direct decode (0.83 GB in-app, 0.40 GB isolated).
+- **Budget missed, reported honestly:** after first use the wheel leaves ~23–27 MB, the panel ~38 MB, Settings ~66 MB (framework caches; no growth over repeated use). Options for later in PERF-REPORT.md.
+- Tests: 114 unit tests, 60 engine checks (62 with `--large`), `--drag-test`; real-event level 2 documented in MANUAL-TESTS.md. Docs: PERF-REPORT.md, INSTRUMENTS.md, README demo-GIF checklist, `scripts/clean-rebuild.sh`.
+
 ---
 
 ## 5. Performance budget and how it is enforced

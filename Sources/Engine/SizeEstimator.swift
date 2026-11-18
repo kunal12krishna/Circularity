@@ -2,28 +2,47 @@ import CoreGraphics
 import Foundation
 import ImageIO
 
-/// Live "about 2.9 MB" estimates for the wheel's centre (PLAN.md §3.3):
-/// encodes a ≤ 1600 px downsample once per format and scales by the pixel
-/// ratio. Smaller samples lose the fine detail that drives JPEG size; this
-/// keeps most of it without ever decoding a huge image at full size.
+/// Live "about 2.9 MB" estimates for the wheel's centre (PLAN.md §3.3).
+/// Only JPEG and PNG are really encoded (a ≤ 1600 px downsample, scaled by the
+/// pixel ratio). HEIC, AVIF, WebP and GIF are derived from those with ratios
+/// measured on photos, and BMP/TIFF are computed: loading the HEIC and AVIF
+/// encoders just for a hint cost ~35 MB that stayed for the life of the app
+/// (docs/PERF-REPORT.md). The Compress and Resize dialogs still encode for real.
 public enum SizeEstimator {
+    public static let wheelSample = 1600
+
+    /// Typical size relative to JPEG at the app's default qualities
+    /// (JPG 85, HEIC 80, AVIF 75, WebP 80), measured on photos.
+    public static let ratioToJPEG: [OutputFormat: Double] = [.heic: 0.6, .avif: 0.45, .webp: 0.75]
+
     public static func estimate(_ url: URL, formats: [OutputFormat], support: FormatSupport = .current) -> [OutputFormat: Int64] {
-        guard let input = try? ImageInput.open(url), let small = try? input.upright(maxPixel: 1600) else { return [:] }
+        guard let input = try? ImageInput.open(url),
+              let small = try? autoreleasepool(invoking: { try input.upright(maxPixel: wheelSample) }) else { return [:] }
         let full = input.uprightSize
-        let ratio = Double(full.width * full.height) / Double(max(1, small.width * small.height))
+        let pixels = Double(full.width * full.height)
+        let ratio = pixels / Double(max(1, small.width * small.height))
+        func encoded(_ format: OutputFormat) -> Int64? {
+            autoreleasepool {
+                (try? ImageOps.encode(small, as: format, quality: OutputPolicy().quality(for: format))).map { Int64(Double($0.count) * ratio) }
+            }
+        }
+        let needsJPEG = formats.contains { $0 != .png && $0 != .bmp && $0 != .tiff }
+        let jpg = needsJPEG ? encoded(.jpg) : nil
+        let png = formats.contains(.png) || formats.contains(.gif) ? encoded(.png) : nil
+        let channels = Double(ImageOps.hasAlpha(small) ? 4 : 3)
         var result: [OutputFormat: Int64] = [:]
-        for format in formats {
+        for format in formats where format == .pdf || format == .bmp || support.canWrite(format) {
             switch format {
-            case .bmp:
-                result[format] = Int64(full.width * full.height * 3) + 54
-            case .pdf:
-                if let jpg = try? ImageOps.encode(small, as: .jpg, quality: 0.85) {
-                    result[format] = Int64(Double(jpg.count) * ratio) + 2_000
-                }
+            case .jpg: result[format] = jpg
+            case .png: result[format] = png
+            case .pdf: result[format] = jpg.map { $0 + 2_000 }
+            case .bmp: result[format] = Int64(pixels * 3) + 54
+            case .tiff: result[format] = Int64(pixels * channels) + 8_000 // uncompressed
+            case .gif:
+                // 256 colours: about 1.4–1.9× a JPEG for photos, never more than PNG for flat graphics.
+                if let jpg, let png { result[format] = min(png, Int64(Double(jpg) * 2)) } else { result[format] = png }
             default:
-                guard support.canWrite(format),
-                      let data = try? ImageOps.encode(small, as: format, quality: OutputPolicy().quality(for: format)) else { continue }
-                result[format] = Int64(Double(data.count) * ratio)
+                if let jpg, let k = ratioToJPEG[format] { result[format] = Int64(Double(jpg) * k) }
             }
         }
         return result

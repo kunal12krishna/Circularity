@@ -48,6 +48,15 @@ struct ImageInput {
         }
         guard let source else { throw JobError.unreadable(url.lastPathComponent) }
         let longEdge = Int(max(uprightSize.width, uprightSize.height))
+        // Full size and already upright: decode directly. The thumbnail API at
+        // full size made extra copies (a 100 MP PNG → JPG peaked at 1.2 GB
+        // instead of 0.4 GB; docs/PERF-REPORT.md).
+        if orientation == 1, maxPixel.map({ $0 >= longEdge }) ?? true {
+            guard let image = CGImageSourceCreateImageAtIndex(source, index, [kCGImageSourceShouldCacheImmediately: false] as CFDictionary) else {
+                throw JobError.unreadable(url.lastPathComponent)
+            }
+            return image
+        }
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,

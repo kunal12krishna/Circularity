@@ -134,3 +134,10 @@ Quit the app first and relaunch the new build (`open build/DerivedData/Build/Pro
 | 72 | Notifications → on (allow when macOS asks) → Send a test; convert a file. | A banner; for a conversion it has Open and Show in Finder. |
 | 73 | Advanced → Developer HUD on. | A small readout top-right (memory, jobs, wheel, last drag). Off removes it. Save report… writes a text file and shows it. |
 | 74 | General → Launch at login on. | System Settings → General → Login Items lists Circularity (macOS may ask you to approve). |
+
+## Automatic checks and real-event testing
+
+- `scripts/clean-rebuild.sh --test` runs everything: 114 unit tests, the engine smoke test (60 checks; 62 with `--large`) and `--drag-test`.
+- `--drag-test` drives the real wheel, panel, Settings and jobs, but it hands the wheel its drop and clicks directly (level 1, no permission needed). It cannot press keys in other apps or make a real system drag.
+- **Level 2 (real events)** needs the test runner to have Accessibility permission, which the app itself never asks for. Do it by hand with rows 1–10 and 55–57 above, or script it with a tool that posts mouse events (for example `cliclick` from Homebrew, run from a Terminal that has Accessibility permission): press on a file in Finder, drag 40 pt, tap Shift, move onto a segment, release — then check the result file and the log line "Wheel choice: …".
+- `--perf-report docs/PERF-REPORT.md` measures memory, CPU and timings (see docs/PERF-REPORT.md and docs/INSTRUMENTS.md).

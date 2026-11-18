@@ -11,7 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var filesOpenedBeforeLaunch: [URL] = []
 
     func applicationWillFinishLaunching(_ notification: Notification) {
-        guard launch.renderPreviewsDirectory == nil, !launch.dragTest else { return }
+        guard launch.renderPreviewsDirectory == nil, !launch.dragTest, !launch.perfReport else { return }
         primary = singleInstance.primaryInstance()
         if primary == nil {
             // Listen before launch finishes: a later copy waits for
@@ -37,6 +37,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if launch.dragTest {
             DragTest.run()
+            return
+        }
+        if launch.perfReport {
+            PerfReport.run(to: launch.perfReportFile)
             return
         }
 
