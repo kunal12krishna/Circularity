@@ -2,10 +2,38 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=Outfit:wght@300;500;800&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Sora:wght@400;600&family=Unbounded:wght@500;800&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=Outfit:wght@300;500;800&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Sora:wght@400;600&family=Unbounded:wght@500;800&family=VT323&display=swap">
 <style>
-/* Layout: a working "desktop" demo is the hero; every section reskins live (Halo · Aqua · ASCII · Pixel · Glass). */
+/* Layout: a sticky product nav, a hero that is a working demo, then one idea per section
+   (numbers, a scroll story, tabbed features, use cases, builder, lab, game, changelog).
+   "Studio" is the default look (light and dark); the other styles reskin the whole page. */
 :root {
+  --bg: #F5F6F8; --bg2: #ECEEF1; --panel: #FFFFFF; --panel2: #F2F3F6; --line: rgba(15,18,24,.10);
+  --fg: #0E1116; --muted: #59606C; --accent: #3B7A00; --on-accent: #FFFFFF; --danger: #B42318;
+  --display: "Geist", "SF Pro Display", system-ui, sans-serif; --body: "Geist", "SF Pro Text", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Menlo, monospace; --body-size: 16px; --radius: 16px;
+  --shadow: 0 1px 2px rgba(15,18,24,.05), 0 18px 44px rgba(15,18,24,.09); --glow: none;
+  --display-case: none; --display-track: -.035em; --display-weight: 620;
+  --cta: #0E1116; --on-cta: #FFFFFF; --plate: #0E1014; --mark: #C6FF3D; --nav: rgba(245,246,248,.78);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-skin]), :root[data-skin="studio"]:not([data-theme="light"]) {
+    --bg: #0A0B0E; --bg2: #111318; --panel: #14161B; --panel2: #1B1E24; --line: rgba(255,255,255,.09);
+    --fg: #EDEFF3; --muted: #9BA2AE; --accent: #C6FF3D; --on-accent: #10140A; --danger: #FF8A80;
+    --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 22px 54px rgba(0,0,0,.5);
+    --cta: #EDEFF3; --on-cta: #0A0B0E; --nav: rgba(10,11,14,.72); color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]:not([data-skin]), :root[data-theme="dark"][data-skin="studio"] {
+  --bg: #0A0B0E; --bg2: #111318; --panel: #14161B; --panel2: #1B1E24; --line: rgba(255,255,255,.09);
+  --fg: #EDEFF3; --muted: #9BA2AE; --accent: #C6FF3D; --on-accent: #10140A; --danger: #FF8A80;
+  --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 22px 54px rgba(0,0,0,.5);
+  --cta: #EDEFF3; --on-cta: #0A0B0E; --nav: rgba(10,11,14,.72); color-scheme: dark;
+}
+/* Every other style: buttons take the style's accent, headings its own weight. */
+:root[data-skin]:not([data-skin="studio"]) { --cta: var(--accent); --on-cta: var(--on-accent); --display-weight: 800; --nav: color-mix(in srgb, var(--bg) 84%, transparent); }
+:root[data-skin="halo"] {
   --bg: #0B0D11; --bg2: #12151B; --panel: #171A21; --panel2: #1D2129; --line: rgba(255,255,255,.09);
   --fg: #ECEEF2; --muted: #9AA1AF; --accent: #C6FF3D; --on-accent: #10140A; --danger: #FF8A80;
   --display: "Unbounded", "Avenir Next", system-ui, sans-serif; --body: "Sora", "Avenir Next", system-ui, sans-serif;
@@ -117,10 +145,11 @@ button, input { font: inherit; color: inherit; }
 .wrap { max-width: 1180px; margin: 0 auto; }
 .mono { font-family: var(--mono); }
 .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-h1, h2, h3 { font-family: var(--display); text-transform: var(--display-case); letter-spacing: var(--display-track); text-wrap: balance; margin: 0; line-height: 1.08; }
-h1 { font-size: clamp(34px, 5.4vw, 64px); font-weight: 800; }
-h2 { font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; }
-h3 { font-size: 18px; font-weight: 700; }
+h1, h2, h3 { font-family: var(--display); text-transform: var(--display-case); letter-spacing: var(--display-track); text-wrap: balance; margin: 0; line-height: 1.06; }
+h1 { font-size: clamp(42px, 7vw, 84px); font-weight: var(--display-weight); line-height: .98; }
+h2 { font-size: clamp(30px, 4.2vw, 52px); font-weight: var(--display-weight); }
+h3 { font-size: 19px; font-weight: 650; letter-spacing: -.01em; }
+:root:not([data-skin]) .eyebrow, :root[data-skin="studio"] .eyebrow { font-family: var(--body); text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 550; color: var(--accent); }
 :root[data-skin="pixel"] h1 { font-size: clamp(22px, 3.6vw, 40px); line-height: 1.35; }
 :root[data-skin="pixel"] h2 { font-size: clamp(18px, 2.4vw, 26px); line-height: 1.4; }
 :root[data-skin="pixel"] h3 { font-size: 13px; line-height: 1.6; }
@@ -133,9 +162,28 @@ p { margin: 0; max-width: 62ch; }
 
 /* Top bar */
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--bg); }
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+.top-old { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
   background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
-.top .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+/* Sticky product nav (Apple-style sub-nav) with a scroll-progress line */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  background: var(--nav); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 18px; height: 56px; }
+.nav .progress { position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; background: var(--accent); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
+.nav .links { display: flex; gap: 20px; margin-left: 8px; }
+.nav .links a { font-family: var(--body); font-size: 14px; color: var(--muted); text-decoration: none; letter-spacing: 0; }
+.nav .links a[aria-current="true"] { color: var(--fg); }
+.nav .right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.nav .btn.primary { padding: 7px 14px; font-size: 14px; }
+.style-menu { position: relative; }
+.style-btn { width: auto; padding: 0 12px; gap: 8px; display: inline-flex; border-radius: 999px; font-size: 13px; font-family: var(--body); }
+.style-dot { width: 12px; height: 12px; border-radius: 50%; background: conic-gradient(#C6FF3D, #1C6FE0, #FF5CA8, #FFCC33, #C6FF3D); }
+.style-pop { position: absolute; right: 0; top: calc(100% + 8px); width: 260px; padding: 8px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); display: grid; gap: 2px; z-index: 60; }
+.style-opt { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; border: 0; background: transparent; cursor: pointer; text-align: left; font-family: var(--body); font-size: 14px; color: var(--fg); }
+.style-opt:hover, .style-opt:focus-visible { background: var(--panel2); }
+.style-opt[aria-pressed="true"]::after { content: "✓"; margin-left: auto; color: var(--accent); }
+.style-opt i { width: 22px; height: 22px; border-radius: 6px; flex: none; border: 1px solid var(--line); }
+.style-opt small { color: var(--muted); font-size: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; text-transform: var(--display-case); font-size: 15px; text-decoration: none; color: var(--fg); }
 :root[data-skin="pixel"] .brand { font-size: 11px; }
 .glyph { width: 26px; height: 26px; color: var(--accent); }
@@ -152,8 +200,22 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 section { padding-block: clamp(56px, 8vw, 96px); }
 
 /* Hero */
-.hero { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: clamp(24px, 4vw, 56px); align-items: center; padding-block: clamp(28px, 5vw, 56px) 40px; }
+.hero { display: grid; justify-items: start; gap: 22px; padding-block: clamp(48px, 9vw, 112px) 36px; }
 .hero > * { min-width: 0; }
+.announce { display: inline-flex; align-items: center; gap: 10px; padding: 5px 12px 5px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); text-decoration: none; font-size: 14px; }
+.announce .tag { border-radius: 999px; }
+.hero .lede { font-size: clamp(18px, 1.7vw, 21px); max-width: 40ch; margin: 0; }
+.req { color: var(--muted); font-size: 14px; margin-top: -8px; }
+.livekeys { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+.livekeys kbd { transition: transform .08s, background .12s, color .12s, border-bottom-width .08s; min-width: 38px; text-align: center; padding: 6px 10px; font-size: 13px; }
+.livekeys kbd.down { transform: translateY(2px); border-bottom-width: 1px; background: var(--accent); color: var(--on-accent); }
+.livekeys span { color: var(--muted); font-size: 13px; }
+.demo-wrap { padding-bottom: 12px; }
+.demo-cap { color: var(--muted); font-size: 14px; margin-top: 12px; text-align: center; max-width: none; }
+.plate { margin: 0; border-radius: 20px; overflow: hidden; background: var(--plate); border: 1px solid var(--line); box-shadow: var(--shadow); transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .2s ease-out; }
+.plate img { display: block; width: 100%; height: auto; }
+.reveal { transition: transform .8s cubic-bezier(.2,.75,.2,1); }
+.reveal.pre { transform: translateY(22px); }
 .lede { font-size: 1.08em; color: var(--muted); margin-top: 18px; }
 .steps { display: grid; gap: 10px; margin: 26px 0 0; padding: 0; list-style: none; }
 .steps li { display: flex; gap: 12px; align-items: baseline; }
@@ -163,7 +225,8 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); color: var(--fg); text-decoration: none; cursor: pointer; font-weight: 600; transition: transform .15s, box-shadow .2s; }
 .btn:hover { transform: translateY(-2px); }
-.btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; box-shadow: var(--glow); }
+.btn.primary { background: var(--cta); color: var(--on-cta); border-color: transparent; box-shadow: var(--glow); }
+:root:not([data-skin]) .btn, :root[data-skin="studio"] .btn { border-radius: 999px; padding: 11px 20px; font-weight: 560; }
 :root[data-skin="aqua"] .btn.primary { background: linear-gradient(#8CC8FF, #2A7CEB 52%, #1C62CF); box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 3px 10px rgba(28,111,224,.45); text-shadow: 0 -1px 0 rgba(0,0,0,.25); }
 :root[data-skin="pixel"] .btn { box-shadow: var(--shadow); }
 :root[data-skin="pixel"] .btn.primary { box-shadow: 4px 4px 0 #8A5A00; }
@@ -256,7 +319,7 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 :root[data-skin="pixel"] .play-hud { font-size: 17px; }
 .play-hud b { color: var(--accent); font-size: 1.3em; }
 
-.skin-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.skin-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
 .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .grid3 .card h3 { display: flex; gap: 10px; align-items: baseline; }
 .tag { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; background: var(--accent); color: var(--on-accent); }
@@ -337,7 +400,116 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 :root[data-skin="pixel"] .toast, :root[data-skin="ascii"] .toast { border-radius: 0; font-size: 16px; }
 
+/* Section titles: one idea per screen */
+.sec-title { margin-bottom: 14px; }
+.sec-sub { color: var(--muted); font-size: 18px; max-width: 52ch; margin-bottom: 36px; }
+
+/* Numbers that count up */
+.numbers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding-block: 28px 8px; border-block: 1px solid var(--line); }
+.num { padding: 18px 16px; border-left: 1px solid var(--line); min-width: 0; }
+.num:first-child { border-left: 0; }
+.num b { font-family: var(--display); font-weight: var(--display-weight); font-size: clamp(30px, 3.6vw, 46px); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.num .unit { font-size: 18px; color: var(--muted); margin-left: 4px; }
+.num p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.num-note { grid-column: 1 / -1; color: var(--muted); font-size: 13px; padding: 10px 16px 16px; }
+
+/* Scroll story: the picture follows the step you are reading */
+.story-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(24px, 5vw, 72px); align-items: start; }
+.story-stage { position: sticky; top: calc(76px + env(safe-area-inset-top, 0px)); height: min(520px, 70vh); border-radius: 22px; background: var(--plate);
+  border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; }
+.story-steps { list-style: none; margin: 0; padding: 0; }
+.story-step { min-height: 62vh; display: grid; align-content: center; gap: 10px; padding-block: 24px; opacity: .38; transition: opacity .35s; }
+.story-step.on { opacity: 1; }
+.story-step .n { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+.story-step h3 { font-size: clamp(30px, 3.6vw, 44px); font-weight: var(--display-weight); letter-spacing: var(--display-track); }
+.story-step p { color: var(--muted); font-size: 18px; }
+.stage { position: absolute; inset: 0; }
+.st-finder { position: absolute; inset: 24px 24px auto; height: 56%; border-radius: 12px; background: #1B1E24; border: 1px solid rgba(255,255,255,.08); }
+.st-finder::before { content: ""; position: absolute; left: 12px; top: 11px; width: 40px; height: 10px; background: radial-gradient(circle at 5px 5px, #FF5F57 4px, transparent 5px), radial-gradient(circle at 20px 5px, #FEBC2E 4px, transparent 5px), radial-gradient(circle at 35px 5px, #28C840 4px, transparent 5px); }
+.st-file { position: absolute; display: grid; justify-items: center; gap: 6px; font: 12px var(--mono); color: #ECEEF2; }
+.st-file i { width: 64px; height: 64px; border-radius: 12px; display: block; box-shadow: 0 8px 20px rgba(0,0,0,.4);
+  background: linear-gradient(180deg, #2B2D6E, #F06A4A 58%, #FFC27A 74%, #2A1D44 75%); }
+.st-file.orig { left: 14%; top: 22%; }
+.st-file.ghost { left: 14%; top: 22%; opacity: 0; }
+.st-file.result { left: 34%; top: 22%; opacity: 0; transform: scale(.4); transition: opacity .4s .25s, transform .5s .25s cubic-bezier(.2,1.5,.4,1); }
+.st-file.result i { filter: saturate(.9) contrast(1.05); }
+.st-cursor { position: absolute; width: 18px; height: 24px; left: 20%; top: 30%; opacity: 0;
+  background: #FFFFFF; clip-path: polygon(0 0, 0 78%, 22% 62%, 38% 100%, 52% 94%, 37% 58%, 66% 58%); filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+.st-wheel { position: absolute; width: 74%; left: 13%; top: 8%; border-radius: 50%; opacity: 0; transform: scale(.6); transition: opacity .3s, transform .45s cubic-bezier(.2,1.4,.4,1); }
+.st-key { position: absolute; right: 22px; bottom: 22px; opacity: 0; transition: opacity .3s; }
+.st-key kbd { background: #1B1E24; color: #ECEEF2; border-color: rgba(255,255,255,.2); font-size: 15px; padding: 8px 14px; }
+.st-caption { position: absolute; left: 22px; bottom: 22px; font: 13px var(--mono); color: #A9AFBC; }
+.stage[data-step="1"] .st-cursor, .stage[data-step="1"] .st-file.ghost { opacity: 1; animation: drag 2.6s ease-in-out infinite; }
+.stage[data-step="2"] .st-wheel, .stage[data-step="3"] .st-wheel { opacity: 1; transform: scale(1); }
+.stage[data-step="2"] .st-key { opacity: 1; }
+.stage[data-step="2"] .st-key kbd { animation: press 1.6s ease-in-out infinite; }
+.stage[data-step="2"] .st-finder, .stage[data-step="3"] .st-finder { opacity: .35; }
+.stage[data-step="3"] .st-wheel { opacity: 0; transform: scale(.7); transition-delay: .15s; }
+.stage[data-step="3"] .st-file.result { opacity: 1; transform: scale(1); }
+@keyframes drag { 0% { transform: translate(0, 0); } 60%, 100% { transform: translate(120px, 90px); } }
+
+/* Feature explorer: tabs that switch real product shots */
+.explorer { display: grid; gap: 22px; }
+.ex-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.ex-tab { position: relative; overflow: hidden; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 9px 16px; cursor: pointer; font: 500 14px var(--body); }
+.ex-tab[aria-selected="true"] { color: var(--fg); border-color: color-mix(in srgb, var(--fg) 30%, transparent); }
+.ex-tab .bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
+.ex-tab[aria-selected="true"] .bar.run { animation: tabbar var(--dur, 7s) linear forwards; }
+@keyframes tabbar { to { transform: scaleX(1); } }
+:root[data-skin="pixel"] .ex-tab, :root[data-skin="ascii"] .ex-tab, :root[data-skin="win95"] .ex-tab, :root[data-skin="news"] .ex-tab { border-radius: 0; }
+.ex-panel { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(20px, 4vw, 56px); align-items: center; }
+.ex-panel[hidden] { display: none; }
+.ex-copy { display: grid; gap: 14px; align-content: start; }
+.ex-copy h3 { font-size: clamp(26px, 2.8vw, 36px); font-weight: var(--display-weight); letter-spacing: var(--display-track); }
+.ex-copy p { color: var(--muted); font-size: 17px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.chip-row li { font: 500 12px var(--mono); padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg); background: var(--panel); }
+.shots-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.shots-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.shots-3 figcaption, .shots-2 figcaption { font: 12px var(--mono); color: var(--muted); padding: 8px 2px 0; }
+.ex-panel.enter .plate, .ex-panel.enter .shots-2, .ex-panel.enter .shots-3 { animation: rise .5s cubic-bezier(.2,.8,.2,1); }
+@keyframes rise { from { transform: translateY(14px) scale(.985); } }
+
+/* Use cases */
+.uses { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(20px, 4vw, 48px); align-items: start; }
+.use-tabs { display: grid; gap: 6px; }
+.use-tab { text-align: left; border: 1px solid transparent; background: transparent; border-radius: 14px; padding: 14px 16px; cursor: pointer; color: var(--muted); font: 500 17px var(--body); display: flex; justify-content: space-between; gap: 10px; }
+.use-tab[aria-selected="true"] { background: var(--panel); border-color: var(--line); color: var(--fg); box-shadow: var(--shadow); }
+.use-card { border-radius: 22px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); padding: clamp(18px, 3vw, 32px); display: grid; gap: 18px; min-height: 280px; }
+.flow { display: grid; gap: 12px; }
+.flow > * { animation: rise .45s cubic-bezier(.2,.8,.2,1) both; }
+.flow > *:nth-child(2) { animation-delay: .08s; } .flow > *:nth-child(3) { animation-delay: .16s; }
+.file-chip { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--panel2); border: 1px solid var(--line); min-width: 0; }
+.file-chip i { width: 38px; height: 38px; border-radius: 9px; flex: none; background: var(--plate); display: grid; place-items: center; font: 700 10px var(--mono); color: var(--mark); font-style: normal; }
+.file-chip b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-chip span { color: var(--muted); font-size: 13px; font-family: var(--mono); }
+.file-chip.result { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.via { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; padding-left: 18px; }
+.via kbd { font-size: 12px; }
+.use-line { color: var(--muted); font-size: 16px; }
+
+/* Changelog */
+.release { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; padding-block: 26px; border-top: 1px solid var(--line); }
+.rel-meta { display: grid; gap: 4px; align-content: start; }
+.rel-meta b { font: 600 20px var(--display); letter-spacing: -.02em; }
+.rel-meta time { color: var(--muted); font-size: 14px; }
+.release ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.release li::marker { color: var(--accent); }
+
+/* Download */
+.get { text-align: center; display: grid; justify-items: center; gap: 16px; padding-block: clamp(56px, 8vw, 96px); }
+.get .glyph { width: 56px; height: 56px; }
+.get p { color: var(--muted); max-width: 54ch; }
+.sw-studio { background: linear-gradient(135deg, #F5F6F8 50%, #0A0B0E 50%); } .sw-studio span { background: #0E1116; border: 3px solid #C6FF3D; }
+
 @media (max-width: 960px) {
+  .story-grid, .ex-panel, .uses { grid-template-columns: minmax(0, 1fr); }
+  .story-stage { height: 300px; z-index: 2; }
+  .story-step { min-height: 46vh; }
+  .numbers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .num:nth-child(4) { border-left: 0; }
+  .release { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .nav .links { display: none; }
   .hero, .install, .builder, .lab { grid-template-columns: minmax(0, 1fr); }
   .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .links { display: none; }
@@ -348,6 +520,10 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 @media (max-width: 560px) {
   .grid4, .skin-cards, .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid3 { grid-template-columns: minmax(0, 1fr); }
+  .numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .num:nth-child(odd) { border-left: 0; } .num:nth-child(4) { border-left: 1px solid var(--line); }
+  .shots-3 { grid-template-columns: 1fr; }
+  .nav .style-btn .lbl-text { display: none; }
   .skins { overflow-x: auto; flex-wrap: nowrap; max-width: 100%; padding-bottom: 2px; }
   .skins { margin-left: 0; }
   .files { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
@@ -361,50 +537,53 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 <a class="skip" href="#desk">Skip to the demo</a>
 <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
 
-<header class="top">
+<header class="nav" id="nav">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="Circularity home">
-      <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
-        <path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/>
-      </svg>
+    <a class="brand" href="#top" aria-label="Circularity, back to the top">
+      <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg>
       Circularity
     </a>
     <nav class="links" aria-label="Sections">
-      <a href="#desk">Try it</a><a href="#theme">Theme builder</a><a href="#lab">Format lab</a><a href="#play">Game</a>
+      <a href="#how">How it works</a><a href="#features">Features</a><a href="#theme">Themes</a><a href="#lab">Format lab</a><a href="#play">Game</a><a href="#changelog">Changelog</a>
     </nav>
-    <nav class="skins" aria-label="Skin">
-      <button class="pill" data-skin-btn="halo">Halo</button>
-      <button class="pill" data-skin-btn="aqua">Aqua</button>
-      <button class="pill" data-skin-btn="ascii">ASCII</button>
-      <button class="pill" data-skin-btn="pixel">Pixel</button>
-      <button class="pill" data-skin-btn="glass">Glass</button>
-      <button class="pill" data-skin-btn="win95">Win95</button>
-      <button class="pill" data-skin-btn="blueprint">Blueprint</button>
-      <button class="pill" data-skin-btn="news">Paper</button>
-    </nav>
-    <button class="icon-btn" id="soundBtn" aria-pressed="false" title="Sound" aria-label="Sound off">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWaves" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" opacity=".25"/></svg>
-    </button>
+    <div class="right">
+      <div class="style-menu">
+        <button class="icon-btn style-btn" id="styleBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="stylePop"><span class="style-dot" aria-hidden="true"></span><span class="lbl-text">Style</span></button>
+        <div class="style-pop" id="stylePop" hidden role="group" aria-label="Page style">
+          <button class="style-opt" type="button" data-skin-btn="studio"><i style="background:linear-gradient(135deg,#F5F6F8 50%,#0A0B0E 50%)"></i><span>Studio<br><small>default</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="halo"><i style="background:conic-gradient(#C6FF3D 0 60deg,#1B1D23 60deg)"></i><span>Halo<br><small>neon, like the app</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="aqua"><i style="background:radial-gradient(circle at 50% 30%,#D5ECFF,#1A5CC0)"></i><span>Aqua<br><small>2001 gel</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="ascii"><i style="background:#040704"></i><span>ASCII<br><small>terminal</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="pixel"><i style="background:#FFCC33"></i><span>Pixel<br><small>8-bit</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="glass"><i style="background:linear-gradient(135deg,#5B4BFF,#FF4FB0,#00C2FF)"></i><span>Liquid glass<br><small>frosted</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="win95"><i style="background:#008080"></i><span>Windows 95<br><small>bevels</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="blueprint"><i style="background:#123E7C"></i><span>Blueprint<br><small>drafting</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="news"><i style="background:#EEECE6"></i><span>Newspaper<br><small>ink on paper</small></span></button>
+        </div>
+      </div>
+      <button class="icon-btn" id="soundBtn" type="button" aria-pressed="false" title="Sound" aria-label="Sound off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWaves" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" opacity=".25"/></svg>
+      </button>
+      <a class="btn primary dl" href="#install">Download</a>
+    </div>
   </div>
+  <span class="progress" aria-hidden="true"></span>
 </header>
 
 <main id="top">
-  <div class="wrap hero">
-    <div>
-      <div class="eyebrow">Mac menu bar app · macOS 13+</div>
-      <h1 style="margin-top:14px">Convert files <span class="accent">without opening</span> anything.</h1>
-      <p class="lede">Drag a file, tap Shift, and a wheel of formats opens around your pointer. Let go on one. The new file lands next to the original.</p>
-      <ol class="steps">
-        <li><b>01</b><span>Press on a picture in the window and start dragging.</span></li>
-        <li><b>02</b><span>Tap <kbd>⇧ Shift</kbd>, shake the pointer, or just hold still.</span></li>
-        <li><b>03</b><span>Let go on <b class="mono" style="color:inherit">JPG</b>, rest on <b class="mono" style="color:inherit">••• MORE</b> for the fun ones.</span></li>
-      </ol>
-      <div class="cta-row">
-        <a class="btn primary" href="#install">Get Circularity</a>
-        <a class="btn" href="#play">Play the fling game</a>
-      </div>
+  <section class="wrap hero" aria-labelledby="heroTitle">
+    <a class="announce" href="#changelog"><span class="tag">New in 0.2</span> Cut out, drop shelf and themes →</a>
+    <h1 id="heroTitle">Convert files<br>mid-drag.</h1>
+    <p class="lede">Drag a picture, PDF or document, tap Shift, and let go on a format. The new file lands next to the original. Nothing opens, nothing is uploaded.</p>
+    <div class="cta-row" style="margin-top:4px">
+      <a class="btn primary dl" href="#install">Download for Mac</a>
+      <a class="btn" href="#desk">Try it below</a>
     </div>
+    <p class="req">Free · macOS 13 or later · Apple silicon and Intel · 3.4 MB</p>
+    <div class="livekeys" aria-hidden="true"><kbd data-key="Shift">⇧ Shift</kbd><kbd data-key="Control">⌃</kbd><kbd data-key="Alt">⌥</kbd><kbd data-key="Meta">⌘</kbd><kbd data-key=" ">Space</kbd><span id="keysHint">press a key, they light up</span></div>
+  </section>
 
+  <div class="wrap demo-wrap">
     <div class="desk" id="desk" aria-label="Try it: a pretend Mac desktop">
       <div class="desk-bar">
         <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -423,7 +602,43 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       </div>
       <div class="stats" aria-live="polite"><span>converted <b id="statCount">0</b></span><span>saved <b id="statSaved">0 KB</b></span><span id="statHint">click a file to open the wheel without dragging</span></div>
     </div>
+    <p class="demo-cap">This is the real thing, in your browser: press on a picture, drag a little, tap ⇧ Shift, let go on a format.</p>
   </div>
+
+  <section class="wrap" aria-label="Measured numbers" style="padding-block: 40px 24px">
+    <div class="numbers">
+      <div class="num"><b data-count="12.5" data-dec="1">12.5</b><span class="unit">MB</span><p>memory at rest</p></div>
+      <div class="num"><b data-count="0.02" data-dec="2">0.02</b><span class="unit">%</span><p>CPU when idle</p></div>
+      <div class="num"><b data-count="0" data-dec="0">0</b><p>permissions to grant</p></div>
+      <div class="num"><b data-count="0" data-dec="0">0</b><p>files uploaded, ever</p></div>
+      <div class="num"><b data-count="0.7" data-dec="1">0.7</b><span class="unit">s</span><p>to start</p></div>
+      <p class="num-note">Measured with the app's own performance report on a MacBook Air, November 2026.</p>
+    </div>
+  </section>
+
+  <section class="wrap" id="how" aria-labelledby="howTitle">
+    <h2 class="sec-title" id="howTitle">How it works.</h2>
+    <p class="sec-sub">Three moves, wherever a file is: Finder, the desktop, Mail, a browser download.</p>
+    <div class="story-grid">
+      <div class="story-stage" aria-hidden="true">
+        <div class="stage" id="stage" data-step="1">
+          <div class="st-finder"></div>
+          <div class="st-file orig"><i></i>IMG_2041.HEIC</div>
+          <div class="st-file ghost"><i></i></div>
+          <div class="st-cursor"></div>
+          <img class="st-wheel" src="assets/wheel-halo.jpg" alt="" width="820" height="820">
+          <div class="st-key"><kbd>⇧ Shift</kbd></div>
+          <div class="st-file result"><i></i>IMG_2041.jpg · 1.1 MB</div>
+          <div class="st-caption" id="stageCaption">Drag</div>
+        </div>
+      </div>
+      <ol class="story-steps">
+        <li class="story-step on" data-step="1"><span class="n">01</span><h3>Drag.</h3><p>Press on any file and start dragging. Several at once work too, and so do files from other apps.</p></li>
+        <li class="story-step" data-step="2"><span class="n">02</span><h3>Tap Shift.</h3><p>A wheel of formats opens around your pointer. Shaking the pointer works too. No Accessibility permission, no key logging.</p></li>
+        <li class="story-step" data-step="3"><span class="n">03</span><h3>Let go.</h3><p>Release on JPG and IMG_2041.jpg appears next to the original a moment later. The original is never changed.</p></li>
+      </ol>
+    </div>
+  </section>
 
   <section class="wrap" id="ways">
     <div class="section-head">
@@ -451,6 +666,63 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
         <h3>The panel</h3>
         <p>Presets you can drop files on, recent results, and ⌘K: type <span class="mono">50kb</span> or <span class="mono">1920w</span>.</p>
       </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="features" aria-labelledby="featTitle">
+    <h2 class="sec-title" id="featTitle">One wheel, a lot inside.</h2>
+    <p class="sec-sub">Real pictures from the app. Pick a tab, or let them play.</p>
+    <div class="explorer" id="explorer">
+      <div class="ex-tabs" role="tablist" aria-label="Features">
+        <button class="ex-tab" role="tab" type="button" id="ex-t0" aria-controls="ex-p0" aria-selected="true">The wheel<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t1" aria-controls="ex-p1" aria-selected="false" tabindex="-1">More<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t2" aria-controls="ex-p2" aria-selected="false" tabindex="-1">Cut out<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t3" aria-controls="ex-p3" aria-selected="false" tabindex="-1">Menu bar panel<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t4" aria-controls="ex-p4" aria-selected="false" tabindex="-1">Settings<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t5" aria-controls="ex-p5" aria-selected="false" tabindex="-1">Three looks<span class="bar"></span></button>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p0" aria-labelledby="ex-t0">
+        <div class="ex-copy"><h3>Six buttons around your pointer.</h3><p>The formats that fit what you're holding, plus Compress and Resize. Hover one and the centre tells you the size you'll get.</p>
+          <ul class="chip-row"><li>PNG</li><li>JPG</li><li>HEIC</li><li>AVIF</li><li>WebP</li><li>TIFF</li><li>GIF</li><li>BMP</li><li>PDF</li><li>TXT</li><li>DOCX</li><li>HTML</li></ul></div>
+        <figure class="plate tilt"><img src="assets/wheel-halo.jpg" alt="The Halo wheel with JPG highlighted: the centre reads Convert to JPG, small, best for photos" width="820" height="820" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p1" aria-labelledby="ex-t1" hidden>
+        <div class="ex-copy"><h3>Rest on More for the rest.</h3><p>Crop, Cut out, one PDF from many pictures or one per picture, and the formats that didn't fit on the ring. Buttons you save from Resize or Compress show up here too.</p></div>
+        <figure class="plate tilt"><img src="assets/wheel-halo-more.jpg" alt="The More fan open under the wheel with Crop, Cut, PDF, BMP, GIF and TIFF" width="900" height="900" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p2" aria-labelledby="ex-t2" hidden>
+        <div class="ex-copy"><h3>Cut out the background.</h3><p>Apple's on-device subject lifting keeps the subject and makes everything else transparent, saved as a PNG. Nothing leaves your Mac. Needs macOS 14 or later.</p></div>
+        <figure class="plate tilt"><img src="assets/cutout.jpg" alt="Before and after: an orange mug on a table, then the same mug on a transparent background" width="1500" height="570" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p3" aria-labelledby="ex-t3" hidden>
+        <div class="ex-copy"><h3>A panel in the menu bar.</h3><p>Drop files on a preset, type commands like <span class="mono">50kb</span> or <span class="mono">1920w</span> after ⌘K, and find every result in Recent. Dark, light, or three layouts.</p>
+          <ul class="chip-row"><li>⌃⌥Space</li><li>⌘K</li><li>&lt; 2mb</li><li>1920w</li><li>no gps</li></ul></div>
+        <div class="shots-2">
+          <figure class="plate tilt" style="margin:0"><img src="assets/panel-dark.jpg" alt="The Stack+ panel in dark: stats, a job in progress, preset tiles and recent results" width="600" height="1100" loading="lazy"></figure>
+          <figure class="plate tilt" style="margin:0"><img src="assets/panel-light.jpg" alt="The Tabs panel in light: today, space saved, quick presets" width="731" height="1100" loading="lazy"></figure>
+        </div>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p4" aria-labelledby="ex-t4" hidden>
+        <div class="ex-copy"><h3>Settings that show what they do.</h3><p>Layouts, colours, sizes, shortcuts, output folder and naming. Every change previews live and applies at once.</p></div>
+        <figure class="plate tilt"><img src="assets/settings.jpg" alt="The Settings window on the General page: startup, shortcuts and help" width="1500" height="1108" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p5" aria-labelledby="ex-t5" hidden>
+        <div class="ex-copy"><h3>Halo, Ring or Orbit.</h3><p>The same wheel in three designs. Halo is the default; Ring sits on frosted glass; Orbit floats separate buttons.</p></div>
+        <div class="shots-3">
+          <figure style="margin:0"><div class="plate tilt"><img src="assets/wheel-halo.jpg" alt="Halo layout" width="820" height="820" loading="lazy"></div><figcaption>Halo</figcaption></figure>
+          <figure style="margin:0"><div class="plate tilt"><img src="assets/wheel-ring.jpg" alt="Ring layout" width="820" height="820" loading="lazy"></div><figcaption>Ring</figcaption></figure>
+          <figure style="margin:0"><div class="plate tilt"><img src="assets/wheel-orbit.jpg" alt="Orbit layout" width="820" height="820" loading="lazy"></div><figcaption>Orbit</figcaption></figure>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap" id="uses" aria-labelledby="usesTitle">
+    <h2 class="sec-title" id="usesTitle">What will you convert?</h2>
+    <p class="sec-sub">Pick one. These are typical examples, sizes included.</p>
+    <div class="uses">
+      <div class="use-tabs" role="tablist" aria-label="Examples" id="useTabs"></div>
+      <div class="use-card" role="tabpanel" id="usePanel" aria-live="polite"></div>
     </div>
   </section>
 
@@ -558,6 +830,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <p style="color:var(--muted)">The app ships with themes and three wheel layouts. This page does the same trick: the wheel, the game and every button redraw in the style you choose. Secret: type <span class="mono">shift</span> anywhere.</p>
     </div>
     <div class="skin-cards">
+      <button class="skin-card" data-skin-btn="studio"><div class="sw sw-studio"><span></span></div><div class="lbl">Studio · default</div></button>
       <button class="skin-card" data-skin-btn="halo"><div class="sw sw-halo"><span></span></div><div class="lbl">Halo · neon</div></button>
       <button class="skin-card" data-skin-btn="aqua"><div class="sw sw-aqua"><span></span></div><div class="lbl">Aqua · 2001</div></button>
       <button class="skin-card" data-skin-btn="ascii"><div class="sw sw-ascii">[(o)]<span></span></div><div class="lbl">ASCII · tty</div></button>
@@ -581,20 +854,40 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     </div>
   </section>
 
-  <section class="wrap" id="install">
-    <div class="section-head">
-      <div class="eyebrow">Version 0.2.0 · 3.4 MB · Apple silicon and Intel</div>
-      <h2>Get Circularity</h2>
-    </div>
-    <div class="install">
-      <div class="card">
-        <h3>Download</h3>
-        <p>Open the disk image and drag Circularity to Applications.</p>
-        <div><a class="btn primary" id="downloadBtn" href="#install">Download for Mac</a></div>
-        <p id="downloadNote"></p>
-        <p><b style="color:var(--fg)">First launch:</b> macOS 15 and later: open it once, then System Settings → Privacy &amp; Security → Open Anyway. macOS 13–14: right-click the app → Open.</p>
-      </div>
-    </div>
+  <section class="wrap" id="changelog" aria-labelledby="logTitle">
+    <h2 class="sec-title" id="logTitle">Changelog.</h2>
+    <p class="sec-sub">What changed, and when.</p>
+    <article class="release">
+      <div class="rel-meta"><b>0.2.0</b><time datetime="2026-11-18">18 November 2026</time></div>
+      <ul>
+        <li>Cut out: remove a photo's background on your Mac (macOS 14 or later).</li>
+        <li>Drop shelf: the result floats by your pointer, ready to drag into Mail or a chat.</li>
+        <li>Before and after: hover JPG, HEIC or Compress for a magnified preview.</li>
+        <li>Choose your own six wheel buttons for pictures.</li>
+        <li>Milestones in Stats, from your first conversion to 100 GB saved.</li>
+        <li>Paste a theme from this website into Settings → Appearance.</li>
+        <li>Update checks, off unless you turn them on.</li>
+        <li>The menu bar panel is readable in every colour setting; long file names no longer overflow the wheel.</li>
+      </ul>
+    </article>
+    <article class="release">
+      <div class="rel-meta"><b>0.1.0</b><time datetime="2026-11-17">17 November 2026</time></div>
+      <ul>
+        <li>The wheel in three looks, opened with Shift, a shake or ⌃⌥C in Finder.</li>
+        <li>Images, PDFs and documents converted with Apple's own frameworks.</li>
+        <li>Menu bar panel with presets, ⌘K, history and stats; watch folders; clipboard conversion.</li>
+        <li>Settings with themes, shortcuts and output naming; a welcome and an interactive tutorial.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section class="wrap get" id="install" aria-labelledby="getTitle">
+    <svg class="glyph" style="color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg>
+    <h2 id="getTitle">Drag. Tap. Done.</h2>
+    <p>Free for macOS 13 or later, on Apple silicon and Intel. Open the disk image and drag Circularity to Applications.</p>
+    <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.2.0</a>
+    <p id="downloadNote" role="status"></p>
+    <p style="font-size:14px">First launch: on macOS 15 and later, open it once, then System Settings → Privacy &amp; Security → Open Anyway. On macOS 13–14, right-click the app → Open.</p>
   </section>
 
   <footer class="wrap">
@@ -658,19 +951,21 @@ $("#soundBtn").addEventListener("click", () => {
 });
 
 // ---------- Skins ----------
-const SKINS = ["halo", "aqua", "ascii", "pixel", "glass", "win95", "blueprint", "news"];
+const SKINS = ["studio", "halo", "aqua", "ascii", "pixel", "glass", "win95", "blueprint", "news"];
 const LIGHT_SKINS = ["aqua", "win95", "news"];
+// `skin` is how the wheel and game are drawn; Studio pages show the app's own (Halo) wheel.
 let skin = "halo";
+let pageStyle = "";
 function setSkin(name, announce) {
-  if (!SKINS.includes(name) || name === skin && root.dataset.skin) return;
+  if (!SKINS.includes(name) || name === pageStyle) return;
   const apply = () => {
-    skin = name; root.dataset.skin = name;
+    pageStyle = name; skin = name === "studio" ? "halo" : name; root.dataset.skin = name;
     $$("[data-skin-btn]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.skinBtn === name));
-    store.set("circularity-skin", name);
+    store.set("circularity-style", name);
     drawWheel(); play.restyle(); if (typeof lab !== "undefined") lab.draw();
   };
   if (document.startViewTransition && !reduceMotion && announce !== "silent") document.startViewTransition(apply); else apply();
-  if (announce === true) { toast("Skin: " + name.toUpperCase()); sfx.skin(); }
+  if (announce === true) { toast("Style: " + ($(`.style-opt[data-skin-btn="${name}"] span`)?.firstChild?.textContent || name)); sfx.skin(); }
 }
 $$("[data-skin-btn]").forEach((b) => b.addEventListener("click", () => setSkin(b.dataset.skinBtn, true)));
 
@@ -1331,7 +1626,7 @@ function parseCommand(q) {
   const hit = Object.keys(map).find((k) => k.startsWith(q) || q === k);
   const titles = { sqz: "Compress", size: "Resize to half", ascii: "Turn into ASCII art", pixel: "Turn into pixel art", gray: "Make it black and white" };
   if (hit) { const key = map[hit]; return { title: titles[key] || `Convert to ${ACTIONS[key].label}`, run: (f) => runAction(f, key) }; }
-  if (/^(shift|halo|aqua|ascii|pixel|glass|win95|blueprint|news)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
+  if (/^(shift|studio|halo|aqua|ascii|pixel|glass|win95|blueprint|news)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
   return null;
 }
 cmdInput.addEventListener("input", () => { const c = parseCommand(cmdInput.value); cmdHint.textContent = cmdInput.value ? (c ? `↩ ${c.title}${selected ? ` · ${middleTruncate(selected.name, 28)}` : ""}` : "Try webp, 50kb, 800w, ascii, pixel, pdf") : "Runs on the selected file. Press ↩."; });
@@ -1860,13 +2155,187 @@ $$(".copy").forEach((b) => { if (b.id === "modalClose") return; b.addEventListen
   try { await navigator.clipboard.writeText(text); b.textContent = "copied"; } catch { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "selected"; }
   setTimeout(() => (b.textContent = "copy"), 1500);
 }); });
-const dl = $("#downloadBtn");
-if (DOWNLOAD_URL) { dl.href = DOWNLOAD_URL; dl.target = "_blank"; dl.rel = "noopener"; }
-else { dl.addEventListener("click", (e) => { e.preventDefault(); $("#downloadNote").textContent = "The download link arrives with the first public release. Check back soon."; }); }
+$$(".dl").forEach((dl) => {
+  if (DOWNLOAD_URL) { dl.href = DOWNLOAD_URL; return; } // a .dmg link downloads by itself
+  dl.addEventListener("click", (e) => {
+    e.preventDefault();
+    $("#install").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    $("#downloadNote").textContent = "The download arrives with the first public release. Check back soon.";
+  });
+});
+
+// ---------- Style menu (all nine page styles) ----------
+(() => {
+  const btn = $("#styleBtn"), pop = $("#stylePop");
+  const close = (focus) => { pop.hidden = true; btn.setAttribute("aria-expanded", "false"); if (focus) btn.focus(); };
+  btn.addEventListener("click", () => {
+    const open = pop.hidden; pop.hidden = !open; btn.setAttribute("aria-expanded", String(open));
+    if (open) ($(".style-opt[aria-pressed='true']", pop) || $(".style-opt", pop)).focus();
+  });
+  pop.addEventListener("click", (e) => { if (e.target.closest(".style-opt")) close(true); });
+  pop.addEventListener("keydown", (e) => {
+    const opts = $$(".style-opt", pop), i = opts.indexOf(document.activeElement);
+    if (e.key === "Escape") { e.stopPropagation(); close(true); }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); opts[(i + (e.key === "ArrowDown" ? 1 : opts.length - 1)) % opts.length].focus(); }
+  });
+  document.addEventListener("pointerdown", (e) => { if (!pop.hidden && !e.target.closest(".style-menu")) close(false); });
+})();
+
+// ---------- Live keycaps: press a key anywhere and it lights up ----------
+(() => {
+  const caps = $$(".livekeys kbd"); let used = false;
+  const set = (key, down) => { for (const k of caps) if (k.dataset.key === key) k.classList.toggle("down", down); };
+  document.addEventListener("keydown", (e) => {
+    set(e.key, true);
+    if (!used && caps.some((k) => k.dataset.key === e.key)) { used = true; $("#keysHint").textContent = "now try it on a file below: drag, then tap ⇧ Shift"; }
+  });
+  document.addEventListener("keyup", (e) => set(e.key, false));
+  addEventListener("blur", () => caps.forEach((k) => k.classList.remove("down")));
+})();
+
+// ---------- Nav: scroll progress and the section you are in ----------
+(() => {
+  const nav = $("#nav"), links = $$(".nav .links a");
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    nav.style.setProperty("--p", max > 0 ? Math.min(1, scrollY / max).toFixed(4) : 0);
+  };
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  update();
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) links.forEach((a) => a.setAttribute("aria-current", String(a.getAttribute("href") === "#" + en.target.id)));
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  links.forEach((a) => { const sec = $(a.getAttribute("href")); if (sec) io.observe(sec); });
+})();
+
+// ---------- Numbers count up when they arrive ----------
+(() => {
+  const nums = $$(".num b[data-count]");
+  if (reduceMotion) return;
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      if (!en.isIntersecting) continue;
+      io.unobserve(en.target);
+      const el = en.target, to = parseFloat(el.dataset.count), dec = +el.dataset.dec, t0 = performance.now();
+      const tick = (t) => { const k = Math.min(1, (t - t0) / 1100), e = 1 - Math.pow(1 - k, 3); el.textContent = (to * e).toFixed(dec); if (k < 1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }
+  }, { threshold: 0.6 });
+  nums.forEach((n) => io.observe(n));
+})();
+
+// ---------- How it works: the stage follows the step being read ----------
+(() => {
+  const stage = $("#stage"), steps = $$(".story-step"), caption = $("#stageCaption");
+  const names = { 1: "Drag", 2: "Tap Shift", 3: "Let go: IMG_2041.jpg is ready" };
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) {
+      const n = en.target.dataset.step;
+      stage.dataset.step = n; caption.textContent = names[n];
+      steps.forEach((st) => st.classList.toggle("on", st === en.target));
+    }
+  }, { rootMargin: "-45% 0px -45% 0px" });
+  steps.forEach((st) => io.observe(st));
+})();
+
+// ---------- Feature explorer: tabs that play by themselves ----------
+(() => {
+  const root = $("#explorer"), tabs = $$(".ex-tab", root), panels = $$(".ex-panel", root);
+  const DUR = 7000; let current = 0, timer = 0, paused = false, visible = false;
+  function show(i, focus) {
+    current = (i + tabs.length) % tabs.length;
+    tabs.forEach((t, k) => { const on = k === current; t.setAttribute("aria-selected", String(on)); t.tabIndex = on ? 0 : -1; $(".bar", t).classList.remove("run"); });
+    panels.forEach((p, k) => { p.hidden = k !== current; p.classList.remove("enter"); });
+    const panel = panels[current]; void panel.offsetWidth; panel.classList.add("enter");
+    if (focus) tabs[current].focus();
+    schedule();
+  }
+  function schedule() {
+    clearTimeout(timer);
+    if (reduceMotion || paused || !visible) return;
+    const bar = $(".bar", tabs[current]); bar.style.setProperty("--dur", DUR + "ms"); void bar.offsetWidth; bar.classList.add("run");
+    timer = setTimeout(() => show(current + 1), DUR);
+  }
+  tabs.forEach((t, k) => {
+    t.addEventListener("click", () => { paused = true; show(k); });
+    t.addEventListener("keydown", (e) => {
+      const d = { ArrowRight: 1, ArrowLeft: -1, Home: -current, End: tabs.length - 1 - current }[e.key];
+      if (d === undefined) return; e.preventDefault(); paused = true; show(current + d, true);
+    });
+  });
+  root.addEventListener("pointerenter", () => { paused = true; clearTimeout(timer); $$(".bar", root).forEach((b) => b.classList.remove("run")); });
+  root.addEventListener("focusin", () => { paused = true; clearTimeout(timer); });
+  new IntersectionObserver((en) => { visible = en[0].isIntersecting; schedule(); }, { threshold: 0.35 }).observe(root);
+})();
+
+// ---------- Use cases ----------
+(() => {
+  const USES = [
+    { tab: "Photos from an iPhone", icon: "HEIC", from: ["IMG_2041.HEIC", "3.2 MB"], via: ["drag", "⇧", "JPG"], to: ["IMG_2041.jpg", "1.1 MB"],
+      line: "For websites, forms and friends whose apps won't open HEIC." },
+    { tab: "Screenshots", icon: "PNG", from: ["Screenshot 2026-11-18 at 09.41.png", "4.8 MB"], via: ["⌘K", "< 500kb"], to: ["Screenshot 2026-11-18 at 09.41 (compressed).jpg", "486 KB"],
+      line: "Small enough for any chat or email, without opening an editor." },
+    { tab: "Scans and PDFs", icon: "PDF", from: ["Lease scan.pdf", "18.4 MB"], via: ["drag", "⇧", "Compress", "Balanced"], to: ["Lease scan (compressed).pdf", "4.1 MB"],
+      line: "Every page is checked against the original before the smaller file is kept." },
+    { tab: "Notes and documents", icon: "MD", from: ["Meeting notes.md", "6 KB"], via: ["drag", "⇧", "PDF"], to: ["Meeting notes.pdf", "A4, selectable text"],
+      line: "Markdown, HTML, Word and RTF, printed with proper margins." },
+    { tab: "Product photos", icon: "PNG", from: ["Mug.png", "2.1 MB"], via: ["drag", "⇧", "More", "Cut out"], to: ["Mug (cut out).png", "transparent background"],
+      line: "Ready for a listing or a slide, cut out on your Mac." },
+    { tab: "A whole folder", icon: "DIR", from: ["Screenshots", "folder"], via: ["Watch folder", "JPG"], to: ["each new screenshot.jpg", "a second later"],
+      line: "Turn it on once and new files convert themselves." },
+  ];
+  const tabsEl = $("#useTabs"), panel = $("#usePanel"); let current = 0;
+  const esc = (t) => t.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  function render() {
+    const u = USES[current];
+    panel.setAttribute("aria-labelledby", "use-t" + current);
+    panel.innerHTML = `<div class="flow">
+      <div class="file-chip"><i>${u.icon}</i><div style="min-width:0"><b title="${esc(u.from[0])}">${esc(u.from[0])}</b><span>${esc(u.from[1])}</span></div></div>
+      <div class="via">↓ ${u.via.map((v) => `<kbd>${esc(v)}</kbd>`).join(" ")}</div>
+      <div class="file-chip result"><i>${esc((u.to[0].split(".").pop() || "").slice(0, 4).toUpperCase())}</i><div style="min-width:0"><b title="${esc(u.to[0])}">${esc(u.to[0])}</b><span>${esc(u.to[1])}</span></div></div>
+    </div><p class="use-line">${esc(u.line)}</p>`;
+  }
+  USES.forEach((u, i) => {
+    const b = document.createElement("button");
+    b.className = "use-tab"; b.type = "button"; b.setAttribute("role", "tab"); b.id = "use-t" + i; b.setAttribute("aria-controls", "usePanel");
+    b.innerHTML = `<span>${esc(u.tab)}</span><span aria-hidden="true">→</span>`;
+    b.addEventListener("click", () => select(i));
+    b.addEventListener("keydown", (e) => { const d = { ArrowDown: 1, ArrowUp: -1 }[e.key]; if (d) { e.preventDefault(); select((current + d + USES.length) % USES.length, true); } });
+    tabsEl.append(b);
+  });
+  function select(i, focus) {
+    current = i;
+    $$(".use-tab", tabsEl).forEach((b, k) => { b.setAttribute("aria-selected", String(k === i)); b.tabIndex = k === i ? 0 : -1; });
+    if (focus) $$(".use-tab", tabsEl)[i].focus();
+    render();
+  }
+  select(0);
+})();
+
+// ---------- Polish: product shots tilt toward the pointer; sections rise in ----------
+(() => {
+  if (reduceMotion || matchMedia("(pointer: coarse)").matches) return;
+  document.addEventListener("pointermove", (e) => {
+    const plate = e.target.closest?.(".tilt");
+    if (!plate) return;
+    const r = plate.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    plate.style.setProperty("--ry", (x * 6).toFixed(2) + "deg"); plate.style.setProperty("--rx", (-y * 6).toFixed(2) + "deg");
+  });
+  document.addEventListener("pointerout", (e) => { const plate = e.target.closest?.(".tilt"); if (plate && !plate.contains(e.relatedTarget)) { plate.style.setProperty("--rx", "0deg"); plate.style.setProperty("--ry", "0deg"); } });
+})();
+(() => {
+  if (reduceMotion) return;
+  const items = $$("main > section, .demo-wrap").filter((el) => el.getBoundingClientRect().top > innerHeight);
+  items.forEach((el) => el.classList.add("reveal", "pre"));
+  const io = new IntersectionObserver((entries) => { for (const en of entries) if (en.isIntersecting) { en.target.classList.remove("pre"); io.unobserve(en.target); } }, { rootMargin: "0px 0px -8% 0px" });
+  items.forEach((el) => io.observe(el));
+})();
 
 // ---------- Start ----------
-const savedSkin = store.get("circularity-skin");
-setSkin(SKINS.includes(savedSkin) ? savedSkin : "halo", "silent");
+const savedSkin = store.get("circularity-style");
+setSkin(SKINS.includes(savedSkin) ? savedSkin : "studio", "silent");
 (async () => {
   const samples = [["Sunset over the hills.png", drawSunset], ["Screenshot 2026-11-18 at 09.41.png", drawScreenshot], ["Kitty.png", drawKitty]];
   for (const [name, draw] of samples) { const c = draw(); const blob = await toBlob(c, "image/png"); const f = await addFile({ name, blob }); if (f && !selected) select(f); }
