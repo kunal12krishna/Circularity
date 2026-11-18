@@ -84,9 +84,8 @@ open Circularity.xcodeproj
 | `scripts/sign.sh` | Developer ID signature — only when `DEVELOPER_ID_APP` is set, otherwise it says so and does nothing |
 | `scripts/notarize.sh` | Notarise and staple the DMG — only when `NOTARY_PROFILE` is set |
 | `scripts/release.sh` | All of the above in order |
-| `scripts/clean-rebuild.sh` | Deletes the Debug build and caches (keeps `dist/`), rebuilds the app and opens it (`--test` runs all tests, `--reset` erases settings too) |
-| `scripts/build-website.sh` | The public website in `website/public/` (`--with-dmg` puts the DMG inside, for Cloudflare Pages) |
-| `scripts/clean-rebuild.sh` | Deletes the Debug build and caches (keeps `dist/`), rebuilds the app and opens it (`--test` runs all tests, `--reset` erases settings too) |
+| `scripts/install.sh` | Installs the Release app into /Applications on this Mac and opens it (`--fresh` rebuilds it first) |
+| `scripts/clean-rebuild.sh` | Deletes the Debug build and caches (keeps `dist/` and the installed app), rebuilds a test copy and opens it (`--test` runs all tests, `--reset` erases settings too) |
 | `scripts/build-website.sh` | The public website in `website/public/` (`--with-dmg` puts the DMG inside, for Cloudflare Pages) |
 
 Tests: `xcodebuild -scheme Circularity test` (unit tests), the
