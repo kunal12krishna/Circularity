@@ -29,7 +29,7 @@
   --shadow: 0 0 0 1px rgba(243,238,228,.03), 0 28px 60px rgba(0,0,0,.5); --nav: rgba(20,17,13,.8);
   --grid-line: 243,238,228; --grid-active: 111,140,255; color-scheme: dark;
 }
-/* Neon: the graphite and lime of the app's Neon theme (the default until 0.3). */
+/* Neon: the graphite and lime of the app's Neon theme (an optional style). */
 :root[data-skin="neon"] {
   --bg: #0A0C0F; --bg2: #101318; --panel: #14171D; --panel2: #1B1F26; --line: rgba(255,255,255,.11);
   --fg: #ECEEF2; --muted: #9AA2AE; --accent: #C6FF3D; --on-accent: #0E1206; --accent-text: #C6FF3D; --danger: #FF8A80;
@@ -752,7 +752,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
         <a class="btn primary dl" href="#install">Download for Mac</a>
         <a class="btn" href="#desk">Try it below</a>
       </div>
-      <p class="req">Free · macOS 13 or later · Apple silicon and Intel · 3.4 MB</p>
+      <p class="req">Free · macOS 13 or later · Apple silicon and Intel<span id="dmgSize"> · 3.6 MB</span></p>
       <p class="psst livekeys" id="psst">psst: hold <kbd data-key="Shift">⇧ Shift</kbd> anywhere on this page, or press <kbd data-key="Control">⌃</kbd><kbd data-key="Alt">⌥</kbd><kbd data-key="Meta">⌘</kbd> and watch them light up. <span id="keysHint"></span></p>
     </div>
     <figure class="hero-wheel">
@@ -805,7 +805,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="how" aria-labelledby="howTitle">
-    <h2 class="sec-title" id="howTitle">How it works.</h2>
+    <h2 class="sec-title" id="howTitle">How it works</h2>
     <p class="sec-sub">Three moves, wherever a file is: Finder, the desktop, Mail, a browser download.</p>
     <div class="story-grid">
       <div class="story-stage" aria-hidden="true">
@@ -835,7 +835,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
         <p class="morph-hint">scroll ↓</p>
       </div>
       <div class="morph-copy" id="morphCopy">
-        <h3>Twenty ways out of every file.</h3>
+        <h3>Twenty ways out</h3>
         <p>Images, PDFs and documents, plus Compress, Resize, Crop, Combine and Cut out. Hover or tap a card to flip it.</p>
       </div>
       <ul class="morph-cards" id="morphCards" aria-label="Formats and tools"></ul>
@@ -860,7 +860,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <div class="card">
         <div class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd class="press">C</kbd></div>
         <h3>⌃⌥C in Finder</h3>
-        <p>Select files and press it. The wheel opens where your pointer is.</p>
+        <p>Select files and press Control-Option-C. The wheel opens where your pointer is.</p>
       </div>
       <div class="card">
         <div class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd class="press">Space</kbd></div>
@@ -871,7 +871,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="features" aria-labelledby="featTitle">
-    <h2 class="sec-title" id="featTitle">One wheel, a lot inside.</h2>
+    <h2 class="sec-title" id="featTitle">One wheel, a lot inside</h2>
     <p class="sec-sub">Real pictures from the app. Pick a tab, or let them play.</p>
     <div class="explorer" id="explorer">
       <div class="ex-tabs" role="tablist" aria-label="Features">
@@ -944,7 +944,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   <section class="wrap" id="theme" aria-labelledby="studioTitle">
     <a class="studio-teaser" href="studio.html">
       <div class="stz-copy">
-        <h2 id="studioTitle">Wheel Studio.</h2>
+        <h2 id="studioTitle">Wheel Studio</h2>
         <p>A whole page for one wheel, and every knob is something the app really draws: fills from stickers to outline, colours, rounded corners, glow, a wheel that breathes, a ring of orbiting dots, a twirl as it opens, sparks. Paste it into Circularity and it looks exactly like this.</p>
         <ul class="stz-list" aria-label="Some of the knobs">
           <li>38 knobs, all in the app</li><li>19 presets</li><li>🎲 surprise me</li><li>breathe · orbit · twirl</li>
@@ -1009,7 +1009,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
           <li>0 permissions: no Accessibility, no Input Monitoring, no Screen Recording. macOS never asks.</li>
           <li>works on your Mac with Apple's own ImageIO, PDFKit and WebKit</li>
           <li>never changes your original file</li>
-          <li>reads the clipboard only when you press ⌃⌥V</li>
+          <li>reads the clipboard only when you press ⌃⌥V (Control-Option-V)</li>
           <li class="no">uploads your files (it can't: there is no server)</li>
           <li class="no">checks for updates, unless you turn that on</li>
         </ul></div>
@@ -1023,7 +1023,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="changelog" aria-labelledby="logTitle">
-    <h2 class="sec-title" id="logTitle">Changelog.</h2>
+    <h2 class="sec-title" id="logTitle">Changelog</h2>
     <p class="sec-sub">What changed, and when.</p>
     <div class="win"><div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>changelog.txt</span><span></span></div><div class="win-body">
     <article class="release" style="border-top:0">
@@ -1057,7 +1057,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     <p>Free for macOS 13 or later, on Apple silicon and Intel. Open the disk image and drag Circularity to Applications.</p>
     <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.2.0</a>
     <p id="downloadNote" role="status"></p>
-    <p style="font-size:14px">First launch: on macOS 15 and later, open it once, then System Settings → Privacy &amp; Security → Open Anyway. On macOS 13–14, right-click the app → Open.</p>
+    <p style="font-size:14px">The first time, macOS asks before opening it, because this early build isn't signed with an Apple Developer ID yet. On macOS 15 and later, open it once, then go to System Settings → Privacy &amp; Security → Open Anyway. On macOS 13 and 14, right-click the app and choose Open.</p>
   </section>
 
   <footer class="wrap">
@@ -2161,6 +2161,9 @@ $$(".dl").forEach((dl) => {
     return;
   }
   if (DOWNLOAD_URL) { dl.href = DOWNLOAD_URL; return; } // a .dmg link downloads by itself
+  // No disk image yet: don't promise a size or a version.
+  $("#dmgSize")?.remove();
+  if (dl.id === "downloadBtn") dl.textContent = "Download (coming soon)";
   dl.addEventListener("click", (e) => {
     e.preventDefault();
     $("#install").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
@@ -2308,9 +2311,9 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     ["BMP", "image", "--s-tiff", "for old software"], ["MD", "doc", "--s-webp", "Markdown to PDF, HTML, Word"],
     ["HTML", "doc", "--s-heic", "a web page to PDF"], ["RTF", "doc", "--s-jpg", "rich text, to and fro"],
     ["DOCX", "doc", "--s-png", "Word to PDF and back"], ["TXT", "doc", "--s-avif", "plain text out of anything"],
-    ["SHRINK", "tool", "--accent", "Compress to a quality or a size: < 2 MB"], ["RESIZE", "tool", "--accent", "1920w, A4, Letter or a scale"],
-    ["CROP", "tool", "--accent", "trim pictures and PDF pages"], ["MERGE", "tool", "--accent", "Combine many files into one PDF"],
-    ["CUT", "tool", "--accent", "Cut out: lift the subject off its background"], ["PAGES", "tool", "--accent", "PDF pages to images"],
+    ["COMPRESS", "tool", "--accent", "to a quality or a size: < 2 MB"], ["RESIZE", "tool", "--accent", "1920w, A4, Letter or a scale"],
+    ["CROP", "tool", "--accent", "trim pictures and PDF pages"], ["COMBINE", "tool", "--accent", "many files into one PDF"],
+    ["CUT OUT", "tool", "--accent", "lift the subject off its background"], ["PAGES", "tool", "--accent", "PDF pages to images"],
   ];
   const N = CARDS.length, rnd = (a) => (Math.random() - 0.5) * a;
   const cards = CARDS.map(([name, kind, color, what]) => {

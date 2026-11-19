@@ -31,15 +31,20 @@ if [ -z "$URL" ] && REMOTE=$(git remote get-url origin 2>/dev/null); then
     case "$REMOTE" in *github.com*) URL="https://github.com/$SLUG/releases/latest/download/Circularity.dmg" ;; esac
 fi
 
-python3 - "$URL" <<'PY'
+SIZE=""
+[ -f dist/Circularity.dmg ] && SIZE=$(stat -f %z dist/Circularity.dmg 2>/dev/null || stat -c %s dist/Circularity.dmg)
+python3 - "$URL" "$SIZE" <<'PY'
 import re, sys
-url = sys.argv[1]
+url, size = sys.argv[1], sys.argv[2]
 src = open("website/index.html", encoding="utf-8").read()
 # Head: everything up to the end of the first <style> block; body: the rest.
 cut = src.index("</style>") + len("</style>")
 head, body = src[:cut], src[cut:]
 head = head.replace('<meta name="claude:viewport-fit-sides" content="cover">\n', "")
 body = body.replace('const DOWNLOAD_URL = "";', f'const DOWNLOAD_URL = {url!r};'.replace("'", '"'))
+# The download size as Finder shows it (decimal megabytes), from the real disk image when there is one.
+if size:
+    body = re.sub(r'(<span id="dmgSize">)[^<]*(</span>)', lambda m: f"{m.group(1)} · {int(size) / 1e6:.1f} MB{m.group(2)}", body)
 description = ("Convert files on your Mac without opening anything: drag a file, tap Shift, "
                "and let go on a format. Try it in your browser.")
 page = f"""<!doctype html>
