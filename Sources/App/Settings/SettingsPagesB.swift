@@ -260,6 +260,54 @@ struct AppearancePage: View {
                 ChipRow(title: "Labels", options: [("title", "Title case"), ("upper", "UPPER CASE")],
                         selection: model.binding(SettingsKeys.labelCase), accent: a)
             }
+            SettingsCard(title: "Fill and colour", footer: "These come from the Wheel Studio on the website: paste a Studio theme to set them all at once.") {
+                ChipRow(title: "Fill", options: [("flat", "Board"), ("duo", "Duotone"), ("shades", "Shades"), ("stickers", "Stickers"),
+                                                 ("rainbow", "Rainbow"), ("outline", "Outline")],
+                        selection: model.binding(SettingsKeys.fillStyle), accent: a)
+                colourRow("Second colour (Duotone, glow)", SettingsKeys.accent2Hex, allowsNone: false)
+                SliderRow(title: "Resting buttons", detail: "How solid the buttons you're not on are.",
+                          value: model.clamped(SettingsKeys.restOpacity, 0.15...1), range: 0.15...1, step: 0.05, format: { "\(Int(($0 * 100).rounded())) %" }, accent: a)
+                colourRow("Disc", SettingsKeys.discHex)
+                colourRow("Labels", SettingsKeys.textHex)
+                colourRow("Text on the lit button", SettingsKeys.hotTextHex)
+                colourRow("Rim", SettingsKeys.rimHex)
+                SliderRow(title: "Rim width", value: model.clamped(SettingsKeys.rimWidth, 0...6), range: 0...6, step: 0.5,
+                          format: { $0 == 0 ? "none" : String(format: "%.1f×", $0) }, accent: a)
+            }
+            SettingsCard(title: "Shape") {
+                SliderRow(title: "Corner rounding", detail: "Ring and Halo.", value: model.clamped(SettingsKeys.corners, 0...1), range: 0...1, step: 0.05,
+                          format: { "\(Int(($0 * 100).rounded())) %" }, accent: a)
+                SliderRow(title: "Hover pop", detail: "How far the button under the pointer grows.",
+                          value: model.clamped(SettingsKeys.hoverPop, 0...2.5), range: 0...2.5, step: 0.1,
+                          format: { String(format: "%.1f×", $0) }, accent: a)
+                SliderRow(title: "Shadow", value: model.clamped(SettingsKeys.discShadow, 0...1), range: 0...1, step: 0.05, format: { "\(Int(($0 * 100).rounded())) %" }, accent: a)
+                ToggleRow(title: "Captions and icons", detail: "Halo's small captions, Ring's icons, Orbit's icon discs.",
+                          isOn: model.binding(SettingsKeys.captions), accent: a)
+                ToggleRow(title: "Dim the other buttons", detail: "Ring and Orbit, while one is lit.", isOn: model.binding(SettingsKeys.dimOthers), accent: a)
+                ChipRow(title: "Label weight", options: [("regular", "Regular"), ("semibold", "Semibold"), ("bold", "Bold"), ("heavy", "Heavy")],
+                        selection: model.binding(SettingsKeys.labelWeight), accent: a)
+                SliderRow(title: "Letter spacing", value: model.clamped(SettingsKeys.tracking, -0.05...0.3), range: -0.05...0.3, step: 0.01,
+                          format: { String(format: "%.2f em", $0) }, accent: a)
+            }
+            SettingsCard(title: "Glow and motion",
+                         footer: "Motion plays on the real wheel (drag a file and tap Shift), not in the picture above, and stays off with Reduce Motion. The six buttons never move, so you can always aim.") {
+                ToggleRow(title: "Glow like the layout", detail: "Halo glows under the lit button; Ring and Orbit don't.",
+                          isOn: Binding(get: { model.store.value(SettingsKeys.glow) < 0 },
+                                        set: { model.store.set($0 ? -1 : 0.6, for: SettingsKeys.glow) }), accent: a)
+                if model.store.value(SettingsKeys.glow) >= 0 {
+                    SliderRow(title: "Glow", value: model.clamped(SettingsKeys.glow, 0...1.5), range: 0...1.5, step: 0.05, format: { "\(Int(($0 * 100).rounded())) %" }, accent: a)
+                }
+                ChipRow(title: "Glow colour", options: [("accent", "Accent"), ("second", "Second colour"), ("white", "White")],
+                        selection: model.binding(SettingsKeys.glowColor), accent: a)
+                SliderRow(title: "Breathe", detail: "The wheel slowly swells and settles.", value: model.clamped(SettingsKeys.breathe, 0...1),
+                          range: 0...1, step: 0.05, format: { $0 == 0 ? "off" : "\(Int(($0 * 100).rounded())) %" }, accent: a)
+                SliderRow(title: "Orbiting dots", value: model.double(SettingsKeys.ringDots), range: 0...36, step: 1,
+                          format: { $0 == 0 ? "none" : "\(Int($0))" }, accent: a)
+                SliderRow(title: "Orbit speed", value: model.clamped(SettingsKeys.ringSpin, 0...20), range: 0...20, step: 1,
+                          format: { $0 == 0 ? "still" : "\(Int($0)) rpm" }, accent: a)
+                ToggleRow(title: "Twirl in", detail: "The wheel spins into place as it opens.", isOn: model.binding(SettingsKeys.twirl), accent: a)
+                ToggleRow(title: "Sparks", detail: "A small burst when a button lights up.", isOn: model.binding(SettingsKeys.sparks), accent: a)
+            }
             SettingsCard(title: "Accessibility", footer: "These follow System Settings → Accessibility → Display.") {
                 accessibilityLine("Reduce Motion", Motion.reduceMotion, on: "the wheel fades in, no springs")
                 accessibilityLine("Reduce Transparency", Motion.reduceTransparency, on: "Ring uses Halo's solid disc")
@@ -286,6 +334,23 @@ struct AppearancePage: View {
             Spacer()
             if !value.isEmpty {
                 Button("None") { model.store.set("", for: key) }.buttonStyle(.plain).font(Halo.rounded(11, .semibold)).foregroundStyle(model.accent)
+            }
+            ColorPicker(title, selection: colorBinding(model.binding(key), fallback: Color(hex: 0x3A3D45)), supportsOpacity: false).labelsHidden()
+        }
+    }
+
+    /// A colour setting; `allowsNone` offers "Auto" (the layout's own colour).
+    private func colourRow(_ title: String, _ key: SettingsKey<String>, allowsNone: Bool = true) -> some View {
+        let value = model.store.value(key)
+        return HStack(spacing: 8) {
+            Text(title).font(Halo.rounded(12)).foregroundStyle(Halo.text)
+            Spacer()
+            if allowsNone {
+                if value.isEmpty {
+                    Text("Auto").font(Halo.rounded(11)).foregroundStyle(Halo.secondary)
+                } else {
+                    Button("Auto") { model.store.set("", for: key) }.buttonStyle(.plain).font(Halo.rounded(11, .semibold)).foregroundStyle(model.accent)
+                }
             }
             ColorPicker(title, selection: colorBinding(model.binding(key), fallback: Color(hex: 0x3A3D45)), supportsOpacity: false).labelsHidden()
         }

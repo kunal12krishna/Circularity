@@ -81,6 +81,16 @@ final class SectorRenderer: WheelRenderer {
     }
 
     private static func tokens(_ style: Style, look: WheelStyle) -> Tokens {
+        var t = boardTokens(style, look: look)
+        // Wheel Studio looks: bright fills want near-black text; custom inks win.
+        if look.brightFills { t.fgRest = .hex(0x0B0D10); t.captionRest = .black(0.55); t.fgHot = .hex(0x0B0D10) }
+        if let ink = look.textColor { t.fgRest = ink; t.captionRest = ink.copy(alpha: 0.62) ?? ink }
+        if let hot = look.hotTextColor { t.fgHot = hot }
+        t.dimOthers = t.dimOthers && look.dimOthers
+        return t
+    }
+
+    private static func boardTokens(_ style: Style, look: WheelStyle) -> Tokens {
         switch (style, look.light) {
         case (.ring, false):
             Tokens(segRest: .white(0.07), segEmpty: .white(0.03), segStroke: .white(0.10), segHotStroke: .white(0.35),
@@ -100,10 +110,12 @@ final class SectorRenderer: WheelRenderer {
         }
     }
 
-    /// The resting fill of a segment: its category tint, if one is set.
+    /// The resting fill of a segment: the fill style's, else its category tint, at the resting opacity.
     private func restFill(_ i: Int) -> CGColor {
-        guard let slot = menu.ring[i], let tint = look.tint(for: slot) else { return tokens.segRest }
-        return tint.copy(alpha: style == .ring ? 0.22 : 0.2) ?? tokens.segRest
+        guard let slot = menu.ring[i] else { return tokens.segRest }
+        if let fill = look.restFill(slot: slot, index: i) { return look.resting(fill) }
+        guard let tint = look.tint(for: slot) else { return look.resting(tokens.segRest) }
+        return look.resting(tint.copy(alpha: style == .ring ? 0.22 : 0.2) ?? tokens.segRest)
     }
 
     // MARK: Configure
@@ -133,34 +145,42 @@ final class SectorRenderer: WheelRenderer {
             shadow.contents = style == .ring
                 ? DiscImages.outerShadow(diameter: d, offsetY: 40 * s, blur: 90 * s, color: .black(0.5), canvas: size, scale: blurScale)
                 : DiscImages.outerShadow(diameter: d, offsetY: 30 * s, blur: 80 * s, color: .black(0.7), canvas: size, scale: blurScale)
+            shadow.opacity = Float(look.discShadow)
             disc.path = CGPath(ellipseIn: discRect, transform: nil)
             if style == .ring {
                 let strength = min(1, max(0, look.glassStrength))
-                disc.fillColor = look.light ? .hex(0xFFFFFF, strength) : .hex(0x18181C, strength)
+                disc.fillColor = look.discColor?.copy(alpha: strength) ?? (look.light ? .hex(0xFFFFFF, strength) : .hex(0x18181C, strength))
                 disc.strokeColor = nil
                 glow.frame = discRect
                 glow.contents = DiscImages.innerGlow(diameter: d, offsetY: 2 * s, blur: 34 * s,
                                                      color: look.light ? .white(0.5) : .white(0.07), scale: blurScale)
                 hairline.path = CGPath(ellipseIn: discRect.insetBy(dx: 0.5, dy: 0.5), transform: nil)
-                hairline.strokeColor = look.light ? .black(0.10) : .white(0.12)
-                hairline.lineWidth = 1
+                hairline.strokeColor = look.rimColor ?? (look.light ? .black(0.10) : .white(0.12))
+                hairline.lineWidth = look.rimWidth
+                hairline.isHidden = look.rimWidth <= 0
                 band.isHidden = true
             } else {
                 // Board C: solid graphite disc, 1 pt white 5 % outline, accent
                 // hairline at r 208 (22 %), dark band r 118…190.
-                disc.fillColor = .hex(0x0D0F14)
+                disc.fillColor = look.discColor ?? .hex(0x0D0F14)
                 disc.strokeColor = .white(0.05)
                 disc.lineWidth = 1
                 glow.contents = nil
                 let r = 208 * s
                 hairline.path = CGPath(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r), transform: nil)
-                hairline.strokeColor = accent.copy(alpha: 0.22)
-                hairline.lineWidth = 1
+                hairline.strokeColor = look.rimColor ?? accent.copy(alpha: 0.22)
+                hairline.lineWidth = look.rimWidth
+                hairline.isHidden = look.rimWidth <= 0
                 band.isHidden = false
                 let rb = 154 * s
                 band.path = CGPath(ellipseIn: CGRect(x: center.x - rb, y: center.y - rb, width: 2 * rb, height: 2 * rb), transform: nil)
                 band.fillColor = nil
-                band.strokeColor = .hex(0x141519)
+                // A custom disc keeps the band as a slightly lifted ring of the same colour.
+                band.strokeColor = look.discColor.map { c in
+                    let k: CGFloat = RGB(cg: c).luminance < 0.4 ? 0.04 : -0.04
+                    let rgb = RGB(cg: c)
+                    return CGColor(srgbRed: min(1, max(0, rgb.r + k)), green: min(1, max(0, rgb.g + k)), blue: min(1, max(0, rgb.b + k)), alpha: 1)
+                } ?? .hex(0x141519)
                 band.lineWidth = 72 * s
             }
             hairline.fillColor = nil
@@ -203,13 +223,13 @@ final class SectorRenderer: WheelRenderer {
         if style == .ring {
             seg.restIcon = SymbolCache.image(slot.symbol, pointSize: 22 * s, weight: .medium, color: tokens.fgRest, scale: contentsScale)
             seg.hotIcon = SymbolCache.image(slot.symbol, pointSize: 22 * s, weight: .medium, color: tokens.fgHot, scale: contentsScale)
-            seg.icon.isHidden = false
+            seg.icon.isHidden = !look.captions
             seg.caption.isHidden = true
         } else {
             seg.restIcon = nil
             seg.hotIcon = nil
             seg.icon.isHidden = true
-            seg.caption.isHidden = false
+            seg.caption.isHidden = !look.captions
         }
         segments[i] = seg
         styleSegmentContent(i, hot: false)
@@ -222,19 +242,19 @@ final class SectorRenderer: WheelRenderer {
         let fg = hot ? tokens.fgHot : tokens.fgRest
         let ls = look.labelScale
         if style == .ring {
-            seg.label.set(look.label(slot.label), font: look.labelFont(15 * s * ls, .bold), color: fg, kern: 0.3 * s,
-                          maxWidth: 96 * s, minScale: 0.7)
+            seg.label.set(look.label(slot.label), font: look.labelFont(15 * s * ls, look.weight), color: fg,
+                          kern: 0.3 * s + look.tracking * 15 * s * ls, maxWidth: 96 * s, minScale: 0.7)
             if let image = hot ? seg.hotIcon : seg.restIcon {
                 seg.icon.contents = image
                 seg.icon.bounds = CGRect(x: 0, y: 0, width: CGFloat(image.width) / contentsScale,
                                          height: CGFloat(image.height) / contentsScale)
             }
         } else {
-            seg.label.set(slot.monoLabel, font: WheelFont.mono(15 * s * ls, .bold), color: fg, kern: 1.2 * s,
-                          maxWidth: 80 * s, minScale: 0.7)
+            seg.label.set(slot.monoLabel, font: WheelFont.mono(15 * s * ls, look.weight), color: fg,
+                          kern: 1.2 * s + look.tracking * 15 * s * ls, maxWidth: 80 * s, minScale: 0.7)
             let caption: CGColor = hot ? hotCaptionColor : tokens.captionRest
-            seg.caption.set(slot.caption, font: WheelFont.rounded(10 * s * ls, .semibold), color: caption, kern: 0.4 * s,
-                            maxWidth: 80 * s, minScale: 0.7)
+            seg.caption.set(slot.caption, font: WheelFont.rounded(10 * s * ls, .semibold), color: caption,
+                            kern: 0.4 * s + look.tracking * 10 * s * ls, maxWidth: 80 * s, minScale: 0.7)
         }
     }
 
@@ -375,8 +395,8 @@ final class SectorRenderer: WheelRenderer {
     private func updateSegment(_ i: Int, hot: Bool, animated: Bool) {
         let seg = segments[i]
         let mid = WheelGeometry.midAngle(ofSlot: i), half = geometry.segmentSpan / 2
-        let path = sectorPath(center: center, inner: geometry.inner(hovered: hot), outer: geometry.outer(hovered: hot),
-                              from: mid - half, to: mid + half)
+        let path = roundedSectorPath(center: center, inner: geometry.inner(hovered: hot), outer: geometry.outer(hovered: hot),
+                                     from: mid - half, to: mid + half, round: look.corners)
         let changed = seg.hot != hot || seg.shape.path == nil
         if changed {
             let from = seg.shape.presentation()?.path ?? seg.shape.path
@@ -388,16 +408,20 @@ final class SectorRenderer: WheelRenderer {
         let empty = menu.ring[i] == nil
         let dwc = Motion.differentiateWithoutColor && hot
         transact(0.12, animated: animated) {
-            if style == .halo {
-                // A soft neon glow under the lit segment.
-                seg.shape.shadowColor = accent
-                seg.shape.shadowRadius = 14 * geometry.scale
-                seg.shape.shadowOffset = .zero
-                seg.shape.shadowOpacity = hot ? 0.55 : 0
-            }
-            seg.shape.fillColor = empty ? tokens.segEmpty : (hot ? accent : restFill(i))
-            seg.shape.strokeColor = dwc ? .white(0.9) : (hot ? tokens.segHotStroke : tokens.segStroke)
-            seg.shape.lineWidth = dwc ? 2.5 : 1
+            // A soft glow under the lit segment (Halo's neon by default; any layout can have one).
+            let glow = look.glowAmount(halo: style == .halo)
+            let slot = menu.ring[i]
+            seg.shape.shadowColor = look.glowColor(sticker: slot.map { WheelStyle.stickerColor($0, index: i) })
+            seg.shape.shadowRadius = 14 * geometry.scale * max(glow, 0.01) / 0.6
+            seg.shape.shadowOffset = .zero
+            seg.shape.shadowOpacity = hot && glow > 0 ? Float(min(0.95, 0.55 * glow / 0.6)) : 0
+            seg.shape.fillColor = empty ? tokens.segEmpty : (hot ? (slot.map { look.hotFill(slot: $0, index: i) } ?? accent) : restFill(i))
+            let outline = look.fillStyle == "outline" && !hot && slot != nil
+            let bright = look.brightFills && hot
+            let stroke: CGColor? = outline ? (slot.flatMap { look.tint(for: $0) } ?? accent).copy(alpha: 0.7)
+                : bright ? .white(1) : (hot ? tokens.segHotStroke : tokens.segStroke)
+            seg.shape.strokeColor = dwc ? .white(0.9) : stroke
+            seg.shape.lineWidth = dwc ? 2.5 : (outline ? 2 : bright ? 3 : 1)
             seg.shape.lineDashPattern = dwc ? [5, 3] : nil
         }
         placeContent(i, hot: hot, animated: animated && changed)
@@ -419,6 +443,11 @@ final class SectorRenderer: WheelRenderer {
                                                   angle: WheelGeometry.midAngle(ofSlot: i)), center: center)
         let top: CALayer = style == .ring ? seg.icon : seg.label
         let bottom: CALayer = style == .ring ? seg.label : seg.caption
+        // Captions or icons off: the label alone, centred.
+        if top.isHidden || bottom.isHidden {
+            move(top.isHidden ? bottom : top, to: mid, animated: animated)
+            return
+        }
         let gap = (style == .ring ? 6 : 2) * s
         let h = top.bounds.height + gap + bottom.bounds.height
         move(top, to: CGPoint(x: mid.x, y: mid.y + h / 2 - top.bounds.height / 2), animated: animated)

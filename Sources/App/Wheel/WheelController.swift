@@ -42,6 +42,8 @@ final class WheelController {
     private var lastDragPoint: CGPoint?
     private(set) var isVisible = false
     private let loupe = BeforeAfterLoupe()
+    /// Breathing, the orbiting dots, the twirl and sparks (Wheel Studio looks).
+    private let effects = WheelEffects()
     private var contentsScale: CGFloat = 2
     /// Bumped by every show(), so a delayed hide meant for an earlier wheel
     /// never closes a newer one.
@@ -106,7 +108,8 @@ final class WheelController {
         panel.setFrame(CGRect(x: center.x - size / 2, y: center.y - size / 2, width: size, height: size), display: false)
         host.frame = CGRect(x: 0, y: 0, width: size, height: size)
         layerView?.frame = host.bounds
-        renderer.layer.frame = host.bounds
+        effects.configure(style: look, geometry: geometry, bounds: host.bounds, contentsScale: contentsScale)
+        renderer.layer.frame = effects.root.bounds
         if let glass {
             let d = geometry.discDiameter * geometry.scale
             glass.frame = CGRect(x: (size - d) / 2, y: (size - d) / 2, width: d, height: d)
@@ -127,6 +130,7 @@ final class WheelController {
         isVisible = true
         onShown?()
         bloom(renderer, style: settings.value(SettingsKeys.animationStyle))
+        effects.opened(glass: renderer.usesGlass && glass?.isHidden == false ? glass?.layer : nil)
         WheelSounds.play(.open, pack: settings.value(SettingsKeys.soundPack))
         Log.wheel.notice("Wheel shown (\(kind.rawValue, privacy: .public), \(mode == .click ? "click" : "drag", privacy: .public) mode, \(files.count, privacy: .public) item(s), fan \(self.state.fanFlipped ? "flipped" : "down", privacy: .public))")
         NSAccessibility.post(element: host, notification: .layoutChanged)
@@ -153,6 +157,7 @@ final class WheelController {
                 guard let self, !self.isVisible else { return }
                 panel.orderOut(nil)
                 panel.allowsKey = false
+                self.effects.stop(glass: self.glass?.layer)
                 self.renderer?.setThumbnail(nil)
                 self.files = DraggedFiles()
                 MemoryFootprint.relieve()
@@ -211,7 +216,7 @@ final class WheelController {
         case .orbit: OrbitRenderer()
         }
         renderer?.layer.removeFromSuperlayer()
-        layerView?.layer?.addSublayer(made.layer)
+        effects.attach(made.layer)
         renderer = made
         rendererKey = key
         return (made, kind)
@@ -229,6 +234,7 @@ final class WheelController {
         let layerView = NSView(frame: host.bounds)
         layerView.layer = CALayer()
         layerView.wantsLayer = true
+        layerView.layer?.addSublayer(effects.root)
         host.addSubview(glass)
         host.addSubview(layerView)
         panel.contentView = host
@@ -425,6 +431,11 @@ final class WheelController {
             NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         }
         if changedTarget, newTarget != .none { WheelSounds.play(.hover, pack: settings.value(SettingsKeys.soundPack)) }
+        if changedTarget, case let .segment(i) = newTarget, menu.ring[i] != nil {
+            let c = CGPoint(x: geometry.size / 2, y: geometry.size / 2)
+            effects.spark(at: layerPoint(WheelGeometry.offset(radius: geometry.contentRadius(hovered: true),
+                                                              angle: WheelGeometry.midAngle(ofSlot: i)), center: c))
+        }
         if changedTarget, let host { NSAccessibility.post(element: host, notification: .layoutChanged) }
     }
 

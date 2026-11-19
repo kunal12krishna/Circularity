@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Wheel Studio</title>
-<meta name="description" content="Wheel Studio: design your own Circularity wheel. Shapes, colours, fonts, glow, sparks and backdrops, then paste the theme into the app or export a poster or clip.">
+<meta name="description" content="Wheel Studio: design your Circularity wheel. Every knob is something the app really draws: fills, colours, corners, glow, breathing, an orbiting ring, a twirl and sparks. Paste it into the app.">
 <meta name="theme-color" content="#F3EEE4">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&family=Instrument+Serif&family=JetBrains+Mono:wght@400;700;800&family=Nunito:wght@400;700;800;900&family=Outfit:wght@400;700;900&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@400;700&family=Unbounded:wght@400;700;900&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&family=JetBrains+Mono:wght@400;600;700;800&family=Nunito:wght@400;600;700;800;900&display=swap">
 <style>
 /* Wheel Studio: one big live stage, a panel of knobs, printed on the site's Riso paper.
    The page's accent follows the wheel's. */
@@ -68,6 +68,7 @@ button { cursor: pointer; }
 .stage.drop #cv { box-shadow: 0 0 0 3px var(--a), 0 30px 80px rgba(0,0,0,.5); }
 .stage-bar { display: flex; align-items: center; gap: 12px; padding: 10px 18px 14px; min-height: 52px; font: 12px var(--mono); color: var(--muted); flex-wrap: wrap; }
 .stage-bar b { color: var(--fg); font-weight: 600; }
+.stage-bar .btn { height: 30px; font: 600 12px var(--ui); }
 #caption { flex: 1; min-width: 200px; }
 .keys { opacity: .8; }
 .keys kbd { border: 1px solid var(--line2); border-radius: 4px; padding: 0 4px; color: var(--fg); }
@@ -75,6 +76,8 @@ button { cursor: pointer; }
 /* Panel */
 .panel { border-left: 1px solid var(--line); background: var(--panel); display: grid; grid-template-rows: auto auto minmax(0, 1fr); min-height: 0; }
 .legend { padding: 12px 16px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.legend-note { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.7; }
+.legend-note b { color: var(--fg); }
 .legend-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
 .badge { font: 600 10px var(--mono); padding: 2px 6px; border-radius: 5px; letter-spacing: .04em; white-space: nowrap; }
 .badge.app { background: color-mix(in srgb, var(--a) 22%, transparent); color: color-mix(in srgb, var(--a) 50%, var(--fg)); border: 1px solid color-mix(in srgb, var(--a) 45%, transparent); }
@@ -201,32 +204,29 @@ html.embed #cv { border-radius: 0; box-shadow: none; pointer-events: none; }
       <canvas id="cv" tabindex="0" role="img" aria-label="Preview of your wheel"></canvas>
     </div>
     <div class="stage-bar">
-      <span id="caption" aria-live="polite">Hover the wheel. Click a button to "convert".</span>
-      <span class="keys"><kbd>←</kbd> <kbd>→</kbd> move · <kbd>↵</kbd> convert · <kbd>R</kbd> roll · drop a picture for a backdrop</span>
+      <span id="caption" aria-live="polite">Hover the wheel. This is exactly what Circularity draws.</span>
+      <button class="btn" type="button" id="replay" title="Play the wheel opening, as it does when you tap Shift">▶ Replay opening</button>
+      <span class="keys"><kbd>←</kbd> <kbd>→</kbd> move · <kbd>R</kbd> roll · drop a picture as your wallpaper</span>
     </div>
   </section>
 
   <aside class="panel" aria-label="Customise">
     <div class="legend">
-      <div class="legend-row"><span class="badge app">◆ APP</span> goes into Circularity when you paste the theme <span class="badge studio">✦ STUDIO</span> posters, clips and links</div>
-      <div class="legend-row">
-        <label class="sw"><input type="checkbox" id="appView"><span>See it as the app draws it</span></label>
-        <label class="sw"><input type="checkbox" id="hideStudio"><span>Only ◆ knobs</span></label>
-      </div>
+      <p class="legend-note"><span class="badge app">◆ IN THE APP</span> Every knob here is something Circularity really draws. Copy it, then <b>Paste theme</b> in the app.</p>
     </div>
     <div class="tabs" role="tablist" aria-label="Knobs">
       <button class="tab" role="tab" id="t-presets" aria-controls="p-presets" aria-selected="true">Presets</button>
       <button class="tab" role="tab" id="t-shape" aria-controls="p-shape" aria-selected="false" tabindex="-1">Shape</button>
       <button class="tab" role="tab" id="t-colour" aria-controls="p-colour" aria-selected="false" tabindex="-1">Colour</button>
       <button class="tab" role="tab" id="t-type" aria-controls="p-type" aria-selected="false" tabindex="-1">Type</button>
-      <button class="tab" role="tab" id="t-effects" aria-controls="p-effects" aria-selected="false" tabindex="-1">Effects</button>
-      <button class="tab" role="tab" id="t-backdrop" aria-controls="p-backdrop" aria-selected="false" tabindex="-1">Backdrop</button>
+      <button class="tab" role="tab" id="t-motion" aria-controls="p-motion" aria-selected="false" tabindex="-1">Motion</button>
+      <button class="tab" role="tab" id="t-wallpaper" aria-controls="p-wallpaper" aria-selected="false" tabindex="-1">Wallpaper</button>
       <button class="tab" role="tab" id="t-export" aria-controls="p-export" aria-selected="false" tabindex="-1">Export</button>
     </div>
     <div class="panes">
       <section class="pane" role="tabpanel" id="p-presets" aria-labelledby="t-presets">
         <h2>Start somewhere</h2>
-        <p class="sub">Seven looks the app ships with, twelve wilder ones. Every knob stays editable afterwards.</p>
+        <p class="sub">Seven themes the app ships with, twelve Studio originals. All of them paste into the app as you see them.</p>
         <div class="big-dice"><button class="btn primary" type="button" id="dice2">🎲 Surprise me</button><button class="btn" type="button" id="resetAll">Start over</button></div>
         <div class="group-h">In the app</div>
         <div class="presets" id="presetsApp"></div>
@@ -240,19 +240,19 @@ html.embed #cv { border-radius: 0; box-shadow: none; pointer-events: none; }
 
       <section class="pane" role="tabpanel" id="p-shape" aria-labelledby="t-shape" hidden>
         <h2>Shape</h2>
-        <p class="sub">Layout, size and geometry. Try a fan or twelve buttons.</p>
+        <p class="sub">Layout, size, corners and how far a button pops when you're on it.</p>
         <div class="rows" data-tab="shape"></div>
       </section>
 
       <section class="pane" role="tabpanel" id="p-colour" aria-labelledby="t-colour" hidden>
         <h2>Colour</h2>
-        <p class="sub">The accent lights the button under the pointer. Fill styles colour the rest.</p>
-        <div class="row" data-app="1" data-knob>
-          <div class="row-h"><span class="lbl">Built-in theme</span><span class="badge app">◆ APP</span></div>
+        <p class="sub">The accent lights the button under the pointer. The fill colours the rest.</p>
+        <div class="row" data-knob>
+          <div class="row-h"><span class="lbl">Built-in theme</span></div>
           <div class="chips" id="themeChips" role="group" aria-label="Built-in theme"></div>
         </div>
-        <div class="row" data-app="1" data-knob>
-          <div class="row-h"><label for="accent">Accent</label><span class="badge app">◆ APP</span><output id="accentOut"></output></div>
+        <div class="row" data-knob>
+          <div class="row-h"><label for="accent">Accent</label><output id="accentOut"></output></div>
           <div class="swatches" id="swatches" role="group" aria-label="Accent swatches"></div>
           <div class="colr"><input type="color" id="accent"><input class="hex" id="accentHex" maxlength="7" spellcheck="false" aria-label="Accent hex"><button class="btn" type="button" id="eyedrop" hidden>Pick from screen</button><button class="btn" type="button" id="accentRoll" title="A random accent">🎲</button></div>
           <div class="contrast" id="contrast"></div>
@@ -262,31 +262,22 @@ html.embed #cv { border-radius: 0; box-shadow: none; pointer-events: none; }
 
       <section class="pane" role="tabpanel" id="p-type" aria-labelledby="t-type" hidden>
         <h2>Type</h2>
-        <p class="sub">The app's three fonts, or ten display faces for posters.</p>
+        <p class="sub">The app's three fonts. Halo keeps its monospace labels.</p>
         <div class="rows" data-tab="type"></div>
-        <div class="row" data-app="0" data-knob>
-          <div class="row-h"><span class="lbl">Rename the buttons</span><span class="badge studio">✦ STUDIO</span></div>
-          <div class="labels" id="labels"></div>
-          <div class="btns"><button class="btn" type="button" id="emojiLabels">Emoji everything</button><button class="btn" type="button" id="clearLabels">Back to formats</button></div>
-        </div>
-        <div class="row" data-app="0" data-knob>
-          <div class="row-h"><label for="centreText">Centre text</label><span class="badge studio">✦ STUDIO</span></div>
-          <input class="txt" id="centreText" maxlength="16" placeholder="Follows the button you hover">
-        </div>
       </section>
 
-      <section class="pane" role="tabpanel" id="p-effects" aria-labelledby="t-effects" hidden>
-        <h2>Effects</h2>
-        <p class="sub">Glow, motion, particles and film. None of these are in the app; they're for posters and clips.</p>
-        <div class="rows" data-tab="effects"></div>
+      <section class="pane" role="tabpanel" id="p-motion" aria-labelledby="t-motion" hidden>
+        <h2>Glow and motion</h2>
+        <p class="sub">The wheel can breathe, wear a ring of orbiting dots, twirl in as it opens and throw sparks. The six buttons never move, so you can always aim. Off with Reduce Motion.</p>
+        <div class="rows" data-tab="motion"></div>
       </section>
 
-      <section class="pane" role="tabpanel" id="p-backdrop" aria-labelledby="t-backdrop" hidden>
-        <h2>Backdrop</h2>
-        <p class="sub">What's behind the wheel. Drop any picture on the stage to use it.</p>
-        <div class="rows" data-tab="backdrop"></div>
-        <div class="row" data-app="0" data-knob>
-          <div class="row-h"><span class="lbl">Your own picture</span><span class="badge studio">✦ STUDIO</span></div>
+      <section class="pane" role="tabpanel" id="p-wallpaper" aria-labelledby="t-wallpaper" hidden>
+        <h2>Wallpaper</h2>
+        <p class="sub">Stands in for your desktop, so you can see the wheel the way you will. It isn't part of the theme.</p>
+        <div class="rows" data-tab="wallpaper"></div>
+        <div class="row">
+          <div class="row-h"><span class="lbl">Your own wallpaper</span></div>
           <div class="btns"><label class="btn" for="photoIn">Choose a picture…</label><input type="file" id="photoIn" accept="image/*" class="sr-only"><button class="btn" type="button" id="matchBg">Match the accent</button></div>
           <p class="hint" id="photoNote">Stays on this device; it isn't uploaded or put in share links.</p>
         </div>
@@ -295,37 +286,34 @@ html.embed #cv { border-radius: 0; box-shadow: none; pointer-events: none; }
       <section class="pane" role="tabpanel" id="p-export" aria-labelledby="t-export" hidden>
         <h2>Take it with you</h2>
         <div class="group-h">Into the app</div>
-        <div class="row" data-app="1">
-          <div class="row-h"><span class="lbl">Theme for Circularity</span><span class="badge app">◆ APP</span></div>
-          <p class="hint">Copy, then in Circularity: Settings → Appearance → <b>Paste theme</b>.</p>
+        <div class="row">
+          <div class="row-h"><span class="lbl">Theme for Circularity</span></div>
+          <p class="hint">Copy, then in Circularity: Settings → Appearance → <b>Paste theme</b>. A share link pastes too.</p>
           <div class="btns"><button class="btn primary" type="button" id="copyApp">Copy for the app</button><button class="btn" type="button" id="showCode" aria-expanded="false" aria-controls="code">Show the code</button></div>
           <textarea class="code" id="code" readonly hidden aria-label="Theme code"></textarea>
-          <div class="appprev"><canvas id="appPrev" width="200" height="200" role="img" aria-label="What Circularity will draw after you paste"></canvas>
-            <p class="hint"><b>This is what Circularity draws</b> after you paste: the ◆ settings, in the app's own style. Turn on "See it as the app draws it" to try it big.</p></div>
           <ul class="carry app" id="carryApp"></ul>
-          <ul class="carry" id="carryStudio"></ul>
         </div>
-        <div class="row" data-app="1">
-          <div class="row-h"><label for="importCode">Bring a theme in</label><span class="badge app">◆ APP</span></div>
+        <div class="row">
+          <div class="row-h"><label for="importCode">Bring a theme in</label></div>
           <p class="hint">In the app: Settings → Appearance → Copy theme, then paste it here.</p>
           <textarea class="code" id="importCode" style="min-height:80px" placeholder='{"app": "Circularity", …}'></textarea>
           <div class="btns"><button class="btn" type="button" id="importBtn">Load it</button></div>
         </div>
         <div class="group-h">Show it off</div>
-        <div class="row" data-app="0">
-          <div class="row-h"><span class="lbl">Poster</span><span class="badge studio">✦ STUDIO</span></div>
-          <div class="seg" id="pngSize" role="group" aria-label="Poster size"><button type="button" data-v="1080" aria-pressed="false">1080 px</button><button type="button" data-v="2048" aria-pressed="true">2048 px</button><button type="button" data-v="4096" aria-pressed="false">4096 px</button></div>
-          <label class="sw"><input type="checkbox" id="pngClear"><span>Transparent background (a sticker)</span></label>
+        <div class="row">
+          <div class="row-h"><span class="lbl">Picture</span></div>
+          <div class="seg" id="pngSize" role="group" aria-label="Picture size"><button type="button" data-v="1080" aria-pressed="false">1080 px</button><button type="button" data-v="2048" aria-pressed="true">2048 px</button><button type="button" data-v="4096" aria-pressed="false">4096 px</button></div>
+          <label class="sw"><input type="checkbox" id="pngClear"><span>No wallpaper (transparent)</span></label>
           <div class="btns"><button class="btn primary" type="button" id="savePng">Download PNG</button></div>
         </div>
-        <div class="row" data-app="0">
-          <div class="row-h"><span class="lbl">Clip</span><span class="badge studio">✦ STUDIO</span></div>
-          <p class="hint" id="clipNote">A 4-second loop of the wheel spinning through its buttons.</p>
+        <div class="row">
+          <div class="row-h"><span class="lbl">Clip</span></div>
+          <p class="hint" id="clipNote">A 4-second clip: the wheel opens, then walks round its buttons.</p>
           <div class="btns"><button class="btn rec" type="button" id="recBtn"><i></i> Record a clip</button></div>
         </div>
-        <div class="row" data-app="0">
-          <div class="row-h"><span class="lbl">Link</span><span class="badge studio">✦ STUDIO</span></div>
-          <p class="hint">Everything except your own picture, in one link.</p>
+        <div class="row">
+          <div class="row-h"><span class="lbl">Link</span></div>
+          <p class="hint">The whole wheel in one link. Anyone can open it here, or paste it into the app.</p>
           <div class="btns"><button class="btn" type="button" id="shareBtn">Copy share link</button></div>
           <input class="txt" id="shareOut" readonly hidden aria-label="Share link">
         </div>
@@ -337,6 +325,9 @@ html.embed #cv { border-radius: 0; box-shadow: none; pointer-events: none; }
 
 <script>
 "use strict";
+// Wheel Studio. Every knob is a Circularity setting, and the stage draws the
+// wheel with the app's own numbers (WheelGeometry, SectorRenderer,
+// OrbitRenderer, WheelEffects). The wallpaper is preview-only.
 const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const EMBED = location.hash === "#embed";
@@ -349,381 +340,424 @@ const store = {
 // ---------- Colour maths ----------
 const hexRgb = (h) => { h = String(h || "#888888").replace("#", ""); if (h.length === 3) h = [...h].map((c) => c + c).join(""); const v = parseInt(h.slice(0, 6), 16) || 0; return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; };
 const rgbHex = (r, g, b) => "#" + [r, g, b].map((x) => Math.round(Math.max(0, Math.min(255, x))).toString(16).padStart(2, "0")).join("").toUpperCase();
-const rgba = (h, a) => { const [r, g, b] = hexRgb(h); return `rgba(${r},${g},${b},${a})`; };
 const mixHex = (a, b, t) => { const A = hexRgb(a), B = hexRgb(b); return rgbHex(A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t, A[2] + (B[2] - A[2]) * t); };
-const hslHex = (h, s, l) => { h = ((h % 360) + 360) % 360; s /= 100; l /= 100; const k = (n) => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
-  const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); return rgbHex(f(0) * 255, f(8) * 255, f(4) * 255); };
+const hslRgb = (h, s, l) => { h = ((h % 360) + 360) % 360; const a = s * Math.min(l, 1 - l); const f = (n) => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, Math.min(9 - k, 1))); }; return [f(0) * 255, f(8) * 255, f(4) * 255]; };
+const hslHex = (h, s, l) => rgbHex(...hslRgb(h, s / 100, l / 100));
 const isHex = (s) => typeof s === "string" && /^#[0-9a-f]{6}$/i.test(s);
-// WCAG maths, the same rule the app uses for text on the accent.
 const lum = (hex) => { const [r, g, b] = hexRgb(hex).map((c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
 const onAccent = (hex) => (contrast(hex, "#1A1206") >= contrast(hex, "#FFFFFF") ? "#1A1206" : "#FFFFFF");
-const rad = (deg) => (deg - 90) * Math.PI / 180; // 0° is the top, clockwise
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+// Colours as [r, g, b, a] (a 0…1), like the app's CGColors.
+const C = (hex, a = 1) => [...hexRgb(hex), a];
+const W_ = (a) => [255, 255, 255, a], K_ = (a) => [0, 0, 0, a];
+const withA = (c, a) => [c[0], c[1], c[2], a];
+const css = (c) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${+c[3].toFixed(3)})`;
+const cHex = (c) => rgbHex(c[0], c[1], c[2]);
+const rad = (clock) => (clock - 90) * Math.PI / 180; // clock angles: 0 = 12 o'clock, clockwise (y-down)
 
-// ---------- What a wheel is ----------
+// ---------- What a wheel is: Circularity's appearance settings ----------
 const SYS_DARK = matchMedia("(prefers-color-scheme: dark)").matches;
 const DEFAULT = {
-  // ◆ the app's theme settings
   theme: "riso", accent: "#FF4FA0", layout: "halo", scheme: "auto", panel: "auto", glass: 0.55,
   tints: { images: "", tools: "", documents: "" }, scale: 1, thick: 1, gap: 3, orb: 1, label: 1, font: "rounded", case: "title",
-  // ✦ studio
-  count: 6, spread: 360, rot: 0, round: 0, bulge: 1, btn: 1,
-  explode: 0, stagger: 0, hole: 0, discPad: 0, discShape: "circle", labelPos: "middle", labelTurn: "upright", mirror: false, orbRing: 1.5, orbitPath: true, orbitIcons: true,
-  fill: "flat", accent2: "#2F5BFF", hue: 0, disc: "", ink: "",
-  hotInk: "", capInk: "", orbFill: "", rimColor: "", rimW: 1, segLine: "", segLineW: 1, segAlpha: 1, gradDir: "out", hueShift: 0, sat: 1, bright: 1,
-  display: "app", weight: 800, track: 0, captions: true, labels: [], centre: "",
-  kicker: true, hint: true, orbSize: 1, capSize: 1, italic: false, outline: 0, orbFace: "same",
-  fx: { glow: 0.6, shadow: 0.7, spin: 0, breathe: 0, sparks: true, dots: 0, tilt: 0.5, grain: 0, scan: 0, vignette: 0, autohover: true, pointer: "none", sound: false,
-    glowColor: "accent", pulse: 0, sparkAmt: 1, sparkShape: "dots", gravity: 1, shock: true, wobble: 0, misprint: 0, halftone: 0, pixel: 0 },
-  // The poster's paper follows the Mac: ink-black in Dark Mode, warm paper in Light.
-  bg: { kind: "paper", c1: "#FF4FA0", c2: "#2F5BFF", c3: SYS_DARK ? "#14110D" : "#F3EEE4", animate: true, blur: 0, dim: 0,
-    scale: 1, angle: 135, frame: 0, frameColor: "#17140F", title: "" },
+  fill: "flat", accent2: "#2F5BFF", segAlpha: 1, disc: "", ink: "", hotInk: "", rimColor: "", rimW: 1,
+  round: 0, bulge: 1, captions: true, dimOthers: true, labelWeight: "bold", track: 0,
+  fx: { glow: -1, glowColor: "accent", shadow: 1, breathe: 0, dots: 0, spin: 0, twirl: false, sparks: false, autohover: true, sound: false },
+  // Preview only (your desktop stands in here); never exported.
+  bg: { kind: "paper", c1: "#FF4FA0", c2: "#2F5BFF", c3: SYS_DARK ? "#14110D" : "#F3EEE4", animate: true, blur: 0, dim: 0 },
 };
-const APP_KEYS = ["theme", "accent", "layout", "scheme", "panel", "glass", "tints", "scale", "thick", "gap", "orb", "label", "font", "case"];
+// Studio knob ↔ app setting. Export, import and validation all read this.
+const KEYS = [
+  ["accent", "appearance.accentHex", { hex: true }], ["glass", "appearance.glassStrength", { lo: 0, hi: 1 }],
+  ["scheme", "appearance.wheelScheme", { one: ["auto", "system", "light", "dark"] }], ["panel", "menubar.colorScheme", { one: ["auto", "system", "light", "dark"] }],
+  ["layout", "wheel.layout", { one: ["halo", "ring", "orbit"] }],
+  ["tints.images", "appearance.tint.images", { hex0: true }], ["tints.documents", "appearance.tint.documents", { hex0: true }], ["tints.tools", "appearance.tint.tools", { hex0: true }],
+  ["scale", "wheel.scale", { lo: 0.7, hi: 1.4 }], ["thick", "appearance.ringThickness", { lo: 0.8, hi: 1.2 }], ["gap", "appearance.segmentGap", { lo: 1, hi: 8, int: true }],
+  ["orb", "appearance.orbScale", { lo: 0.85, hi: 1.15 }], ["label", "appearance.labelScale", { lo: 0.85, hi: 1.3 }],
+  ["font", "appearance.font", { one: ["rounded", "default", "mono"] }], ["case", "appearance.labelCase", { one: ["title", "upper"] }],
+  ["fill", "appearance.fillStyle", { one: ["flat", "duo", "shades", "stickers", "rainbow", "outline"] }], ["accent2", "appearance.accent2Hex", { hex: true }],
+  ["segAlpha", "appearance.restOpacity", { lo: 0.15, hi: 1 }], ["disc", "appearance.discHex", { hex0: true }], ["ink", "appearance.textHex", { hex0: true }],
+  ["hotInk", "appearance.hotTextHex", { hex0: true }], ["rimColor", "appearance.rimHex", { hex0: true }], ["rimW", "appearance.rimWidth", { lo: 0, hi: 6 }],
+  ["fx.glow", "appearance.glow", { lo: -1, hi: 1.5, glow: true }], ["fx.glowColor", "appearance.glowColor", { one: ["accent", "second", "white"] }],
+  ["round", "appearance.corners", { lo: 0, hi: 1 }], ["bulge", "appearance.hoverPop", { lo: 0, hi: 2.5 }], ["fx.shadow", "appearance.discShadow", { lo: 0, hi: 1 }],
+  ["captions", "appearance.captions", { bool: true }], ["dimOthers", "appearance.dimOthers", { bool: true }],
+  ["labelWeight", "appearance.labelWeight", { one: ["regular", "semibold", "bold", "heavy"] }], ["track", "appearance.tracking", { lo: -0.05, hi: 0.3 }],
+  ["fx.breathe", "appearance.breathe", { lo: 0, hi: 1 }], ["fx.dots", "appearance.ringDots", { lo: 0, hi: 36, int: true }], ["fx.spin", "appearance.ringSpin", { lo: 0, hi: 20 }],
+  ["fx.twirl", "appearance.twirl", { bool: true }], ["fx.sparks", "appearance.sparks", { bool: true }],
+];
 const clone = (o) => JSON.parse(JSON.stringify(o));
+const getP = (o, p) => p.split(".").reduce((a, k) => a?.[k], o);
+const setP = (o, p, v) => { const ks = p.split("."), last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
 function merge(base, over) {
   const out = clone(base);
   for (const [k, v] of Object.entries(over || {})) {
+    if (!(k in out)) continue; // knobs the app doesn't have are dropped
     if (v && typeof v === "object" && !Array.isArray(v) && out[k] && typeof out[k] === "object") out[k] = merge(out[k], v);
-    else if (k in out || k === "labels") out[k] = clone(v);
+    else out[k] = clone(v);
   }
   return out;
 }
-const getP = (o, p) => p.split(".").reduce((a, k) => a?.[k], o);
-const setP = (o, p, v) => { const ks = p.split("."), last = ks.pop(); ks.reduce((a, k) => a[k], o)[last] = v; };
+// Anything out of the app's ranges (an old link, a hand edit) comes back in.
+function valid(S) {
+  for (const [path, , r] of KEYS) {
+    const v = getP(S, path), d = getP(DEFAULT, path);
+    let ok = v;
+    if (r.one) ok = r.one.includes(v) ? v : d;
+    else if (r.hex) ok = isHex(v) ? v.toUpperCase() : d;
+    else if (r.hex0) ok = isHex(v) ? v.toUpperCase() : "";
+    else if (r.bool) ok = typeof v === "boolean" ? v : d;
+    else { const n = +v; ok = Number.isFinite(n) ? clamp(n, r.lo, r.hi) : d; if (r.glow && ok < 0) ok = -1; if (r.int) ok = Math.round(ok); }
+    setP(S, path, ok);
+  }
+  if (!["paper", "desktop", "aurora", "solid", "photo", "none"].includes(S.bg.kind)) S.bg.kind = "paper";
+  return S;
+}
 
 const APP_THEMES = [
   { id: "riso", name: "Riso", sub: "the default", set: {} },
-  { id: "neon", name: "Neon", sub: "lime", set: { accent: "#C6FF3D", accent2: "#5CE1FF", bg: { kind: "aurora", c1: "#1F4D3A", c2: "#2B2F6B", c3: "#07080B" } } },
-  { id: "tangerine", name: "Tangerine", sub: "warm", set: { accent: "#FF8A00", layout: "ring", fx: { glow: 0 }, bg: { kind: "desktop", c1: "#3A2A1C", c2: "#120D09" } } },
-  { id: "glass", name: "Glass", sub: "light", set: { accent: "#7C8CFF", layout: "ring", glass: 0.3, scheme: "light", fx: { glow: 0 }, bg: { kind: "desktop", c1: "#DCD6CC", c2: "#B9C4D0" } } },
-  { id: "graphite", name: "Graphite", sub: "quiet", set: { accent: "#9BA3AF", layout: "ring", glass: 0.75, font: "default", fx: { glow: 0 }, bg: { kind: "desktop", c1: "#2B3242", c2: "#14171E" } } },
-  { id: "midnight", name: "Midnight", sub: "deep blue", set: { accent: "#5C7CFA", layout: "ring", glass: 0.8, fx: { glow: 0 }, bg: { kind: "desktop", c1: "#1B2550", c2: "#06070D" } } },
-  { id: "mono", name: "Mono", sub: "black & white", set: { accent: "#F2F2F2", font: "default", fx: { glow: 0.25 }, bg: { kind: "solid", c1: "#050505" } } },
+  { id: "neon", name: "Neon", sub: "lime", set: { accent: "#C6FF3D", bg: { kind: "aurora", c1: "#1F4D3A", c2: "#2B2F6B", c3: "#07080B" } } },
+  { id: "tangerine", name: "Tangerine", sub: "warm", set: { accent: "#FF8A00", layout: "ring", bg: { kind: "desktop", c1: "#3A2A1C", c2: "#120D09" } } },
+  { id: "glass", name: "Glass", sub: "light", set: { accent: "#7C8CFF", layout: "ring", glass: 0.3, scheme: "light", bg: { kind: "desktop", c1: "#DCD6CC", c2: "#B9C4D0" } } },
+  { id: "graphite", name: "Graphite", sub: "quiet", set: { accent: "#9BA3AF", layout: "ring", glass: 0.75, font: "default", bg: { kind: "desktop", c1: "#2B3242", c2: "#14171E" } } },
+  { id: "midnight", name: "Midnight", sub: "deep blue", set: { accent: "#5C7CFA", layout: "ring", glass: 0.8, bg: { kind: "desktop", c1: "#1B2550", c2: "#06070D" } } },
+  { id: "mono", name: "Mono", sub: "black & white", set: { accent: "#F2F2F2", font: "default", bg: { kind: "solid", c1: "#050505" } } },
 ];
 const STUDIO_PRESETS = [
-  { name: "Vaporwave", sub: "gradient · grain", set: { theme: "custom", accent: "#FF5CA8", accent2: "#5CE1FF", fill: "gradient", layout: "ring", scheme: "dark", display: "outfit", weight: 900, case: "upper", round: 0.5,
-    fx: { glow: 1, grain: 0.35, scan: 0.2, dots: 12, spin: 2 }, bg: { kind: "waves", c1: "#FF5CA8", c2: "#6B3BFF", c3: "#12082A" } } },
-  { name: "Terminal", sub: "phosphor", set: { theme: "custom", accent: "#39FF6A", font: "mono", display: "vt323", case: "upper", fill: "outline", ink: "#39FF6A", disc: "#020804",
-    fx: { glow: 1.2, scan: 0.6, vignette: 0.7, pointer: "arrow" }, bg: { kind: "solid", c1: "#020804" } } },
-  { name: "Sticker bomb", sub: "chunky", set: { theme: "custom", accent: "#FFFFFF", fill: "stickers", layout: "ring", scheme: "light", round: 1, gap: 8, thick: 1.2, bulge: 2, display: "hand", weight: 700,
-    fx: { glow: 0, shadow: 1.2 }, bg: { kind: "dots", c1: "#C9BFAE", c3: "#F4EFE6" } } },
-  { name: "Arcade", sub: "8-bit", set: { theme: "custom", accent: "#FFFFFF", fill: "rainbow", count: 8, display: "press", case: "upper", captions: false,
-    fx: { glow: 1.2, scan: 0.3, spin: 4 }, bg: { kind: "grid", c1: "#FF2BD6", c3: "#0B0420" } } },
-  { name: "Blueprint", sub: "drafted", set: { theme: "custom", accent: "#FFFFFF", fill: "outline", layout: "ring", display: "grotesk", ink: "#DCEBFF", disc: "#0F3F8C", count: 8,
-    fx: { glow: 0, shadow: 0.3 }, bg: { kind: "grid", c1: "#6FA8FF", c3: "#0F3F8C" } } },
-  { name: "Noir", sub: "film", set: { theme: "custom", accent: "#EDEDED", layout: "ring", scheme: "dark", display: "playfair", weight: 900, round: 0.15,
-    fx: { glow: 0, grain: 0.6, vignette: 0.85 }, bg: { kind: "solid", c1: "#151515" } } },
-  { name: "Sunset", sub: "warm glow", set: { theme: "custom", accent: "#FF6A3D", accent2: "#FFD23F", fill: "gradient", display: "unbounded", round: 0.35,
-    fx: { glow: 0.9, breathe: 0.5 }, bg: { kind: "aurora", c1: "#FF6A3D", c2: "#9B6BFF", c3: "#1A0B1E" } } },
-  { name: "Candy", sub: "orbit · pastel", set: { theme: "custom", accent: "#FF6FB5", layout: "orbit", scheme: "light", fill: "stickers", display: "outfit", count: 8,
-    fx: { glow: 0.3, shadow: 0.6, dots: 8 }, bg: { kind: "mesh", c1: "#FFD6EC", c2: "#C9F0FF", c3: "#FFF4C2" } } },
-  { name: "Swiss", sub: "grid · red", set: { theme: "custom", accent: "#FF2B2B", layout: "ring", scheme: "light", display: "grotesk", weight: 700, case: "upper", gap: 1, glass: 0.9,
-    fx: { glow: 0, shadow: 0.3 }, bg: { kind: "solid", c1: "#F2F0EA" } } },
-  { name: "Half moon", sub: "a fan", set: { theme: "custom", accent: "#5CE1FF", spread: 200, count: 8, round: 0.4, fill: "shades",
-    fx: { glow: 0.8 }, bg: { kind: "waves", c1: "#0E5A6B", c2: "#0A2B44", c3: "#04121B" } } },
-  { name: "Chrome", sub: "Y2K", set: { theme: "custom", accent: "#D9E2EC", accent2: "#8FA3B8", fill: "glass", layout: "ring", display: "unbounded", round: 0.6, thick: 1.15,
-    fx: { glow: 0.5, shadow: 1.3 }, bg: { kind: "mesh", c1: "#8796A8", c2: "#2D3540", c3: "#C7D0DA" } } },
-  { name: "Lava", sub: "molten", set: { theme: "custom", accent: "#FF3D2E", accent2: "#FFB020", fill: "duo", count: 10, round: 0.3,
-    fx: { glow: 1.5, breathe: 1, spin: 2 }, bg: { kind: "aurora", c1: "#FF3D2E", c2: "#FF8A00", c3: "#120402" } } },
+  { name: "Sticker bomb", sub: "chunky", set: { theme: "custom", accent: "#FF4FA0", layout: "ring", scheme: "light", glass: 0.9, fill: "stickers", round: 1, gap: 6, thick: 1.2, bulge: 2, fx: { shadow: 0.8 }, bg: { kind: "paper", c3: "#F3EEE4" } } },
+  { name: "Arcade", sub: "rainbow ring", set: { theme: "custom", accent: "#FFFFFF", fill: "rainbow", font: "mono", case: "upper", fx: { glow: 1.2, glowColor: "white", dots: 24, spin: 6, sparks: true }, bg: { kind: "solid", c1: "#0B0420" } } },
+  { name: "Outline", sub: "line work", set: { theme: "custom", accent: "#FF4FA0", layout: "ring", scheme: "dark", fill: "outline", round: 0.35, dimOthers: false, labelWeight: "heavy", fx: { glow: 0.8 }, bg: { kind: "desktop", c1: "#2A2230", c2: "#0E0B12" } } },
+  { name: "Duotone", sub: "orbit", set: { theme: "custom", accent: "#FF4FA0", accent2: "#2F5BFF", layout: "orbit", scheme: "dark", fill: "duo", segAlpha: 0.75, fx: { glow: 0.8 }, bg: { kind: "paper", c3: "#14110D" } } },
+  { name: "Paper", sub: "halo, printed", set: { theme: "custom", fill: "shades", disc: "#F3EEE4", ink: "#17140F", rimColor: "#2F5BFF", rimW: 3, track: 0.08, fx: { glow: 0.3 }, bg: { kind: "paper", c3: "#E9E2D5" } } },
+  { name: "Breather", sub: "slow glow", set: { theme: "custom", accent: "#5CE1FF", fx: { glow: 1.2, breathe: 0.8, dots: 12, spin: 3, twirl: true }, bg: { kind: "aurora", c1: "#0E5A6B", c2: "#1B2550", c3: "#04121B" } } },
+  { name: "Lava", sub: "molten", set: { theme: "custom", accent: "#FF3D2E", accent2: "#FFB020", fill: "duo", round: 0.3, fx: { glow: 1.5, glowColor: "second", breathe: 1, sparks: true }, bg: { kind: "aurora", c1: "#FF3D2E", c2: "#FF8A00", c3: "#120402" } } },
+  { name: "Print shop", sub: "ink on white", set: { theme: "custom", accent: "#17140F", layout: "ring", scheme: "light", glass: 1, fill: "outline", disc: "#FFFFFF", ink: "#17140F", round: 0.2, labelWeight: "regular", track: 0.12, case: "upper", fx: { glow: 0, shadow: 0.4 }, bg: { kind: "solid", c1: "#F2F0EA" } } },
+  { name: "Candy", sub: "orbit, pastel", set: { theme: "custom", accent: "#FF6FB5", layout: "orbit", scheme: "light", fill: "stickers", segAlpha: 0.9, fx: { glow: 0.3, sparks: true }, bg: { kind: "paper", c1: "#FFD6EC", c2: "#C9F0FF", c3: "#FFF4C2" } } },
+  { name: "Night orbit", sub: "dots", set: { theme: "custom", accent: "#5C7CFA", accent2: "#9B6BFF", disc: "#0B1230", rimColor: "#5C7CFA", rimW: 2, fx: { glowColor: "second", dots: 18, spin: 2 }, bg: { kind: "aurora", c1: "#1B2550", c2: "#3B1C5A", c3: "#06070D" } } },
+  { name: "Terminal", sub: "phosphor", set: { theme: "custom", accent: "#39FF6A", font: "mono", case: "upper", fill: "outline", ink: "#39FF6A", disc: "#020804", rimColor: "#39FF6A", fx: { glow: 1.2 }, bg: { kind: "solid", c1: "#020804" } } },
+  { name: "Chunky", sub: "big pop", set: { theme: "custom", accent: "#FF8A00", layout: "ring", fill: "shades", round: 0.8, bulge: 2.5, labelWeight: "heavy", fx: { twirl: true, sparks: true }, bg: { kind: "desktop", c1: "#3A2A1C", c2: "#120D09" } } },
 ];
+const presetState = (p) => valid(merge(DEFAULT, p.set));
 
-// The buttons around the wheel; 8, 10 and 12 add more formats.
-const SEG = {
-  png: { label: "PNG", mono: "PNG", cap: "LOSSLESS", kind: "images", kicker: "CONVERT TO", hint: "lossless, keeps transparency", sticker: "#35D0E6", emoji: "🖼️" },
-  jpg: { label: "JPG", mono: "JPG", cap: "PHOTO", kind: "images", kicker: "CONVERT TO", hint: "small, best for photos", sticker: "#FF6FB5", emoji: "📷" },
-  heic: { label: "HEIC", mono: "HEIC", cap: "IPHONE", kind: "images", kicker: "CONVERT TO", hint: "half the size of JPG", sticker: "#FF9A3D", emoji: "📱" },
-  webp: { label: "WebP", mono: "WEBP", cap: "WEB", kind: "images", kicker: "CONVERT TO", hint: "small, for the web", sticker: "#9B6BFF", emoji: "🌐" },
-  avif: { label: "AVIF", mono: "AVIF", cap: "TINY", kind: "images", kicker: "CONVERT TO", hint: "the smallest of all", sticker: "#FFD23F", emoji: "🪶" },
-  tiff: { label: "TIFF", mono: "TIFF", cap: "PRINT", kind: "images", kicker: "CONVERT TO", hint: "uncompressed, for print", sticker: "#3ECF8E", emoji: "🖨️" },
-  pdf: { label: "PDF", mono: "PDF", cap: "DOCUMENT", kind: "documents", kicker: "MAKE A", hint: "one page per picture", sticker: "#FF5E5B", emoji: "📄" },
-  cut: { label: "Cut out", mono: "CUT", cap: "NO BG", kind: "tools", kicker: "CUT OUT THE", hint: "background made transparent", sticker: "#3ECF8E", emoji: "✂️" },
-  crop: { label: "Crop", mono: "CROP", cap: "TRIM", kind: "tools", kicker: "OPEN", hint: "trim the edges", sticker: "#FF8AD8", emoji: "📐" },
-  more: { label: "More", mono: "•••", cap: "MORE", kind: null, kicker: "REST HERE FOR", hint: "the rest of the formats", sticker: "#E8E8EE", emoji: "✨" },
-  sqz: { label: "Compress", mono: "SQZ", cap: "COMPRESS", kind: "tools", kicker: "OPEN", hint: "quality or target size", sticker: "#FFD23F", emoji: "🗜️" },
-  size: { label: "Resize", mono: "SIZE", cap: "RESIZE", kind: "tools", kicker: "OPEN", hint: "width × height", sticker: "#9B6BFF", emoji: "↔️" },
+// The sample menu the app builds for a HEIC photo (slot 0 at 12 o'clock).
+const SEGS = [
+  { id: "png", label: "PNG", mono: "PNG", cap: "LOSSLESS", kind: "images", icon: "photo", kicker: "CONVERT TO", hint: "lossless, keeps transparency", verb: "Convert to PNG" },
+  { id: "jpg", label: "JPG", mono: "JPG", cap: "PHOTO", kind: "images", icon: "photo", kicker: "CONVERT TO", hint: "small, best for photos", verb: "Convert to JPG" },
+  { id: "avif", label: "AVIF", mono: "AVIF", cap: "SMALLEST", kind: "images", icon: "photo", kicker: "CONVERT TO", hint: "the smallest of all", verb: "Convert to AVIF" },
+  { id: "more", label: "More", mono: "•••", cap: "MORE", kind: "more", icon: "ellipsis", kicker: "REST HERE FOR", hint: "8 more options", verb: "More options" },
+  { id: "sqz", label: "Compress", mono: "SQZ", cap: "COMPRESS", kind: "tools", icon: "compress", kicker: "OPEN", hint: "quality or target size", verb: "Compress…" },
+  { id: "size", label: "Resize", mono: "SIZE", cap: "RESIZE", kind: "tools", icon: "resize", kicker: "OPEN", hint: "width × height", verb: "Resize…" },
+];
+const STICKERS = { PNG: "#35D0E6", JPG: "#FF6FB5", AVIF: "#FFD23F", "•••": "#E8E8EE", SQZ: "#FFD23F", SIZE: "#9B6BFF" };
+const FAMILY = {
+  rounded: 'ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif',
+  default: '-apple-system, BlinkMacSystemFont, system-ui, "Geist", sans-serif',
+  mono: 'ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace',
 };
-const ORDER = { 6: ["png", "jpg", "cut", "more", "sqz", "size"], 8: ["png", "jpg", "heic", "pdf", "cut", "more", "sqz", "size"],
-  10: ["png", "jpg", "heic", "webp", "pdf", "cut", "more", "sqz", "size", "crop"],
-  12: ["png", "jpg", "heic", "webp", "avif", "tiff", "pdf", "cut", "more", "sqz", "size", "crop"] };
-const segsFor = (n) => (ORDER[n] || ORDER[6]).map((id) => ({ id, ...SEG[id] }));
-
-const FONTS = {
-  app: { name: "App font", fam: null, k: 1 },
-  geist: { name: "Geist", fam: '"Geist", system-ui, sans-serif', k: 1 },
-  unbounded: { name: "Unbounded", fam: '"Unbounded", sans-serif', k: 0.82 },
-  grotesk: { name: "Space Grotesk", fam: '"Space Grotesk", sans-serif', k: 1 },
-  outfit: { name: "Outfit", fam: '"Outfit", sans-serif', k: 1 },
-  playfair: { name: "Playfair", fam: '"Playfair Display", serif', k: 1.02 },
-  instrument: { name: "Instrument", fam: '"Instrument Serif", serif', k: 1.25 },
-  silkscreen: { name: "Silkscreen", fam: '"Silkscreen", monospace', k: 0.88 },
-  press: { name: "Press Start", fam: '"Press Start 2P", monospace', k: 0.58 },
-  vt323: { name: "VT323", fam: '"VT323", monospace', k: 1.4 },
-  hand: { name: "Handwritten", fam: '"Architects Daughter", cursive', k: 1.05 },
-};
-const appFont = (f) => (f === "mono" ? '"JetBrains Mono", ui-monospace, monospace' : f === "default" ? '-apple-system, system-ui, "Geist", sans-serif' : '"Nunito", ui-rounded, system-ui, sans-serif');
+const WEIGHT = { regular: 400, semibold: 600, bold: 700, heavy: 800 };
 
 // ---------- State, history, storage ----------
 let st = (() => {
-  if (location.hash.startsWith("#w=")) { try { return merge(DEFAULT, JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3).replace(/-/g, "+").replace(/_/g, "/")))))); } catch {} }
-  try { const v = JSON.parse(store.get("circularity-studio-v2") || "null"); if (v) return merge(DEFAULT, v); } catch {}
-  // Carry over a theme made in the old builder on the home page (only if it isn't the old lime default).
-  try { const o = JSON.parse(store.get("circularity-theme-builder") || "null");
-    if (o && o.accent && o.accent.toUpperCase() !== "#C6FF3D") return merge(DEFAULT, { theme: o.theme, accent: o.accent, layout: o.layout, scheme: o.scheme, panel: o.panel, glass: o.glass, tints: o.tints,
-      scale: o.scale, thick: o.thick, gap: o.gap, orb: o.orb, label: o.label, font: o.font, case: o.case }); } catch {}
+  if (location.hash.startsWith("#w=")) { try { return valid(merge(DEFAULT, JSON.parse(decodeURIComponent(escape(atob(location.hash.slice(3).replace(/-/g, "+").replace(/_/g, "/"))))))); } catch {} }
+  try { const v = JSON.parse(store.get("circularity-studio-v3") || "null"); if (v) return valid(merge(DEFAULT, v)); } catch {}
   return clone(DEFAULT);
 })();
-if (EMBED) st = merge(DEFAULT, STUDIO_PRESETS[0].set);
-let appView = false, hideStudio = false, photo = null, recording = false;
+if (EMBED) st = presetState(STUDIO_PRESETS[0]);
+let photo = null, recording = false;
 let hist = [JSON.stringify(st)], hi = 0, histTimer = 0;
 function pushHist() { const j = JSON.stringify(st); if (j === hist[hi]) return; hist = hist.slice(0, hi + 1); hist.push(j); if (hist.length > 100) hist.shift(); hi = hist.length - 1; updUndo(); }
 function updUndo() { $("#undo").disabled = hi <= 0; $("#redo").disabled = hi >= hist.length - 1; }
 function restore(j) { st = JSON.parse(j); save(); syncUI(); kick(); }
 function undo() { clearTimeout(histTimer); pushHist(); if (hi > 0) { hi--; restore(hist[hi]); updUndo(); toast("Undone"); } }
 function redo() { if (hi < hist.length - 1) { hi++; restore(hist[hi]); updUndo(); toast("Redone"); } }
-function save() { store.set("circularity-studio-v2", JSON.stringify(st)); }
+function save() { store.set("circularity-studio-v3", JSON.stringify(st)); }
 function commit(now) { save(); syncUI(); kick(); clearTimeout(histTimer); if (now) pushHist(); else histTimer = setTimeout(pushHist, 400); }
 function set(path, v) {
   setP(st, path, v);
   if (path === "accent") st.theme = APP_THEMES.find((t) => (t.set.accent || DEFAULT.accent) === v)?.id || "custom";
+  if (path === "fx.dots" || path === "fx.spin" || path === "fx.twirl") restartMotion = true;
   commit();
 }
 
-// The app view: only ◆ settings, everything else as the app draws it.
-function effective(force) {
-  if (!appView && !force) return st;
-  const e = clone(DEFAULT);
-  for (const k of APP_KEYS) e[k] = clone(st[k]);
-  e.fx.glow = st.layout === "halo" ? 0.6 : 0; e.fx.autohover = st.fx.autohover; e.fx.tilt = 0;
-  const light = isLight(e); e.bg.kind = "desktop"; e.bg.c1 = light ? "#DCD6CC" : "#2B3242"; e.bg.c2 = light ? "#B9C4D0" : "#14171E";
-  return e;
-}
-function isLight(S) {
-  if (S.layout === "halo") return false;
-  if (S.scheme === "light") return true;
-  if (S.scheme === "dark") return false;
-  if (S.scheme === "system") return matchMedia("(prefers-color-scheme: light)").matches;
-  return S.layout === "orbit";
-}
-
-// ---------- Drawing ----------
-function geometry(S) {
-  const halo = S.layout === "halo", n = S.count, step = S.spread / n;
-  if (S.layout === "orbit") {
-    const fit = Math.min(1, (2 * Math.PI * 165 * (S.spread / 360) / n) / 100);
-    return { n, step, orb: 150 * S.orb, buttonR: 165 * (n > 8 ? 1.06 : 1), buttonD: 88 * S.btn * Math.max(0.55, fit), disc: 436 };
+// ---------- The app's look rules (WheelStyle, tokens) ----------
+const isLight = (S) => S.layout === "halo" ? false : S.scheme === "light" ? true : S.scheme === "dark" ? false
+  : S.scheme === "system" ? !matchMedia("(prefers-color-scheme: dark)").matches : S.layout === "orbit";
+const bright = (S) => S.fill === "stickers" || S.fill === "rainbow";
+const glowAmount = (S) => S.fx.glow < 0 ? (S.layout === "halo" ? 0.6 : 0) : S.fx.glow;
+const tintOf = (S, seg) => (seg.kind === "more" ? "" : S.tints[seg.kind]) || "";
+const stickerOf = (seg) => C(STICKERS[seg.mono] || "#E8E8EE");
+const rainbowOf = (i, lit) => [...hslRgb(i / 6 * 360, lit ? 0.95 : 0.85, lit ? 0.66 : 0.6), 1];
+const glowColour = (S, seg) => S.fx.glowColor === "second" ? C(S.accent2) : S.fx.glowColor === "white" ? W_(1) : (S.fill === "stickers" && seg ? stickerOf(seg) : C(S.accent));
+const resting = (S, c) => withA(c, c[3] * S.segAlpha);
+function restFill(S, seg, i) {
+  const t = tintOf(S, seg);
+  switch (S.fill) {
+    case "duo": return C(t || (i % 2 === 1 ? S.accent2 : S.accent), 0.24);
+    case "shades": return C(t || S.accent, 0.08 + 0.34 * i / 5);
+    case "stickers": return stickerOf(seg);
+    case "rainbow": return rainbowOf(i, false);
+    case "outline": return [0, 0, 0, 0];
+    default: return null;
   }
-  const base = halo ? { rin: 120, rout: 188, bulge: 10, orb: 230, disc: 424 } : { rin: 98, rout: 204, bulge: 12, orb: 180, disc: 436 };
-  const g = { ...base, n, step };
-  g.rin = Math.max(40, base.rin + S.hole);
-  g.rout = g.rin + (base.rout - base.rin) * S.thick;
-  g.span = Math.max(3, step - S.gap * (halo ? 2 / 3 : 1) * Math.min(1, 6 / n * 1.4));
-  g.orb = Math.min(base.orb * S.orb, g.rin * 2 - 8);
-  g.disc = Math.max(base.disc, (g.rout + g.bulge * S.bulge + 2) * 2) + (S.explode + S.stagger) * 2 + S.discPad * 2;
-  return g;
 }
-const segAngle = (S, i, spin) => {
-  const n = S.count, j = S.mirror ? (S.spread >= 360 ? (n - i) % n : n - 1 - i) : i;
-  return S.rot + (spin || 0) + (S.spread >= 360 ? j * 360 / n : -S.spread / 2 + (j + 0.5) * S.spread / n);
-};
-const segPush = (S, i) => S.explode + (i % 2 ? S.stagger : 0); // how far a button sits out from the centre
-let NOW = 0; // the scene clock, for pulse and wobble
-function discPath(ctx, R, shape) {
-  ctx.beginPath();
-  if (shape === "hex") { for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; ctx[k ? "lineTo" : "moveTo"](Math.cos(a) * R, Math.sin(a) * R); } ctx.closePath(); }
-  else if (shape === "squircle") { const r = R * 0.42; ctx.moveTo(-R + r, -R); ctx.arcTo(R, -R, R, R, r); ctx.arcTo(R, R, -R, R, r); ctx.arcTo(-R, R, -R, -R, r); ctx.arcTo(-R, -R, R, -R, r); ctx.closePath(); }
-  else ctx.arc(0, 0, R, 0, Math.PI * 2);
-}
-const glowCol = (S, seg) => S.fx.glowColor === "second" ? S.accent2 : S.fx.glowColor === "white" ? "#FFFFFF" : S.fx.glowColor === "ink" ? (S.ink || "#17140F") : (S.fill === "stickers" && seg ? seg.sticker : S.accent);
-const pulseK = (S) => 1 + S.fx.pulse * 0.7 * Math.sin(NOW * 4);
-const weightOf = (S, w) => (S.italic ? "italic " : "") + w;
-// Text with an optional outline in a contrasting ink.
-function paint(ctx, S, txt, x, y, color) {
-  if (S.outline > 0) { ctx.save(); ctx.lineJoin = "round"; ctx.lineWidth = S.outline * 2; ctx.strokeStyle = lum(isHex(color) ? color : "#FFFFFF") > 0.4 ? "#0B0D10" : "#FFFFFF"; ctx.strokeText(txt, x, y); ctx.restore(); }
-  ctx.fillStyle = color; ctx.fillText(txt, x, y);
+const hotFill = (S, seg, i) => S.fill === "stickers" ? stickerOf(seg) : S.fill === "rainbow" ? rainbowOf(i, true) : C(S.accent);
+function sectorTokens(S) {
+  const halo = S.layout === "halo", light = isLight(S), on = C(onAccent(S.accent));
+  const t = halo ? { segRest: C("#1B1D23"), segStroke: null, segHotStroke: null, fgRest: C("#ECEEF2"), fgHot: on, capRest: C("#9097A6"), dim: false }
+    : light ? { segRest: K_(0.06), segStroke: K_(0.10), segHotStroke: K_(0.25), fgRest: C("#1D1B18"), fgHot: on, capRest: C("#4A453E"), dim: true }
+    : { segRest: W_(0.07), segStroke: W_(0.10), segHotStroke: W_(0.35), fgRest: C("#F4F1EC"), fgHot: on, capRest: C("#C9C3B9"), dim: true };
+  if (bright(S)) { t.fgRest = C("#0B0D10"); t.capRest = K_(0.55); t.fgHot = C("#0B0D10"); }
+  if (S.ink) { t.fgRest = C(S.ink); t.capRest = C(S.ink, 0.62); }
+  if (S.hotInk) t.fgHot = C(S.hotInk);
+  t.dim = t.dim && S.dimOthers;
+  return t;
 }
 
-// An annular sector with rounded corners (round 0…1).
-function sector(ctx, rin, rout, a0, a1, round) {
-  ctx.beginPath(); rin = Math.max(1, rin); rout = Math.max(rin + 1, rout);
-  const rr = round * Math.min((rout - rin) / 2, (a1 - a0) * rin / 2) * 0.96;
-  if (rr < 0.5) { ctx.arc(0, 0, rout, a0, a1); ctx.arc(0, 0, rin, a1, a0, true); ctx.closePath(); return; }
+// ---------- Geometry (WheelGeometry.make + WheelTweaks) ----------
+function geom(S) {
+  const pop = clamp(S.bulge, 0, 2.5);
+  if (S.layout === "orbit") {
+    const hs = 1 + 0.16 * pop;
+    return { kind: "orbit", buttonR: 165, buttonD: 88, hoverScale: hs, orb: 140 * clamp(S.orb, 0.85, 1.15), reach: 165 + 44 * hs };
+  }
+  const halo = S.layout === "halo";
+  const b = halo ? { rin: 120, rout: 188, hin: 116, hout: 198, orb: 230, disc: 424 } : { rin: 98, rout: 204, hin: 92, hout: 216, orb: 180, disc: 436 };
+  const rout = b.rin + (b.rout - b.rin) * clamp(S.thick, 0.8, 1.2), hout = rout + (b.hout - b.rout) * pop;
+  const disc = Math.max(b.disc, (hout + 2) * 2);
+  return { kind: S.layout, rin: b.rin, rout, hin: b.rin - (b.rin - b.hin) * pop, hout, disc,
+    span: 60 - clamp(S.gap, 1, 8) * (halo ? 2 / 3 : 1), orb: Math.min(b.orb * clamp(S.orb, 0.85, 1.15), b.rin * 2 - 8), reach: halo ? disc / 2 : hout };
+}
+
+// A sector with true fillets (the app's roundedSectorPath), in y-down scene space.
+function sectorPath(ctx, rin, rout, c0, c1, round) {
+  ctx.beginPath();
+  const a0 = rad(c0), a1 = rad(c1);
+  if (round <= 0.001) { ctx.arc(0, 0, rout, a0, a1); ctx.arc(0, 0, rin, a1, a0, true); ctx.closePath(); return; }
+  rin = Math.max(1, rin); rout = Math.max(rin + 1, rout);
+  const half = Math.sin(Math.min(Math.PI / 2 - 0.01, (a1 - a0) / 2));
+  const rr = Math.max(0.5, Math.min(1, round) * Math.min((rout - rin) / 2, rin * half / (1 - half)) * 0.98);
   const P = (r, a) => [Math.cos(a) * r, Math.sin(a) * r];
-  const dO = rr / rout, dI = rr / rin;
-  const [osx, osy] = P(rout, a0), [oex, oey] = P(rout, a1), [iex, iey] = P(rin, a1), [isx, isy] = P(rin, a0);
-  const [mx, my] = P((rin + rout) / 2, a0);
-  ctx.moveTo(mx, my);
-  ctx.arcTo(osx, osy, osx - Math.sin(a0) * rr * 2, osy + Math.cos(a0) * rr * 2, rr);
-  ctx.arc(0, 0, rout, a0 + dO, a1 - dO);
-  ctx.arcTo(oex, oey, iex, iey, rr);
-  ctx.arcTo(iex, iey, iex + Math.sin(a1) * rr * 2, iey - Math.cos(a1) * rr * 2, rr);
-  ctx.arc(0, 0, rin, a1 - dI, a0 + dI, true);
-  ctx.arcTo(isx, isy, osx, osy, rr);
+  const dOut = Math.asin(rr / (rout - rr)), dIn = Math.asin(rr / (rin + rr));
+  const o0 = a0 + dOut, o1 = a1 - dOut, i0 = a0 + dIn, i1 = a1 - dIn;
+  ctx.moveTo(...P((rin + rr) * Math.cos(dIn), a0));
+  ctx.lineTo(...P((rout - rr) * Math.cos(dOut), a0));
+  ctx.arc(...P(rout - rr, o0), rr, a0 - Math.PI / 2, o0);
+  ctx.arc(0, 0, rout, o0, o1);
+  ctx.arc(...P(rout - rr, o1), rr, o1, a1 + Math.PI / 2);
+  ctx.lineTo(...P((rin + rr) * Math.cos(dIn), a1));
+  ctx.arc(...P(rin + rr, i1), rr, a1 + Math.PI / 2, i1 + Math.PI);
+  ctx.arc(0, 0, rin, i1, i0, true);
+  ctx.arc(...P(rin + rr, i0), rr, i0 + Math.PI, a0 + Math.PI * 1.5);
   ctx.closePath();
 }
 
-function setFont(ctx, weight, px, fam) { ctx.font = `${weight} ${Math.max(1, px).toFixed(1)}px ${fam}`; }
-const orbFam = (S, halo) => S.orbFace === "same" ? labelFam(S, halo) : S.orbFace === "app" ? appFont(S.font) : FONTS[S.orbFace]?.fam || labelFam(S, halo);
-function fitText(ctx, text, maxW, weight, px, fam) { setFont(ctx, weight, px, fam); const w = ctx.measureText(text).width; if (w > maxW && w > 0) setFont(ctx, weight, px * maxW / w, fam); }
-function track(ctx, S, px) { if ("letterSpacing" in ctx) ctx.letterSpacing = (S.track * px).toFixed(2) + "px"; }
-function labelFam(S, halo) { return S.display !== "app" ? FONTS[S.display].fam : (halo ? '"JetBrains Mono", ui-monospace, monospace' : appFont(S.font)); }
-const fontK = (S) => (FONTS[S.display] || FONTS.app).k;
-function labelText(S, seg, i, halo) {
-  const custom = S.labels[i];
-  if (custom) return custom;
-  const t = halo && S.display === "app" ? seg.mono : seg.label;
-  return S.case === "upper" ? t.toUpperCase() : t;
+// ---------- Drawing helpers ----------
+let PX = 1; // scene units → canvas pixels (shadows ignore transforms)
+function font(ctx, weight, px, fam) { ctx.font = `${weight} ${Math.max(1, px).toFixed(2)}px ${fam}`; }
+// Shrinks to fit (down to minScale), then shortens in the middle, like CATextLayer.set in the app.
+function fit(ctx, text, maxW, weight, px, fam, minScale = 0.7) {
+  font(ctx, weight, px, fam); const w = ctx.measureText(text).width;
+  if (w <= maxW || w <= 0) return text;
+  font(ctx, weight, px * Math.max(minScale, maxW / w), fam);
+  if (ctx.measureText(text).width <= maxW) return text;
+  const ch = [...text]; let lo = 0, hi = ch.length - 1, best = "…";
+  while (lo <= hi) { const mid = (lo + hi) >> 1, tail = mid >> 1, c = ch.slice(0, mid - tail).join("") + "…" + ch.slice(ch.length - tail).join("");
+    if (ctx.measureText(c).width <= maxW) { best = c; lo = mid + 1; } else hi = mid - 1; }
+  return best;
 }
+function spacing(ctx, px) { if ("letterSpacing" in ctx) ctx.letterSpacing = px.toFixed(2) + "px"; }
+function text(ctx, s, x, y, colour) { ctx.fillStyle = css(colour); ctx.fillText(s, x, y); }
+function shadow(ctx, colour, blur, dy = 0) { ctx.shadowColor = css(colour); ctx.shadowBlur = blur * PX; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = dy * PX; }
+function noShadow(ctx) { ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0; }
+const labelFam = (S) => FAMILY[S.font] || FAMILY.rounded;
 
-function segStyle(S, seg, i, n, hot, light, halo, rin, rout, mid, ctx) {
-  const tint = seg.kind && S.tints[seg.kind];
-  let ink = S.ink || (halo ? "#ECEEF2" : light ? "#1D1B18" : "#F4F1EC");
-  let cap = S.capInk || (S.ink ? rgba(S.ink, 0.62) : (halo ? "#9097A6" : light ? "#4A453E" : "#C9C3B9"));
-  let fill, stroke = null, lw = 1;
-  const grad = (c0, c1) => {
-    const rm = (rin + rout) / 2, across = S.gradDir === "across";
-    const p0 = across ? rad(mid - 25) : rad(mid), p1 = across ? rad(mid + 25) : rad(mid);
-    const g = ctx.createLinearGradient(Math.cos(p0) * (across ? rm : rin), Math.sin(p0) * (across ? rm : rin), Math.cos(p1) * (across ? rm : rout), Math.sin(p1) * (across ? rm : rout));
-    g.addColorStop(0, c0); g.addColorStop(1, c1); return g; };
-  const dark = "#0B0D10";
-  if (hot) {
-    if (S.fill === "stickers") { fill = seg.sticker; ink = dark; cap = "rgba(0,0,0,.6)"; stroke = "#FFFFFF"; lw = 3; }
-    else if (S.fill === "rainbow") { fill = hslHex(i / n * 360 + S.hue, 95, 66); ink = dark; cap = "rgba(0,0,0,.6)"; stroke = "#FFFFFF"; lw = 3; }
-    else { fill = S.fill === "gradient" || S.fill === "duo" ? grad(S.accent, S.accent2) : S.accent; ink = onAccent(S.accent); cap = rgba(ink, 0.72); }
-    if (S.hotInk) { ink = S.hotInk; cap = rgba(S.hotInk, 0.72); }
-    return { fill, ink, cap, stroke, lw };
+// Simple stand-ins for the SF Symbols the app shows.
+function icon(ctx, name, x, y, size, colour) {
+  ctx.save(); ctx.translate(x, y); ctx.strokeStyle = css(colour); ctx.fillStyle = css(colour); ctx.lineWidth = size * 0.085; ctx.lineJoin = ctx.lineCap = "round";
+  const s = size / 2;
+  if (name === "photo") {
+    ctx.beginPath(); ctx.roundRect(-s, -s * 0.8, s * 2, s * 1.6, s * 0.25); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-s * 0.75, s * 0.55); ctx.lineTo(-s * 0.2, -s * 0.05); ctx.lineTo(s * 0.2, s * 0.3); ctx.lineTo(s * 0.45, s * 0.05); ctx.lineTo(s * 0.8, s * 0.55); ctx.stroke();
+    ctx.beginPath(); ctx.arc(s * 0.45, -s * 0.38, s * 0.16, 0, Math.PI * 2); ctx.fill();
+  } else if (name === "ellipsis") {
+    for (const dx of [-0.6, 0, 0.6]) { ctx.beginPath(); ctx.arc(dx * s, 0, s * 0.16, 0, Math.PI * 2); ctx.fill(); }
+  } else {
+    const inward = name === "compress";
+    for (const sg of [-1, 1]) {
+      const far = [sg * s * 0.85, -sg * s * 0.85], near = [sg * s * 0.15, -sg * s * 0.15];
+      const [from, to] = inward ? [far, near] : [near, far];
+      ctx.beginPath(); ctx.moveTo(...from); ctx.lineTo(...to); ctx.stroke();
+      const h = s * 0.45, dir = inward ? -sg : sg;
+      ctx.beginPath(); ctx.moveTo(to[0] - dir * h, to[1]); ctx.lineTo(...to); ctx.lineTo(to[0], to[1] + dir * h); ctx.stroke();
+    }
   }
-  switch (S.fill) {
-    case "gradient": fill = grad(rgba(tint || S.accent, 0.1), rgba(S.accent2, 0.34)); stroke = rgba(S.accent2, 0.25); break;
-    case "stickers": fill = seg.sticker; ink = dark; cap = "rgba(0,0,0,.55)"; break;
-    case "rainbow": fill = hslHex(i / n * 360 + S.hue, 85, 60); ink = dark; cap = "rgba(0,0,0,.55)"; break;
-    case "outline": fill = "rgba(0,0,0,0)"; stroke = rgba(tint || S.accent, 0.7); lw = 2; break;
-    case "glass": fill = grad(light ? "rgba(255,255,255,.65)" : "rgba(255,255,255,.2)", light ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.04)"); stroke = light ? "rgba(255,255,255,.9)" : "rgba(255,255,255,.35)"; lw = 1.2; break;
-    case "duo": fill = rgba(tint || (i % 2 ? S.accent2 : S.accent), 0.24); break;
-    case "shades": fill = rgba(tint || S.accent, 0.08 + 0.34 * (i / Math.max(1, n - 1))); break;
-    default:
-      fill = tint ? rgba(tint, halo ? 0.2 : 0.22) : halo ? "#1B1D23" : light ? "rgba(0,0,0,.06)" : "rgba(255,255,255,.07)";
-      if (!halo) stroke = light ? "rgba(0,0,0,.1)" : "rgba(255,255,255,.1)";
-  }
-  return { fill, ink, cap, stroke, lw };
-}
-
-function discColours(S, light, halo) {
-  const disc = S.disc || (halo ? "#0D0F14" : light ? `rgba(255,255,255,${S.glass})` : `rgba(24,24,28,${S.glass})`);
-  const orbHex = S.disc ? mixHex(S.disc, light ? "#000000" : "#FFFFFF", 0.06) : light ? "#F4F2EF" : halo ? "#1A1D24" : "#141416";
-  const orb = S.disc ? orbHex : halo ? "#1A1D24" : light ? "rgba(255,255,255,.86)" : "rgba(14,14,16,.78)";
-  if (S.orbFill) return { disc, orb: S.orbFill, orbHex: S.orbFill };
-  return { disc, orb, orbHex };
-}
-
-function drawOrb(ctx, S, g, segs, hover, light, halo) {
-  const { orb, orbHex } = discColours(S, light, halo);
-  ctx.fillStyle = orb; ctx.beginPath(); ctx.arc(0, 0, g.orb / 2, 0, Math.PI * 2); ctx.fill();
-  if (S.orbRing > 0) { ctx.strokeStyle = S.rimColor || (light ? "rgba(60,40,20,.15)" : "rgba(255,255,255,.16)"); ctx.lineWidth = S.orbRing; ctx.stroke(); }
-  const seg = segs[hover] || segs[0];
-  const ink = S.ink || (light ? "#1D1B18" : "#ECEEF2");
-  const big = contrast(S.accent, orbHex) >= 3 ? S.accent : ink;
-  const f = g.orb / (halo ? 230 : S.layout === "orbit" ? 150 : 180), ls = S.label, fam = orbFam(S, halo), k = S.orbFace === "same" ? fontK(S) : (FONTS[S.orbFace] || FONTS.app).k;
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  const word = S.centre || (S.labels[hover] || (halo && S.display === "app" ? seg.mono : (S.case === "upper" ? seg.label.toUpperCase() : seg.label)));
-  const lines = !S.centre;
-  if (lines && S.kicker) { setFont(ctx, weightOf(S, 600), 10 * f * ls, appFont(S.font)); track(ctx, S, 10 * f * ls); paint(ctx, S, seg.kicker, 0, -30 * f, S.ink ? rgba(S.ink, 0.6) : light ? "#5A544B" : "#A9AFBC"); }
-  track(ctx, S, 32 * f * ls * k);
-  fitText(ctx, word, g.orb * 0.8, weightOf(S, S.weight), (halo ? 34 : 30) * f * ls * k * S.orbSize, fam);
-  ctx.save(); if (S.fx.glow > 0 && big === S.accent) { ctx.shadowColor = glowCol(S); ctx.shadowBlur = 18 * S.fx.glow * pulseK(S); } paint(ctx, S, word, 0, 0, big); ctx.restore();
-  if (lines && S.hint) { track(ctx, S, 0); fitText(ctx, seg.hint, g.orb * 0.82, weightOf(S, 600), 11 * f * ls, appFont(S.font)); paint(ctx, S, seg.hint, 0, 28 * f, S.ink ? rgba(S.ink, 0.8) : light ? "#2A2622" : "#D5D9E1"); }
-  track(ctx, S, 0);
-}
-
-function drawSectors(ctx, S, g, segs, hover, light, spin) {
-  const halo = S.layout === "halo", n = segs.length;
-  const { disc } = discColours(S, light, halo);
-  if (S.discShape !== "none") {
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 57 * S.fx.shadow; ctx.shadowOffsetY = 28 * S.fx.shadow;
-    ctx.fillStyle = disc; discPath(ctx, g.disc / 2, S.discShape); ctx.fill(); ctx.restore();
-    if (S.rimW > 0) { ctx.strokeStyle = S.rimColor || (halo ? rgba(S.accent, 0.22) : light ? "rgba(0,0,0,.1)" : "rgba(255,255,255,.12)"); ctx.lineWidth = S.rimW;
-      discPath(ctx, g.disc / 2 - (halo ? 4 : 0.5), S.discShape); ctx.stroke(); }
-  }
-  const order = [...segs.keys()].sort((a, b) => (a === hover) - (b === hover)); // the hot one on top
-  for (const i of order) {
-    const seg = segs[i], hot = i === hover, mid = segAngle(S, i, spin) + S.fx.wobble * 5 * Math.sin(NOW * 3 + i * 1.7), half = g.span / 2;
-    const pop = hot ? S.bulge : 0, rout = g.rout + g.bulge * pop, rin = g.rin - 6 * pop, push = segPush(S, i), am = rad(mid);
-    ctx.save(); ctx.translate(Math.cos(am) * push, Math.sin(am) * push);
-    sector(ctx, rin, rout, rad(mid - half), rad(mid + half), S.round);
-    const s = segStyle(S, seg, i, n, hot, light, halo, rin, rout, mid, ctx);
-    ctx.save();
-    if (!hot) ctx.globalAlpha = S.segAlpha;
-    if (hot && S.fx.glow > 0) { ctx.shadowColor = glowCol(S, seg); ctx.shadowBlur = 36 * S.fx.glow * pulseK(S); }
-    ctx.fillStyle = s.fill; ctx.fill(); ctx.restore();
-    const line = !hot && S.segLine ? S.segLine : s.stroke;
-    if (line && S.segLineW > 0) { ctx.strokeStyle = line; ctx.lineWidth = (s.stroke ? s.lw : 1) * S.segLineW; ctx.stroke(); }
-    const at = S.labelPos === "inner" ? 0.32 : S.labelPos === "outer" ? 0.68 : 0.5;
-    const r = rin + (rout - rin) * at + (hot ? 2 : 0), x = Math.cos(am) * r, y = Math.sin(am) * r;
-    const chord = 2 * r * Math.sin(Math.min(Math.PI / 2, (g.span * Math.PI / 180) / 2)) * 0.84;
-    const ls = S.label * Math.min(1, 7 / n + 0.2), fam = labelFam(S, halo), k = fontK(S), txt = labelText(S, seg, i, halo);
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    const capY = S.captions && !S.labels[i] ? 11 * ls * Math.max(1, S.capSize * 0.9) : 0;
-    ctx.translate(x, y);
-    if (S.labelTurn === "radial") { let t = am + Math.PI / 2; if (Math.sin(am) > 0.01) t += Math.PI; ctx.rotate(t); }
-    track(ctx, S, 15 * ls * k);
-    fitText(ctx, txt, S.labelTurn === "radial" ? chord : Math.min(chord, rout - rin + 30), weightOf(S, S.weight > 700 ? 700 : S.weight), 15 * ls * k, fam);
-    paint(ctx, S, txt, 0, -capY * 0.64, s.ink);
-    if (capY) { track(ctx, S, 0); fitText(ctx, seg.cap, chord, weightOf(S, 600), 10 * ls * S.capSize, appFont(S.font)); paint(ctx, S, seg.cap, 0, capY, s.cap); }
-    track(ctx, S, 0);
-    ctx.restore();
-  }
-  drawOrb(ctx, S, g, segs, hover, light, halo);
-}
-
-function drawOrbit(ctx, S, g, segs, hover, light, spin) {
-  const n = segs.length, halo = false;
-  if (S.orbitPath) { ctx.strokeStyle = S.rimColor || (S.ink ? rgba(S.ink, 0.25) : light ? "rgba(60,40,20,.16)" : "rgba(255,255,255,.16)"); ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5 * Math.max(0.5, S.rimW);
-    ctx.beginPath(); ctx.arc(0, 0, g.buttonR + S.explode, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); }
-  const order = [...segs.keys()].sort((a, b) => (a === hover) - (b === hover));
-  for (const i of order) {
-    const seg = segs[i], hot = i === hover, a = rad(segAngle(S, i, spin) + S.fx.wobble * 5 * Math.sin(NOW * 3 + i * 1.7)), R = g.buttonR + segPush(S, i), x = Math.cos(a) * R, y = Math.sin(a) * R;
-    const r = g.buttonD / 2 * (hot ? 1 + 0.16 * S.bulge : 1), tint = seg.kind && S.tints[seg.kind];
-    let fill, ink = S.ink || (light ? "#1D1B18" : "#F4F1EC"), stroke = null;
-    if (S.fill === "stickers") { fill = seg.sticker; ink = "#0B0D10"; if (hot) stroke = "#FFFFFF"; }
-    else if (S.fill === "rainbow") { fill = hslHex(i / n * 360 + S.hue, 88, hot ? 68 : 60); ink = "#0B0D10"; if (hot) stroke = "#FFFFFF"; }
-    else if (hot) { fill = S.accent; ink = S.hotInk || onAccent(S.accent); }
-    else if (S.fill === "outline") { fill = "rgba(0,0,0,0)"; stroke = rgba(tint || S.accent, 0.75); }
-    else if (S.fill === "glass") { fill = light ? "rgba(255,255,255,.5)" : "rgba(255,255,255,.12)"; stroke = "rgba(255,255,255,.45)"; }
-    else if (S.fill === "gradient" || S.fill === "duo") { fill = rgba(i % 2 && S.fill === "duo" ? S.accent2 : (tint || S.accent2), 0.3); }
-    else if (S.fill === "shades") { fill = rgba(tint || S.accent, 0.1 + 0.4 * i / Math.max(1, n - 1)); }
-    else fill = S.disc ? mixHex(S.disc, light ? "#000000" : "#FFFFFF", 0.1) : light ? "rgba(255,255,255,.72)" : "rgba(38,38,43,.88)";
-    ctx.save(); ctx.shadowColor = hot && S.fx.glow > 0 ? glowCol(S, seg) : "rgba(20,15,10,.3)";
-    ctx.shadowBlur = hot && S.fx.glow > 0 ? 34 * S.fx.glow * pulseK(S) : 22 * S.fx.shadow; ctx.shadowOffsetY = hot ? 0 : 10 * S.fx.shadow;
-    if (!hot) ctx.globalAlpha = S.segAlpha;
-    ctx.fillStyle = fill; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-    const line = !hot && S.segLine ? S.segLine : stroke;
-    if (line && S.segLineW > 0) { ctx.strokeStyle = line; ctx.lineWidth = (hot ? 3 : 2) * S.segLineW; ctx.stroke(); }
-    const f = g.buttonD / 88;
-    if (S.orbitIcons) { ctx.fillStyle = hot ? "rgba(255,255,255,.85)" : (S.fill === "stickers" || S.fill === "rainbow") ? "rgba(0,0,0,.14)" : (tint || (light ? "#E4E0DA" : "#3A3A40"));
-      ctx.beginPath(); ctx.arc(x, y - 10 * f, 15 * f, 0, Math.PI * 2); ctx.fill(); }
-    const fam = labelFam(S, halo), k = fontK(S), txt = labelText(S, seg, i, false);
-    ctx.textAlign = "center"; ctx.textBaseline = "middle"; track(ctx, S, 12 * S.label * k * f);
-    fitText(ctx, txt, r * 1.7, weightOf(S, Math.min(800, S.weight)), 12 * S.label * k * f, fam); paint(ctx, S, txt, x, y + (S.orbitIcons ? 20 : 0) * f, ink); track(ctx, S, 0);
-  }
-  drawOrb(ctx, S, g, segs, hover, light, false);
-}
-
-function drawPointer(ctx, kind) {
-  if (kind === "none") return;
-  ctx.save(); ctx.translate(6, 8);
-  if (kind === "file") {
-    ctx.save(); ctx.translate(14, 18); ctx.rotate(-0.08);
-    ctx.fillStyle = "rgba(0,0,0,.3)"; ctx.fillRect(2, 3, 34, 42);
-    ctx.fillStyle = "#F4F1EC"; ctx.fillRect(0, 0, 34, 42); ctx.fillStyle = "#FF9A3D"; ctx.fillRect(4, 24, 26, 12);
-    ctx.fillStyle = "#0B0D10"; ctx.font = "700 7px Geist, system-ui"; ctx.textAlign = "center"; ctx.fillText("HEIC", 17, 31); ctx.restore();
-  }
-  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, 22); ctx.lineTo(5.5, 17); ctx.lineTo(9.5, 26); ctx.lineTo(13, 24.5); ctx.lineTo(9, 15.5); ctx.lineTo(16, 15.5); ctx.closePath();
-  ctx.fillStyle = "#0B0D10"; ctx.strokeStyle = "#FFFFFF"; ctx.lineWidth = 1.6; ctx.lineJoin = "round"; ctx.stroke(); ctx.fill();
   ctx.restore();
 }
 
-// Backdrops
+// The placeholder picture from the boards (peach sky, orange sun, green hills).
+function picture(ctx, x, y, w, h) {
+  ctx.save(); ctx.beginPath(); ctx.rect(x, y, w, h); ctx.clip();
+  ctx.fillStyle = "#F6C79B"; ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = "#FF8A00"; ctx.beginPath(); ctx.arc(x + w * 56 / 84, y + h * 32 / 84, w * 11 / 84, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#3E6B5A"; ctx.beginPath();
+  [[0, 60], [26, 38], [46, 56], [62, 44], [84, 62], [84, 84], [0, 84]].forEach(([px, py], k) => ctx[k ? "lineTo" : "moveTo"](x + w * px / 84, y + h * py / 84));
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+
+// ---------- Ring and Halo (SectorRenderer) ----------
+function orbText(seg) {
+  return seg ? { kicker: seg.kicker, big: seg.big || seg.label, hint: seg.hint } : { kicker: "DROP HERE TO", big: "Cancel", hint: "nothing is changed" };
+}
+function drawSectors(ctx, S, g, hover) {
+  const halo = S.layout === "halo", light = isLight(S), T = sectorTokens(S), glow = glowAmount(S);
+  const discHex = S.disc;
+  // Disc shadow, disc, band, rim (board C / board D).
+  ctx.save();
+  shadow(ctx, K_((halo ? 0.7 : 0.5) * S.fx.shadow), halo ? 80 : 90, halo ? 30 : 40);
+  ctx.beginPath(); ctx.arc(0, 0, g.disc / 2, 0, Math.PI * 2);
+  if (halo) ctx.fillStyle = discHex || "#0D0F14";
+  else ctx.fillStyle = css(discHex ? C(discHex, S.glass) : light ? W_(S.glass) : C("#18181C", S.glass));
+  ctx.fill(); ctx.restore();
+  if (halo) {
+    ctx.strokeStyle = css(W_(0.05)); ctx.lineWidth = 1; ctx.stroke();
+    const band = discHex ? mixHex(discHex, lum(discHex) < 0.4 ? "#FFFFFF" : "#000000", 0.04) : "#141519"; // the app lifts or deepens by 4 %
+    ctx.beginPath(); ctx.arc(0, 0, 154, 0, Math.PI * 2); ctx.strokeStyle = band; ctx.lineWidth = 72; ctx.stroke();
+    if (S.rimW > 0) { ctx.beginPath(); ctx.arc(0, 0, 208, 0, Math.PI * 2); ctx.strokeStyle = css(S.rimColor ? C(S.rimColor) : C(S.accent, 0.22)); ctx.lineWidth = S.rimW; ctx.stroke(); }
+  } else if (S.rimW > 0) {
+    ctx.beginPath(); ctx.arc(0, 0, g.disc / 2 - 0.5, 0, Math.PI * 2);
+    ctx.strokeStyle = css(S.rimColor ? C(S.rimColor) : light ? K_(0.1) : W_(0.12)); ctx.lineWidth = S.rimW; ctx.stroke();
+  }
+  const somethingHot = hover >= 0;
+  const order = [0, 1, 2, 3, 4, 5].sort((a, b) => (a === hover) - (b === hover)); // the lit one on top
+  for (const i of order) {
+    const seg = SEGS[i], hot = i === hover, mid = i * 60, half = g.span / 2;
+    const rin = hot ? g.hin : g.rin, rout = hot ? g.hout : g.rout;
+    ctx.save();
+    if (T.dim && somethingHot && !hot) ctx.globalAlpha = 0.55;
+    sectorPath(ctx, rin, rout, mid - half, mid + half, S.round);
+    const fill = hot ? hotFill(S, seg, i) : (() => { const f = restFill(S, seg, i); if (f) return resting(S, f); const t = tintOf(S, seg); return resting(S, t ? C(t, halo ? 0.2 : 0.22) : T.segRest); })();
+    ctx.save();
+    if (hot && glow > 0) { const gc = glowColour(S, seg); shadow(ctx, withA(gc, Math.min(0.95, 0.55 * glow / 0.6)), 2 * 14 * glow / 0.6); }
+    ctx.fillStyle = css(fill); ctx.fill(); ctx.restore();
+    const outline = S.fill === "outline" && !hot, brightHot = bright(S) && hot;
+    const stroke = outline ? C(tintOf(S, seg) || S.accent, 0.7) : brightHot ? W_(1) : (hot ? T.segHotStroke : T.segStroke);
+    if (stroke) { ctx.strokeStyle = css(stroke); ctx.lineWidth = outline ? 2 : brightHot ? 3 : 1; ctx.stroke(); }
+    // Content: Ring = icon over label; Halo = mono label over caption.
+    const r = (rin + rout) / 2, a = rad(mid), x = Math.cos(a) * r, y = Math.sin(a) * r, ls = S.label;
+    const fg = hot ? T.fgHot : T.fgRest;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const weight = WEIGHT[S.labelWeight] || 700;
+    if (!halo) {
+      const label = S.case === "upper" ? seg.label.toUpperCase() : seg.label;
+      spacing(ctx, 0.3 + S.track * 15 * ls);
+      const shown = fit(ctx, label, 96, weight, 15 * ls, labelFam(S));
+      const lh = 15 * ls * 1.2, ih = 22, total = S.captions ? ih + 6 + lh : lh;
+      if (S.captions) icon(ctx, seg.icon, x, y - total / 2 + ih / 2, ih, fg);
+      text(ctx, shown, x, y + total / 2 - lh / 2, fg);
+    } else {
+      spacing(ctx, 1.2 + S.track * 15 * ls);
+      const shown = fit(ctx, seg.mono, 80, weight, 15 * ls, FAMILY.mono);
+      const lh = 15 * ls * 1.15, ch = 10 * ls * 1.2, total = S.captions ? lh + 2 + ch : lh;
+      text(ctx, shown, x, y - total / 2 + lh / 2, fg);
+      if (S.captions) {
+        const on = onAccent(S.accent) === "#FFFFFF" ? 0.85 : 0.75;
+        spacing(ctx, 0.4 + S.track * 10 * ls); const cap = fit(ctx, seg.cap, 80, 600, 10 * ls, FAMILY.rounded);
+        text(ctx, cap, x, y + total / 2 - ch / 2, hot ? withA(T.fgHot, on) : T.capRest);
+      }
+    }
+    spacing(ctx, 0);
+    ctx.restore();
+  }
+  drawCentre(ctx, S, g, hover, light, halo);
+}
+
+// The centre orb: the file's picture, dimmed, under the hovered button's words.
+function drawCentre(ctx, S, g, hover, light, halo) {
+  const R = g.orb / 2, seg = hover >= 0 ? SEGS[hover] : null, t = orbText(seg);
+  const base = light ? "#F4F2EF" : halo ? "#1A1D24" : "#141416"; // the app's centre keeps its own colour
+  ctx.save(); ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.clip();
+  picture(ctx, -R, -R, R * 2, R * 2);
+  ctx.fillStyle = css(C(base, light ? 0.78 : 0.62)); ctx.fillRect(-R, -R, R * 2, R * 2);
+  ctx.restore();
+  ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.strokeStyle = css(seg ? (light ? K_(0.15) : W_(0.16)) : C("#D9443A")); ctx.lineWidth = seg ? 1.5 : 2; ctx.stroke();
+  const f = g.orb / (halo ? 230 : 180), ink = S.ink ? C(S.ink) : light ? C("#1D1B18") : C("#ECEEF2");
+  const big = seg ? (contrast(S.accent, base) >= 3 ? C(S.accent) : ink) : C("#FF6B5E");
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  spacing(ctx, 1.2 * f); font(ctx, 600, 10 * f, FAMILY.rounded); text(ctx, t.kicker, 0, -36 * f, light ? C("#5A544B") : C("#A9AFBC"));
+  const word = seg ? (halo ? seg.mono === "•••" ? "More" : seg.mono : seg.label) : t.big;
+  spacing(ctx, 0); fit(ctx, word, g.orb * 0.8, 800, (halo ? 36 : 32) * f, halo ? FAMILY.mono : labelFam(S));
+  text(ctx, word, 0, -6 * f, big);
+  fit(ctx, t.hint, g.orb * 0.82, 600, 11 * f, FAMILY.rounded); text(ctx, t.hint, 0, 22 * f, ink);
+  font(ctx, 500, 9.5 * f, FAMILY.rounded); text(ctx, "IMG_2041.HEIC · 3.2 MB", 0, 42 * f, light ? C("#5E574D") : C("#9AA1AE"));
+}
+
+// ---------- Orbit (OrbitRenderer) ----------
+const WARM = (a) => [60, 40, 20, a];
+const PALETTE = {
+  light: { ink: C("#1D1B18"), secondary: C("#5E574D"), button: W_(0.72), border: WARM(0.12), orb: W_(0.78), pill: C("#1D1B18"), pillInk: W_(1), guide: WARM(0.16) },
+  dark: { ink: C("#F4F1EC"), secondary: C("#B4AEA5"), button: C("#26262B", 0.88), border: W_(0.12), orb: C("#1E1E22", 0.88), pill: C("#F4F1EC"), pillInk: C("#1D1B18"), guide: W_(0.16) },
+};
+const ORBIT_TINT = { images: ["#FFE2C2", "#8A4300"], tools: ["#D7E5F5", "#1F4D80"], more: ["#E4E0DA", "#3D3831"], documents: ["#FAD4D0", "#8E2A1F"] };
+function drawOrbit(ctx, S, g, hover, cursor) {
+  const light = isLight(S), P = light ? PALETTE.light : PALETTE.dark, glow = glowAmount(S);
+  const restInk = S.ink ? C(S.ink) : bright(S) ? C("#0B0D10") : P.ink, hotInk = S.hotInk ? C(S.hotInk) : bright(S) ? C("#0B0D10") : C(onAccent(S.accent));
+  if (S.rimW > 0) {
+    ctx.save(); ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5 * S.rimW; ctx.strokeStyle = css(S.rimColor ? C(S.rimColor) : P.guide);
+    ctx.beginPath(); ctx.arc(0, 0, g.buttonR, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+  }
+  const somethingHot = hover >= 0;
+  const order = [0, 1, 2, 3, 4, 5].sort((a, b) => (a === hover) - (b === hover));
+  for (const i of order) {
+    const seg = SEGS[i], hot = i === hover, a = rad(i * 60), x = Math.cos(a) * g.buttonR, y = Math.sin(a) * g.buttonR;
+    const k = hot ? g.hoverScale : 1, d = g.buttonD;
+    ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
+    if (S.dimOthers && somethingHot && !hot) ctx.globalAlpha = 0.6;
+    const custom = restFill(S, seg, i);
+    const fill = hot ? hotFill(S, seg, i) : resting(S, custom || (S.disc ? C(S.disc, 0.88) : P.button));
+    ctx.save();
+    if (hot && glow > 0) shadow(ctx, withA(glowColour(S, seg), Math.min(0.95, 0.55 * glow / 0.6)), 2 * 14 * glow / 0.6);
+    else shadow(ctx, hot ? [160, 80, 0, 0.35 * S.fx.shadow] : WARM(0.14 * S.fx.shadow), hot ? 34 : 26, hot ? 16 : 10);
+    ctx.beginPath(); ctx.arc(0, 0, d / 2, 0, Math.PI * 2); ctx.fillStyle = css(fill); ctx.fill(); ctx.restore();
+    const outline = S.fill === "outline" && !hot;
+    ctx.strokeStyle = css(hot ? W_(0.9) : outline ? C(tintOf(S, seg) || S.accent, 0.75) : P.border);
+    ctx.lineWidth = outline ? 2 : hot && bright(S) ? 3 : 1; ctx.stroke();
+    const ls = S.label, weight = WEIGHT[S.labelWeight] || 700, label = S.case === "upper" ? seg.label.toUpperCase() : seg.label;
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    spacing(ctx, S.track * 12 * ls); const shown = fit(ctx, label, d - 8, weight, 12 * ls, labelFam(S));
+    const lh = 12 * ls * 1.2, total = S.captions ? 32 + 5 + lh : lh;
+    if (S.captions) {
+      const tint = tintOf(S, seg), pair = ORBIT_TINT[seg.kind] || ORBIT_TINT.images;
+      const bg = hot ? W_(0.85) : bright(S) ? K_(0.14) : tint ? C(tint) : C(pair[0]);
+      const glyph = tint ? C(onAccent(tint)) : C(pair[1]);
+      const ty = -total / 2 + 16;
+      ctx.beginPath(); ctx.arc(0, ty, 16, 0, Math.PI * 2); ctx.fillStyle = css(bg); ctx.fill();
+      icon(ctx, seg.icon, 0, ty, 14, glyph);
+    }
+    text(ctx, shown, 0, total / 2 - lh / 2, hot ? hotInk : restInk);
+    spacing(ctx, 0);
+    ctx.restore();
+  }
+  // Centre: a light orb with the picture, the file name and its size.
+  const R = g.orb / 2;
+  ctx.save(); shadow(ctx, WARM(0.18 * S.fx.shadow), 40, 18);
+  ctx.beginPath(); ctx.arc(0, 0, R - 0.75, 0, Math.PI * 2); ctx.fillStyle = css(S.disc ? C(S.disc, 0.88) : P.orb); ctx.fill(); ctx.restore();
+  ctx.strokeStyle = css(hover === -1 ? C("#D9443A") : P.border); ctx.lineWidth = 1.5; ctx.stroke();
+  const card = 46, f = g.orb / 140;
+  ctx.save(); ctx.scale(f, f); ctx.beginPath(); ctx.roundRect(-card / 2, -46, card, card, 9); ctx.clip(); picture(ctx, -card / 2, -46, card, card); ctx.restore();
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  fit(ctx, hover === -1 ? "Cancel" : "IMG_2041.HEIC", g.orb * 0.8, 700, 12 * S.label * f, labelFam(S)); text(ctx, hover === -1 ? "Cancel" : "IMG_2041.HEIC", 0, 16 * f, P.ink);
+  font(ctx, 400, 11 * S.label * f, FAMILY.rounded); text(ctx, hover === -1 ? "nothing is changed" : "3.2 MB", 0, 34 * f, P.secondary);
+  // The cursor pill with the action's verb.
+  if (hover >= 0) {
+    const seg = SEGS[hover], c = cursor || (() => { const a = rad(hover * 60); return [Math.cos(a) * (g.buttonR - 30), Math.sin(a) * (g.buttonR - 30)]; })();
+    font(ctx, 600, 13, FAMILY.rounded); const w = ctx.measureText(seg.verb).width + 24, h = 30;
+    const px = Math.min(c[0] - 4 + w / 2, 235 - w / 2), py = c[1] + 30 + h / 2;
+    ctx.save(); shadow(ctx, K_(0.22), 20, 8); ctx.beginPath(); ctx.roundRect(px - w / 2, py - h / 2, w, h, h / 2); ctx.fillStyle = css(P.pill); ctx.fill(); ctx.restore();
+    text(ctx, seg.verb, px, py, P.pillInk);
+  }
+}
+
+// ---------- Wallpaper (preview only) ----------
 let noise = null;
 function noiseCanvas() {
   if (noise) return noise;
@@ -732,22 +766,18 @@ function noiseCanvas() {
   for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; }
   c.putImageData(d, 0, 0); return noise;
 }
-function drawBackdrop(ctx, S, W, t) {
+function drawWallpaper(ctx, S, W, t) {
   const b = S.bg, accent = S.accent;
-  const lin = (c0, c1) => { const a = (b.angle - 90) * Math.PI / 180, dx = Math.cos(a) * W / 2, dy = Math.sin(a) * W / 2;
-    const g = ctx.createLinearGradient(W / 2 - dx, W / 2 - dy, W / 2 + dx, W / 2 + dy); g.addColorStop(0, c0); g.addColorStop(1, c1); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); };
-  const sc = b.scale || 1;
-  const blob = (x, y, r, c, a) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgba(c, a)); g.addColorStop(1, rgba(c, 0)); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); };
+  const lin = (c0, c1) => { const g = ctx.createLinearGradient(0, 0, W, W); g.addColorStop(0, c0); g.addColorStop(1, c1); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); };
+  const blob = (x, y, r, c, a) => { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, css(C(c, a))); g.addColorStop(1, css(C(c, 0))); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); };
   switch (b.kind) {
     case "paper": {
       ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
-      // Ink printed on paper multiplies; on ink-black paper it glows (screen).
-      const inkPaper = lum(b.c3) < 0.2;
+      const inkPaper = lum(b.c3) < 0.2; // ink on paper multiplies; on ink-black paper it glows
       ctx.save(); ctx.globalCompositeOperation = inkPaper ? "screen" : "multiply";
       const dx = Math.sin(t * 0.3) * W * 0.01, ia = inkPaper ? 0.7 : 0.85;
-      ctx.fillStyle = rgba(b.c1, ia); ctx.beginPath(); ctx.arc(W * 0.3 + dx, W * 0.34, W * 0.26 * sc, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = rgba(b.c2, ia); ctx.beginPath(); ctx.arc(W * 0.72 - dx, W * 0.7, W * 0.3 * sc, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = rgba(b.c2, 0.55); ctx.fillRect(W * 0.08, W * 0.78, W * 0.3, W * 0.05); ctx.fillStyle = rgba(b.c1, 0.6); ctx.fillRect(W * 0.1 + W * 0.012, W * 0.8, W * 0.3, W * 0.05);
+      ctx.fillStyle = css(C(b.c1, ia)); ctx.beginPath(); ctx.arc(W * 0.3 + dx, W * 0.34, W * 0.26, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = css(C(b.c2, ia)); ctx.beginPath(); ctx.arc(W * 0.72 - dx, W * 0.7, W * 0.3, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
       ctx.save(); ctx.globalAlpha = 0.12; ctx.fillStyle = ctx.createPattern(noiseCanvas(), "repeat"); ctx.fillRect(0, 0, W, W); ctx.restore();
       break; }
@@ -757,138 +787,67 @@ function drawBackdrop(ctx, S, W, t) {
       [[b.c1, 0], [b.c2, 2.1], [accent, 4.2]].forEach(([c, p], i) =>
         blob(W * (0.5 + 0.32 * Math.sin(t * 0.21 + p)), W * (0.5 + 0.3 * Math.cos(t * 0.17 + p * 1.3)), W * (0.55 + 0.08 * i), c, 0.55));
       break;
-    case "waves":
-      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
-      for (let i = 0; i < 6; i++) {
-        ctx.beginPath(); ctx.moveTo(0, W);
-        for (let j = 0; j <= 48; j++) { const x = W * j / 48; ctx.lineTo(x, W * (0.3 + i * 0.12) + Math.sin(x / W * Math.PI * 2 * 1.1 + t * 0.35 + i * 0.9) * W * 0.05 + Math.sin(x / W * 9 + i) * W * 0.008); }
-        ctx.lineTo(W, W); ctx.closePath(); ctx.fillStyle = rgba(mixHex(b.c1, b.c2, i / 5), 0.55 + i * 0.07); ctx.fill();
-      }
-      break;
-    case "mesh":
-      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
-      blob(W * (0.1 + 0.05 * Math.sin(t * 0.3)), W * 0.1, W * 0.9, b.c1, 0.85); blob(W * 0.95, W * (0.9 + 0.05 * Math.cos(t * 0.25)), W * 0.9, b.c2, 0.85);
-      blob(W * 0.9, W * 0.1, W * 0.6, accent, 0.35); blob(W * 0.1, W * 0.95, W * 0.6, mixHex(b.c1, b.c2, 0.5), 0.6); break;
-    case "grid": {
-      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W);
-      const step = W / 16 * sc, off = (t * W * 0.01) % step, lines = Math.ceil(W / step) + 1; ctx.lineWidth = Math.max(1, W / 900);
-      for (let i = -1; i <= lines; i++) { ctx.strokeStyle = rgba(b.c1, i % 4 === 0 ? 0.42 : 0.18);
-        ctx.beginPath(); ctx.moveTo(i * step + off, 0); ctx.lineTo(i * step + off, W); ctx.moveTo(0, i * step + off); ctx.lineTo(W, i * step + off); ctx.stroke(); }
-      break; }
-    case "dots": {
-      ctx.fillStyle = b.c3; ctx.fillRect(0, 0, W, W); ctx.fillStyle = rgba(b.c1, 0.6);
-      const step = W / 26 * sc, r = Math.max(1, W / 380 * sc);
-      for (let x = step / 2; x < W; x += step) for (let y = step / 2; y < W; y += step) { ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); }
-      break; }
     case "photo":
       if (photo) {
-        const s = Math.max(W / photo.width, W / photo.height), w = photo.width * s, h = photo.height * s;
+        const s = Math.max(W / photo.width, W / photo.height), w = photo.width * s, h = photo.height * s, e = b.blur ? W * 0.05 : 0;
         ctx.save(); if (b.blur > 0) ctx.filter = `blur(${(b.blur * W / 30).toFixed(1)}px)`;
-        ctx.drawImage(photo, (W - w) / 2 - (b.blur ? W * 0.05 : 0), (W - h) / 2 - (b.blur ? W * 0.05 : 0), w + (b.blur ? W * 0.1 : 0), h + (b.blur ? W * 0.1 : 0)); ctx.restore();
+        ctx.drawImage(photo, (W - w) / 2 - e, (W - h) / 2 - e, w + 2 * e, h + 2 * e); ctx.restore();
         if (b.dim > 0) { ctx.fillStyle = `rgba(0,0,0,${b.dim * 0.8})`; ctx.fillRect(0, 0, W, W); }
         break;
       }
-      // no picture yet: fall through to the desktop
+      lin(b.c1, b.c2); break; // no picture yet
+    case "none": break;
     default: lin(b.c1, b.c2);
   }
 }
-let halftoneTile = null;
-function halftonePattern(ctx) {
-  if (!halftoneTile) { halftoneTile = document.createElement("canvas"); halftoneTile.width = halftoneTile.height = 8;
-    const h = halftoneTile.getContext("2d"); h.fillStyle = "#000"; h.beginPath(); h.arc(4, 4, 1.7, 0, Math.PI * 2); h.fill(); }
-  return ctx.createPattern(halftoneTile, "repeat");
+
+// ---------- Motion (WheelEffects) ----------
+const BREATH = 2 * Math.PI / 2.2, BREATH_DEPTH = 0.035, TWIRL = 60;
+// The app's springs, as closed-form damped oscillators.
+function spring(t, stiffness, damping) {
+  const w0 = Math.sqrt(stiffness), z = damping / (2 * w0);
+  if (z >= 1) return Math.exp(-w0 * t) * (1 + w0 * t);
+  const wd = w0 * Math.sqrt(1 - z * z);
+  return Math.exp(-z * w0 * t) * (Math.cos(wd * t) + (z * w0 / wd) * Math.sin(wd * t));
 }
-const bgIsLight = (S) => { const b = S.bg; const c = ["solid", "desktop", "photo"].includes(b.kind) ? b.c1 : b.c3; return b.kind === "photo" ? false : lum(c) > 0.35; };
-function drawPoster(ctx, S, W, clear) {
-  const b = S.bg;
-  if (b.frame > 0) { const lw = b.frame * W / 600; ctx.save(); ctx.strokeStyle = b.frameColor; ctx.lineWidth = lw; ctx.strokeRect(lw / 2, lw / 2, W - lw, W - lw); ctx.restore(); }
-  if (b.title) {
-    ctx.save(); ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
-    const px = W * 0.05; ctx.font = `${weightOf(S, 800)} ${px}px ${S.display === "app" ? '"Geist", system-ui, sans-serif' : FONTS[S.display].fam}`;
-    if ("letterSpacing" in ctx) ctx.letterSpacing = (S.track * px).toFixed(1) + "px";
-    paint(ctx, S, b.title, W / 2, W - W * 0.055 - (b.frame > 0 ? b.frame * W / 600 : 0), b.frame > 0 ? b.frameColor : (clear ? S.accent : bgIsLight(S) ? "#17140F" : "#F3EEE4"));
-    ctx.restore();
-  }
-}
-function pixelate(ctx, amount) {
-  const c = ctx.canvas, block = 2 + amount * 14 * (c.width / Math.max(1, CSS || c.width) || 1);
-  const w = Math.max(8, Math.round(c.width / block)), h = Math.max(8, Math.round(c.height / block));
-  const t = document.createElement("canvas"); t.width = w; t.height = h; const tx = t.getContext("2d"); tx.drawImage(c, 0, 0, w, h);
-  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, c.width, c.height); ctx.imageSmoothingEnabled = false; ctx.drawImage(t, 0, 0, c.width, c.height); ctx.restore();
-}
-function drawOverlays(ctx, S, W, clear) {
-  const fx = S.fx;
-  if (fx.vignette > 0 && !clear) { const g = ctx.createRadialGradient(W / 2, W / 2, W * 0.28, W / 2, W / 2, W * 0.75); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, `rgba(0,0,0,${fx.vignette * 0.85})`); ctx.fillStyle = g; ctx.fillRect(0, 0, W, W); }
-  if (fx.scan > 0) { ctx.save(); if (clear) ctx.globalCompositeOperation = "source-atop"; ctx.fillStyle = `rgba(0,0,0,${fx.scan * 0.38})`; const s = Math.max(2, W / 260); for (let y = 0; y < W; y += s * 1.6) ctx.fillRect(0, y, W, s * 0.6); ctx.restore(); }
-  if (fx.grain > 0) { ctx.save(); if (clear) ctx.globalCompositeOperation = "source-atop"; ctx.globalAlpha = fx.grain * 0.22; ctx.fillStyle = ctx.createPattern(noiseCanvas(), "repeat"); ctx.fillRect(0, 0, W, W); ctx.restore(); }
+const breathK = (S, t) => RM || !S.fx.breathe ? 1 : 1 + BREATH_DEPTH * S.fx.breathe * (0.5 - 0.5 * Math.cos(2 * Math.PI * (t % BREATH) / BREATH));
+function drawDots(ctx, S, g, spinDeg) {
+  const n = Math.round(S.fx.dots); if (!n) return;
+  const R = g.reach + 18, glow = glowAmount(S);
+  ctx.save(); ctx.rotate(spinDeg * Math.PI / 180);
+  if (glow > 0) shadow(ctx, withA(glowColour(S), 0.9), 12);
+  ctx.fillStyle = S.accent;
+  for (let i = 0; i < n; i++) { const a = i * 2 * Math.PI / n + Math.PI / 2; ctx.beginPath(); ctx.arc(Math.cos(a) * R, Math.sin(a) * R, 3.5, 0, Math.PI * 2); ctx.fill(); }
+  ctx.restore();
 }
 
-// One frame of the whole scene at W×W.
+// One frame of the scene at W×W. o: { t, hover, spin, open, cursor, parts, clear, dpr }
+const fitScale = (W, S) => W * 0.92 / (470 * 1.4) * clamp(S.scale, 0.7, 1.4);
 function render(ctx, W, S, o) {
-  NOW = o.t || 0;
   ctx.save(); ctx.clearRect(0, 0, W, W);
-  if (!o.clear) drawBackdrop(ctx, S, W, o.t);
-  const segs = segsFor(S.count), g = geometry(S), light = isLight(S);
-  const k = W * 0.92 / (470 * 1.4) * S.scale * (1 + 0.035 * S.fx.breathe * Math.sin(o.t * 2.2));
-  ctx.translate(W / 2, W / 2); ctx.scale(k, k);
-  if (S.fx.dots > 0) {
-    const n = Math.round(S.fx.dots), R = (g.disc / 2 + 18);
-    ctx.save(); ctx.fillStyle = S.accent; ctx.shadowColor = S.accent; ctx.shadowBlur = 10 * (S.fx.glow + 0.3);
-    for (let i = 0; i < n; i++) { const a = o.t * 0.5 + i * Math.PI * 2 / n; ctx.globalAlpha = 0.45 + 0.55 * (i % 3 === 0); ctx.beginPath(); ctx.arc(Math.cos(a) * R, Math.sin(a) * R, i % 3 === 0 ? 4 : 2.5, 0, Math.PI * 2); ctx.fill(); }
-    ctx.restore();
+  if (!o.clear) drawWallpaper(ctx, S, W, o.t);
+  const g = geom(S);
+  let k = fitScale(W, S) * breathK(S, o.t), alpha = 1, turn = 0;
+  if (o.open != null && !RM) { // bloom (spring 0.6 → 1, fade in) and the twirl
+    k *= 1 - 0.4 * spring(o.open, 380, 26); alpha = Math.min(1, o.open / 0.18);
+    if (S.fx.twirl) turn = -TWIRL * spring(o.open, 170, 15);
   }
-  // Misprint: the second ink lands a little off register, behind the wheel.
-  if (S.fx.misprint > 0) {
-    ctx.save(); ctx.globalAlpha = 0.85; ctx.fillStyle = S.accent2; ctx.translate(S.fx.misprint, S.fx.misprint * 0.7);
-    if (S.layout === "orbit") segs.forEach((_, i) => { const a = rad(segAngle(S, i, o.spin)), R = g.buttonR + segPush(S, i); ctx.beginPath(); ctx.arc(Math.cos(a) * R, Math.sin(a) * R, g.buttonD / 2, 0, Math.PI * 2); ctx.fill(); });
-    else if (S.discShape !== "none") { discPath(ctx, g.disc / 2, S.discShape); ctx.fill(); }
-    else segs.forEach((_, i) => { const m = segAngle(S, i, o.spin), am = rad(m), p = segPush(S, i); ctx.save(); ctx.translate(Math.cos(am) * p, Math.sin(am) * p); sector(ctx, g.rin, g.rout, rad(m - g.span / 2), rad(m + g.span / 2), S.round); ctx.fill(); ctx.restore(); });
-    ctx.restore();
-  }
-  const filt = (S.hueShift ? `hue-rotate(${S.hueShift.toFixed(0)}deg) ` : "") + (S.sat !== 1 ? `saturate(${S.sat.toFixed(2)}) ` : "") + (S.bright !== 1 ? `brightness(${S.bright.toFixed(2)})` : "");
-  ctx.save(); if (filt.trim() && "filter" in ctx) ctx.filter = filt.trim();
-  if (S.layout === "orbit") drawOrbit(ctx, S, g, segs, o.hover, light, o.spin); else drawSectors(ctx, S, g, segs, o.hover, light, o.spin);
-  ctx.restore();
-  if (S.fx.halftone > 0) {
-    ctx.save(); discPath(ctx, (S.layout === "orbit" ? g.buttonR + g.buttonD / 2 : g.disc / 2) + S.explode, S.discShape === "none" ? "circle" : S.discShape); ctx.clip();
-    ctx.globalAlpha = S.fx.halftone * 0.4; ctx.globalCompositeOperation = light || S.fill === "stickers" ? "multiply" : "overlay"; ctx.fillStyle = halftonePattern(ctx);
-    ctx.fillRect(-g.disc, -g.disc, g.disc * 2, g.disc * 2); ctx.restore();
-  }
-  ctx.save(); ctx.translate(0, (S.layout === "orbit" ? 150 * S.orb : g.orb) * 0.17); drawPointer(ctx, S.fx.pointer); ctx.restore();
+  PX = k * (o.dpr || 1);
+  ctx.translate(W / 2, W / 2); ctx.scale(k, k); ctx.rotate(turn * Math.PI / 180); ctx.globalAlpha = alpha;
+  drawDots(ctx, S, g, o.spin || 0);
+  if (S.layout === "orbit") drawOrbit(ctx, S, g, o.hover, o.cursor); else drawSectors(ctx, S, g, o.hover);
   ctx.restore();
   if (o.parts) for (const p of o.parts) {
-    ctx.globalAlpha = Math.max(0, p.life);
-    if (p.ring) { ctx.strokeStyle = p.c; ctx.lineWidth = 3 * p.life; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.stroke(); continue; }
-    const r = p.r * p.life + 0.6; ctx.fillStyle = p.c;
-    if (p.shape === "squares") { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-r, -r, r * 2, r * 2); ctx.restore(); }
-    else if (p.shape === "confetti") { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.fillRect(-r * 1.6, -r * 0.45, r * 3.2, r * 0.9); ctx.restore(); }
-    else if (p.shape === "stars") { ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot); ctx.beginPath(); for (let k = 0; k < 10; k++) { const rr = k % 2 ? r * 0.45 : r * 1.4, a = k * Math.PI / 5; ctx[k ? "lineTo" : "moveTo"](Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); ctx.fill(); ctx.restore(); }
-    else if (p.shape === "emoji") { ctx.font = `${(r * 4).toFixed(1)}px system-ui`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(p.e, p.x, p.y); }
-    else { ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = Math.max(0, Math.min(1, p.life)); ctx.fillStyle = p.c;
+    ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.3, p.r * p.life), 0, Math.PI * 2); ctx.fill();
   }
   ctx.globalAlpha = 1;
-  drawOverlays(ctx, S, W, o.clear);
-  drawPoster(ctx, S, W, o.clear);
-  if (S.fx.pixel > 0) pixelate(ctx, S.fx.pixel);
 }
 
 // ---------- The live stage ----------
 const cv = $("#cv"), cx = cv.getContext("2d"), stage = $("#stage");
-let CSS = 400, DPR = 1, vis = clone(effective()), hover = 1, userHover = false, T = 0, spin = 0, parts = [], raf = 0, last = 0, moving = false, kbHover = false;
-const NO_TWEEN = new Set(["count", "fx.dots", "weight", "fx.spin"]);
-function approach(v, s, f, path) {
-  let mv = false;
-  for (const k of Object.keys(s)) {
-    const p = path ? path + "." + k : k, a = v[k], b = s[k];
-    if (typeof b === "number" && typeof a === "number" && !NO_TWEEN.has(p)) {
-      const d = b - a; if (Math.abs(d) > 0.002 * (Math.abs(b) + 1)) { v[k] = a + d * f; mv = true; } else v[k] = b;
-    } else if (isHex(b) && isHex(a)) {
-      if (a.toUpperCase() !== b.toUpperCase()) { const m = mixHex(a, b, Math.max(f, 0.08)); v[k] = m === a.toUpperCase() ? b : m; mv = true; }
-    } else if (b && typeof b === "object" && !Array.isArray(b)) { if (!v[k] || typeof v[k] !== "object") v[k] = {}; mv = approach(v[k], b, f, p) || mv; }
-    else v[k] = Array.isArray(b) ? b.slice() : b;
-  }
-  return mv;
-}
+let CSS = 400, DPR = 1, hover = 1, userHover = false, kbHover = false, T = 0, spin = 0, parts = [], raf = 0, last = 0;
+let openAt = null, cursor = null, restartMotion = false;
 function size() {
   const r = stage.getBoundingClientRect(), pad = EMBED ? 0 : (innerWidth <= 900 ? 20 : 36);
   CSS = Math.max(160, Math.floor(Math.min(r.width - pad, r.height - pad)));
@@ -897,229 +856,152 @@ function size() {
   cv.style.width = cv.style.height = CSS + "px"; cv.width = cv.height = Math.round(CSS * DPR);
   kick();
 }
-function animated(S) { return !RM && (S.fx.spin > 0 || S.fx.breathe > 0 || S.fx.dots > 0 || S.fx.pulse > 0 || S.fx.wobble > 0 || (S.bg.animate && ["aurora", "waves", "mesh", "grid"].includes(S.bg.kind))); }
+const opening = () => openAt != null && T - openAt < 1.4;
+function animated(S) { return !RM && (S.fx.breathe > 0 || (S.fx.dots > 0 && S.fx.spin > 0) || (S.bg.animate && S.bg.kind === "aurora")); }
 function frame(now) {
   raf = 0;
-  // rAF's timestamp can be a hair older than the kick; never let time run backwards.
   const dt = clamp((now - last) / 1000, 0.001, 0.05); last = Math.max(last, now);
-  const eff = effective();
-  moving = approach(vis, eff, RM ? 1 : 1 - Math.pow(0.0015, dt));
-  if (!RM) { T += dt; spin = (spin + (vis.fx.spin + (recording ? 6 : 0)) * 6 * dt) % 360; }
-  for (const p of parts) { p.life -= dt * (p.ring ? 1.6 : 1.1); if (p.ring) p.r += dt * CSS * 0.9; else { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 260 * vis.fx.gravity * dt; p.vx *= 0.985; p.rot = (p.rot || 0) + (p.vr || 0) * dt; } }
+  T += dt;
+  if (!RM) spin = (spin + st.fx.spin * 6 * dt) % 360;
+  for (const p of parts) { p.life -= dt / p.span; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 260 * p.k * dt; }
   parts = parts.filter((p) => p.life > 0);
   cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  render(cx, CSS, vis, { t: T, hover, spin, parts });
-  if (moving || parts.length || animated(vis) || recording) raf = requestAnimationFrame(frame);
+  render(cx, CSS, st, { t: T, hover, spin, open: opening() ? T - openAt : null, cursor, parts, dpr: DPR });
+  if (parts.length || animated(st) || opening() || recording) raf = requestAnimationFrame(frame);
 }
 function kick() { if (!raf) { last = performance.now(); raf = requestAnimationFrame(frame); } }
 new ResizeObserver(size).observe(stage);
+function replay() { openAt = T; spin = 0; kick(); }
 
-// Pointer → which button.
+// Pointer → button, exactly as WheelGeometry.hitTest.
 function hitTest(px, py) {
-  const S = vis, g = geometry(S), k = CSS * 0.92 / (470 * 1.4) * S.scale, x = (px - CSS / 2) / k, y = (py - CSS / 2) / k, r = Math.hypot(x, y), n = S.count;
-  if (S.layout === "orbit") {
-    let best = -1, bd = Infinity;
-    for (let i = 0; i < n; i++) { const a = rad(segAngle(S, i, spin)), d = Math.hypot(x - Math.cos(a) * g.buttonR, y - Math.sin(a) * g.buttonR); if (d < bd) { bd = d; best = i; } }
-    return bd < g.buttonD * 0.8 ? best : -1;
+  const g = geom(st), k = fitScale(CSS, st), x = (px - CSS / 2) / k, y = (py - CSS / 2) / k, d = Math.hypot(x, y);
+  if (d <= g.orb / 2) return -1;
+  if (d > g.reach) return null;
+  let deg = Math.atan2(x, -y) * 180 / Math.PI; if (deg < 0) deg += 360;
+  return Math.floor((deg + 30) / 60) % 6;
+}
+function contentPoint(i) {
+  const g = geom(st), k = fitScale(CSS, st), a = rad(i * 60), r = g.kind === "orbit" ? g.buttonR : (g.hin + g.hout) / 2;
+  return [CSS / 2 + Math.cos(a) * r * k, CSS / 2 + Math.sin(a) * r * k, k];
+}
+// WheelEffects.spark: a short burst from the lit button.
+function sparks(i) {
+  if (RM || !st.fx.sparks) return;
+  const [x, y, k] = contentPoint(i), cols = bright(st) ? ["#FFFFFF", st.accent] : [st.accent, st.accent2, "#FFFFFF"];
+  for (let j = 0; j < 11; j++) {
+    const a = Math.random() * Math.PI * 2, sp = (130 + (Math.random() - 0.5) * 120) * k;
+    parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, r: (2.6 + Math.random() * 1.2) * k, life: 1, span: 0.65 + Math.random() * 0.6, k, c: cols[j % cols.length] });
   }
-  if (r < g.orb / 2 || r > g.disc / 2 + 30) return -1;
-  let deg = Math.atan2(x, -y) * 180 / Math.PI;
-  let best = -1, bd = Infinity;
-  for (let i = 0; i < n; i++) { const d = Math.abs(((deg - segAngle(S, i, spin)) % 360 + 540) % 360 - 180); if (d < bd) { bd = d; best = i; } }
-  return bd <= S.spread / n / 2 + 1 ? best : -1;
-}
-function segCentre(i) {
-  const S = vis, g = geometry(S), k = CSS * 0.92 / (470 * 1.4) * S.scale, a = rad(segAngle(S, i, spin));
-  const r = (S.layout === "orbit" ? g.buttonR : (g.rin + g.rout) / 2) + segPush(S, i);
-  return [CSS / 2 + Math.cos(a) * r * k, CSS / 2 + Math.sin(a) * r * k];
-}
-function sparks(i, many) {
-  if (RM || !vis.fx.sparks) return;
-  const [x, y] = segCentre(i), seg = segsFor(vis.count)[i];
-  const cols = vis.fill === "stickers" ? [seg.sticker, "#FFFFFF"] : vis.fill === "rainbow" ? [hslHex(Math.random() * 360, 90, 65), "#FFFFFF"] : [vis.accent, vis.accent2, "#FFFFFF"];
-  const n = Math.round((many ? 46 : 12) * vis.fx.sparkAmt), shape = vis.fx.sparkShape;
-  for (let j = 0; j < n; j++) { const a = Math.random() * Math.PI * 2, sp = (many ? 160 : 70) + Math.random() * (many ? 340 : 120);
-    parts.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - (many ? 120 : 30), r: 1.5 + Math.random() * (many ? 3.5 : 2), life: 0.7 + Math.random() * 0.5, c: cols[j % cols.length],
-      shape, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 12, e: st.labels[i] || seg.emoji }); }
-  if (many && vis.fx.shock) parts.push({ ring: true, x: CSS / 2, y: CSS / 2, r: CSS * 0.1, life: 1, c: glowCol(vis, seg) });
-  if (parts.length > 400) parts.splice(0, parts.length - 400);
   kick();
-}
-function setHover(i, why) {
-  if (i < 0 || i === hover) return;
-  hover = i; const seg = segsFor(vis.count)[i];
-  if (why !== "auto") { sparks(i, false); tick(660 + i * 70); }
-  $("#caption").innerHTML = `<b>${esc(st.labels[i] || seg.label)}</b> · ${esc(seg.hint)}`;
-  kick();
-}
-function convert() {
-  const seg = segsFor(vis.count)[hover];
-  sparks(hover, true); tick(1046, 0.09, "triangle");
-  $("#caption").innerHTML = seg.kind ? `<b>IMG_2041.${seg.id === "cut" || seg.id === "sqz" || seg.id === "size" || seg.id === "crop" ? "png" : seg.id}</b> is ready (pretend) ✓` : "<b>More</b> fans out in the app";
 }
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+function setHover(i, why) {
+  if (i === null || i === hover) return;
+  hover = i;
+  if (i >= 0) {
+    const seg = SEGS[i];
+    if (why !== "auto") { sparks(i); tick(660 + i * 70); }
+    $("#caption").innerHTML = `<b>${esc(seg.label)}</b> · ${esc(seg.hint)}`;
+  } else $("#caption").innerHTML = "<b>Cancel</b> · let go in the middle and nothing changes";
+  kick();
+}
 cv.addEventListener("pointermove", (e) => {
-  const r = cv.getBoundingClientRect(); userHover = true; setHover(hitTest(e.clientX - r.left, e.clientY - r.top));
+  const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top, k = fitScale(CSS, st);
+  cursor = [(px - CSS / 2) / k, (py - CSS / 2) / k]; userHover = true; setHover(hitTest(px, py)); kick();
 });
-cv.addEventListener("pointerdown", (e) => { const r = cv.getBoundingClientRect(), i = hitTest(e.clientX - r.left, e.clientY - r.top); if (i >= 0) { setHover(i); convert(); } });
-cv.addEventListener("pointerleave", () => { userHover = false; });
+cv.addEventListener("pointerleave", () => { userHover = false; cursor = null; });
 cv.addEventListener("keydown", (e) => {
-  const n = vis.count;
-  if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); kbHover = true; setHover((hover + 1) % n); }
-  else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); kbHover = true; setHover((hover + n - 1) % n); }
-  else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); convert(); }
+  if (e.key === "ArrowRight" || e.key === "ArrowDown") { e.preventDefault(); kbHover = true; setHover(((hover < 0 ? 0 : hover) + 1) % 6); }
+  else if (e.key === "ArrowLeft" || e.key === "ArrowUp") { e.preventDefault(); kbHover = true; setHover(((hover < 0 ? 0 : hover) + 5) % 6); }
 });
 cv.addEventListener("blur", () => { kbHover = false; });
-// 3D tilt toward the pointer.
-stage.addEventListener("pointermove", (e) => {
-  const tilt = effective().fx.tilt; if (RM || !tilt || e.pointerType === "touch") return;
-  const r = stage.getBoundingClientRect(), dx = (e.clientX - r.left) / r.width - 0.5, dy = (e.clientY - r.top) / r.height - 0.5;
-  cv.style.transform = `rotateX(${(-dy * 16 * tilt).toFixed(2)}deg) rotateY(${(dx * 16 * tilt).toFixed(2)}deg)`;
-});
-stage.addEventListener("pointerleave", () => { cv.style.transform = ""; });
-// The wheel hovers by itself when nobody is touching it.
 setInterval(() => {
-  if (userHover || kbHover || !vis.fx.autohover || RM || document.hidden) return;
-  setHover((hover + 1) % vis.count, "auto");
-}, recording ? 400 : 1300);
+  if (userHover || kbHover || !st.fx.autohover || RM || document.hidden || recording) return;
+  setHover((hover + 1) % 6, "auto");
+}, 1300);
+$("#replay").addEventListener("click", replay);
 
-// Little sounds (off by default).
 let audio = null;
-function tick(freq, gain = 0.04, type = "sine") {
+function tick(freq, gain = 0.04) {
   if (!st.fx.sound || EMBED) return;
   try {
     audio = audio || new (window.AudioContext || window.webkitAudioContext)();
     const o = audio.createOscillator(), g = audio.createGain(), t0 = audio.currentTime;
-    o.type = type; o.frequency.value = freq; g.gain.setValueAtTime(gain, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+    o.frequency.value = freq; g.gain.setValueAtTime(gain, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
     o.connect(g).connect(audio.destination); o.start(t0); o.stop(t0 + 0.13);
   } catch {}
 }
 
 // ---------- Knobs ----------
 const pct = (v) => Math.round(v * 100) + " %";
-const C = [];
-const K = (tab, o) => C.push({ tab, ...o });
+const KN = [];
+const K = (tab, o) => KN.push({ tab, ...o });
 const notOrbit = (S) => S.layout !== "orbit";
-// Shape
-K("shape", { key: "layout", label: "Layout", app: true, type: "seg", options: [["halo", "Halo"], ["ring", "Ring"], ["orbit", "Orbit"]] });
-K("shape", { key: "scale", label: "Wheel size", app: true, type: "range", min: 0.7, max: 1.4, step: 0.05, fmt: pct });
-K("shape", { key: "thick", label: "Ring thickness", app: true, type: "range", min: 0.8, max: 1.2, step: 0.05, fmt: pct, when: notOrbit });
-K("shape", { key: "gap", label: "Gap between buttons", app: true, type: "range", min: 1, max: 8, step: 1, fmt: (v) => Math.round(v) + "°", when: notOrbit });
-K("shape", { key: "orb", label: "Centre size", app: true, type: "range", min: 0.85, max: 1.15, step: 0.05, fmt: pct });
-K("shape", { key: "count", label: "Buttons", app: false, type: "seg", num: true, options: [[6, "6"], [8, "8"], [10, "10"], [12, "12"]], hint: "The app has six; more adds HEIC, PDF, WebP, AVIF, TIFF and Crop." });
-K("shape", { key: "spread", label: "Fan", app: false, type: "range", min: 120, max: 360, step: 5, fmt: (v) => Math.round(v) >= 360 ? "full circle" : Math.round(v) + "°" });
-K("shape", { key: "rot", label: "Turn", app: false, type: "range", min: -180, max: 180, step: 1, fmt: (v) => Math.round(v) + "°" });
-K("shape", { key: "round", label: "Corner rounding", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: notOrbit });
-K("shape", { key: "bulge", label: "Hover pop", app: false, type: "range", min: 0, max: 2.5, step: 0.1, fmt: (v) => v.toFixed(1) + "×" });
-K("shape", { key: "btn", label: "Button size", app: false, type: "range", min: 0.7, max: 1.3, step: 0.05, fmt: pct, when: (S) => S.layout === "orbit" });
-K("shape", { key: "explode", label: "Explode", app: false, type: "range", min: 0, max: 30, step: 1, fmt: (v) => Math.round(v) + " pt" });
-K("shape", { key: "stagger", label: "Stagger", app: false, type: "range", min: 0, max: 24, step: 1, fmt: (v) => Math.round(v) + " pt", hint: "every other button steps out" });
-K("shape", { key: "hole", label: "Hole size", app: false, type: "range", min: -30, max: 30, step: 1, fmt: (v) => Math.round(v) + " pt", when: notOrbit });
-K("shape", { key: "discPad", label: "Disc margin", app: false, type: "range", min: -20, max: 40, step: 1, fmt: (v) => Math.round(v) + " pt", when: notOrbit });
-K("shape", { key: "discShape", label: "Disc shape", app: false, type: "seg", options: [["circle", "Circle"], ["squircle", "Squircle"], ["hex", "Hexagon"], ["none", "None"]], when: notOrbit });
-K("shape", { key: "labelPos", label: "Label position", app: false, type: "seg", options: [["inner", "Inner"], ["middle", "Middle"], ["outer", "Outer"]], when: notOrbit });
-K("shape", { key: "labelTurn", label: "Label direction", app: false, type: "seg", options: [["upright", "Upright"], ["radial", "Along the ring"]], when: notOrbit });
-K("shape", { key: "mirror", label: "Mirror", app: false, type: "toggle", hint: "buttons run anticlockwise" });
-K("shape", { key: "orbRing", label: "Centre ring", app: false, type: "range", min: 0, max: 6, step: 0.5, fmt: (v) => v ? v.toFixed(1) + " pt" : "none" });
-K("shape", { key: "orbitPath", label: "Orbit path", app: false, type: "toggle", hint: "the dashed circle", when: (S) => S.layout === "orbit" });
-K("shape", { key: "orbitIcons", label: "Orbit icons", app: false, type: "toggle", hint: "the dot above each label", when: (S) => S.layout === "orbit" });
-// Colour
-K("colour", { key: "scheme", label: "Wheel colours", app: true, type: "seg", options: [["auto", "Automatic"], ["dark", "Dark"], ["light", "Light"], ["system", "Match macOS"]], disabled: (S) => S.layout === "halo", hint: "Halo is always dark." });
-K("colour", { key: "glass", label: "Glass", app: true, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.layout === "ring" });
-K("colour", { key: "tints.images", label: "Tint image formats", app: true, type: "color", auto: "Off" });
-K("colour", { key: "tints.tools", label: "Tint tools", app: true, type: "color", auto: "Off" });
-K("colour", { key: "tints.documents", label: "Tint PDF and documents", app: true, type: "color", auto: "Off" });
-K("colour", { key: "panel", label: "Menu bar panel", app: true, type: "seg", options: [["auto", "Automatic"], ["dark", "Dark"], ["light", "Light"]], hint: "The panel under the menu bar icon (not drawn here)." });
-K("colour", { key: "fill", label: "Fill style", app: false, type: "seg", options: [["flat", "App"], ["gradient", "Gradient"], ["duo", "Duotone"], ["shades", "Shades"], ["stickers", "Stickers"], ["rainbow", "Rainbow"], ["outline", "Outline"], ["glass", "Glass"]] });
-K("colour", { key: "accent2", label: "Second colour", app: false, type: "color", when: (S) => ["gradient", "duo"].includes(S.fill) });
-K("colour", { key: "hue", label: "Rainbow turn", app: false, type: "range", min: 0, max: 360, step: 5, fmt: (v) => Math.round(v) + "°", when: (S) => S.fill === "rainbow" });
-K("colour", { key: "disc", label: "Disc colour", app: false, type: "color", auto: "Auto" });
-K("colour", { key: "ink", label: "Text colour", app: false, type: "color", auto: "Auto" });
-K("colour", { key: "hotInk", label: "Text on the lit button", app: false, type: "color", auto: "Auto" });
-K("colour", { key: "capInk", label: "Caption colour", app: false, type: "color", auto: "Auto" });
-K("colour", { key: "orbFill", label: "Centre colour", app: false, type: "color", auto: "Auto" });
-K("colour", { key: "rimColor", label: "Rim colour", app: false, type: "color", auto: "Auto" });
-K("colour", { key: "rimW", label: "Rim width", app: false, type: "range", min: 0, max: 8, step: 0.5, fmt: (v) => v ? v.toFixed(1) + " pt" : "none" });
-K("colour", { key: "segLine", label: "Button outline", app: false, type: "color", auto: "Auto" });
-K("colour", { key: "segLineW", label: "Outline width", app: false, type: "range", min: 0, max: 4, step: 0.25, fmt: (v) => v.toFixed(2) + "×" });
-K("colour", { key: "segAlpha", label: "Button opacity", app: false, type: "range", min: 0.15, max: 1, step: 0.05, fmt: pct, hint: "the resting buttons; the lit one stays solid" });
-K("colour", { key: "gradDir", label: "Gradient direction", app: false, type: "seg", options: [["out", "Centre → rim"], ["across", "Across"]], when: (S) => ["gradient", "duo", "glass"].includes(S.fill) });
-K("colour", { key: "hueShift", label: "Hue shift", app: false, type: "range", min: 0, max: 360, step: 5, fmt: (v) => Math.round(v) + "°" });
-K("colour", { key: "sat", label: "Saturation", app: false, type: "range", min: 0, max: 2, step: 0.05, fmt: pct });
-K("colour", { key: "bright", label: "Brightness", app: false, type: "range", min: 0.6, max: 1.4, step: 0.02, fmt: pct });
-// Type
-K("type", { key: "font", label: "App font", app: true, type: "seg", font: true, options: [["rounded", "Rounded"], ["default", "System"], ["mono", "Mono"]], hint: "Halo keeps mono in the app." });
-K("type", { key: "case", label: "Case", app: true, type: "seg", options: [["title", "Title case"], ["upper", "UPPER"]] });
-K("type", { key: "label", label: "Label size", app: true, type: "range", min: 0.85, max: 1.3, step: 0.05, fmt: pct });
-K("type", { key: "display", label: "Display face", app: false, type: "seg", font: true, options: Object.entries(FONTS).map(([k, f]) => [k, f.name]) });
-K("type", { key: "weight", label: "Weight", app: false, type: "seg", num: true, options: [[400, "Regular"], [700, "Bold"], [900, "Black"]] });
-K("type", { key: "track", label: "Letter spacing", app: false, type: "range", min: -0.06, max: 0.3, step: 0.01, fmt: (v) => v.toFixed(2) + " em" });
-K("type", { key: "captions", label: "Small captions", app: false, type: "toggle", hint: "LOSSLESS, PHOTO… under each label" });
-K("type", { key: "kicker", label: "Centre kicker", app: false, type: "toggle", hint: "CONVERT TO, OPEN… above the word" });
-K("type", { key: "hint", label: "Centre hint", app: false, type: "toggle", hint: "the line under the word" });
-K("type", { key: "orbSize", label: "Centre word size", app: false, type: "range", min: 0.7, max: 1.5, step: 0.05, fmt: pct });
-K("type", { key: "capSize", label: "Caption size", app: false, type: "range", min: 0.7, max: 1.5, step: 0.05, fmt: pct, when: (S) => S.captions });
-K("type", { key: "italic", label: "Italic", app: false, type: "toggle", hint: "slanted everywhere" });
-K("type", { key: "outline", label: "Text outline", app: false, type: "range", min: 0, max: 4, step: 0.25, fmt: (v) => v ? v.toFixed(2) + " pt" : "none" });
-K("type", { key: "orbFace", label: "Centre face", app: false, type: "seg", font: true, options: [["same", "Same as labels"], ...Object.entries(FONTS).map(([k, f]) => [k, f.name])] });
-// Effects
-K("effects", { key: "fx.glow", label: "Neon glow", app: false, type: "range", min: 0, max: 1.5, step: 0.05, fmt: pct });
-K("effects", { key: "fx.shadow", label: "Shadow depth", app: false, type: "range", min: 0, max: 1.5, step: 0.05, fmt: pct });
-K("effects", { key: "fx.sparks", label: "Sparks", app: false, type: "toggle", hint: "on hover, and a burst when you click" });
-K("effects", { key: "fx.spin", label: "Spin", app: false, type: "range", min: 0, max: 20, step: 1, fmt: (v) => v ? v + " rpm" : "still" });
-K("effects", { key: "fx.breathe", label: "Breathe", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
-K("effects", { key: "fx.dots", label: "Orbiting dots", app: false, type: "range", min: 0, max: 36, step: 1, fmt: (v) => Math.round(v) || "none" });
-K("effects", { key: "fx.tilt", label: "3D tilt", app: false, type: "range", min: 0, max: 1.5, step: 0.05, fmt: pct, hint: "the stage leans toward your pointer" });
-K("effects", { key: "fx.grain", label: "Film grain", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
-K("effects", { key: "fx.scan", label: "Scanlines", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
-K("effects", { key: "fx.vignette", label: "Vignette", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
-K("effects", { key: "fx.pointer", label: "Pointer", app: false, type: "seg", options: [["none", "Hidden"], ["arrow", "Arrow"], ["file", "Dragging a file"]] });
-K("effects", { key: "fx.autohover", label: "Hover by itself", app: false, type: "toggle", hint: "walks round the buttons when you're not pointing" });
-K("effects", { key: "fx.sound", label: "Sound", app: false, type: "toggle", hint: "little ticks as you move" });
-K("effects", { key: "fx.glowColor", label: "Glow colour", app: false, type: "seg", options: [["accent", "Accent"], ["second", "Second colour"], ["white", "White"], ["ink", "Ink"]] });
-K("effects", { key: "fx.pulse", label: "Pulse", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, hint: "the glow breathes" });
-K("effects", { key: "fx.sparkAmt", label: "Spark amount", app: false, type: "range", min: 0.2, max: 3, step: 0.1, fmt: (v) => v.toFixed(1) + "×", when: (S) => S.fx.sparks });
-K("effects", { key: "fx.sparkShape", label: "Spark shape", app: false, type: "seg", options: [["dots", "Dots"], ["stars", "Stars"], ["squares", "Squares"], ["confetti", "Confetti"], ["emoji", "Emoji"]], when: (S) => S.fx.sparks });
-K("effects", { key: "fx.gravity", label: "Gravity", app: false, type: "range", min: 0, max: 2, step: 0.1, fmt: (v) => v ? v.toFixed(1) + " g" : "floaty", when: (S) => S.fx.sparks });
-K("effects", { key: "fx.shock", label: "Shockwave", app: false, type: "toggle", hint: "a ring rolls out when you click" });
-K("effects", { key: "fx.wobble", label: "Wobble", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
-K("effects", { key: "fx.misprint", label: "Misprint", app: false, type: "range", min: 0, max: 14, step: 1, fmt: (v) => v ? Math.round(v) + " pt off" : "in register", hint: "the second colour lands off register, like riso" });
-K("effects", { key: "fx.halftone", label: "Halftone", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
-K("effects", { key: "fx.pixel", label: "Pixelate", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: (v) => v ? pct(v) : "off" });
-// Backdrop
-K("backdrop", { key: "bg.kind", label: "Kind", app: false, type: "seg", options: [["paper", "Riso paper"], ["desktop", "Desktop"], ["aurora", "Aurora"], ["waves", "Waves"], ["mesh", "Mesh"], ["grid", "Grid"], ["dots", "Dots"], ["solid", "Solid"], ["photo", "Picture"], ["none", "Transparent"]] });
-K("backdrop", { key: "bg.c1", label: "Colour one", app: false, type: "color", when: (S) => !["none", "photo"].includes(S.bg.kind) });
-K("backdrop", { key: "bg.c2", label: "Colour two", app: false, type: "color", when: (S) => ["paper", "desktop", "aurora", "waves", "mesh"].includes(S.bg.kind) });
-K("backdrop", { key: "bg.c3", label: "Base", app: false, type: "color", when: (S) => ["paper", "aurora", "waves", "mesh", "grid", "dots"].includes(S.bg.kind) });
-K("backdrop", { key: "bg.animate", label: "Drift", app: false, type: "toggle", hint: "slow movement in aurora, waves, mesh and grid", when: (S) => ["aurora", "waves", "mesh", "grid"].includes(S.bg.kind) });
-K("backdrop", { key: "bg.blur", label: "Blur the picture", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.bg.kind === "photo" });
-K("backdrop", { key: "bg.dim", label: "Dim the picture", app: false, type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.bg.kind === "photo" });
-K("backdrop", { key: "bg.scale", label: "Pattern scale", app: false, type: "range", min: 0.5, max: 2, step: 0.05, fmt: pct, when: (S) => ["paper", "grid", "dots"].includes(S.bg.kind) });
-K("backdrop", { key: "bg.angle", label: "Gradient angle", app: false, type: "range", min: 0, max: 360, step: 5, fmt: (v) => Math.round(v) + "°", when: (S) => ["desktop", "photo"].includes(S.bg.kind) });
-K("backdrop", { key: "bg.frame", label: "Poster frame", app: false, type: "range", min: 0, max: 40, step: 1, fmt: (v) => v ? Math.round(v) + " pt" : "none" });
-K("backdrop", { key: "bg.frameColor", label: "Frame colour", app: false, type: "color", when: (S) => S.bg.frame > 0 });
-K("backdrop", { key: "bg.title", label: "Poster title", app: false, type: "text", placeholder: "My wheel", max: 28 });
+K("shape", { key: "layout", label: "Layout", type: "seg", options: [["halo", "Halo"], ["ring", "Ring"], ["orbit", "Orbit"]] });
+K("shape", { key: "scale", label: "Wheel size", type: "range", min: 0.7, max: 1.4, step: 0.05, fmt: pct });
+K("shape", { key: "thick", label: "Ring thickness", type: "range", min: 0.8, max: 1.2, step: 0.05, fmt: pct, when: notOrbit });
+K("shape", { key: "gap", label: "Gap between buttons", type: "range", min: 1, max: 8, step: 1, fmt: (v) => Math.round(v) + "°", when: notOrbit });
+K("shape", { key: "orb", label: "Centre size", type: "range", min: 0.85, max: 1.15, step: 0.05, fmt: pct });
+K("shape", { key: "round", label: "Corner rounding", type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: notOrbit });
+K("shape", { key: "bulge", label: "Hover pop", type: "range", min: 0, max: 2.5, step: 0.1, fmt: (v) => v.toFixed(1) + "×", hint: "how far the button under the pointer grows" });
+K("shape", { key: "fx.shadow", label: "Shadow", type: "range", min: 0, max: 1, step: 0.05, fmt: pct });
+K("shape", { key: "captions", label: "Captions and icons", type: "toggle", hint: "Halo's captions, Ring's icons, Orbit's icon discs" });
+K("shape", { key: "dimOthers", label: "Dim the other buttons", type: "toggle", hint: "while one is lit", when: (S) => S.layout !== "halo" });
+K("colour", { key: "scheme", label: "Wheel colours", type: "seg", options: [["auto", "Automatic"], ["dark", "Dark"], ["light", "Light"], ["system", "Match macOS"]], disabled: (S) => S.layout === "halo", hint: "Halo is always dark." });
+K("colour", { key: "glass", label: "Glass", type: "range", min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.layout === "ring" });
+K("colour", { key: "fill", label: "Fill", type: "seg", options: [["flat", "Board"], ["duo", "Duotone"], ["shades", "Shades"], ["stickers", "Stickers"], ["rainbow", "Rainbow"], ["outline", "Outline"]] });
+K("colour", { key: "accent2", label: "Second colour", type: "color", hint: "Duotone's other colour, and a glow colour" });
+K("colour", { key: "segAlpha", label: "Resting buttons", type: "range", min: 0.15, max: 1, step: 0.05, fmt: pct, hint: "how solid the buttons you're not on are" });
+K("colour", { key: "disc", label: "Disc", type: "color", auto: "Auto" });
+K("colour", { key: "ink", label: "Labels", type: "color", auto: "Auto" });
+K("colour", { key: "hotInk", label: "Text on the lit button", type: "color", auto: "Auto" });
+K("colour", { key: "rimColor", label: "Rim", type: "color", auto: "Auto" });
+K("colour", { key: "rimW", label: "Rim width", type: "range", min: 0, max: 6, step: 0.5, fmt: (v) => v ? v.toFixed(1) + "×" : "none" });
+K("colour", { key: "tints.images", label: "Tint image formats", type: "color", auto: "Off", when: (S) => !bright(S) });
+K("colour", { key: "tints.tools", label: "Tint tools", type: "color", auto: "Off", when: (S) => !bright(S) });
+K("colour", { key: "tints.documents", label: "Tint PDF and documents", type: "color", auto: "Off", when: (S) => !bright(S), hint: "shows on a PDF or document's wheel" });
+K("colour", { key: "panel", label: "Menu bar panel", type: "seg", options: [["auto", "Automatic"], ["dark", "Dark"], ["light", "Light"], ["system", "Match macOS"]], hint: "the panel under the menu bar icon (not drawn here)" });
+K("type", { key: "font", label: "Font", type: "seg", font: true, options: [["rounded", "Rounded"], ["default", "System"], ["mono", "Mono"]] });
+K("type", { key: "case", label: "Case", type: "seg", options: [["title", "Title case"], ["upper", "UPPER"]] });
+K("type", { key: "label", label: "Label size", type: "range", min: 0.85, max: 1.3, step: 0.05, fmt: pct });
+K("type", { key: "labelWeight", label: "Label weight", type: "seg", options: [["regular", "Regular"], ["semibold", "Semibold"], ["bold", "Bold"], ["heavy", "Heavy"]] });
+K("type", { key: "track", label: "Letter spacing", type: "range", min: -0.05, max: 0.3, step: 0.01, fmt: (v) => v.toFixed(2) + " em" });
+K("motion", { key: "fx.glow", label: "Glow", type: "range", min: -0.05, max: 1.5, step: 0.05, fmt: (v) => v < 0 ? "like the layout" : pct(v), hint: "far left: the layout's own (Halo glows, Ring and Orbit don't)" });
+K("motion", { key: "fx.glowColor", label: "Glow colour", type: "seg", options: [["accent", "Accent"], ["second", "Second colour"], ["white", "White"]] });
+K("motion", { key: "fx.breathe", label: "Breathe", type: "range", min: 0, max: 1, step: 0.05, fmt: (v) => v ? pct(v) : "off", hint: "the wheel slowly swells and settles" });
+K("motion", { key: "fx.dots", label: "Orbiting dots", type: "range", min: 0, max: 36, step: 1, fmt: (v) => Math.round(v) || "none" });
+K("motion", { key: "fx.spin", label: "Orbit speed", type: "range", min: 0, max: 20, step: 1, fmt: (v) => v ? Math.round(v) + " rpm" : "still", when: (S) => S.fx.dots > 0 });
+K("motion", { key: "fx.twirl", label: "Twirl in", type: "toggle", hint: "spins into place as it opens (▶ Replay to see it)" });
+K("motion", { key: "fx.sparks", label: "Sparks", type: "toggle", hint: "a small burst when a button lights up" });
+// Preview-only (not knobs, not exported).
+K("wallpaper", { key: "bg.kind", label: "Wallpaper", type: "seg", pv: true, options: [["paper", "Riso paper"], ["desktop", "Gradient"], ["aurora", "Aurora"], ["solid", "Solid"], ["photo", "Your picture"], ["none", "None"]] });
+K("wallpaper", { key: "bg.c1", label: "Colour one", type: "color", pv: true, when: (S) => !["none", "photo"].includes(S.bg.kind) });
+K("wallpaper", { key: "bg.c2", label: "Colour two", type: "color", pv: true, when: (S) => ["paper", "desktop", "aurora"].includes(S.bg.kind) });
+K("wallpaper", { key: "bg.c3", label: "Paper", type: "color", pv: true, when: (S) => ["paper", "aurora"].includes(S.bg.kind) });
+K("wallpaper", { key: "bg.animate", label: "Drift", type: "toggle", pv: true, hint: "the aurora moves slowly", when: (S) => S.bg.kind === "aurora" });
+K("wallpaper", { key: "bg.blur", label: "Blur the picture", type: "range", pv: true, min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.bg.kind === "photo" });
+K("wallpaper", { key: "bg.dim", label: "Dim the picture", type: "range", pv: true, min: 0, max: 1, step: 0.05, fmt: pct, when: (S) => S.bg.kind === "photo" });
+K("wallpaper", { key: "fx.autohover", label: "Hover by itself", type: "toggle", pv: true, hint: "walks round the buttons when you're not pointing" });
+K("wallpaper", { key: "fx.sound", label: "Sound", type: "toggle", pv: true, hint: "little ticks as you move" });
 
-const badge = (app) => app ? '<span class="badge app">◆ APP</span>' : '<span class="badge studio">✦ STUDIO</span>';
 function buildKnobs() {
-  for (const c of C) {
+  for (const c of KN) {
     const id = "k_" + c.key.replace(/\./g, "_"), el = document.createElement("div");
-    el.className = "row"; el.dataset.app = c.app ? "1" : "0"; el.dataset.knob = "";
-    let head = `<div class="row-h">${c.type === "seg" ? `<span class="lbl" id="${id}_l">${c.label}</span>` : `<label for="${id}">${c.label}</label>`}${badge(c.app)}<output id="${id}_o"></output></div>`, body = "";
+    el.className = "row"; if (!c.pv) el.dataset.knob = "";
+    let head = `<div class="row-h">${c.type === "seg" ? `<span class="lbl" id="${id}_l">${c.label}</span>` : `<label for="${id}">${c.label}</label>`}<output id="${id}_o"></output></div>`, body = "";
     if (c.type === "range") body = `<input type="range" id="${id}" min="${c.min}" max="${c.max}" step="${c.step}">`;
     if (c.type === "seg") body = `<div class="seg${c.font ? " fonts" : ""}" role="group" aria-labelledby="${id}_l" id="${id}">${c.options.map(([v, l]) =>
-      `<button type="button" data-v="${v}"${c.font ? ` style="font-family:${c.key === "font" ? appFont(v) : ((FONTS[v] && FONTS[v].fam) || "var(--ui)").replace(/"/g, "'")}"` : ""}>${l}</button>`).join("")}</div>`;
+      `<button type="button" data-v="${v}"${c.font ? ` style="font-family:${FAMILY[v].replace(/"/g, "'")}"` : ""}>${l}</button>`).join("")}</div>`;
     if (c.type === "toggle") body = `<label class="sw"><input type="checkbox" id="${id}"><span>${c.hint || ""}</span></label>`;
-    if (c.type === "text") body = `<input class="txt" id="${id}" maxlength="${c.max || 24}" placeholder="${c.placeholder || ""}">`;
     if (c.type === "color") body = `<div class="colr">${c.auto ? `<label class="auto"><input type="checkbox" id="${id}_a"> ${c.auto}</label>` : ""}<input type="color" id="${id}" aria-label="${c.label}"><input class="hex" id="${id}_h" maxlength="7" spellcheck="false" aria-label="${c.label} hex"></div>`;
     if (c.hint && c.type !== "toggle") body += `<p class="hint">${c.hint}</p>`;
     el.innerHTML = head + body;
     $(`.rows[data-tab="${c.tab}"]`).append(el);
     c.el = el; c.out = $(`#${id}_o`, el);
-    if (c.type === "range") { c.input = $("#" + id, el); c.input.addEventListener("input", () => set(c.key, parseFloat(c.input.value))); }
-    if (c.type === "seg") $$("button", el).forEach((b) => b.addEventListener("click", () => set(c.key, c.num ? +b.dataset.v : b.dataset.v)));
+    if (c.type === "range") { c.input = $("#" + id, el); c.input.addEventListener("input", () => { let v = parseFloat(c.input.value); if (c.key === "fx.glow" && v < 0) v = -1; set(c.key, v); }); }
+    if (c.type === "seg") $$("button", el).forEach((b) => b.addEventListener("click", () => set(c.key, b.dataset.v)));
     if (c.type === "toggle") { c.input = $("#" + id, el); c.input.addEventListener("change", () => set(c.key, c.input.checked)); }
-    if (c.type === "text") { c.input = $("#" + id, el); c.input.addEventListener("input", () => set(c.key, c.input.value)); }
     if (c.type === "color") {
       c.input = $("#" + id, el); c.hex = $(`#${id}_h`, el); c.autoBox = $(`#${id}_a`, el);
       c.input.addEventListener("input", () => set(c.key, c.input.value.toUpperCase()));
@@ -1131,11 +1013,9 @@ function buildKnobs() {
 function syncKnob(c) {
   const v = getP(st, c.key);
   c.el.hidden = !!(c.when && !c.when(st));
-  c.el.classList.toggle("studio-hidden", hideStudio && !c.app);
   if (c.type === "range") { c.input.value = v; const f = c.fmt(v); c.out.textContent = f; c.input.setAttribute("aria-valuetext", f); }
   if (c.type === "seg") { const dis = c.disabled?.(st); $$("button", c.el).forEach((b) => { b.setAttribute("aria-pressed", String(String(b.dataset.v) === String(v))); b.disabled = !!dis; }); }
   if (c.type === "toggle") c.input.checked = !!v;
-  if (c.type === "text" && document.activeElement !== c.input) c.input.value = v || "";
   if (c.type === "color") {
     const on = !!v; if (c.autoBox) c.autoBox.checked = !on;
     c.input.disabled = c.hex.disabled = !on && !!c.autoBox;
@@ -1143,14 +1023,12 @@ function syncKnob(c) {
   }
 }
 
-// Custom knobs: themes, accent, labels, centre text.
-const SWATCHES = ["#C6FF3D", "#FF8A00", "#FF5E3A", "#FFB020", "#FF5CA8", "#9B6BFF", "#7C8CFF", "#5CE1FF", "#3ECF8E", "#F2F2F2", "#9BA3AF", "#FF2B2B"];
+const SWATCHES = ["#FF4FA0", "#2F5BFF", "#FF8A00", "#FFB020", "#7C8CFF", "#C6FF3D", "#5CE1FF", "#9BA3AF", "#3ECF8E", "#F2F2F2", "#FF2B2B", "#17140F"];
 function buildCustom() {
   for (const t of APP_THEMES) {
     const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.dataset.id = t.id;
     b.innerHTML = `<i style="background:${t.set.accent || DEFAULT.accent}"></i>${t.name}`;
-    b.addEventListener("click", () => { const keep = { accent: t.set.accent || DEFAULT.accent, glass: t.set.glass ?? DEFAULT.glass, font: t.set.font || DEFAULT.font };
-      Object.assign(st, keep); st.theme = t.id; commit(); toast(`${t.name} colours`); });
+    b.addEventListener("click", () => { const p = presetState(t); Object.assign(st, { accent: p.accent, glass: p.glass, font: p.font, theme: t.id }); commit(true); toast(`${t.name} colours`); });
     $("#themeChips").append(b);
   }
   for (const hex of SWATCHES) {
@@ -1161,125 +1039,94 @@ function buildCustom() {
   $("#accentHex").addEventListener("change", (e) => { let v = e.target.value.trim(); if (!v.startsWith("#")) v = "#" + v; if (isHex(v)) set("accent", v.toUpperCase()); else syncUI(); });
   $("#accentRoll").addEventListener("click", () => set("accent", hslHex(Math.random() * 360, 85 + Math.random() * 15, 55 + Math.random() * 12)));
   if ("EyeDropper" in window) { const b = $("#eyedrop"); b.hidden = false; b.addEventListener("click", async () => { try { const r = await new EyeDropper().open(); set("accent", r.sRGBHex.toUpperCase()); } catch {} }); }
-  $("#centreText").addEventListener("input", (e) => { st.centre = e.target.value; commit(); });
-  $("#emojiLabels").addEventListener("click", () => { st.labels = segsFor(st.count).map((x) => x.emoji); commit(true); toast("Emoji everything ✨"); });
-  $("#clearLabels").addEventListener("click", () => { st.labels = []; st.centre = ""; commit(true); });
 }
-function syncLabels() {
-  const box = $("#labels"), segs = segsFor(st.count);
-  if (box.childElementCount !== segs.length || box.dataset.n !== String(st.count)) {
-    box.textContent = ""; box.dataset.n = st.count;
-    segs.forEach((seg, i) => { const inp = document.createElement("input"); inp.maxLength = 10; inp.placeholder = seg.label; inp.setAttribute("aria-label", `Label for ${seg.label}`);
-      inp.addEventListener("input", () => { st.labels[i] = inp.value; commit(); }); box.append(inp); });
-  }
-  $$("input", box).forEach((inp, i) => { if (document.activeElement !== inp) inp.value = st.labels[i] || ""; });
-  if (document.activeElement !== $("#centreText")) $("#centreText").value = st.centre || "";
-}
-
 function syncUI() {
-  for (const c of C) syncKnob(c);
-  $$(".row[data-knob]").forEach((el) => { if (!C.some((c) => c.el === el)) el.classList.toggle("studio-hidden", hideStudio && el.dataset.app === "0"); });
+  for (const c of KN) syncKnob(c);
   $$("#themeChips .chip").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.id === st.theme)));
   $$("#swatches button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.hex === st.accent.toUpperCase())));
   $("#accent").value = st.accent.toLowerCase(); $("#accentHex").value = st.accent; $("#accentOut").textContent = st.theme === "custom" ? "custom" : st.theme;
   const on = onAccent(st.accent), ratio = contrast(st.accent, on);
   $("#contrast").textContent = `Text on it: ${on === "#FFFFFF" ? "white" : "dark"} · ${ratio.toFixed(1)}:1 ${ratio >= 4.5 ? "✓ easy to read" : ratio >= 3 ? "· fine for big text" : "· hard to read"}`;
-  syncLabels();
-  // The page wears the wheel's accent.
   document.documentElement.style.setProperty("--a", st.accent); document.documentElement.style.setProperty("--on-a", onAccent(st.accent));
   stage.classList.toggle("checker", st.bg.kind === "none");
+  if (restartMotion) { restartMotion = false; spin = 0; }
   syncExport();
 }
 
 // ---------- Presets, dice, my wheels ----------
 function thumb(S, px) {
   const c = document.createElement("canvas"), d = Math.min(2, devicePixelRatio || 1); c.width = c.height = Math.round(px * d);
-  const x = c.getContext("2d"); x.scale(d, d); render(x, px, S, { t: 1.2, hover: 1, spin: 0 }); return c;
+  const x = c.getContext("2d"); x.scale(d, d); render(x, px, S, { t: 1.2, hover: 1, spin: 0, dpr: d }); return c;
 }
-const presetState = (p) => merge(DEFAULT, p.set);
 function presetButton(name, sub, S, onPick, onDelete) {
-  const b = document.createElement("div"); b.className = "preset"; b.setAttribute("role", "button"); b.tabIndex = 0; b.dataset.preset = name;
+  const b = document.createElement("div"); b.className = "preset"; b.setAttribute("role", "button"); b.tabIndex = 0;
   b.append(thumb(S, 120)); const l = document.createElement("div"); l.innerHTML = `${esc(name)}<small>${esc(sub)}</small>`; b.append(l);
   b.addEventListener("click", (e) => { if (!e.target.closest(".del")) onPick(); });
   b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(); } });
   if (onDelete) { const d = document.createElement("button"); d.className = "del"; d.type = "button"; d.textContent = "×"; d.setAttribute("aria-label", "Delete " + name); d.addEventListener("click", onDelete); b.append(d); }
   return b;
 }
-function applyState(S, msg) { clearTimeout(histTimer); pushHist(); const keepSound = st.fx.sound; st = clone(S); st.fx.sound = keepSound; commit(true); if (msg) toast(msg); }
+function applyState(S, msg) {
+  clearTimeout(histTimer); pushHist();
+  const keep = { autohover: st.fx.autohover, sound: st.fx.sound };
+  st = valid(clone(S)); Object.assign(st.fx, keep);
+  commit(true); replay(); if (msg) toast(msg);
+}
 function buildPresets() {
   const a = $("#presetsApp"), s = $("#presetsStudio"); a.textContent = s.textContent = "";
-  APP_THEMES.forEach((p) => a.append(presetButton(p.name, p.sub, presetState(p), () => applyState(merge(presetState(p), { theme: p.id }), p.name))));
+  APP_THEMES.forEach((p) => a.append(presetButton(p.name, p.sub, presetState(p), () => applyState({ ...presetState(p), theme: p.id }, p.name))));
   STUDIO_PRESETS.forEach((p) => s.append(presetButton(p.name, p.sub, presetState(p), () => applyState(presetState(p), p.name))));
   buildMine();
 }
-const mine = () => { try { return JSON.parse(store.get("circularity-studio-saved") || "[]"); } catch { return []; } };
+const mine = () => { try { return JSON.parse(store.get("circularity-studio-saved-v3") || "[]"); } catch { return []; } };
 function buildMine() {
   const box = $("#presetsMine"), list = mine(); box.textContent = "";
-  list.forEach((w, i) => box.append(presetButton(w.name, w.when, merge(DEFAULT, w.st), () => applyState(merge(DEFAULT, w.st), w.name), () => {
-    const l = mine(); l.splice(i, 1); store.set("circularity-studio-saved", JSON.stringify(l)); buildMine(); toast("Deleted"); })));
+  list.forEach((w, i) => box.append(presetButton(w.name, w.when, valid(merge(DEFAULT, w.st)), () => applyState(valid(merge(DEFAULT, w.st)), w.name), () => {
+    const l = mine(); l.splice(i, 1); store.set("circularity-studio-saved-v3", JSON.stringify(l)); buildMine(); toast("Deleted"); })));
   $("#mineEmpty").hidden = list.length > 0;
 }
 $("#saveWheel").addEventListener("click", () => {
   const l = mine(); l.unshift({ name: `Wheel ${l.length + 1}`, when: new Date().toLocaleDateString(undefined, { day: "numeric", month: "short" }), st });
-  store.set("circularity-studio-saved", JSON.stringify(l.slice(0, 24))); buildMine(); toast("Saved to My wheels");
+  store.set("circularity-studio-saved-v3", JSON.stringify(l.slice(0, 24))); buildMine(); toast("Saved to My wheels");
 });
 const pick = (a) => a[Math.floor(Math.random() * a.length)], rr = (a, b, s = 0.05) => Math.round((a + Math.random() * (b - a)) / s) * s;
+const maybe = (p, v, d) => (Math.random() < p ? v : d);
 function surprise() {
-  const h = Math.random() * 360, dark = Math.random() < 0.72, accent = hslHex(h, 88 + Math.random() * 12, 58 + Math.random() * 8);
-  const kind = pick(["desktop", "aurora", "aurora", "waves", "waves", "mesh", "grid", "dots", "solid"]);
+  const h = Math.random() * 360, dark = Math.random() < 0.7, accent = hslHex(h, 88 + Math.random() * 12, 58 + Math.random() * 8);
+  const layout = pick(["halo", "halo", "ring", "ring", "orbit"]);
   const S = merge(DEFAULT, {
-    theme: "custom", accent, accent2: hslHex(h + pick([40, 150, 180, 210, 300]), 90, 62), layout: pick(["halo", "halo", "ring", "ring", "orbit"]), scheme: dark ? "dark" : "light",
-    count: pick([6, 6, 6, 8, 8, 10, 12]), spread: pick([360, 360, 360, 360, 240, 200]), rot: pick([0, 0, 0, 15, 30]), round: pick([0, 0.2, 0.4, 0.7, 1]),
-    gap: Math.round(rr(1, 8, 1)), thick: rr(0.8, 1.2), orb: rr(0.85, 1.15), label: rr(0.95, 1.2), scale: rr(0.9, 1.1), bulge: rr(0.6, 2.2, 0.1),
-    fill: pick(["flat", "gradient", "gradient", "duo", "shades", "stickers", "rainbow", "outline", "glass"]),
-    display: pick(Object.keys(FONTS)), weight: pick([700, 900, 900]), case: pick(["title", "upper"]), font: pick(["rounded", "default", "mono"]), hue: Math.round(Math.random() * 360),
-    fx: { glow: rr(0, 1.4), shadow: rr(0.3, 1.2), spin: pick([0, 0, 0, 2, 5]), breathe: pick([0, 0, 0.5]), dots: pick([0, 0, 0, 8, 16]), grain: pick([0, 0, 0.3]), scan: pick([0, 0, 0, 0.35]), vignette: pick([0, 0, 0.5]), sound: st.fx.sound },
-    bg: { kind, c1: hslHex(h + Math.random() * 60, 70, dark ? 32 : 78), c2: hslHex(h + 180, 60, dark ? 16 : 88), c3: dark ? hslHex(h, 35, 6) : hslHex(h, 35, 95) },
+    theme: "custom", accent, accent2: hslHex(h + pick([40, 150, 180, 210, 300]), 90, 62), layout, scheme: layout === "halo" ? "auto" : dark ? "dark" : "light",
+    gap: Math.round(rr(1, 8, 1)), thick: rr(0.8, 1.2), orb: rr(0.85, 1.15), label: rr(0.9, 1.2), scale: rr(0.9, 1.1), glass: rr(0.4, 0.9),
+    fill: pick(["flat", "duo", "duo", "shades", "stickers", "rainbow", "outline"]), segAlpha: maybe(0.25, rr(0.55, 0.9), 1),
+    round: pick([0, 0.2, 0.4, 0.7, 1]), bulge: rr(0.6, 2.2, 0.1), font: pick(["rounded", "default", "mono"]), case: pick(["title", "upper"]),
+    labelWeight: pick(["semibold", "bold", "bold", "heavy"]), track: maybe(0.3, rr(0.02, 0.15, 0.01), 0), captions: Math.random() < 0.85, dimOthers: Math.random() < 0.8,
+    rimW: maybe(0.3, rr(1.5, 4, 0.5), 1), rimColor: maybe(0.25, accent, ""),
+    fx: { glow: maybe(0.7, rr(0.3, 1.4), -1), glowColor: maybe(0.3, pick(["second", "white"]), "accent"), shadow: rr(0.4, 1),
+      breathe: maybe(0.3, rr(0.3, 0.9), 0), dots: maybe(0.35, pick([8, 12, 18, 24]), 0), spin: pick([0, 2, 4, 8]), twirl: Math.random() < 0.35, sparks: Math.random() < 0.45 },
+    bg: { kind: pick(["paper", "paper", "desktop", "aurora", "solid"]), c1: hslHex(h + Math.random() * 60, 70, dark ? 32 : 78), c2: hslHex(h + 180, 60, dark ? 16 : 88), c3: dark ? "#14110D" : "#F3EEE4" },
   });
-  const maybe = (p, v, d) => (Math.random() < p ? v : d);
-  Object.assign(S, { explode: maybe(0.2, Math.round(rr(4, 18, 1)), 0), stagger: maybe(0.15, Math.round(rr(4, 16, 1)), 0), discShape: maybe(0.3, pick(["squircle", "hex", "none"]), "circle"),
-    labelTurn: maybe(0.25, "radial", "upright"), labelPos: maybe(0.2, pick(["inner", "outer"]), "middle"), mirror: Math.random() < 0.15, rimW: maybe(0.3, rr(1.5, 4, 0.5), 1),
-    segAlpha: maybe(0.2, rr(0.5, 0.9), 1), italic: Math.random() < 0.12, outline: maybe(0.15, rr(0.75, 2, 0.25), 0), orbFace: maybe(0.3, pick(Object.keys(FONTS)), "same"), gradDir: pick(["out", "across"]) });
-  Object.assign(S.fx, { glowColor: maybe(0.3, pick(["second", "white"]), "accent"), pulse: maybe(0.25, rr(0.3, 0.8), 0), sparkShape: pick(["dots", "stars", "squares", "confetti", "emoji"]),
-    sparkAmt: rr(0.8, 2), wobble: maybe(0.12, rr(0.2, 0.5), 0), misprint: maybe(0.3, Math.round(rr(3, 10, 1)), 0), halftone: maybe(0.15, rr(0.3, 0.7), 0), pixel: maybe(0.06, rr(0.2, 0.5), 0) });
-  Object.assign(S.bg, { scale: maybe(0.3, rr(0.6, 1.6), 1), angle: Math.round(rr(0, 360, 5)) });
-  if (S.layout === "halo") S.scheme = "auto";
   applyState(S, "🎲 " + pick(["Fresh one", "Oh, nice", "Bold choice", "Rolled", "That's new", "Spicy"]));
 }
 $("#dice").addEventListener("click", surprise); $("#dice2").addEventListener("click", surprise);
 $("#resetAll").addEventListener("click", () => applyState(clone(DEFAULT), "Back to Riso"));
 
-// ---------- Export ----------
+// ---------- Export (Circularity's theme JSON: every knob, inside the app's ranges) ----------
 function appJSON() {
-  // Kept inside the ranges Circularity accepts, so a paste never drops a setting.
-  const r2 = (n) => Math.round(n * 100) / 100, cl = (v, a, b) => r2(Math.min(b, Math.max(a, +v || 0)));
-  const pick = (v, ok, d) => (ok.includes(v) ? v : d), hex = (v) => (isHex(v) ? v.toUpperCase() : "");
-  const themeId = APP_THEMES.some((t) => t.id === st.theme && (t.set.accent || DEFAULT.accent) === st.accent) ? st.theme : "custom";
-  return JSON.stringify({ app: "Circularity", schemaVersion: 2, values: {
-    "appearance.theme": themeId, "appearance.accentHex": hex(st.accent) || DEFAULT.accent, "appearance.glassStrength": cl(st.glass, 0, 1),
-    "appearance.wheelScheme": pick(st.scheme, ["auto", "system", "light", "dark"], "auto"), "menubar.colorScheme": pick(st.panel, ["auto", "system", "light", "dark"], "auto"),
-    "wheel.layout": pick(st.layout, ["halo", "ring", "orbit"], "halo"),
-    "appearance.tint.images": hex(st.tints.images), "appearance.tint.documents": hex(st.tints.documents), "appearance.tint.tools": hex(st.tints.tools),
-    "wheel.scale": cl(st.scale, 0.7, 1.4), "appearance.ringThickness": cl(st.thick, 0.8, 1.2), "appearance.segmentGap": Math.round(cl(st.gap, 1, 8)),
-    "appearance.orbScale": cl(st.orb, 0.85, 1.15), "appearance.labelScale": cl(st.label, 0.85, 1.3),
-    "appearance.font": pick(st.font, ["rounded", "default", "mono"], "rounded"), "appearance.labelCase": pick(st.case, ["title", "upper"], "title"),
-  } }, null, 2);
-}
-let prevTimer = 0;
-function drawAppPreview() {
-  const c = $("#appPrev"); if (!c) return;
-  const d = Math.min(2, devicePixelRatio || 1), px = 112; c.width = c.height = px * d;
-  const x = c.getContext("2d"); x.setTransform(d, 0, 0, d, 0, 0); render(x, px, effective(true), { t: 0, hover, spin: 0 });
+  const v = valid(clone(st)), values = {};
+  values["appearance.theme"] = APP_THEMES.some((t) => t.id === v.theme && (t.set.accent || DEFAULT.accent) === v.accent) ? v.theme : "custom";
+  for (const [path, key, r] of KEYS) {
+    let x = getP(v, path);
+    if (typeof x === "number") x = r.int ? Math.round(x) : Math.round(x * 100) / 100;
+    values[key] = x;
+  }
+  return JSON.stringify({ app: "Circularity", schemaVersion: 2, values }, null, 2);
 }
 function syncExport() {
-  clearTimeout(prevTimer); prevTimer = setTimeout(drawAppPreview, 60);
   const code = $("#code"); if (code) code.value = appJSON();
-  const app = [`${st.layout[0].toUpperCase() + st.layout.slice(1)} layout, accent ${st.accent}`, `size ${pct(st.scale)}, ${st.font} font, ${st.case === "upper" ? "UPPER" : "Title"} case`];
-  if (st.tints.images || st.tints.tools || st.tints.documents) app.push("your tints");
-  $("#carryApp").innerHTML = app.map((x) => `<li>${esc(x)}</li>`).join("");
-  const diff = C.filter((c) => !c.app && JSON.stringify(getP(st, c.key)) !== JSON.stringify(getP(DEFAULT, c.key))).map((c) => c.label);
-  if (st.labels.some(Boolean)) diff.push("renamed buttons"); if (st.centre) diff.push("centre text");
-  $("#carryStudio").innerHTML = diff.length ? `<li>Stays here (the app doesn't have these): ${esc(diff.slice(0, 8).join(", "))}${diff.length > 8 ? ` and ${diff.length - 8} more` : ""}</li>` : "";
+  const motion = [st.fx.breathe > 0 && "breathing", st.fx.dots > 0 && `${Math.round(st.fx.dots)} orbiting dots`, st.fx.twirl && "twirl in", st.fx.sparks && "sparks"].filter(Boolean);
+  const lines = [`${st.layout[0].toUpperCase() + st.layout.slice(1)} layout, accent ${st.accent}, ${({ flat: "board", duo: "duotone" })[st.fill] || st.fill} fill`,
+    `${KEYS.length + 1} settings in all, the same ones as Settings → Appearance`, motion.length ? `Motion: ${motion.join(", ")}` : "No motion (add some in the Motion tab)"];
+  $("#carryApp").innerHTML = lines.map((x) => `<li>${esc(x)}</li>`).join("");
 }
 async function copyText(text, okMsg, fallbackEl) {
   try { await navigator.clipboard.writeText(text); toast(okMsg); return true; }
@@ -1291,24 +1138,22 @@ $("#showCode").addEventListener("click", (e) => { const c = $("#code"); c.hidden
 $("#importBtn").addEventListener("click", () => {
   try {
     const v = JSON.parse($("#importCode").value).values; if (!v) throw 0;
-    const S = clone(st), map = { "appearance.theme": "theme", "appearance.accentHex": "accent", "appearance.glassStrength": "glass", "appearance.wheelScheme": "scheme", "menubar.colorScheme": "panel",
-      "wheel.layout": "layout", "wheel.scale": "scale", "appearance.ringThickness": "thick", "appearance.segmentGap": "gap", "appearance.orbScale": "orb", "appearance.labelScale": "label", "appearance.font": "font", "appearance.labelCase": "case" };
-    for (const [k, p] of Object.entries(map)) if (v[k] !== undefined) S[p] = v[k];
-    for (const kind of ["images", "documents", "tools"]) if (v["appearance.tint." + kind] !== undefined) S.tints[kind] = v["appearance.tint." + kind];
-    applyState(merge(DEFAULT, S), "Loaded your theme from the app");
+    const S = clone(st);
+    if (v["appearance.theme"] !== undefined) S.theme = v["appearance.theme"];
+    for (const [path, key] of KEYS) if (v[key] !== undefined) setP(S, path, v[key]);
+    applyState(S, "Loaded your theme from the app");
   } catch { toast("That doesn't look like a Circularity theme"); }
 });
 const b64 = (s) => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const shareLink = () => location.href.split("#")[0] + "#w=" + b64(JSON.stringify({ ...st, fx: { ...st.fx, sound: false } }));
-$("#shareBtn").addEventListener("click", () => copyText(shareLink(), "Link copied: anyone who opens it gets this wheel", $("#shareOut")));
-$("#shareTop").addEventListener("click", () => copyText(shareLink(), "Link copied: anyone who opens it gets this wheel", null));
+$("#shareBtn").addEventListener("click", () => copyText(shareLink(), "Link copied: it opens here, and pastes into the app", $("#shareOut")));
+$("#shareTop").addEventListener("click", () => copyText(shareLink(), "Link copied: it opens here, and pastes into the app", null));
 let pngSize = 2048;
 $$("#pngSize button").forEach((b) => b.addEventListener("click", () => { pngSize = +b.dataset.v; $$("#pngSize button").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }));
 function download(blob, name) { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
 $("#savePng").addEventListener("click", () => {
   const c = document.createElement("canvas"); c.width = c.height = pngSize;
-  const clear = $("#pngClear").checked || st.bg.kind === "none";
-  render(c.getContext("2d"), pngSize, effective(), { t: T, hover, spin, clear });
+  render(c.getContext("2d"), pngSize, st, { t: T, hover, spin, clear: $("#pngClear").checked || st.bg.kind === "none", dpr: 1 });
   c.toBlob((b) => { if (b) { download(b, "circularity-wheel.png"); toast(`Saved a ${pngSize} px PNG`); } else toast("Your browser couldn't make the PNG"); }, "image/png");
 });
 (() => {
@@ -1322,16 +1167,16 @@ $("#savePng").addEventListener("click", () => {
     rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     rec.onstop = () => { recording = false; document.body.classList.remove("recording"); btn.lastChild.textContent = " Record a clip";
       download(new Blob(chunks, { type }), "circularity-wheel." + (type.includes("mp4") ? "mp4" : "webm")); toast("Clip saved"); };
-    recording = true; document.body.classList.add("recording"); btn.lastChild.textContent = " Recording… 4 s"; kick();
-    let n = 0; const walk = setInterval(() => { setHover((hover + 1) % vis.count, n++ % 2 ? "auto" : "rec"); }, 450);
+    recording = true; document.body.classList.add("recording"); btn.lastChild.textContent = " Recording… 4 s"; replay();
+    const walk = setInterval(() => setHover((hover + 1) % 6, "rec"), 500);
     rec.start(); setTimeout(() => { clearInterval(walk); rec.stop(); }, 4000);
   });
 })();
 
-// Your own picture as the backdrop: choose it, or drop it on the stage.
+// Your own wallpaper: choose a picture, or drop it on the stage.
 function usePhoto(file) {
   if (!file || !file.type.startsWith("image/")) { toast("That isn't a picture"); return; }
-  const img = new Image(); img.onload = () => { photo = img; st.bg.kind = "photo"; commit(true); toast("Backdrop set (it stays on this device)"); };
+  const img = new Image(); img.onload = () => { photo = img; st.bg.kind = "photo"; commit(true); toast("Wallpaper set (it stays on this device)"); };
   img.onerror = () => toast("Couldn't open that picture"); img.src = URL.createObjectURL(file);
 }
 $("#photoIn").addEventListener("change", (e) => usePhoto(e.target.files[0]));
@@ -1341,13 +1186,13 @@ stage.addEventListener("drop", (e) => { e.preventDefault(); stage.classList.remo
 $("#matchBg").addEventListener("click", () => {
   const [r, g, b] = hexRgb(st.accent), max = Math.max(r, g, b), min = Math.min(r, g, b); let h = 0;
   if (max !== min) { const d = max - min; h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; }
-  const light = isLight(st);
-  Object.assign(st.bg, { c1: hslHex(h + 20, 60, light ? 80 : 30), c2: hslHex(h - 40, 55, light ? 90 : 14), c3: light ? hslHex(h, 30, 95) : hslHex(h, 40, 6) });
-  if (st.bg.kind === "photo" && !photo) st.bg.kind = "aurora";
-  commit(true); toast("Backdrop matched to the accent");
+  const dark = lum(st.bg.c3) < 0.2;
+  Object.assign(st.bg, { c1: hslHex(h + 20, 60, dark ? 30 : 80), c2: hslHex(h - 40, 55, dark ? 14 : 90) });
+  if (st.bg.kind === "photo" && !photo) st.bg.kind = "paper";
+  commit(true); toast("Wallpaper matched to the accent");
 });
 
-// ---------- Tabs, toggles, keys ----------
+// ---------- Tabs, keys, toast ----------
 const tabs = $$(".tab");
 function openTab(t) {
   tabs.forEach((x) => { const on = x === t; x.setAttribute("aria-selected", String(on)); x.tabIndex = on ? 0 : -1; $("#" + x.getAttribute("aria-controls")).hidden = !on; });
@@ -1357,8 +1202,6 @@ tabs.forEach((t, i) => {
   t.addEventListener("click", () => openTab(t));
   t.addEventListener("keydown", (e) => { const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0; if (d) { e.preventDefault(); const n = tabs[(i + d + tabs.length) % tabs.length]; openTab(n); n.focus(); } });
 });
-$("#appView").addEventListener("change", (e) => { appView = e.target.checked; cv.style.transform = ""; kick(); toast(appView ? "Now drawn as the app draws it" : "Studio view"); });
-$("#hideStudio").addEventListener("change", (e) => { hideStudio = e.target.checked; syncUI(); });
 $("#undo").addEventListener("click", undo); $("#redo").addEventListener("click", redo);
 addEventListener("keydown", (e) => {
   const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !["range", "checkbox", "color"].includes(e.target.type);
@@ -1370,22 +1213,19 @@ function toast(msg) { if (EMBED) return; const t = $("#toast"); t.textContent = 
 
 // ---------- Start ----------
 buildKnobs(); buildCustom();
-$("#knobs").textContent = `${$$(".row[data-knob]").length} knobs`;
-syncUI(); updUndo(); size();
+$("#knobs").textContent = `${$$(".row[data-knob]").length} knobs, all in the app`;
+syncUI(); updUndo(); size(); replay();
 if (!EMBED) {
   buildPresets();
   const savedTab = $("#" + (store.get("circularity-studio-tab") || "t-presets")); if (savedTab) openTab(savedTab);
   if (location.hash.startsWith("#w=")) { toast("Loaded a shared wheel"); history.replaceState(null, "", location.pathname + location.search); }
 }
-// Canvas text needs the fonts loaded; ask for every face, then redraw.
-Promise.all(['700 20px "JetBrains Mono"', '800 20px "Nunito"', ...Object.values(FONTS).filter((f) => f.fam).flatMap((f) => [`400 20px ${f.fam}`, `700 20px ${f.fam}`, `900 20px ${f.fam}`])]
-  .map((f) => document.fonts.load(f).catch(() => {}))).then(() => { kick(); if (!EMBED) buildPresets(); });
-
-// Embed: cycle through the looks for the home page.
+Promise.all(['700 20px "JetBrains Mono"', '800 20px "Nunito"', '600 20px "Nunito"', '400 20px "Nunito"'].map((f) => document.fonts.load(f).catch(() => {})))
+  .then(() => { kick(); if (!EMBED) buildPresets(); });
+// Embed: the home page shows the Studio cycling through its looks.
 if (EMBED) {
-  const looks = [...STUDIO_PRESETS.map(presetState), merge(DEFAULT, {})]; let i = 0;
-  st.fx.autohover = true;
-  setInterval(() => { if (document.hidden) return; i = (i + 1) % looks.length; st = merge(looks[i], { fx: { tilt: 0 } }); kick(); }, 2600);
+  const looks = [...STUDIO_PRESETS.map(presetState), clone(DEFAULT)]; let i = 0;
+  setInterval(() => { if (document.hidden) return; i = (i + 1) % looks.length; st = looks[i]; st.fx.autohover = true; replay(); }, 3000);
 }
 </script>
 </body>

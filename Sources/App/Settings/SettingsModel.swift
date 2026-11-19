@@ -193,6 +193,12 @@ final class SettingsModel: ObservableObject {
         SettingsKeys.panelScheme.erased, SettingsKeys.tintImages.erased, SettingsKeys.tintDocuments.erased, SettingsKeys.tintTools.erased,
         SettingsKeys.wheelScale.erased, SettingsKeys.ringThickness.erased, SettingsKeys.segmentGap.erased, SettingsKeys.orbScale.erased,
         SettingsKeys.labelScale.erased, SettingsKeys.fontStyle.erased, SettingsKeys.labelCase.erased,
+        SettingsKeys.fillStyle.erased, SettingsKeys.accent2Hex.erased, SettingsKeys.restOpacity.erased, SettingsKeys.discHex.erased,
+        SettingsKeys.textHex.erased, SettingsKeys.hotTextHex.erased, SettingsKeys.rimHex.erased, SettingsKeys.rimWidth.erased,
+        SettingsKeys.glow.erased, SettingsKeys.glowColor.erased, SettingsKeys.corners.erased, SettingsKeys.hoverPop.erased,
+        SettingsKeys.discShadow.erased, SettingsKeys.captions.erased, SettingsKeys.dimOthers.erased, SettingsKeys.labelWeight.erased,
+        SettingsKeys.tracking.erased, SettingsKeys.breathe.erased, SettingsKeys.ringDots.erased, SettingsKeys.ringSpin.erased,
+        SettingsKeys.twirl.erased, SettingsKeys.sparks.erased,
     ]
 
     /// What a theme carries (the website's theme builder writes these): the

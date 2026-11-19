@@ -12,6 +12,8 @@ nonisolated struct LaunchArguments: Sendable {
     let perfReportFile: URL?
     /// `--check-themes <file.json>`: Wheel Studio exports must import intact.
     let checkThemesFile: URL?
+    /// With a folder after the file, each wheel is also rendered there as the app draws it.
+    let checkThemesRenderDirectory: URL?
 
     init(_ arguments: [String], fileExists: (String) -> Bool = { FileManager.default.fileExists(atPath: $0) }) {
         var files: [URL] = []
@@ -20,6 +22,7 @@ nonisolated struct LaunchArguments: Sendable {
         var perf = false
         var perfFile: URL?
         var themesFile: URL?
+        var themesDir: URL?
         var i = 1 // arguments[0] is the executable
         while i < arguments.count {
             let arg = arguments[i]
@@ -29,6 +32,10 @@ nonisolated struct LaunchArguments: Sendable {
             } else if arg == "--check-themes", i + 1 < arguments.count {
                 themesFile = URL(fileURLWithPath: arguments[i + 1])
                 i += 2
+                if i < arguments.count, !arguments[i].hasPrefix("-") {
+                    themesDir = URL(fileURLWithPath: arguments[i], isDirectory: true)
+                    i += 1
+                }
             } else if arg == "--drag-test" {
                 dragTest = true
                 i += 1
@@ -58,5 +65,6 @@ nonisolated struct LaunchArguments: Sendable {
         perfReport = perf
         perfReportFile = perfFile
         checkThemesFile = themesFile
+        checkThemesRenderDirectory = themesDir
     }
 }

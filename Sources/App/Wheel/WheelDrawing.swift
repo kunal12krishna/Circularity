@@ -192,6 +192,36 @@ func sectorPath(center: CGPoint, inner: CGFloat, outer: CGFloat, from a0: CGFloa
     return path
 }
 
+/// `sectorPath` with rounded corners (`round` 0 … 1 of the largest radius that
+/// fits), the Wheel Studio's "Corner rounding". Each corner is a true fillet:
+/// a circle touching both the straight edge and the curved one (outer corners
+/// sit inside the outer circle, inner corners outside the inner one). Built
+/// y-down like the Studio's canvas, then flipped into y-up layer space; rest
+/// and hover paths have the same elements, so the bulge still animates.
+func roundedSectorPath(center: CGPoint, inner: CGFloat, outer: CGFloat, from c0: CGFloat, to c1: CGFloat, round: CGFloat) -> CGPath {
+    guard round > 0.001 else { return sectorPath(center: center, inner: inner, outer: outer, from: c0, to: c1) }
+    let rin = max(1, inner), rout = max(rin + 1, outer)
+    let a0 = (c0 - 90) * .pi / 180, a1 = (c1 - 90) * .pi / 180
+    let half = sin(min(.pi / 2 - 0.01, (a1 - a0) / 2))
+    let rr = max(0.5, min(1, round) * min((rout - rin) / 2, rin * half / (1 - half)) * 0.98)
+    func p(_ r: CGFloat, _ a: CGFloat) -> CGPoint { CGPoint(x: cos(a) * r, y: sin(a) * r) }
+    let dOut = asin(rr / (rout - rr)), dIn = asin(rr / (rin + rr))
+    let o0 = a0 + dOut, o1 = a1 - dOut, i0 = a0 + dIn, i1 = a1 - dIn
+    let path = CGMutablePath()
+    path.move(to: p((rin + rr) * cos(dIn), a0))
+    path.addLine(to: p((rout - rr) * cos(dOut), a0))
+    path.addArc(center: p(rout - rr, o0), radius: rr, startAngle: a0 - .pi / 2, endAngle: o0, clockwise: false)
+    path.addArc(center: .zero, radius: rout, startAngle: o0, endAngle: o1, clockwise: false)
+    path.addArc(center: p(rout - rr, o1), radius: rr, startAngle: o1, endAngle: a1 + .pi / 2, clockwise: false)
+    path.addLine(to: p((rin + rr) * cos(dIn), a1))
+    path.addArc(center: p(rin + rr, i1), radius: rr, startAngle: a1 + .pi / 2, endAngle: i1 + .pi, clockwise: false)
+    path.addArc(center: .zero, radius: rin, startAngle: i1, endAngle: i0, clockwise: true)
+    path.addArc(center: p(rin + rr, i0), radius: rr, startAngle: i0 + .pi, endAngle: a0 + .pi * 1.5, clockwise: false)
+    path.closeSubpath()
+    var flip = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: center.x, ty: center.y)
+    return path.copy(using: &flip) ?? path
+}
+
 /// Converts a y-down offset from the wheel centre to a y-up layer point.
 func layerPoint(_ offset: CGPoint, center: CGPoint) -> CGPoint {
     CGPoint(x: center.x + offset.x, y: center.y - offset.y)

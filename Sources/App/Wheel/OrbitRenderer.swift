@@ -32,6 +32,9 @@ final class OrbitRenderer: WheelRenderer {
     }
     private var palette = Palette.light
     private var ink: CGColor { palette.ink }
+    /// Resting and lit label colours, after the Wheel Studio's text settings.
+    private var restInk: CGColor { look.textColor ?? (look.brightFills ? .hex(0x0B0D10) : ink) }
+    private var hotInk: CGColor { look.hotTextColor ?? (look.brightFills ? .hex(0x0B0D10) : look.onAccent) }
     private static let warm = (r: 60.0 / 255, g: 40.0 / 255, b: 20.0 / 255)
     private static func warmColor(_ a: CGFloat) -> CGColor { CGColor(srgbRed: warm.r, green: warm.g, blue: warm.b, alpha: a) }
 
@@ -123,8 +126,9 @@ final class OrbitRenderer: WheelRenderer {
             let r = g.buttonRadius * s
             guide.path = CGPath(ellipseIn: CGRect(x: center.x - r, y: center.y - r, width: 2 * r, height: 2 * r), transform: nil)
             guide.fillColor = nil
-            guide.strokeColor = palette.guide
-            guide.lineWidth = 1.5 * s
+            guide.strokeColor = look.rimColor ?? palette.guide
+            guide.lineWidth = 1.5 * s * look.rimWidth
+            guide.isHidden = look.rimWidth <= 0
             guide.lineDashPattern = [NSNumber(value: Double(5 * s)), NSNumber(value: Double(5 * s))]
 
             for i in buttons.indices { configureButton(i) }
@@ -163,10 +167,12 @@ final class OrbitRenderer: WheelRenderer {
             b.icon.contents = image
             b.icon.bounds = CGRect(x: 0, y: 0, width: CGFloat(image.width) / contentsScale, height: CGFloat(image.height) / contentsScale)
         }
-        b.label.set(look.label(slot.label), font: look.labelFont(12 * s * look.labelScale, .bold), color: ink,
-                    maxWidth: d - 8 * s, minScale: 0.7)
-        // Column: tint disc 32, gap 5, label.
-        let total = t + 5 * s + b.label.bounds.height
+        b.label.set(look.label(slot.label), font: look.labelFont(12 * s * look.labelScale, look.weight), color: restInk,
+                    kern: look.tracking * 12 * s * look.labelScale, maxWidth: d - 8 * s, minScale: 0.7)
+        // Column: tint disc 32, gap 5, label (or the label alone with captions off).
+        b.tint.isHidden = !look.captions
+        b.icon.isHidden = !look.captions
+        let total = look.captions ? t + 5 * s + b.label.bounds.height : b.label.bounds.height
         b.tint.position = CGPoint(x: d / 2, y: d / 2 + total / 2 - t / 2)
         b.icon.position = b.tint.position
         b.label.position = CGPoint(x: d / 2, y: d / 2 - total / 2 + b.label.bounds.height / 2)
@@ -177,16 +183,26 @@ final class OrbitRenderer: WheelRenderer {
     private func styleButton(_ i: Int, hot: Bool, animated: Bool) {
         guard let slot = menu.ring[i] else { return }
         let b = buttons[i], s = geometry.scale
-        b.label.set(look.label(slot.label), font: look.labelFont(12 * s * look.labelScale, .bold), color: hot ? look.onAccent : ink,
-                    maxWidth: geometry.buttonDiameter * s - 8 * s, minScale: 0.7)
+        b.label.set(look.label(slot.label), font: look.labelFont(12 * s * look.labelScale, look.weight), color: hot ? hotInk : restInk,
+                    kern: look.tracking * 12 * s * look.labelScale, maxWidth: geometry.buttonDiameter * s - 8 * s, minScale: 0.7)
+        let glow = look.glowAmount(halo: false), outline = look.fillStyle == "outline"
         transact(0.14, animated: animated) {
-            b.disc.backgroundColor = hot ? accent : palette.button
-            b.disc.borderColor = hot ? .white(0.9) : palette.buttonBorder
-            b.disc.shadowColor = hot ? CGColor(srgbRed: 160 / 255, green: 80 / 255, blue: 0, alpha: 1) : Self.warmColor(1)
-            b.disc.shadowOpacity = hot ? 0.35 : 0.14
-            b.disc.shadowRadius = (hot ? 17 : 13) * s
-            b.disc.shadowOffset = CGSize(width: 0, height: -(hot ? 16 : 10) * s)
-            b.tint.backgroundColor = hot ? .white(0.85) : tint(for: slot).0
+            let rest = look.restFill(slot: slot, index: i) ?? (look.discColor?.copy(alpha: 0.88) ?? palette.button)
+            b.disc.backgroundColor = hot ? look.hotFill(slot: slot, index: i) : look.resting(rest)
+            b.disc.borderColor = hot ? .white(0.9) : (outline ? (look.tint(for: slot) ?? accent).copy(alpha: 0.75) : palette.buttonBorder)
+            b.disc.borderWidth = !hot && outline ? 2 : (hot && look.brightFills ? 3 : 1)
+            if hot && glow > 0 {
+                b.disc.shadowColor = look.glowColor(sticker: WheelStyle.stickerColor(slot, index: i))
+                b.disc.shadowOpacity = Float(min(0.95, 0.55 * glow / 0.6))
+                b.disc.shadowRadius = 14 * s * glow / 0.6
+                b.disc.shadowOffset = .zero
+            } else {
+                b.disc.shadowColor = hot ? CGColor(srgbRed: 160 / 255, green: 80 / 255, blue: 0, alpha: 1) : Self.warmColor(1)
+                b.disc.shadowOpacity = Float((hot ? 0.35 : 0.14) * look.discShadow)
+                b.disc.shadowRadius = (hot ? 17 : 13) * s
+                b.disc.shadowOffset = CGSize(width: 0, height: -(hot ? 16 : 10) * s)
+            }
+            b.tint.backgroundColor = hot ? .white(0.85) : (look.brightFills ? .black(0.14) : tint(for: slot).0)
         }
         buttons[i].hot = hot
     }
@@ -224,12 +240,12 @@ final class OrbitRenderer: WheelRenderer {
         orb.position = center
         orbDisc.frame = orb.bounds
         orbDisc.path = CGPath(ellipseIn: orb.bounds.insetBy(dx: 0.75 * s, dy: 0.75 * s), transform: nil)
-        orbDisc.fillColor = palette.orb
+        orbDisc.fillColor = look.discColor?.copy(alpha: 0.88) ?? palette.orb
         orbDisc.strokeColor = palette.buttonBorder
         orbDisc.lineWidth = 1.5 * s
         orbDisc.shadowPath = CGPath(ellipseIn: orb.bounds, transform: nil)
         orbDisc.shadowColor = Self.warmColor(1)
-        orbDisc.shadowOpacity = 0.18
+        orbDisc.shadowOpacity = Float(0.18 * look.discShadow)
         orbDisc.shadowRadius = 20 * s
         orbDisc.shadowOffset = CGSize(width: 0, height: -18 * s)
 
@@ -317,7 +333,7 @@ final class OrbitRenderer: WheelRenderer {
                 }
                 transact(0, animated: false) { g.transform = t }
             }
-            let opacity: Float = somethingHot && !hot ? 0.6 : 1
+            let opacity: Float = somethingHot && !hot && look.dimOthers ? 0.6 : 1
             transact(0.14, animated: animate) { buttons[i].group.opacity = opacity }
         }
 

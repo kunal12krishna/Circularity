@@ -145,6 +145,9 @@ enum SettingsValidation {
         SettingsKeys.panelScheme.name: ["auto", "system", "light", "dark"],
         SettingsKeys.fontStyle.name: ["rounded", "default", "mono"],
         SettingsKeys.labelCase.name: ["title", "upper"],
+        SettingsKeys.fillStyle.name: ["flat", "duo", "shades", "stickers", "rainbow", "outline"],
+        SettingsKeys.glowColor.name: ["accent", "second", "white"],
+        SettingsKeys.labelWeight.name: ["regular", "semibold", "bold", "heavy"],
         SettingsKeys.panelLayout.name: ["stackPlus", "tabs", "mini"],
         SettingsKeys.panelWidth.name: ["s", "m", "l"],
         SettingsKeys.pinnedSize.name: ["s", "m", "l"],
@@ -158,6 +161,10 @@ enum SettingsValidation {
         SettingsKeys.animationSpeed.name: 0.5...2, SettingsKeys.glassStrength.name: 0...1,
         SettingsKeys.wheelScale.name: 0.7...1.4, SettingsKeys.ringThickness.name: 0.8...1.2, SettingsKeys.segmentGap.name: 1...8,
         SettingsKeys.orbScale.name: 0.85...1.15, SettingsKeys.labelScale.name: 0.85...1.3,
+        SettingsKeys.restOpacity.name: 0.15...1, SettingsKeys.rimWidth.name: 0...6, SettingsKeys.glow.name: -1...1.5,
+        SettingsKeys.corners.name: 0...1, SettingsKeys.hoverPop.name: 0...2.5, SettingsKeys.discShadow.name: 0...1,
+        SettingsKeys.tracking.name: -0.05...0.3, SettingsKeys.breathe.name: 0...1, SettingsKeys.ringDots.name: 0...36,
+        SettingsKeys.ringSpin.name: 0...20,
         SettingsKeys.qualityJPG.name: 0.1...1, SettingsKeys.qualityHEIC.name: 0.1...1,
         SettingsKeys.qualityAVIF.name: 0.1...1, SettingsKeys.qualityWebP.name: 0.1...1,
     ]
@@ -179,7 +186,10 @@ enum SettingsValidation {
             return s.isEmpty || SlotProvider.parseSlots(s) != nil
         case SettingsKeys.accentHex.name:
             return (value as? String).flatMap(RGB.init(hexString:)) != nil
-        case SettingsKeys.tintImages.name, SettingsKeys.tintDocuments.name, SettingsKeys.tintTools.name:
+        case SettingsKeys.accent2Hex.name:
+            return (value as? String).flatMap(RGB.init(hexString:)) != nil
+        case SettingsKeys.tintImages.name, SettingsKeys.tintDocuments.name, SettingsKeys.tintTools.name,
+             SettingsKeys.discHex.name, SettingsKeys.textHex.name, SettingsKeys.hotTextHex.name, SettingsKeys.rimHex.name:
             guard let s = value as? String else { return false }
             return s.isEmpty || RGB(hexString: s) != nil
         default:

@@ -14,6 +14,29 @@ struct WheelStyle {
     var font = "rounded"         // rounded | default | mono
     var upperCase = false
     var labelScale: CGFloat = 1
+    // Wheel Studio looks (0.3). The defaults draw the boards exactly.
+    var fillStyle = "flat"       // flat | duo | shades | stickers | rainbow | outline
+    var accent2: CGColor = .hex(0x2F5BFF)
+    var restOpacity: CGFloat = 1
+    var discColor: CGColor?
+    var textColor: CGColor?
+    var hotTextColor: CGColor?
+    var rimColor: CGColor?
+    var rimWidth: CGFloat = 1
+    /// nil = the layout's own (Halo glows, Ring and Orbit don't).
+    var glow: CGFloat?
+    var glowColorName = "accent"
+    var corners: CGFloat = 0
+    var discShadow: CGFloat = 1
+    var captions = true
+    var dimOthers = true
+    var weight: NSFont.Weight = .bold
+    var tracking: CGFloat = 0
+    var breathe: CGFloat = 0
+    var ringDots = 0
+    var ringSpin: CGFloat = 0
+    var twirl = false
+    var sparks = false
 
     /// The boards' own look for an accent (used by previews and tests).
     static func board(accent hex: UInt32, light: Bool = false) -> WheelStyle {
@@ -31,6 +54,71 @@ struct WheelStyle {
     }
 
     func label(_ text: String) -> String { upperCase ? text.uppercased() : text }
+
+    /// Glow strength under the lit button (0 = none) for a layout.
+    func glowAmount(halo: Bool) -> CGFloat { glow ?? (halo ? 0.6 : 0) }
+
+    /// The glow's colour; Stickers glow in the button's own colour.
+    func glowColor(sticker: CGColor? = nil) -> CGColor {
+        switch glowColorName {
+        case "second": accent2
+        case "white": .white(1)
+        default: fillStyle == "stickers" ? (sticker ?? accent) : accent
+        }
+    }
+
+    /// Fill styles whose buttons are bright, so their text is near-black.
+    var brightFills: Bool { fillStyle == "stickers" || fillStyle == "rainbow" }
+
+    /// A resting button's fill for a fill style (nil = the layout's own), before `restOpacity`.
+    func restFill(slot: WheelSlot, index i: Int) -> CGColor? {
+        let tint = tint(for: slot)
+        switch fillStyle {
+        case "duo": return (tint ?? (i % 2 == 1 ? accent2 : accent)).copy(alpha: 0.24)
+        case "shades": return (tint ?? accent).copy(alpha: 0.08 + 0.34 * CGFloat(i) / 5)
+        case "stickers": return Self.stickerColor(slot, index: i)
+        case "rainbow": return Self.rainbow(i, lit: false)
+        case "outline": return .clear
+        default: return nil
+        }
+    }
+
+    /// The lit button's fill: the accent, except Stickers and Rainbow keep their colour.
+    func hotFill(slot: WheelSlot, index i: Int) -> CGColor {
+        switch fillStyle {
+        case "stickers": Self.stickerColor(slot, index: i)
+        case "rainbow": Self.rainbow(i, lit: true)
+        default: accent
+        }
+    }
+
+    /// One sticker colour per format and tool (the website's sticker set).
+    static func stickerColor(_ slot: WheelSlot, index i: Int) -> CGColor {
+        let table: [String: UInt32] = ["PNG": 0x35D0E6, "JPG": 0xFF6FB5, "JPEG": 0xFF6FB5, "HEIC": 0xFF9A3D, "WEBP": 0x9B6BFF,
+                                       "AVIF": 0xFFD23F, "TIFF": 0x3ECF8E, "PDF": 0xFF5E5B, "GIF": 0x5CE1FF, "BMP": 0xC9BFAE,
+                                       "CUT": 0x3ECF8E, "CROP": 0xFF8AD8, "•••": 0xE8E8EE, "SQZ": 0xFFD23F, "SIZE": 0x9B6BFF]
+        if let v = table[slot.monoLabel.uppercased()] { return .hex(v) }
+        let fallback: [UInt32] = [0x35D0E6, 0xFF6FB5, 0x3ECF8E, 0xE8E8EE, 0xFFD23F, 0x9B6BFF]
+        return .hex(fallback[i % fallback.count])
+    }
+
+    /// Rainbow: hue by position, the same HSL as the Studio.
+    static func rainbow(_ i: Int, lit: Bool) -> CGColor {
+        let rgb = hsl(CGFloat(i) / 6 * 360, lit ? 0.95 : 0.85, lit ? 0.66 : 0.60)
+        return CGColor(srgbRed: rgb.0, green: rgb.1, blue: rgb.2, alpha: 1)
+    }
+
+    static func hsl(_ h: CGFloat, _ s: CGFloat, _ l: CGFloat) -> (CGFloat, CGFloat, CGFloat) {
+        let a = s * min(l, 1 - l)
+        func f(_ n: CGFloat) -> CGFloat {
+            let k = (n + h / 30).truncatingRemainder(dividingBy: 12)
+            return l - a * max(-1, min(k - 3, min(9 - k, 1)))
+        }
+        return (f(0), f(8), f(4))
+    }
+
+    /// `color` at `restOpacity` (the resting buttons only).
+    func resting(_ color: CGColor) -> CGColor { color.copy(alpha: color.alpha * restOpacity) ?? color }
 
     /// The resting tint for a slot's category, if one is set.
     func tint(for slot: WheelSlot) -> CGColor? {
@@ -105,6 +193,34 @@ enum Appearance {
         style.font = settings.value(SettingsKeys.fontStyle)
         style.upperCase = settings.value(SettingsKeys.labelCase) == "upper"
         style.labelScale = CGFloat(min(1.3, max(0.85, settings.value(SettingsKeys.labelScale))))
+        let clamp = { (v: Double, lo: Double, hi: Double) in CGFloat(min(hi, max(lo, v))) }
+        style.fillStyle = settings.value(SettingsKeys.fillStyle)
+        style.accent2 = CGColor.hexString(settings.value(SettingsKeys.accent2Hex)) ?? .hex(0x2F5BFF)
+        style.restOpacity = clamp(settings.value(SettingsKeys.restOpacity), 0.15, 1)
+        style.discColor = CGColor.hexString(settings.value(SettingsKeys.discHex))
+        style.textColor = CGColor.hexString(settings.value(SettingsKeys.textHex))
+        style.hotTextColor = CGColor.hexString(settings.value(SettingsKeys.hotTextHex))
+        style.rimColor = CGColor.hexString(settings.value(SettingsKeys.rimHex))
+        style.rimWidth = clamp(settings.value(SettingsKeys.rimWidth), 0, 6)
+        let glow = settings.value(SettingsKeys.glow)
+        style.glow = glow < 0 ? nil : clamp(glow, 0, 1.5)
+        style.glowColorName = settings.value(SettingsKeys.glowColor)
+        style.corners = clamp(settings.value(SettingsKeys.corners), 0, 1)
+        style.discShadow = clamp(settings.value(SettingsKeys.discShadow), 0, 1)
+        style.captions = settings.value(SettingsKeys.captions)
+        style.dimOthers = settings.value(SettingsKeys.dimOthers)
+        style.weight = switch settings.value(SettingsKeys.labelWeight) {
+        case "regular": .regular
+        case "semibold": .semibold
+        case "heavy": .heavy
+        default: .bold
+        }
+        style.tracking = clamp(settings.value(SettingsKeys.tracking), -0.05, 0.3)
+        style.breathe = clamp(settings.value(SettingsKeys.breathe), 0, 1)
+        style.ringDots = min(36, max(0, settings.value(SettingsKeys.ringDots)))
+        style.ringSpin = clamp(settings.value(SettingsKeys.ringSpin), 0, 20)
+        style.twirl = settings.value(SettingsKeys.twirl)
+        style.sparks = settings.value(SettingsKeys.sparks)
         return style
     }
 
@@ -112,7 +228,8 @@ enum Appearance {
         WheelGeometry.make(layout, scale: CGFloat(min(1.4, max(0.7, settings.value(SettingsKeys.wheelScale)))),
                            tweaks: WheelTweaks(thickness: CGFloat(settings.value(SettingsKeys.ringThickness)),
                                                gap: CGFloat(settings.value(SettingsKeys.segmentGap)),
-                                               orbScale: CGFloat(settings.value(SettingsKeys.orbScale))))
+                                               orbScale: CGFloat(settings.value(SettingsKeys.orbScale)),
+                                               pop: CGFloat(settings.value(SettingsKeys.hoverPop))))
     }
 
     /// Applies a theme's accent, glass and font (Settings → Appearance).

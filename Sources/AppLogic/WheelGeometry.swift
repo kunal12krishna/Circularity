@@ -13,6 +13,8 @@ nonisolated struct WheelTweaks: Sendable, Equatable {
     var gap: CGFloat = 3
     /// Centre orb size, 0.85 … 1.15.
     var orbScale: CGFloat = 1
+    /// How far a hovered button grows: 0 … 2.5 × the board's bulge (Orbit: its scale-up).
+    var pop: CGFloat = 1
 
     static let board = WheelTweaks()
 }
@@ -90,12 +92,15 @@ nonisolated struct WheelGeometry: Sendable, Equatable {
     /// segment span (Halo's board gap is 2°, so it gets two thirds of Ring's);
     /// the orb never grows into the segments.
     mutating func apply(_ t: WheelTweaks) {
+        let pop = min(2.5, max(0, t.pop))
         guard kind != .orbit else {
             orbDiameter *= min(1.15, max(0.85, t.orbScale))
+            buttonHoverScale = 1 + (buttonHoverScale - 1) * pop
             return
         }
         let k = min(1.2, max(0.8, t.thickness))
-        let bulge = (hoverOuter - restOuter)
+        let bulge = (hoverOuter - restOuter) * pop
+        hoverInner = restInner - (restInner - hoverInner) * pop
         restOuter = restInner + (restOuter - restInner) * k
         hoverOuter = restOuter + bulge
         let gap = min(8, max(1, t.gap)) * (kind == .halo ? 2.0 / 3.0 : 1)

@@ -25,12 +25,24 @@ enum StudioThemes {
             ("scheme", SettingsKeys.wheelScheme.name), ("panel", SettingsKeys.panelScheme.name), ("glass", SettingsKeys.glassStrength.name),
             ("scale", SettingsKeys.wheelScale.name), ("thick", SettingsKeys.ringThickness.name), ("gap", SettingsKeys.segmentGap.name),
             ("orb", SettingsKeys.orbScale.name), ("label", SettingsKeys.labelScale.name), ("font", SettingsKeys.fontStyle.name), ("case", SettingsKeys.labelCase.name),
+            ("fill", SettingsKeys.fillStyle.name), ("accent2", SettingsKeys.accent2Hex.name), ("segAlpha", SettingsKeys.restOpacity.name),
+            ("disc", SettingsKeys.discHex.name), ("ink", SettingsKeys.textHex.name), ("hotInk", SettingsKeys.hotTextHex.name),
+            ("rimColor", SettingsKeys.rimHex.name), ("rimW", SettingsKeys.rimWidth.name), ("round", SettingsKeys.corners.name),
+            ("bulge", SettingsKeys.hoverPop.name), ("captions", SettingsKeys.captions.name), ("dimOthers", SettingsKeys.dimOthers.name),
+            ("labelWeight", SettingsKeys.labelWeight.name), ("track", SettingsKeys.tracking.name),
+            ("fx.glow", SettingsKeys.glow.name), ("fx.glowColor", SettingsKeys.glowColor.name), ("fx.shadow", SettingsKeys.discShadow.name),
+            ("fx.breathe", SettingsKeys.breathe.name), ("fx.dots", SettingsKeys.ringDots.name), ("fx.spin", SettingsKeys.ringSpin.name),
+            ("fx.twirl", SettingsKeys.twirl.name), ("fx.sparks", SettingsKeys.sparks.name),
         ]
         var out: [String: Any] = [:]
+        let fx = w["fx"] as? [String: Any] ?? [:]
         for (studio, app) in names {
-            guard var v = w[studio] else { continue }
+            let found = studio.hasPrefix("fx.") ? fx[String(studio.dropFirst(3))] : w[studio]
+            guard var v = found else { continue }
+            // JSON true/false stay booleans; 0 and 1 are numbers (NSNumber bridges both ways).
+            if CFGetTypeID(v as CFTypeRef) == CFBooleanGetTypeID() { out[app] = v as? Bool ?? false; continue }
             if let n = v as? Double { v = (n * 100).rounded() / 100 } // a slider may sit between steps
-            if studio == "gap", let n = v as? Double { v = n.rounded() }
+            if studio == "gap" || studio == "fx.dots", let n = v as? Double { v = Int(n.rounded()) }
             out[app] = v
         }
         if let tints = w["tints"] as? [String: Any] {

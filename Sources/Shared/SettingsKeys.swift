@@ -100,6 +100,29 @@ nonisolated enum SettingsKeys {
     static let labelScale = SettingsKey("appearance.labelScale", 1.0)            // 0.85 … 1.3
     static let fontStyle = SettingsKey("appearance.font", "rounded")            // rounded | default | mono
     static let labelCase = SettingsKey("appearance.labelCase", "title")         // title | upper
+    // Looks designed in the website's Wheel Studio (0.3): fills, colours, shape and motion.
+    static let fillStyle = SettingsKey("appearance.fillStyle", "flat")          // flat | duo | shades | stickers | rainbow | outline
+    static let accent2Hex = SettingsKey("appearance.accent2Hex", "#2F5BFF")      // Duotone's second colour, and a glow colour
+    static let restOpacity = SettingsKey("appearance.restOpacity", 1.0)          // 0.15 … 1: the resting buttons' fill
+    static let discHex = SettingsKey("appearance.discHex", "")                   // "" = the layout's own
+    static let textHex = SettingsKey("appearance.textHex", "")                   // resting labels; "" = the layout's own
+    static let hotTextHex = SettingsKey("appearance.hotTextHex", "")             // text on the lit button; "" = readable on the accent
+    static let rimHex = SettingsKey("appearance.rimHex", "")                     // disc outline / Orbit's guide; "" = the layout's own
+    static let rimWidth = SettingsKey("appearance.rimWidth", 1.0)                // 0 … 6 × the board's line
+    static let glow = SettingsKey("appearance.glow", -1.0)                       // -1 = the layout's own (Halo glows), else 0 … 1.5
+    static let glowColor = SettingsKey("appearance.glowColor", "accent")         // accent | second | white
+    static let corners = SettingsKey("appearance.corners", 0.0)                  // 0 … 1: rounded segment corners
+    static let hoverPop = SettingsKey("appearance.hoverPop", 1.0)                // 0 … 2.5 × the board's bulge
+    static let discShadow = SettingsKey("appearance.discShadow", 1.0)            // 0 … 1
+    static let captions = SettingsKey("appearance.captions", true)               // Halo captions, Ring icons, Orbit icon discs
+    static let dimOthers = SettingsKey("appearance.dimOthers", true)             // Ring and Orbit fade the other buttons
+    static let labelWeight = SettingsKey("appearance.labelWeight", "bold")       // regular | semibold | bold | heavy
+    static let tracking = SettingsKey("appearance.tracking", 0.0)                // -0.05 … 0.3 em
+    static let breathe = SettingsKey("appearance.breathe", 0.0)                  // 0 … 1: the wheel slowly swells and settles
+    static let ringDots = SettingsKey("appearance.ringDots", 0)                  // 0 … 36 dots orbiting the wheel
+    static let ringSpin = SettingsKey("appearance.ringSpin", 0.0)                // rpm, 0 … 20: how fast they orbit
+    static let twirl = SettingsKey("appearance.twirl", false)                    // the wheel spins into place as it opens
+    static let sparks = SettingsKey("appearance.sparks", false)                  // a small burst when a button lights up
 
     // MARK: Menu bar
     static let panelLayout = SettingsKey("menubar.layout", "stackPlus")         // stackPlus | tabs | mini
@@ -154,6 +177,9 @@ nonisolated enum SettingsKeys {
         theme.erased, accentHex.erased, glassStrength.erased, wheelScheme.erased, panelScheme.erased,
         tintImages.erased, tintDocuments.erased, tintTools.erased, wheelScale.erased, ringThickness.erased, segmentGap.erased,
         orbScale.erased, labelScale.erased, fontStyle.erased, labelCase.erased,
+        fillStyle.erased, accent2Hex.erased, restOpacity.erased, discHex.erased, textHex.erased, hotTextHex.erased, rimHex.erased,
+        rimWidth.erased, glow.erased, glowColor.erased, corners.erased, hoverPop.erased, discShadow.erased, captions.erased,
+        dimOthers.erased, labelWeight.erased, tracking.erased, breathe.erased, ringDots.erased, ringSpin.erased, twirl.erased, sparks.erased,
         panelLayout.erased, panelWidth.erased, panelDensity.erased, panelSections.erased, iconStyle.erased, showPercent.erased,
         openOnHover.erased, openOnDragOver.erased, presetsJSON.erased, watchRulesJSON.erased, panelTiles.erased,
         panelTileColors.erased, recentsCount.erased, presetGrid.erased, pinned.erased, pinnedSize.erased,

@@ -36,7 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             exit(RenderPreviews.run(into: directory) ? 0 : 1)
         }
         if let file = launch.checkThemesFile {
-            exit(ThemeCheck.run(file) ? 0 : 1)
+            exit(ThemeCheck.run(file, renderInto: launch.checkThemesRenderDirectory) ? 0 : 1)
         }
         if launch.dragTest {
             DragTest.run()

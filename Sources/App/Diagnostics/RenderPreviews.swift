@@ -312,6 +312,20 @@ enum RenderPreviews {
                             state: WheelVisualState(), fileName: longName,
                             to: directory.appendingPathComponent("wheel-\(kind.rawValue)-long-name@2x.png"))
         }
+        // Wheel Studio looks, drawn by the app's own renderers (dots from WheelEffects).
+        let looks: [(String, WheelLayoutKind, UInt32, CGFloat, (inout WheelStyle) -> Void)] = [
+            ("studio-halo-stickers", .halo, 0xFF4FA0, 1.6, { $0.fillStyle = "stickers"; $0.corners = 0.5; $0.glow = 1; $0.ringDots = 12 }),
+            ("studio-ring-outline", .ring, 0xFF4FA0, 1, { $0.fillStyle = "outline"; $0.corners = 0.35; $0.glow = 0.8; $0.dimOthers = false; $0.weight = .heavy }),
+            ("studio-ring-rainbow", .ring, 0xFFFFFF, 1.4, { $0.fillStyle = "rainbow"; $0.corners = 1; $0.captions = false; $0.ringDots = 24; $0.glow = 0.6 }),
+            ("studio-orbit-duo", .orbit, 0xFF4FA0, 1, { $0.fillStyle = "duo"; $0.glow = 0.8; $0.restOpacity = 0.75; $0.light = false }),
+            ("studio-halo-paper", .halo, 0xFF4FA0, 1, { $0.fillStyle = "shades"; $0.discColor = .hex(0xF3EEE4); $0.textColor = .hex(0x17140F)
+                $0.rimColor = .hex(0x2F5BFF); $0.rimWidth = 3; $0.tracking = 0.08 }),
+        ]
+        for (name, kind, accent, pop, tweak) in looks {
+            try renderWheel(kind: kind, types: photo, count: 1, accent: accent, backdrop: kind == .orbit ? 0x14110D : 0x1F2228,
+                            state: WheelVisualState(hover: .segment(1)), pop: pop, tweak: tweak,
+                            to: directory.appendingPathComponent("\(name)@2x.png"))
+        }
         for (name, types, state) in extra {
             try renderWheel(kind: .ring, types: types, count: types.count, accent: 0xFF8A00, backdrop: 0x1F2228,
                             state: state, to: directory.appendingPathComponent("wheel-ring-\(name)@2x.png"))
@@ -319,7 +333,8 @@ enum RenderPreviews {
     }
 
     private static func renderWheel(kind: WheelLayoutKind, types: [UTType], count: Int, accent: UInt32, backdrop: UInt32,
-                                    state: WheelVisualState, fileName: String = "IMG_2041.HEIC", to url: URL) throws {
+                                    state: WheelVisualState, fileName: String = "IMG_2041.HEIC", pop: CGFloat = 1,
+                                    tweak: ((inout WheelStyle) -> Void)? = nil, to url: URL) throws {
         let renderer: WheelRenderer = switch kind {
         case .ring: SectorRenderer(style: .ring)
         case .halo: SectorRenderer(style: .halo)
@@ -332,9 +347,17 @@ enum RenderPreviews {
                                  title: single ? fileName : "\(count) images",
                                  detail: single ? "3.2 MB" : "8.7 MB total", count: count,
                                  thumbnail: samplePicture(size: 240, scale: 2), clickMode: false)
-        let geometry = WheelGeometry.make(kind)
-        renderer.configure(menu: menu, orb: content, style: WheelStyle.board(accent: accent, light: kind == .orbit),
-                           geometry: geometry, contentsScale: 2)
+        let geometry = WheelGeometry.make(kind, tweaks: WheelTweaks(pop: pop))
+        var look = WheelStyle.board(accent: accent, light: kind == .orbit)
+        tweak?(&look)
+        renderer.configure(menu: menu, orb: content, style: look, geometry: geometry, contentsScale: 2)
+        // With a tweak, render through WheelEffects too, so its dots show.
+        let effects = tweak == nil ? nil : WheelEffects()
+        if let effects {
+            effects.attach(renderer.layer)
+            effects.configure(style: look, geometry: geometry, bounds: CGRect(x: 0, y: 0, width: geometry.size, height: geometry.size), contentsScale: 2)
+            renderer.layer.frame = effects.root.bounds
+        }
         var s = state
         if case .segment = s.hover {
             let o = WheelGeometry.offset(radius: geometry.contentRadius(hovered: true), angle: 60)
@@ -350,8 +373,9 @@ enum RenderPreviews {
                 ctx.setFillColor(.hex(backdrop))
                 ctx.fill(CGRect(origin: .zero, size: size))
             }
-            renderer.layer.layoutIfNeeded()
-            renderer.layer.render(in: ctx)
+            let top = effects?.root ?? renderer.layer
+            top.layoutIfNeeded()
+            top.render(in: ctx)
         }), let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else {
             throw RenderError()
         }
@@ -385,5 +409,41 @@ extension NSColor {
                   green: CGFloat((hex >> 8) & 0xFF) / 255,
                   blue: CGFloat(hex & 0xFF) / 255,
                   alpha: alpha)
+    }
+}
+
+extension RenderPreviews {
+    /// A wheel exactly as the app would draw it with `settings` (a HEIC photo,
+    /// JPG lit, on `backdrop`), dots included. `--check-themes <file> <dir>`
+    /// uses it to put each Wheel Studio export next to the Studio's own picture.
+    static func renderTheme(_ settings: SettingsStore, backdrop: UInt32 = 0x1F2228, to url: URL) throws {
+        let kind = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .halo
+        let renderer: WheelRenderer = switch kind {
+        case .ring: SectorRenderer(style: .ring)
+        case .halo: SectorRenderer(style: .halo)
+        case .orbit: OrbitRenderer()
+        }
+        renderer.allowsTilt = false
+        let menu = SlotProvider.menu(for: [.heic], canWrite: { FormatSupport.current.canWrite($0) })
+        let content = OrbContent(fileLine: "IMG_2041.HEIC · 3.2 MB", title: "IMG_2041.HEIC", detail: "3.2 MB", count: 1,
+                                 thumbnail: samplePicture(size: 240, scale: 2), clickMode: false)
+        let geometry = Appearance.geometry(settings, layout: kind), look = Appearance.wheelStyle(settings, layout: kind)
+        renderer.configure(menu: menu, orb: content, style: look, geometry: geometry, contentsScale: 2)
+        let effects = WheelEffects()
+        effects.attach(renderer.layer)
+        effects.configure(style: look, geometry: geometry, bounds: CGRect(x: 0, y: 0, width: geometry.size, height: geometry.size), contentsScale: 2)
+        renderer.layer.frame = effects.root.bounds
+        var state = WheelVisualState(hover: .segment(1))
+        let o = WheelGeometry.offset(radius: geometry.contentRadius(hovered: true), angle: 60)
+        state.cursor = CGPoint(x: o.x + 20, y: o.y + 20)
+        CATransaction.begin(); CATransaction.setDisableActions(true)
+        renderer.apply(state, animated: false)
+        CATransaction.commit()
+        let size = CGSize(width: geometry.size, height: geometry.size)
+        guard let image = renderImage(size: size, scale: 1, { ctx in
+            ctx.setFillColor(.hex(backdrop)); ctx.fill(CGRect(origin: .zero, size: size))
+            effects.root.layoutIfNeeded(); effects.root.render(in: ctx)
+        }), let data = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) else { throw RenderError() }
+        try data.write(to: url)
     }
 }
