@@ -305,6 +305,9 @@ enum RenderPreviews {
             try renderWheel(kind: .halo, types: [.heic], count: 1, accent: 0xFF4FA0, backdrop: 0, state: state,
                             to: directory.appendingPathComponent("wheel-halo-\(name)-clear@2x.png"))
         }
+        // The same wheel in the Neon theme, for the website's Neon style.
+        try renderWheel(kind: .halo, types: [.heic], count: 1, accent: 0xC6FF3D, backdrop: 0, state: WheelVisualState(hover: .segment(1)),
+                        to: directory.appendingPathComponent("wheel-halo-neon-hover-jpg-clear@2x.png"))
         // A very long file name must stay inside the centre in every layout.
         let longName = "Family_holiday_in_the_mountains_summer_2026_final_edit_version_3_exported.HEIC"
         for kind in [WheelLayoutKind.halo, .ring, .orbit] {

@@ -316,6 +316,7 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 .cmd input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-family: var(--mono); font-size: 14px; }
 :root[data-skin="pixel"] .cmd input { font-size: 19px; }
 .cmd .k { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.cmd:focus-within { border-color: var(--accent-text, var(--accent)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
 .cmd-hint { margin: -4px 14px 0; min-height: 20px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
 :root[data-skin="pixel"] .cmd-hint { font-size: 16px; }
 .files { position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px 8px; padding: 14px 14px 18px; min-height: 300px; align-content: start; }
@@ -438,6 +439,7 @@ input[type="color"] { width: 38px; height: 30px; padding: 0; border: 1px solid v
 :root[data-skin="pixel"] .lab-card .fmt, :root[data-skin="pixel"] .lab-card .sz, :root[data-skin="pixel"] .lab-card .chg { font-size: 17px; }
 .lab-view canvas { width: 100%; height: clamp(260px, 36vw, 380px); display: block; background: var(--bg2); border-radius: calc(var(--radius) - 2px); touch-action: none; cursor: ew-resize; }
 select { font: inherit; color: var(--fg); background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; max-width: 100%; }
+.skin-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .skin-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; cursor: pointer; background: var(--panel); text-align: left; padding: 0; color: var(--fg); transition: transform .2s; }
 .skin-card:hover { transform: translateY(-4px) rotate(-1deg); }
 .skin-card[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -1135,11 +1137,17 @@ const loadStyleFonts = (() => { let done = false; return () => {
   const l = document.createElement("link"); l.rel = "stylesheet";
   l.href = "https://fonts.googleapis.com/css2?family=Architects+Daughter&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=Outfit:wght@300;500;800&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=VT323&display=swap"; document.head.append(l);
 }; })();
+// The hero wheel is the app's own render: its Neon theme under Neon, Riso everywhere else.
+function syncHeroWheel() {
+  const img = $(".hero-wheel img"); if (!img) return;
+  const want = root.dataset.skin === "neon" ? "assets/wheel-neon-hero.png" : "assets/wheel-halo-hero.png";
+  if (img.getAttribute("src") !== want) img.setAttribute("src", want);
+}
 function setSkin(name, announce) {
   if (!SKINS.includes(name) || name === pageStyle) return;
   if (!["riso", "ink"].includes(name)) loadStyleFonts();
   const apply = () => {
-    pageStyle = name; skin = ["riso", "ink", "neon"].includes(name) ? "halo" : name; root.dataset.skin = name;
+    pageStyle = name; skin = ["riso", "ink", "neon"].includes(name) ? "halo" : name; root.dataset.skin = name; syncHeroWheel();
     $$("[data-skin-btn]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.skinBtn === name));
     if (announce !== "silent") store.set("circularity-style-pick", name); // only a real pick is remembered
     drawWheel(); if (typeof lab !== "undefined") lab.draw(); if (typeof kgridRedraw !== "undefined") kgridRedraw();
@@ -1148,6 +1156,7 @@ function setSkin(name, announce) {
   if (announce === true) { toast("Style: " + ($(`.style-opt[data-skin-btn="${name}"] span`)?.firstChild?.textContent || name)); sfx.skin(); }
 }
 $$("[data-skin-btn]").forEach((b) => b.addEventListener("click", () => setSkin(b.dataset.skinBtn, true)));
+syncHeroWheel();
 $("#styleBtn").addEventListener("pointerenter", loadStyleFonts, { once: true });
 $("#styleBtn").addEventListener("focus", loadStyleFonts, { once: true });
 if ("IntersectionObserver" in window) { const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { loadStyleFonts(); io.disconnect(); } }, { rootMargin: "800px 0px" }); io.observe($("#skins")); } else loadStyleFonts();
