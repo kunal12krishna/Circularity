@@ -343,7 +343,7 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 :root[data-skin="pixel"] .fsize { font-size: 15px; }
 .fsize .down { color: var(--accent-text, var(--accent)); }
 .fsize .up { color: var(--danger); }
-.drop-note { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+.drop-note { grid-column: 1 / -1; display: block; line-height: 1.6; text-wrap: balance; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; text-align: center; }
 :root[data-skin="pixel"] .drop-note, :root[data-skin="ascii"] .drop-note { border-radius: 0; }
 :root[data-skin="pixel"] .drop-note { font-size: 17px; }
 .desk.dropping .drop-note { border-color: var(--accent); color: var(--fg); background: color-mix(in srgb, var(--accent) 10%, transparent); }
@@ -411,7 +411,8 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 @media (max-width: 760px) { .studio-teaser { grid-template-columns: minmax(0, 1fr); } }
 /* Panels shared by the format lab */
 .builder { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
-.tb-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.tb-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+.tb-card select { width: 100%; min-width: 0; text-overflow: ellipsis; }
 .tb-preview canvas { width: 100%; max-width: 560px; aspect-ratio: 1; display: block; margin: 0 auto; border-radius: calc(var(--radius) - 2px); touch-action: none; }
 .tb-caption { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; min-height: 18px; }
 :root[data-skin="pixel"] .tb-caption { font-size: 16px; }
@@ -670,6 +671,8 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   .nav .links { display: none; }
   .hero, .install, .builder, .lab { grid-template-columns: minmax(0, 1fr); }
   .hero-wheel { width: min(440px, 92%); margin-top: 8px; }
+  .nav .dl { white-space: nowrap; padding-inline: 12px; }
+  .style-pop { position: fixed; top: 64px; left: 16px; right: 16px; width: auto; max-height: calc(100dvh - 80px); overflow-y: auto; overscroll-behavior: contain; }
   .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .links { display: none; }
   .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -2133,7 +2136,24 @@ $$(".copy").forEach((b) => { if (b.id === "modalClose") return; b.addEventListen
   try { await navigator.clipboard.writeText(text); b.textContent = "copied"; } catch { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "selected"; }
   setTimeout(() => (b.textContent = "copy"), 1500);
 }); });
+const touchOnly = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
+if (touchOnly) $("#statHint").textContent = "tap a file to open the wheel without dragging";
+if (innerWidth < 600) cmdInput.placeholder = "try: webp · 50kb · pdf";
+// On a phone or tablet a .dmg is no use: offer to send the page to the Mac instead.
+const sendToMac = touchOnly; // no Mac is touch-only
 $$(".dl").forEach((dl) => {
+  if (sendToMac) {
+    dl.textContent = dl.closest(".nav") ? "Send to Mac" : "Send the link to my Mac";
+    dl.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const url = location.origin + location.pathname, note = $("#downloadNote");
+      try { if (navigator.share) { await navigator.share({ title: "Circularity for Mac", url }); return; } } catch (err) { if (err?.name === "AbortError") return; }
+      try { await navigator.clipboard.writeText(url); note.textContent = "Link copied. Open it on your Mac to download."; }
+      catch { note.textContent = `Open ${url} on your Mac to download.`; }
+      $("#install").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    });
+    return;
+  }
   if (DOWNLOAD_URL) { dl.href = DOWNLOAD_URL; return; } // a .dmg link downloads by itself
   dl.addEventListener("click", (e) => {
     e.preventDefault();
@@ -2467,7 +2487,7 @@ $$(".feel .card").forEach((card) => card.addEventListener("pointermove", (e) => 
   const set = (key, down) => { for (const k of caps) if (k.dataset.key === key) k.classList.toggle("down", down); };
   document.addEventListener("keydown", (e) => {
     set(e.key, true);
-    if (!used && caps.some((k) => k.dataset.key === e.key)) { used = true; $("#keysHint").textContent = "now try it on a file below: drag, then tap ⇧ Shift"; }
+    if (!used && caps.some((k) => k.dataset.key === e.key) && $("#keysHint")) { used = true; $("#keysHint").textContent = "now try it on a file below: drag, then tap ⇧ Shift"; }
   });
   document.addEventListener("keyup", (e) => set(e.key, false));
   addEventListener("blur", () => caps.forEach((k) => k.classList.remove("down")));
