@@ -469,7 +469,16 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 .modal-box { max-width: min(900px, 100%); max-height: 86vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 10px; }
 :root[data-skin="glass"] .modal-box { background: #1A1C3A; }
 .modal-box img { max-height: 64vh; width: auto; margin: 0 auto; border-radius: 8px; }
-.modal-box pre { font-size: 7px; line-height: 1; margin: 0; overflow: auto; color: var(--fg); }
+.modal-note { color: var(--muted); margin: 0; max-width: 62ch; }
+.crop-ratios { display: flex; flex-wrap: wrap; gap: 6px; }
+.crop-stage { position: relative; justify-self: center; overflow: hidden; border-radius: 8px; touch-action: none; user-select: none; -webkit-user-select: none; line-height: 0; }
+.crop-stage img { max-height: 56vh; max-width: 100%; width: auto; border-radius: 0; margin: 0; pointer-events: none; }
+.crop-box { position: absolute; border: 2px solid #fff; outline: 1px solid rgba(0,0,0,.5); box-shadow: 0 0 0 100vmax rgba(10,8,6,.55); cursor: grab; touch-action: none; }
+.crop-box.dragging { cursor: grabbing; }
+.crop-box:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.crop-box::before, .crop-box::after { content: ""; position: absolute; inset: 33.33% 0; border-block: 1px solid rgba(255,255,255,.45); pointer-events: none; }
+.crop-box::after { inset: 0 33.33%; border-block: 0; border-inline: 1px solid rgba(255,255,255,.45); }
+.crop-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .modal-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; font-family: var(--mono); font-size: 13px; }
 .toast { position: fixed; z-index: 99; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-family: var(--mono); font-size: 13px; transition: .25s; pointer-events: none; max-width: calc(100vw - 32px); text-align: center; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -751,7 +760,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       </div>
       <label class="cmd" for="cmdInput">
         <span class="k">⌘K</span>
-        <input id="cmdInput" autocomplete="off" spellcheck="false" placeholder="try: webp · 50kb · 800w · ascii · pixel · pdf">
+        <input id="cmdInput" autocomplete="off" spellcheck="false" placeholder="try: webp · 50kb · 800w · pdf · tiff">
       </label>
       <div class="cmd-hint" id="cmdHint">Runs on the selected file. Press ↩.</div>
       <div class="files" id="files">
@@ -1196,11 +1205,13 @@ function drawKitty() {
   noise(x, w, h, 7); return c;
 }
 
-async function addFile({ name, blob, kind = "image", text = null, from = null, w = 0, h = 0, preview = null }) {
+async function addFile({ name, blob, kind = "image", from = null, w = 0, h = 0, preview = null, look = null, pages = 0 }) {
   const url = URL.createObjectURL(blob);
   let img = null;
-  if (kind === "image") { try { img = await loadImage(url); w = img.naturalWidth; h = img.naturalHeight; } catch { toast("That file isn't a picture this browser can read."); return null; } }
-  const file = { id: nextId++, name, blob, url, img, kind, text, bytes: blob.size, from, w, h, preview };
+  // `look`: a PNG stand-in for formats a browser can't show (TIFF in most), so the file still has a thumbnail.
+  if (kind === "image") { try { img = await loadImage(url); } catch { img = look ? await loadImage(look).catch(() => null) : null; }
+    if (!img) { toast("That file isn't a picture this browser can read."); return null; } w = img.naturalWidth; h = img.naturalHeight; }
+  const file = { id: nextId++, name, blob, url, img, kind, bytes: blob.size, from, w, h, preview, look, pages };
   files.push(file);
   renderFile(file);
   onFilesChanged();
@@ -1218,7 +1229,7 @@ function middleTruncate(s, max) { return s.length <= max ? s : s.slice(0, Math.c
 function renderFile(f) {
   const el = document.createElement("button");
   el.type = "button"; el.className = "file"; el.dataset.id = f.id;
-  const thumb = f.kind === "image" ? `<img src="${f.url}" alt="">` : f.kind === "pdf" ? `<img src="${f.preview}" alt=""><span class="badge">PDF</span>` : `<span class="doc">TXT</span>`;
+  const thumb = f.kind === "image" ? `<img src="${f.look || f.url}" alt="">` : f.kind === "pdf" ? `<img src="${f.preview}" alt=""><span class="badge">PDF</span>` : `<span class="doc">${ext(f.name).toUpperCase() || "FILE"}</span>`;
   let delta = "";
   if (f.from) {
     const pct = Math.round((f.bytes / f.from.bytes - 1) * 100);
@@ -1284,7 +1295,7 @@ const ACTIONS = {
   jpg:   { label: "JPG",  mono: "JPG",  caption: "PHOTO",    kicker: "CONVERT TO", hint: "small, best for photos",       run: async (f) => ({ blob: await encodeAs(f, "jpg"), name: `${base(f.name)}.jpg` }) },
   webp:  { label: "WebP", mono: "WEBP", caption: "WEB",      kicker: "CONVERT TO", hint: "smaller, for websites",        run: async (f) => ({ blob: await encodeAs(f, "webp"), name: `${base(f.name)}.webp` }) },
   pdf:   { label: "PDF",  mono: "PDF",  caption: "DOCUMENT", kicker: "CONVERT TO", hint: "a one-page PDF",               run: async (f) => makePDF(f) },
-  more:  { label: "More", mono: "•••",  caption: "MORE",     kicker: "REST HERE FOR", hint: "the fun ones" },
+  more:  { label: "More", mono: "•••",  caption: "MORE",     kicker: "REST HERE FOR", hint: "6 more options" },
   sqz:   { label: "Compress", mono: "SQZ", caption: "COMPRESS", kicker: "MAKE IT", hint: "smaller, same look", run: async (f) => {
     const fmt = sameFormat(f) === "png" ? "webp" : sameFormat(f);
     let blob; try { blob = await encodeAs(f, fmt, { q: 0.55 }); } catch { blob = await encodeAs(f, "jpg", { q: 0.55 }); }
@@ -1296,54 +1307,185 @@ const ACTIONS = {
     x.imageSmoothingQuality = "high"; x.drawImage(f.img, 0, 0, c.width, c.height);
     let blob; try { blob = await encodeAs(f, fmt, { canvas: c }); } catch { blob = await encodeAs(f, "png", { canvas: c }); }
     return { blob, name: `${base(f.name)} (resized).${blob.type === "image/jpeg" ? "jpg" : blob.type === "image/webp" ? "webp" : "png"}` }; } },
-  ascii: { label: "ASCII", mono: "ASCII", caption: "TEXT ART", kicker: "TURN IT INTO", hint: "a text file of characters", run: async (f) => {
-    const text = asciiArt(f, 110); return { blob: new Blob([text], { type: "text/plain" }), name: `${base(f.name)}.txt`, kind: "text", text }; } },
-  pixel: { label: "Pixel", mono: "PIXEL", caption: "8-BIT", kicker: "TURN IT INTO", hint: "chunky pixel art", run: async (f) => {
-    const small = alphaCanvas(f, 72), c = makeCanvas(small.width * 8, small.height * 8), x = c.getContext("2d");
-    x.imageSmoothingEnabled = false; x.drawImage(small, 0, 0, c.width, c.height);
-    return { blob: await toBlob(c, "image/png"), name: `${base(f.name)} (pixel).png` }; } },
-  gray:  { label: "Mono", mono: "MONO", caption: "GRAYSCALE", kicker: "TURN IT INTO", hint: "black and white", run: async (f) => {
-    const c = alphaCanvas(f, 1600), x = c.getContext("2d"), d = x.getImageData(0, 0, c.width, c.height), p = d.data;
-    for (let i = 0; i < p.length; i += 4) { const l = p[i] * .2126 + p[i + 1] * .7152 + p[i + 2] * .0722; p[i] = p[i + 1] = p[i + 2] = l; }
-    x.putImageData(d, 0, 0);
-    const fmt = sameFormat(f) === "jpg" ? "jpg" : "png";
-    return { blob: await encodeAs(f, fmt, { canvas: fmt === "jpg" ? flatten(c) : c }), name: `${base(f.name)} (mono).${fmt}` }; } },
+  // The More fan, as in the app: Crop, Cut out, Combine, BMP, GIF, TIFF.
+  crop: { label: "Crop", mono: "CROP", caption: "TRIM", kicker: "OPEN", hint: "pick the area to keep", run: (f) => cropDialog(f) },
+  cut: { label: "Cut out", mono: "CUT", caption: "NO BG", kicker: "CUT OUT THE", hint: "in the Mac app", run: async () => { showCutout(); return null; } },
+  combine: { label: "Combine", mono: "COMBINE", caption: "ONE PDF", kicker: "COMBINE INTO", hint: "one PDF of every picture here", run: async () => {
+    const pics = files.filter((x) => x.kind === "image" && x.img);
+    return makePDF(pics, `Combined (${pics.length} pictures).pdf`); } },
+  bmp: { label: "BMP", mono: "BMP", caption: "BITMAP", kicker: "CONVERT TO", hint: "for older software", run: async (f) => {
+    const c = opaqueCanvas(f); return { blob: encodeBMP(c), name: `${base(f.name)}.bmp`, note: scaledNote(f, c) }; } },
+  gif: { label: "GIF", mono: "GIF", caption: "256 COLOURS", kicker: "CONVERT TO", hint: "256 colours", run: async (f) => {
+    const c = alphaCanvas(f, 1600); return { blob: encodeGIF(c), name: `${base(f.name)}.gif`, note: scaledNote(f, c) }; } },
+  tiff: { label: "TIFF", mono: "TIFF", caption: "PRINT", kicker: "CONVERT TO", hint: "lossless, for print", run: async (f) => {
+    const c = alphaCanvas(f); return { blob: encodeTIFF(c), name: `${base(f.name)}.tiff`, note: scaledNote(f, c), look: c }; } },
 };
 function flatten(c) { const o = makeCanvas(c.width, c.height), x = o.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, o.width, o.height); x.drawImage(c, 0, 0); return o; }
 
-function asciiArt(f, cols) {
-  const ramp = "@%#*+=-:. ";
-  const rows = Math.max(8, Math.round(cols * (f.h / f.w) * 0.5));
-  const c = makeCanvas(cols, rows), x = c.getContext("2d");
-  x.fillStyle = "#fff"; x.fillRect(0, 0, cols, rows); x.drawImage(f.img, 0, 0, cols, rows);
-  const p = x.getImageData(0, 0, cols, rows).data; let out = "";
-  for (let y = 0; y < rows; y++) { for (let i = 0; i < cols; i++) { const k = (y * cols + i) * 4; const l = (p[k] * .2126 + p[k + 1] * .7152 + p[k + 2] * .0722) / 255; out += ramp[Math.min(ramp.length - 1, Math.floor(l * ramp.length))]; } out += "\n"; }
-  return out;
-}
-
-// A real one-page PDF: the picture as a JPEG image object (DCTDecode).
-async function makePDF(f) {
-  const c = opaqueCanvas(f, 2000);
-  const jpeg = new Uint8Array(await (await toBlob(c, "image/jpeg", 0.85)).arrayBuffer());
-  const W = Math.round(c.width * 0.75), H = Math.round(c.height * 0.75);
+// A real PDF, one picture per page, each a JPEG image object (DCTDecode).
+async function makePDF(pics, name) {
+  if (!Array.isArray(pics)) { name = `${base(pics.name)}.pdf`; pics = [pics]; }
+  if (!pics.length) throw new Error("There are no pictures on the desk to combine.");
   const enc = new TextEncoder(), parts = [], offsets = []; let length = 0;
   const push = (data) => { const b = typeof data === "string" ? enc.encode(data) : data; parts.push(b); length += b.length; };
-  push("%PDF-1.4\n");
   const obj = (n, body) => { offsets[n] = length; push(`${n} 0 obj\n${body}\nendobj\n`); };
+  push("%PDF-1.4\n");
+  const n = pics.length, kids = pics.map((_, i) => `${3 + i * 3} 0 R`).join(" ");
   obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
-  obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
-  offsets[4] = length;
-  push(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
-  push(jpeg); push("\nendstream\nendobj\n");
-  const content = `q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
-  obj(5, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
-  const xref = length;
-  let table = "xref\n0 6\n0000000000 65535 f \n";
-  for (let n = 1; n <= 5; n++) table += String(offsets[n]).padStart(10, "0") + " 00000 n \n";
-  push(table + `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
-  const preview = URL.createObjectURL(await toBlob(opaqueCanvas(f, 300), "image/jpeg", 0.8));
-  return { blob: new Blob(parts, { type: "application/pdf" }), name: `${base(f.name)}.pdf`, kind: "pdf", preview };
+  obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
+  for (let i = 0; i < n; i++) {
+    const c = opaqueCanvas(pics[i], 2000), page = 3 + i * 3;
+    const jpeg = new Uint8Array(await (await toBlob(c, "image/jpeg", 0.85)).arrayBuffer());
+    const W = Math.round(c.width * 0.75), H = Math.round(c.height * 0.75);
+    obj(page, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${page + 1} 0 R >> >> /Contents ${page + 2} 0 R >>`);
+    offsets[page + 1] = length;
+    push(`${page + 1} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+    push(jpeg); push("\nendstream\nendobj\n");
+    const content = `q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+    obj(page + 2, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+  }
+  const count = 3 + n * 3, xref = length;
+  let table = `xref\n0 ${count}\n0000000000 65535 f \n`;
+  for (let k = 1; k < count; k++) table += String(offsets[k]).padStart(10, "0") + " 00000 n \n";
+  push(table + `trailer\n<< /Size ${count} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  const preview = URL.createObjectURL(await toBlob(opaqueCanvas(pics[0], 300), "image/jpeg", 0.8));
+  return { blob: new Blob(parts, { type: "application/pdf" }), name, kind: "pdf", preview, pages: n };
+}
+
+// The demo works on copies up to 2,400 px; say so when that shrank a picture.
+function scaledNote(f, c) { return c.width < f.w ? `made at ${c.width} × ${c.height} here; the app keeps every pixel` : ""; }
+
+// BMP: 24-bit, bottom-up rows padded to 4 bytes (what the app writes; no alpha).
+function encodeBMP(c) {
+  const w = c.width, h = c.height, d = c.getContext("2d").getImageData(0, 0, w, h).data, row = (w * 3 + 3) & ~3, size = 54 + row * h;
+  const buf = new ArrayBuffer(size), v = new DataView(buf), u = new Uint8Array(buf);
+  u[0] = 66; u[1] = 77; v.setUint32(2, size, true); v.setUint32(10, 54, true); v.setUint32(14, 40, true);
+  v.setInt32(18, w, true); v.setInt32(22, h, true); v.setUint16(26, 1, true); v.setUint16(28, 24, true);
+  v.setUint32(34, row * h, true); v.setInt32(38, 2835, true); v.setInt32(42, 2835, true);
+  for (let y = 0; y < h; y++) { let o = 54 + (h - 1 - y) * row; for (let x = 0; x < w; x++) { const k = (y * w + x) * 4; u[o++] = d[k + 2]; u[o++] = d[k + 1]; u[o++] = d[k]; } }
+  return new Blob([buf], { type: "image/bmp" });
+}
+
+// TIFF: baseline, uncompressed RGBA with unassociated alpha (transparency kept).
+function encodeTIFF(c) {
+  const w = c.width, h = c.height, px = c.getContext("2d").getImageData(0, 0, w, h).data;
+  const tags = 14, ifd = 8, extra = ifd + 2 + tags * 12 + 4, bps = extra, xres = extra + 8, yres = extra + 16, data = extra + 24;
+  const buf = new ArrayBuffer(data + px.length), v = new DataView(buf), u = new Uint8Array(buf);
+  u[0] = 73; u[1] = 73; v.setUint16(2, 42, true); v.setUint32(4, ifd, true); v.setUint16(ifd, tags, true);
+  let o = ifd + 2;
+  const tag = (id, type, count, value) => { v.setUint16(o, id, true); v.setUint16(o + 2, type, true); v.setUint32(o + 4, count, true);
+    if (type === 3 && count === 1) v.setUint16(o + 8, value, true); else v.setUint32(o + 8, value, true); o += 12; };
+  tag(256, 4, 1, w); tag(257, 4, 1, h); tag(258, 3, 4, bps); tag(259, 3, 1, 1); tag(262, 3, 1, 2); tag(273, 4, 1, data);
+  tag(277, 3, 1, 4); tag(278, 4, 1, h); tag(279, 4, 1, px.length); tag(282, 5, 1, xres); tag(283, 5, 1, yres);
+  tag(284, 3, 1, 1); tag(296, 3, 1, 2); tag(338, 3, 1, 2);
+  v.setUint32(o, 0, true);
+  for (let i = 0; i < 4; i++) v.setUint16(bps + i * 2, 8, true);
+  v.setUint32(xres, 72, true); v.setUint32(xres + 4, 1, true); v.setUint32(yres, 72, true); v.setUint32(yres + 4, 1, true);
+  u.set(px, data);
+  return new Blob([buf], { type: "image/tiff" });
+}
+
+// GIF: 256 colours (a 6 × 7 × 6 palette with Floyd–Steinberg dithering), LZW, transparency kept.
+function encodeGIF(c) {
+  const w = c.width, h = c.height, px = c.getContext("2d").getImageData(0, 0, w, h).data;
+  const R = 6, G = 7, B = 6, CLEAR_INDEX = R * G * B; // 252 colours + one transparent slot
+  const level = (v, n) => Math.max(0, Math.min(n - 1, Math.round(v / 255 * (n - 1))));
+  const err = new Float32Array(w * h * 3), idx = new Uint8Array(w * h); let transparent = false;
+  for (let i = 0; i < w * h; i++) { err[i * 3] = px[i * 4]; err[i * 3 + 1] = px[i * 4 + 1]; err[i * 3 + 2] = px[i * 4 + 2]; }
+  const spread = (x, y, er, eg, eb, k) => { if (x < 0 || x >= w || y >= h) return; const j = (y * w + x) * 3; err[j] += er * k; err[j + 1] += eg * k; err[j + 2] += eb * k; };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x;
+    if (px[i * 4 + 3] < 128) { idx[i] = CLEAR_INDEX; transparent = true; continue; }
+    const r = err[i * 3], g = err[i * 3 + 1], b = err[i * 3 + 2], ri = level(r, R), gi = level(g, G), bi = level(b, B);
+    idx[i] = ri * G * B + gi * B + bi;
+    const er = r - ri * 255 / (R - 1), eg = g - gi * 255 / (G - 1), eb = b - bi * 255 / (B - 1);
+    spread(x + 1, y, er, eg, eb, 7 / 16); spread(x - 1, y + 1, er, eg, eb, 3 / 16); spread(x, y + 1, er, eg, eb, 5 / 16); spread(x + 1, y + 1, er, eg, eb, 1 / 16);
+  }
+  const out = []; const bytes = (...b) => out.push(...b); const word = (n) => bytes(n & 255, (n >> 8) & 255);
+  bytes(...[..."GIF89a"].map((ch) => ch.charCodeAt(0))); word(w); word(h); bytes(0xF7, 0, 0);
+  for (let i = 0; i < 256; i++) {
+    if (i < CLEAR_INDEX) { const ri = Math.floor(i / (G * B)), gi = Math.floor(i / B) % G, bi = i % B; bytes(Math.round(ri * 255 / (R - 1)), Math.round(gi * 255 / (G - 1)), Math.round(bi * 255 / (B - 1))); }
+    else bytes(0, 0, 0);
+  }
+  if (transparent) bytes(0x21, 0xF9, 4, 1, 0, 0, CLEAR_INDEX, 0);
+  bytes(0x2C); word(0); word(0); word(w); word(h); bytes(0);
+  // LZW, minimum code size 8 (as omggif does it).
+  const minCode = 8, clear = 1 << minCode, eoi = clear + 1, lzw = [];
+  let size = minCode + 1, next = eoi + 1, table = new Map(), cur = 0, bits = 0;
+  const emit = (code) => { cur |= code << bits; bits += size; while (bits >= 8) { lzw.push(cur & 255); cur >>>= 8; bits -= 8; } };
+  emit(clear); let prefix = idx[0];
+  for (let i = 1; i < idx.length; i++) {
+    const k = idx[i], key = (prefix << 8) | k, found = table.get(key);
+    if (found !== undefined) { prefix = found; continue; }
+    emit(prefix);
+    if (next === 4096) { emit(clear); next = eoi + 1; size = minCode + 1; table = new Map(); }
+    else { if (next >= (1 << size)) size++; table.set(key, next++); }
+    prefix = k;
+  }
+  emit(prefix); emit(eoi); if (bits > 0) lzw.push(cur & 255);
+  bytes(minCode);
+  for (let i = 0; i < lzw.length; i += 255) { const chunk = lzw.slice(i, i + 255); bytes(chunk.length, ...chunk); }
+  bytes(0, 0x3B);
+  return new Blob([new Uint8Array(out)], { type: "image/gif" });
+}
+
+// Cut out needs Apple's on-device Vision, which a browser doesn't have: show the app's real result.
+function showCutout() {
+  openModal("Cut out · in the app", (body) => {
+    const img = document.createElement("img"); img.src = "assets/cutout.jpg"; img.alt = "A drawn mug before and after Cut out in Circularity: the background is gone.";
+    const p = document.createElement("p"); p.className = "modal-note";
+    p.textContent = "Cut out lifts the subject off its background with Apple's on-device Vision (macOS 14 or later) and saves a transparent PNG. A browser can't do that, so this is the app's real result on a test picture.";
+    body.append(img, p);
+  });
+}
+
+// Crop: the app opens an editor with ratio locks. A small one here: drag the box (or use the arrow keys).
+const CANCELLED = new Error("cancelled");
+function cropDialog(f) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const RATIOS = [["free", "Original"], ["1:1", "1:1"], ["4:3", "4:3"], ["3:2", "3:2"], ["16:9", "16:9"], ["9:16", "9:16"]];
+    let ratio = "free", box = null, drag = null;
+    const fit = (r) => { // the largest centred box of ratio r (width ÷ height, in pixels) at 80 %, as fractions
+      const ir = f.w / f.h, k = r || ir; let w = 0.8, h = 0.8;
+      if (ir > k) w = 0.8 * k / ir; else h = 0.8 * ir / k;
+      return { x: (1 - w) / 2, y: (1 - h) / 2, w, h };
+    };
+    const ratioValue = (id) => id === "free" ? null : (([a, b]) => a / b)(id.split(":").map(Number));
+    openModal(`Crop ${f.name}`, (body) => {
+      body.innerHTML = `<div class="crop-ratios" role="group" aria-label="Ratio">${RATIOS.map(([id, l]) => `<button class="pill" type="button" data-r="${id}">${l}</button>`).join("")}</div>
+        <div class="crop-stage"><img src="${f.url}" alt="${f.name}" draggable="false"><div class="crop-box" tabindex="0" role="slider" aria-label="Crop area: drag, or use the arrow keys" aria-valuetext=""></div></div>
+        <p class="modal-note">In the app you can also resize the box. Saves next to the original as “${base(f.name)} (cropped)”.</p>
+        <div class="crop-actions"><button class="btn" type="button" data-act="cancel">Cancel</button><button class="btn primary" type="button" data-act="crop">Crop</button></div>`;
+      const stage = $(".crop-stage", body), el = $(".crop-box", body), img = $("img", body);
+      const draw = () => { Object.assign(el.style, { left: box.x * 100 + "%", top: box.y * 100 + "%", width: box.w * 100 + "%", height: box.h * 100 + "%" });
+        el.setAttribute("aria-valuetext", `${Math.round(box.w * f.w)} × ${Math.round(box.h * f.h)} at ${Math.round(box.x * 100)}%, ${Math.round(box.y * 100)}%`);
+        $$("[data-r]", body).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.r === ratio))); };
+      const setRatio = (id) => { ratio = id; box = fit(ratioValue(id)); draw(); };
+      const moveTo = (x, y) => { box.x = Math.min(1 - box.w, Math.max(0, x)); box.y = Math.min(1 - box.h, Math.max(0, y)); draw(); };
+      $$("[data-r]", body).forEach((b) => b.addEventListener("click", () => setRatio(b.dataset.r)));
+      const end = () => { if (drag) { try { el.releasePointerCapture(drag.id); } catch {} drag = null; el.classList.remove("dragging"); } };
+      el.addEventListener("pointerdown", (e) => { if (drag) return; e.preventDefault(); const r = stage.getBoundingClientRect();
+        drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, bx: box.x, by: box.y, w: r.width, h: r.height }; el.setPointerCapture(e.pointerId); el.classList.add("dragging"); });
+      el.addEventListener("pointermove", (e) => { if (!drag || e.pointerId !== drag.id) return; moveTo(drag.bx + (e.clientX - drag.sx) / drag.w, drag.by + (e.clientY - drag.sy) / drag.h); });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach((t) => el.addEventListener(t, end));
+      el.addEventListener("keydown", (e) => { const d = e.shiftKey ? 0.1 : 0.02, k = { ArrowLeft: [-d, 0], ArrowRight: [d, 0], ArrowUp: [0, -d], ArrowDown: [0, d] }[e.key];
+        if (k) { e.preventDefault(); moveTo(box.x + k[0], box.y + k[1]); } });
+      img.addEventListener("load", () => draw(), { once: true });
+      $('[data-act="cancel"]', body).addEventListener("click", () => closeModal());
+      $('[data-act="crop"]', body).addEventListener("click", async () => {
+        const sx = Math.round(box.x * f.w), sy = Math.round(box.y * f.h), sw = Math.max(1, Math.round(box.w * f.w)), sh = Math.max(1, Math.round(box.h * f.h));
+        const k = Math.min(1, CAP / Math.max(sw, sh)), c = makeCanvas(Math.max(1, Math.round(sw * k)), Math.max(1, Math.round(sh * k))), x = c.getContext("2d");
+        const fmt = sameFormat(f); if (fmt === "jpg") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); }
+        x.imageSmoothingQuality = "high"; x.drawImage(f.img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+        let blob; try { blob = await encodeAs(f, fmt, { canvas: c }); } catch { blob = await encodeAs(f, "png", { canvas: c }); }
+        const e2 = blob.type === "image/jpeg" ? "jpg" : blob.type === "image/webp" ? "webp" : "png";
+        settled = true; closeModal(); resolve({ blob, name: `${base(f.name)} (cropped).${e2}` });
+      });
+      setRatio(ratio);
+      setTimeout(() => el.focus(), 0);
+    }, () => { if (!settled) reject(CANCELLED); });
+  });
 }
 
 // Compress under a byte target: quality search, then shrink if needed (like the app).
@@ -1366,7 +1508,9 @@ async function runAction(f, key, extra) {
   const a = ACTIONS[key];
   try {
     const r = extra ? await extra() : await a.run(f);
-    const out = await addFile({ name: uniqueName(r.name), blob: r.blob, kind: r.kind || "image", text: r.text, from: f, preview: r.preview });
+    if (!r) return; // Cut out shows the app's result instead of making a file here
+    const look = r.look ? URL.createObjectURL(await toBlob(r.look, "image/png")) : null;
+    const out = await addFile({ name: uniqueName(r.name), blob: r.blob, kind: r.kind || "image", from: f, preview: r.preview, look, pages: r.pages });
     if (!out) return;
     converted++; if (out.bytes < f.bytes) saved += f.bytes - out.bytes;
     $("#statCount").textContent = converted; $("#statSaved").textContent = fmtBytes(saved);
@@ -1375,20 +1519,31 @@ async function runAction(f, key, extra) {
     const change = Math.round((out.bytes / f.bytes - 1) * 100);
     toast(`${out.name} · ${fmtBytes(out.bytes)} (${change > 0 ? "+" : ""}${change}%)${r.note ? " · " + r.note : ""}`);
     select(out);
-  } catch (err) { toast(err.message || "That didn't work"); sfx.cancel(); }
+  } catch (err) { if (err !== CANCELLED) toast(err.message || "That didn't work"); sfx.cancel(); }
 }
 
 // Preview a file on double-click / Enter after selecting.
 function preview(f) {
-  $("#modalTitle").textContent = `${f.name} · ${fmtBytes(f.bytes)}${f.w ? ` · ${f.w} × ${f.h}` : ""}`;
-  const body = $("#modalBody"); body.textContent = "";
-  if (f.kind === "text") { const pre = document.createElement("pre"); pre.textContent = f.text; body.append(pre); }
-  else { const img = document.createElement("img"); img.src = f.kind === "pdf" ? f.preview : f.url; img.alt = f.name; body.append(img);
-    if (f.kind === "pdf") { const p = document.createElement("p"); p.style.color = "var(--muted)"; p.textContent = "A real one-page PDF, made in your browser. The app saves it next to the original."; body.append(p); } }
-  $("#modal").hidden = false; $("#modalClose").focus();
+  openModal(`${f.name} · ${fmtBytes(f.bytes)}${f.w ? ` · ${f.w} × ${f.h}` : ""}`, (body) => {
+    const img = document.createElement("img"); img.src = f.kind === "pdf" ? f.preview : (f.look || f.url); img.alt = f.name; body.append(img);
+    if (f.kind === "pdf") { const p = document.createElement("p"); p.className = "modal-note"; p.textContent = `A real ${f.pages > 1 ? `${f.pages}-page` : "one-page"} PDF, made in your browser. The app saves it next to the original.`; body.append(p); }
+  });
 }
-$("#modalClose").addEventListener("click", () => { $("#modal").hidden = true; });
-$("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") $("#modal").hidden = true; });
+let modalOnClose = null, modalReturn = null;
+function openModal(title, fill, onClose = null) {
+  if (!$("#modal").hidden) closeModal();
+  modalReturn = document.activeElement; modalOnClose = onClose;
+  $("#modalTitle").textContent = title; const body = $("#modalBody"); body.textContent = ""; fill(body);
+  $("#modal").hidden = false; if (!body.contains(document.activeElement)) $("#modalClose").focus();
+}
+function closeModal() {
+  if ($("#modal").hidden) return;
+  $("#modal").hidden = true;
+  const done = modalOnClose; modalOnClose = null; done?.();
+  if (modalReturn?.isConnected) modalReturn.focus({ preventScroll: true }); modalReturn = null;
+}
+$("#modalClose").addEventListener("click", closeModal);
+$("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
 
 // ---------- The wheel ----------
 const wheelEl = $("#wheel"), wc = $("#wheelCanvas"), wx = wc.getContext("2d"), disc = $(".disc", wheelEl);
@@ -1399,15 +1554,22 @@ function menuFor(f) {
   const src = sameFormat(f);
   const formats = ["png", "jpg", "webp", "pdf"].filter((k) => k !== src).slice(0, 3);
   const rest = ["png", "jpg", "webp", "pdf"].filter((k) => k !== src && !formats.includes(k));
-  return { ring: [...formats, "more", "sqz", "size"], fan: [...rest, "ascii", "pixel", "gray"] };
+  // The app's More fan order: formats on the right, then the tools, Crop last (on the left).
+  return { ring: [...formats, "more", "sqz", "size"], fan: [...rest, "tiff", "gif", "bmp", "combine", "cut", "crop"] };
 }
 
 function openWheel(f, x, y, mode) {
   if (W.open) return;
   const m = menuFor(f);
   W.file = f; W.mode = mode; W.ring = m.ring; W.fan = m.fan; W.hover = { t: "none" }; W.fanOpen = false; W.est = {};
-  W.scale = Math.min(1, (innerWidth - 16) / G.ring); // fit the ring; the fan may reach past a phone's edge
-  const half = G.ring * W.scale / 2;
+  ACTIONS.more.hint = `${m.fan.length} more options`;
+  const pics = files.filter((x) => x.kind === "image" && x.img).length;
+  ACTIONS.combine.hint = pics > 1 ? `${pics} pictures, one PDF` : "a one-page PDF";
+  // Drag mode stays at the pointer (it can't move), so it fits the ring; click mode can
+  // move, so it keeps room for the whole More fan too.
+  const reach = mode === "click" ? G.fanR + G.chipW / 2 + 10 : G.ring / 2;
+  W.scale = Math.min(1, (innerWidth - 16) / (2 * reach));
+  const half = reach * W.scale;
   W.cx = mode === "click" ? Math.min(Math.max(x, half), innerWidth - half) : x;
   W.cy = mode === "click" ? Math.min(Math.max(y, half), innerHeight - half) : y;
   W.flipped = W.cy + (G.fanR + 30) * W.scale > innerHeight;
@@ -1467,7 +1629,12 @@ function keyFor(h) { return h.t === "seg" ? W.ring[h.i] : h.t === "chip" ? W.fan
 // Live size estimate on hover, by really encoding a small copy.
 async function estimate(key) {
   W.est[key] = null; const f = W.file;
-  if (!["png", "jpg", "webp", "sqz", "gray"].includes(key)) return;
+  if (key === "bmp" || key === "tiff") {
+    const k = Math.min(1, CAP / Math.max(f.w, f.h)), w = Math.max(1, Math.round(f.w * k)), h = Math.max(1, Math.round(f.h * k));
+    W.est[key] = key === "bmp" ? 54 + ((w * 3 + 3) & ~3) * h : 8 + 2 + 14 * 12 + 4 + 24 + w * h * 4;
+    if (W.open) drawWheel(); return;
+  }
+  if (!["png", "jpg", "webp", "sqz"].includes(key)) return;
   try {
     const s = Math.min(1, 480 / Math.max(f.w, f.h)), c = makeCanvas(Math.max(1, Math.round(f.w * s)), Math.max(1, Math.round(f.h * s)));
     const x = c.getContext("2d"); if (key !== "png" && key !== "webp") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); } x.drawImage(f.img, 0, 0, c.width, c.height);
@@ -1761,7 +1928,7 @@ wheelEl.addEventListener("click", (e) => {
 document.addEventListener("pointerdown", (e) => { if (W.open && W.mode === "click" && !wheelEl.contains(e.target)) { const h = hitTest(e.clientX, e.clientY); if (h.t === "none") { closeWheel(); sfx.cancel(); } } }, true);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Shift" && D.active && D.moved && !W.open && D.f.kind === "image") { openWheel(D.f, D.x, D.y, "drag"); return; }
-  if (e.key === "Escape") { if (!$("#modal").hidden) { $("#modal").hidden = true; return; } if (W.open) { closeWheel(); cleanupDrag(); sfx.cancel(); } }
+  if (e.key === "Escape") { if (!$("#modal").hidden) { closeModal(); return; } if (W.open) { closeWheel(); cleanupDrag(); sfx.cancel(); } }
   if (W.open && W.mode === "click" && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
     const i = W.hover.t === "seg" ? W.hover.i : -1; setHover({ t: "seg", i: ((i + (e.key === "ArrowRight" ? 1 : 5)) % 6 + 6) % 6 }); e.preventDefault();
   }
@@ -1782,20 +1949,21 @@ function parseCommand(q) {
     const h = Math.round(f.h * w / f.w), c = makeCanvas(w, Math.max(1, h)), x = c.getContext("2d"); const fmt = sameFormat(f);
     if (fmt === "jpg") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); } x.imageSmoothingQuality = "high"; x.drawImage(f.img, 0, 0, c.width, c.height);
     return { blob: await encodeAs(f, fmt === "webp" ? "webp" : fmt, { canvas: c }), name: `${base(f.name)} (resized).${fmt}` }; }) }; }
-  const map = { jpg: "jpg", jpeg: "jpg", png: "png", webp: "webp", pdf: "pdf", ascii: "ascii", pixel: "pixel", gray: "gray", grey: "gray", mono: "gray", compress: "sqz", resize: "size", half: "size" };
+  const map = { jpg: "jpg", jpeg: "jpg", png: "png", webp: "webp", pdf: "pdf", bmp: "bmp", gif: "gif", tiff: "tiff", tif: "tiff",
+    compress: "sqz", resize: "size", half: "size", crop: "crop", combine: "combine" };
   const hit = Object.keys(map).find((k) => k.startsWith(q) || q === k);
-  const titles = { sqz: "Compress", size: "Resize to half", ascii: "Turn into ASCII art", pixel: "Turn into pixel art", gray: "Make it black and white" };
-  if (hit) { const key = map[hit]; return { title: titles[key] || `Convert to ${ACTIONS[key].label}`, run: (f) => runAction(f, key) }; }
-  if (/^(shift|riso|ink|neon|aqua|ascii|pixel|glass|win95|blueprint|news)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
+  const titles = { sqz: "Compress", size: "Resize to half", crop: "Crop…", combine: "Combine every picture here into one PDF" };
+  if (hit) { const key = map[hit]; return { key, title: titles[key] || `Convert to ${ACTIONS[key].label}`, run: (f) => runAction(f, key) }; }
   return null;
 }
-cmdInput.addEventListener("input", () => { const c = parseCommand(cmdInput.value); cmdHint.textContent = cmdInput.value ? (c ? `↩ ${c.title}${selected ? ` · ${middleTruncate(selected.name, 28)}` : ""}` : "Try webp, 50kb, 800w, ascii, pixel, pdf") : "Runs on the selected file. Press ↩."; });
+cmdInput.addEventListener("input", () => { const c = parseCommand(cmdInput.value); cmdHint.textContent = cmdInput.value ? (c ? `↩ ${c.title}${selected ? ` · ${middleTruncate(selected.name, 28)}` : ""}` : "Try webp, 50kb, 800w, pdf or tiff") : "Runs on the selected file. Press ↩."; });
 cmdInput.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
   const c = parseCommand(cmdInput.value);
-  if (!c) { toast("Try webp, 50kb, 800w, ascii, pixel or pdf"); return; }
+  if (!c) { toast("Try webp, 50kb, 800w, pdf or tiff"); return; }
   const f = selected || files[0]; if (!f) return;
-  if (f.kind !== "image" && !/skin/i.test(c.title)) { toast("Pick a picture first. That one isn't an image."); return; }
+  // Combine gathers every picture on the desk, so it doesn't care what's selected.
+  if (f.kind !== "image" && c.key !== "combine") { toast(`Pick a picture first: ${f.name} isn't one. (The app crops and converts PDFs too.)`); return; }
   c.run(f); cmdInput.value = ""; cmdHint.textContent = "Runs on the selected file. Press ↩.";
 });
 document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); cmdInput.focus(); } });
