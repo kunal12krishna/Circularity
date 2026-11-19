@@ -233,7 +233,7 @@ section { padding-block: clamp(56px, 8vw, 96px); }
 .livekeys span { color: var(--muted); font-size: 13px; }
 .demo-wrap { padding-bottom: 12px; }
 /* Morph: format cards scatter, line up, ring like the wheel, then sweep into an arc as you scroll */
-.morph { height: 320vh; position: relative; padding-block: 0;
+.morph { height: 170vh; position: relative; padding-block: 0;
   margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px))); }
 .morph-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; perspective: 1000px; }
 .morph-intro { position: absolute; left: 50%; top: 50%; translate: -50% -50%; text-align: center; pointer-events: none; z-index: 1;
@@ -773,8 +773,8 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     <p class="demo-cap">This is the real thing, in your browser: press on a picture, drag a little, tap ⇧ Shift, let go on a format.</p>
   </div>
   <div class="marquee" aria-hidden="true"><div class="track">
-    <span><b>0</b> permissions</span><span><i>●</i> nothing uploaded</span><span><b>12.5 MB</b> at rest</span><span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span>pdf → images · text</span><span>markdown · html · word → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span><span><b>3.4 MB</b> download</span>
-    <span><b>0</b> permissions</span><span><i>●</i> nothing uploaded</span><span><b>12.5 MB</b> at rest</span><span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span>pdf → images · text</span><span>markdown · html · word → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span><span><b>3.4 MB</b> download</span>
+    <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
+    <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
   </div></div>
 
   <section class="wrap" aria-label="Measured numbers" style="padding-block: 40px 24px">
@@ -789,7 +789,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="how" aria-labelledby="howTitle">
-    <p class="eyebrow" data-tag="how">three moves</p>
     <h2 class="sec-title" id="howTitle">How it works.</h2>
     <p class="sec-sub">Three moves, wherever a file is: Finder, the desktop, Mail, a browser download.</p>
     <div class="story-grid">
@@ -816,7 +815,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   <section class="morph" id="orbit" aria-labelledby="orbitTitle">
     <div class="morph-pin" id="morphPin">
       <div class="morph-intro" id="morphIntro">
-        <p class="eyebrow" data-tag="formats">twenty ways out</p>
         <h2 id="orbitTitle">One wheel.<br><span class="hl">Every way out.</span></h2>
         <p class="morph-hint">scroll ↓</p>
       </div>
@@ -830,7 +828,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="ways">
     <div class="section-head">
-      <div class="eyebrow" data-tag="open">No permissions needed</div>
       <h2>Four ways to open the wheel</h2>
     </div>
     <div class="grid4">
@@ -858,7 +855,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="features" aria-labelledby="featTitle">
-    <p class="eyebrow" data-tag="inside">a tour</p>
     <h2 class="sec-title" id="featTitle">One wheel, a lot inside.</h2>
     <p class="sec-sub">Real pictures from the app. Pick a tab, or let them play.</p>
     <div class="explorer" id="explorer">
@@ -907,7 +903,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="uses" aria-labelledby="usesTitle">
-    <p class="eyebrow" data-tag="try">examples</p>
     <h2 class="sec-title" id="usesTitle">What will you convert?</h2>
     <p class="sec-sub">Pick one. These are typical examples, sizes included.</p>
     <div class="uses">
@@ -918,11 +913,10 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="new">
     <div class="section-head">
-      <div class="eyebrow" data-tag="new">New in 0.2</div>
       <h2>Small things that feel big</h2>
     </div>
     <div class="grid3 feel" role="list">
-      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">01</span><h3>Cut out <span class="tag">macOS 14+</span></h3><p>Removes the background from a photo with Apple's on-device subject lifting and saves a transparent PNG.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">01</span><h3>Quiet by default</h3><p>Update checks stay off unless you turn them on, and the app sleeps until you drag a file. No account, no sign-in.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">02</span><h3>Drop shelf</h3><p>The result floats next to your pointer. Drag it straight into Mail, Slack or a chat, or copy it with one click.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">03</span><h3>Before and after</h3><p>Hover JPG, HEIC or Compress and a magnifier shows a piece of your picture, half as it is and half as it will be.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">04</span><h3>Your own buttons</h3><p>Choose what sits in each of the six spots on the wheel. Everything else waits under More.</p></div>
@@ -934,7 +928,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   <section class="wrap" id="theme" aria-labelledby="studioTitle">
     <a class="studio-teaser" href="studio.html">
       <div class="stz-copy">
-        <div class="eyebrow" data-tag="studio">make it yours</div>
         <h2 id="studioTitle">Wheel Studio.</h2>
         <p>A whole page for one wheel, and every knob is something the app really draws: fills from stickers to outline, colours, rounded corners, glow, a wheel that breathes, a ring of orbiting dots, a twirl as it opens, sparks. Paste it into Circularity and it looks exactly like this.</p>
         <ul class="stz-list" aria-label="Some of the knobs">
@@ -950,7 +943,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="lab">
     <div class="section-head">
-      <div class="eyebrow" data-tag="lab">Format lab</div>
       <h2>Same picture, every format</h2>
       <p style="color:var(--muted)">Pick a picture (or drop your own on the desktop above), move the quality, then drag across the comparison to see what each format really does. Everything is encoded in your browser.</p>
     </div>
@@ -973,7 +965,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="skins">
     <div class="section-head">
-      <div class="eyebrow" data-tag="skin">Themes, like the app</div>
       <h2>Pick a skin. Everything follows.</h2>
       <p style="color:var(--muted)">The app ships with themes and three wheel layouts. This page does the same trick: the wheel and every button redraw in the style you choose. Secret: type <span class="mono">shift</span> anywhere.</p>
     </div>
@@ -993,7 +984,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="privacy">
     <div class="section-head">
-      <div class="eyebrow" data-tag="trust">What it doesn't touch</div>
       <h2>Small, quiet, private</h2>
     </div>
     <div class="windows">
@@ -1003,7 +993,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
           <li>0 permissions: no Accessibility, no Input Monitoring, no Screen Recording. macOS never asks.</li>
           <li>works on your Mac with Apple's own ImageIO, PDFKit and WebKit</li>
           <li>never changes your original file</li>
-          <li>12.5 MB of memory at rest, 0.02 % CPU. It sleeps until you drag a file.</li>
           <li>reads the clipboard only when you press ⌃⌥V</li>
           <li class="no">uploads your files (it can't: there is no server)</li>
           <li class="no">checks for updates, unless you turn that on</li>
@@ -1018,7 +1007,6 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
   </section>
 
   <section class="wrap" id="changelog" aria-labelledby="logTitle">
-    <p class="eyebrow" data-tag="log">what's new</p>
     <h2 class="sec-title" id="logTitle">Changelog.</h2>
     <p class="sec-sub">What changed, and when.</p>
     <div class="win"><div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>changelog.txt</span><span></span></div><div class="win-body">
@@ -2338,7 +2326,10 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     near = e.isIntersecting;
     if (near && !started) {
       started = true;
-      if (phase === "scatter") { setTimeout(() => go("line"), 300); setTimeout(() => go("circle"), 2100); }
+      readScroll();
+      // Arriving part-way (a link, a jump, a fast scroll): no intro, straight to where the scroll is.
+      if (phase === "scatter" && (morphT > 0.02 || sec.getBoundingClientRect().top < -40)) go("circle");
+      else if (phase === "scatter") { setTimeout(() => go("line"), 300); setTimeout(() => go("circle"), 2100); }
     }
     if (near) { measure(); wake(); }
   }, { rootMargin: "100px 0px" }).observe(sec);
