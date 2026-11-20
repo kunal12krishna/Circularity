@@ -127,6 +127,30 @@ final class SlotProviderTests: XCTestCase {
         XCTAssertEqual(labels(md.ring), ["PDF", "HTML", "TXT", "—", "—", "—"])
         let docx = SlotProvider.menu(for: [UTType("org.openxmlformats.wordprocessingml.document")!], canWrite: everything)
         XCTAssertEqual(labels(docx.ring), ["PDF", "TXT", "HTML", "—", "—", "—"])
+        // Word's older and open formats: PDF, TXT and DOCX (as on Windows).
+        for id in ["com.microsoft.word.doc", "org.oasis-open.opendocument.text", "public.rtf"] {
+            XCTAssertEqual(labels(SlotProvider.menu(for: [UTType(id)!], canWrite: everything).ring), ["PDF", "TXT", "DOCX", "—", "—", "—"], id)
+        }
+    }
+
+    func testSpreadsheetAndPresentationMenus() {
+        // Excel (XLSX / XLS / ODS / CSV) and PowerPoint (PPTX / PPT / ODP) → PDF. CSV is plain text too, but gets this wheel.
+        for (id, hint) in [("org.openxmlformats.spreadsheetml.sheet", "every sheet, fitted to the page"),
+                           ("com.microsoft.excel.xls", "every sheet, fitted to the page"),
+                           ("org.oasis-open.opendocument.spreadsheet", "every sheet, fitted to the page"),
+                           ("public.comma-separated-values-text", "every sheet, fitted to the page"),
+                           ("org.openxmlformats.presentationml.presentation", "one page per slide"),
+                           ("com.microsoft.powerpoint.ppt", "one page per slide"),
+                           ("org.oasis-open.opendocument.presentation", "one page per slide")] {
+            let menu = SlotProvider.menu(for: [UTType(id)!], canWrite: everything)
+            XCTAssertEqual(labels(menu.ring), ["PDF", "—", "—", "—", "—", "—"], id)
+            XCTAssertEqual(menu.ring[0]?.action, .convert(.pdf), id)
+            XCTAssertEqual(menu.ring[0]?.hint, hint, id)
+        }
+        // A workbook and a deck together aren't one kind: nothing to offer.
+        let mixed = SlotProvider.menu(for: [UTType("org.openxmlformats.spreadsheetml.sheet")!,
+                                            UTType("org.openxmlformats.presentationml.presentation")!], canWrite: everything)
+        XCTAssertTrue(mixed.isEmpty)
     }
 
     func testVideoShowsTheFriendlyNotice() {

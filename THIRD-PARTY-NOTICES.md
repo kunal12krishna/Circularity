@@ -5,8 +5,8 @@
 None. Circularity is written from scratch in Swift and uses only frameworks
 that come with macOS (AppKit, SwiftUI, Core Animation, ImageIO, PDFKit,
 Quartz, WebKit, UniformTypeIdentifiers, ServiceManagement,
-UserNotifications, Charts, WidgetKit) and the `textutil` tool that ships
-with macOS. The sounds are macOS system sounds, played by name.
+UserNotifications, Charts, WidgetKit) and the `textutil`,
+`qlmanage` (Quick Look's Office engine) and `ditto` tools that ship with macOS. The sounds are macOS system sounds, played by name.
 
 ## Inspiration (no code or assets copied)
 

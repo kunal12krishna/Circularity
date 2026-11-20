@@ -165,6 +165,9 @@ struct AboutPage: View {
                 toolLine("PDFs", "PDFKit and Quartz")
                 toolLine("Documents", FileManager.default.isExecutableFile(atPath: "/usr/bin/textutil")
                          ? "WebKit for PDF, textutil for Word, RTF and HTML" : "WebKit for PDF (textutil missing: Word and RTF are off)")
+                toolLine("Spreadsheets and slides", FileManager.default.isExecutableFile(atPath: "/usr/bin/qlmanage")
+                         ? "macOS's Office engine for Excel and PowerPoint; ODS, ODP and CSV read directly"
+                         : "ODS, ODP and CSV (Quick Look missing: Excel and PowerPoint are off)")
                 toolLine("Video and audio", "coming in the next update")
             }
             SettingsCard(title: "Thanks") {

@@ -328,6 +328,79 @@ func runAll() async {
               "DOCX → TXT")
     }
 
+    // 9b. Spreadsheets and presentations → PDF (fixtures in Tests/Fixtures/office, copied here first)
+    let officeFixtures = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        .deletingLastPathComponent().appendingPathComponent("Tests/Fixtures/office")
+    func office(_ name: String) -> URL? {
+        let source = officeFixtures.appendingPathComponent(name), copy = root.appendingPathComponent(name)
+        guard fm.fileExists(atPath: source.path) else { return nil }
+        try? fm.copyItem(at: source, to: copy)
+        return copy
+    }
+    func pdfText(_ url: URL?) -> String { url.flatMap { PDFDocument(url: $0)?.string } ?? "" }
+    func pageSize(_ url: URL?) -> CGSize { url.flatMap { PDFDocument(url: $0)?.page(at: 0)?.bounds(for: .mediaBox).size } ?? .zero }
+    func pages(_ url: URL?) -> Int { url.flatMap { PDFDocument(url: $0)?.pageCount } ?? 0 }
+    // SMOKE_KEEP=<folder> keeps these PDFs to look at.
+    func keep(_ url: URL?) {
+        guard let url, let dir = ProcessInfo.processInfo.environment["SMOKE_KEEP"] else { return }
+        try? fm.createDirectory(atPath: dir, withIntermediateDirectories: true)
+        try? fm.copyItem(at: url, to: URL(fileURLWithPath: dir).appendingPathComponent(url.lastPathComponent))
+    }
+    if let csv = office("sample.csv") {
+        let pdf = output(await run([csv], .convert(.pdf)))
+        keep(pdf)
+        let text = pdfText(pdf)
+        check(text.contains("Pune, MH") && text.contains("Ravi \"R\" Kumar") && pageSize(pdf).width > pageSize(pdf).height,
+              "CSV → PDF: quoted commas and quotes survive, landscape page")
+    } else { check(false, "office fixtures found at \(officeFixtures.path)") }
+    if let xlsx = office("sample.xlsx") {
+        let pdf = output(await run([xlsx], .convert(.pdf)))
+        keep(pdf)
+        let text = pdfText(pdf)
+        check(text.contains("Subject 20") && text.contains("Student 60") && text.contains("Totals") && text.contains("Total students"),
+              "XLSX → PDF: every column and row of a wide sheet, and the second sheet under its name (\(pages(pdf)) pages)")
+    }
+    if let ods = office("sample.ods") {
+        let pdf = output(await run([ods], .convert(.pdf)))
+        keep(pdf)
+        let text = pdfText(pdf)
+        check(text.contains("Apples") && text.contains("Fresh every Monday") && pages(pdf) <= 3,
+              "ODS → PDF: both sheets, a million repeated empty rows trimmed (\(pages(pdf)) pages)")
+    }
+    if let pptx = office("sample.pptx") {
+        let pdf = output(await run([pptx], .convert(.pdf)))
+        keep(pdf)
+        let size = pageSize(pdf), text = pdfText(pdf)
+        check(pages(pdf) == 3 && abs(size.width / max(size.height, 1) - 16.0 / 9) < 0.02,
+              "PPTX → PDF: one 16:9 page per slide (\(pages(pdf)) pages, \(Int(size.width))×\(Int(size.height)))")
+        check(text.contains("Bullet points") && text.contains("Pink shape") && text.contains("R2C2"), "PPTX → PDF keeps titles, shapes and tables")
+        let first = pdf.flatMap { PDFDocument(url: $0)?.page(at: 0)?.string } ?? ""
+        check(first.contains("Circularity deck") && !first.contains("Pink shape"), "PPTX → PDF: each page holds only its own slide")
+    }
+    if let odp = office("sample.odp") {
+        let pdf = output(await run([odp], .convert(.pdf)))
+        keep(pdf)
+        let size = pageSize(pdf), text = pdfText(pdf)
+        check(pages(pdf) == 2 && abs(size.width / max(size.height, 1) - 28 / 15.75) < 0.02,
+              "ODP → PDF: one page per slide at the slide's size (\(pages(pdf)) pages, \(Int(size.width))×\(Int(size.height)))")
+        check(text.contains("Hello from ODP") && text.contains("Second point") && !text.contains("SECRET SPEAKER NOTES"),
+              "ODP → PDF keeps titles and bullets, leaves speaker notes out")
+    }
+    // SMOKE_OFFICE_EXTRA=<folder>: also converts every file there to PDF (real decks and workbooks; kept with SMOKE_KEEP).
+    if let extra = ProcessInfo.processInfo.environment["SMOKE_OFFICE_EXTRA"],
+       let names = try? fm.contentsOfDirectory(atPath: extra) {
+        for name in names.sorted() where !name.hasPrefix(".") {
+            let copy = root.appendingPathComponent(name)
+            try? fm.copyItem(at: URL(fileURLWithPath: extra).appendingPathComponent(name), to: copy)
+            let started = Date()
+            let result = await run([copy], .convert(.pdf))
+            let pdf = output(result)
+            keep(pdf)
+            if case let .failure(error) = result { print("EXTRA \(name): \(error.localizedDescription)") }
+            print("EXTRA \(name) → \(pages(pdf)) pages, \(Int(pageSize(pdf).width))×\(Int(pageSize(pdf).height)), \(String(format: "%.1f", Date().timeIntervalSince(started))) s")
+        }
+    }
+
     // 10. Size estimates
     let photoLike = root.appendingPathComponent("photo-like.png")
     writeImage(photoLikeImage(3000, 2000), .png, to: photoLike)

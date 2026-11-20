@@ -8,6 +8,8 @@ nonisolated enum FileKind: Sendable, Hashable {
 
 nonisolated enum DocumentFlavor: Sendable, Hashable {
     case markdown, html, plainText, rich(OutputFormat?) // rich: rtf/doc/docx/odt (docx → .docx)
+    case spreadsheet  // XLSX / XLS / ODS / CSV
+    case presentation // PPTX / PPT / ODP
 }
 
 /// What a wheel button does. Milestone (d) maps these onto engine jobs.
@@ -90,6 +92,9 @@ nonisolated enum SlotProvider {
         if let docx = UTType("org.openxmlformats.wordprocessingml.document"), type.conforms(to: docx) {
             return .document(.rich(.docx))
         }
+        // Before plain text: CSV is plain text too.
+        if OfficeBackend.spreadsheetSource(of: type) != nil { return .document(.spreadsheet) }
+        if OfficeBackend.presentationSource(of: type) != nil { return .document(.presentation) }
         if type.conforms(to: .plainText) { return .document(.plainText) }
         return .other
     }
@@ -236,8 +241,19 @@ nonisolated enum SlotProvider {
         case .html: [.pdf, .txt, .docx]
         case .plainText: [.pdf, .docx, .html]
         case let .rich(own): [.pdf, .txt, .docx, .html].filter { $0 != own }
+        case .spreadsheet, .presentation: [.pdf]
         }
-        var ring: [WheelSlot?] = outputs.prefix(3).map { formatSlot($0, count: count) }
+        var ring: [WheelSlot?] = outputs.prefix(3).map { slot -> WheelSlot in
+            var s = formatSlot(slot, count: count)
+            if slot == .pdf {
+                s.hint = switch flavor {
+                case .spreadsheet: "every sheet, fitted to the page"
+                case .presentation: "one page per slide"
+                default: count > 1 ? "one PDF each" : "every page, as a PDF"
+                }
+            }
+            return s
+        }
         while ring.count < 6 { ring.append(nil) }
         return WheelMenu(ring: ring, fan: [], notice: nil)
     }
