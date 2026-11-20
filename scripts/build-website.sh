@@ -30,6 +30,10 @@ if [ -z "$URL" ] && REMOTE=$(git remote get-url origin 2>/dev/null); then
     SLUG=$(printf '%s' "$REMOTE" | sed -E 's#^(git@github\.com:|https://github\.com/)##; s#\.git$##')
     case "$REMOTE" in *github.com*) URL="https://github.com/$SLUG/releases/latest/download/Circularity.dmg" ;; esac
 fi
+# Old links to /Circularity.dmg on the site follow the download (Cloudflare Pages reads _redirects).
+rm -f website/public/_redirects
+case "$URL" in https://*) printf '/Circularity.dmg %s 302\n' "$URL" > website/public/_redirects ;; esac
+find website/public -name .DS_Store -delete
 
 SIZE=""
 [ -f dist/Circularity.dmg ] && SIZE=$(stat -f %z dist/Circularity.dmg 2>/dev/null || stat -c %s dist/Circularity.dmg)
