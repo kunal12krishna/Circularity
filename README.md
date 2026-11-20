@@ -99,11 +99,12 @@ whenever you want it.
      - **Excel:** XLSX / XLS / ODS / CSV → PDF (every sheet, on landscape pages fitted to the width,
        each under its name; long sheets keep every row)
      - **PowerPoint:** PPTX / PPT / ODP → PDF (one page per slide, at the slide's own size)
-     - **Compress** (DOCX, XLSX, PPTX, ODT, ODS, ODP): like Office's own "Compress Pictures". The
-       pictures inside are made smaller (Light, Balanced or Strong) and the file is zipped again at
-       the strongest setting: `deck.pptx` → `deck (compressed).pptx`. Text, layout and the format
-       stay as they are, and if it can't get smaller the original is kept. The older DOC, XLS and
-       PPT, and RTF and CSV, get PDF only.
+     - **Compress** (DOCX, XLSX, PPTX, ODT, ODS, ODP): like Office's own "Compress Pictures". Each
+       picture inside is resampled for the size it's shown at (Light 220 ppi, Balanced 150, Strong
+       96), kept in its own format, and the file is zipped again at the strongest setting:
+       `deck.pptx` → `deck (compressed).pptx`. Text, layout and the format stay as they are. If it
+       can't get smaller, the original is kept and a message by the pointer says so. The older DOC,
+       XLS and PPT, and RTF and CSV, get PDF only.
 
      Word files go through macOS's `textutil`; Excel and PowerPoint files are laid out by macOS's own
      Office engine, the one Quick Look previews them with; OpenDocument and CSV files are read

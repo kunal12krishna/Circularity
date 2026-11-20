@@ -281,6 +281,18 @@ enum DragTest {
         HotkeyCenter.shared.unregister(id: 91)
 
         // The Settings window and the welcome open for real, on every page.
+        // A job that writes nothing still answers by the pointer (the shelf in message mode).
+        let shelf = DropShelf()
+        shelf.showMessage("Kept the original", "Its pictures are already small.", original: TutorialModel.freshPractice(),
+                          accent: .systemPink)
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        check(shelf.isShowing, "a kept-original result shows a message by the pointer")
+        if let dir = ProcessInfo.processInfo.environment["CIRCULARITY_SHELF_PNG"], let rep = shelf.snapshot(),
+           let png = rep.representation(using: .png, properties: [:]) {
+            try? png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("shelf-message.png"))
+        }
+        shelf.hide()
+
         let presenter = WindowPresenter()
         let settingsModel = SettingsModel(store: settings)
         presenter.show("settings", title: "Settings", size: CGSize(width: 880, height: 680)) { SettingsView(model: settingsModel) }

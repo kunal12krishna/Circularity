@@ -83,11 +83,22 @@ final class AppCoordinator: PanelHost {
         jobs.completed.receive(on: RunLoop.main).sink { [weak self] event in
             guard let self else { return }
             Notifier.shared.jobFinished(title: event.title, result: event.result, settings: settings)
-            if case let .success(r) = event.result {
+            let accent = Appearance.accentNS(settings)
+            switch event.result {
+            case let .success(r):
                 tutorial?.jobFinished(r)
                 if event.interactive, !r.outputs.isEmpty, settings.value(SettingsKeys.afterShelf) {
-                    shelf.show(r.outputs, accent: Appearance.accentNS(settings))
+                    shelf.show(r.outputs, accent: accent)
+                } else if event.interactive, r.outputs.isEmpty, let note = r.notes.first {
+                    // Nothing written (already small, say): say so where the user is looking.
+                    let detail = note.hasPrefix("Kept the original: ") ? String(note.dropFirst("Kept the original: ".count)) : note
+                    shelf.showMessage("Kept the original", detail.prefix(1).uppercased() + detail.dropFirst(),
+                                      original: r.outcomes.first?.inputs.first, accent: accent)
                 }
+            case let .failure(error) where !(error is CancellationError):
+                if event.interactive { shelf.showMessage("Couldn't do that", error.localizedDescription, original: nil, accent: accent) }
+            default:
+                break
             }
         }.store(in: &bag)
         jobs.milestones.receive(on: RunLoop.main).sink { [weak self] ids in

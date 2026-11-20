@@ -459,6 +459,19 @@ func runAll() async {
         if let out {
             check(Set(zipEntries(out)) == Set(zipEntries(big)) && (kind == "PPTX" || zipEntries(out).first == "mimetype"),
                   "Compress \(kind): exactly the same parts\(kind == "ODP" ? ", mimetype first" : "")")
+            if kind == "PPTX" {
+                // The photo is shown 5 in wide: Balanced (150 ppi) keeps about 750 px, not the 1920 px cap.
+                let unpacked = root.appendingPathComponent("unpacked-\(name)", isDirectory: true)
+                sh("/usr/bin/ditto", ["-x", "-k", out.path, unpacked.path])
+                let media = (try? fm.contentsOfDirectory(at: unpacked.appendingPathComponent(media), includingPropertiesForKeys: nil)) ?? []
+                let widths = media.compactMap { url -> Int? in
+                    guard let src = CGImageSourceCreateWithURL(url as CFURL, nil),
+                          let props = CGImageSourceCopyPropertiesAtIndex(src, 0, nil) as? [CFString: Any] else { return nil }
+                    return props[kCGImagePropertyPixelWidth] as? Int
+                }
+                check(!widths.isEmpty && widths.allSatisfy { $0 >= 700 && $0 <= 800 },
+                      "Compress PPTX resamples a picture to the size it's shown at, 150 ppi (\(widths) px wide)")
+            }
             let pdf = output(await run([out], .convert(.pdf)))
             check(pages(pdf) == expected, "Compress \(kind): the compressed file still opens and converts (\(pages(pdf)) pages)")
             let again = try? await run([out], .compressOffice(.balanced)).get()

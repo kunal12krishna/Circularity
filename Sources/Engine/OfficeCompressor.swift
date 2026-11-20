@@ -4,7 +4,8 @@ import UniformTypeIdentifiers
 
 /// Compress for Office files (DOCX, XLSX, PPTX and OpenDocument ODT, ODS,
 /// ODP): like Office's own "Compress Pictures". These files are zip packages;
-/// the pictures inside are shrunk to the level's size and re-saved in their
+/// each picture inside is resampled to the level's resolution for the size
+/// it's shown at (PictureSizes), and re-saved in their
 /// own format under their own names (so every reference to them still
 /// works), and everything is zipped again at the strongest setting. Text,
 /// layout, fonts, video and the file's format are untouched. The result is
@@ -19,13 +20,24 @@ public enum OfficeCompressor {
         type.tags[.filenameExtension]?.contains { extensions.contains($0.lowercased()) } ?? false
     }
 
-    /// Longest side and JPEG quality per level.
-    static func limits(_ level: PDFCompression) -> (maxPixel: Int, quality: Double) {
+    /// Per level: the resolution pictures are resampled to for the size
+    /// they're shown at (as Office's Compress Pictures does), the longest
+    /// side any picture may keep, and the JPEG quality.
+    static func limits(_ level: PDFCompression) -> (ppi: Double, maxPixel: Int, quality: Double) {
         switch level {
-        case .light: (2560, 0.85)
-        case .balanced: (1920, 0.75)
-        case .strong: (1280, 0.6)
+        case .light: (220, 2560, 0.85)
+        case .balanced: (150, 1920, 0.75)
+        case .strong: (96, 1280, 0.6)
         }
+    }
+
+    /// The longest side a picture needs: enough for `ppi` at the largest size it's
+    /// shown (both directions), never more than `maxPixel`, never under 64 px.
+    static func neededLongSide(pixels: (Int, Int), shown: PictureSizes.Shown??, ppi: Double, maxPixel: Int) -> Int {
+        guard case let .some(.some(shown)) = shown, pixels.0 > 0, pixels.1 > 0 else { return maxPixel }
+        let scale = max(shown.width * ppi / Double(pixels.0), shown.height * ppi / Double(pixels.1))
+        let long = Double(max(pixels.0, pixels.1)) * min(1, scale)
+        return max(64, min(maxPixel, Int(long.rounded(.up))))
     }
 
     public enum Verdict: Equatable { case smaller, notSmaller }
@@ -37,7 +49,8 @@ public enum OfficeCompressor {
                                                   ? "content.xml" : "[Content_Types].xml")
         let fm = FileManager.default
         let before = try listing(input)
-        let (maxPixel, quality) = limits(level)
+        let (ppi, maxPixel, quality) = limits(level)
+        let shownSizes = PictureSizes.read(dir)
 
         // The pictures: Word, Excel and PowerPoint keep them in */media, OpenDocument in Pictures.
         let pictures = (fm.enumerator(at: dir, includingPropertiesForKeys: nil)?.compactMap { $0 as? URL } ?? []).filter { url in
@@ -47,7 +60,9 @@ public enum OfficeCompressor {
         }
         for (i, picture) in pictures.enumerated() {
             try Task.checkCancellation()
-            shrink(picture, maxPixel: maxPixel, quality: quality)
+            let pixels = pixelSize(picture)
+            let need = neededLongSide(pixels: pixels, shown: shownSizes[picture.standardizedFileURL.path], ppi: ppi, maxPixel: maxPixel)
+            shrink(picture, maxPixel: need, quality: quality)
             progress(0.1 + 0.7 * Double(i + 1) / Double(max(pictures.count, 1)))
         }
 
@@ -100,6 +115,12 @@ public enum OfficeCompressor {
         CGImageDestinationAddImage(dest, image, options as CFDictionary)
         guard CGImageDestinationFinalize(dest), data.length > 0, data.length < size(url) * 95 / 100 else { return }
         try? (data as Data).write(to: url, options: .atomic)
+    }
+
+    static func pixelSize(_ url: URL) -> (Int, Int) {
+        guard let source = CGImageSourceCreateWithURL(url as CFURL, nil),
+              let props = CGImageSourceCopyPropertiesAtIndex(source, 0, nil) as? [CFString: Any] else { return (0, 0) }
+        return ((props[kCGImagePropertyPixelWidth] as? Int) ?? 0, (props[kCGImagePropertyPixelHeight] as? Int) ?? 0)
     }
 
     /// The package's part names (zipinfo -1), sorted.

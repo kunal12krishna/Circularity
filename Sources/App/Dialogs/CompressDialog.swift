@@ -133,9 +133,9 @@ struct CompressDialog: View {
 
     static func describeOffice(_ level: PDFCompression) -> String {
         switch level {
-        case .light: "pictures up to 2560 px, barely visible"
-        case .balanced: "up to 1920 px, good for sharing"
-        case .strong: "up to 1280 px, smallest"
+        case .light: "pictures at 220 ppi, for print"
+        case .balanced: "150 ppi, good for sharing"
+        case .strong: "96 ppi, smallest, for screens"
         }
     }
 

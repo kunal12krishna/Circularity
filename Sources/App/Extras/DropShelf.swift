@@ -14,9 +14,19 @@ final class DropShelf {
     func show(_ urls: [URL], accent: NSColor) {
         let files = urls.filter { FileManager.default.fileExists(atPath: $0.path) }
         guard !files.isEmpty else { return }
+        present { $0.configure(files, accent: accent) }
+    }
+
+    /// A job that wrote nothing still answers by the pointer: why the original
+    /// was kept, or what went wrong. Show reveals the original.
+    func showMessage(_ title: String, _ detail: String, original: URL?, accent: NSColor) {
+        present { $0.configureMessage(title, detail, original: original, accent: accent) }
+    }
+
+    private func present(_ configure: (ShelfView) -> Void) {
         let panel = self.panel ?? makePanel()
         generation += 1
-        view?.configure(files, accent: accent)
+        if let view { configure(view) }
         view?.resetPointerState() // the pointer may have left while it was hidden
         let size = CGSize(width: 252, height: 108)
         let mouse = NSEvent.mouseLocation
@@ -33,6 +43,14 @@ final class DropShelf {
         }
         NSAccessibility.post(element: view as Any, notification: .layoutChanged)
         scheduleHide()
+    }
+
+    /// For --drag-test: whether it's on screen, and a picture of it.
+    var isShowing: Bool { panel?.isVisible ?? false }
+    func snapshot() -> NSBitmapImageRep? {
+        guard let view, let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return nil }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        return rep
     }
 
     func hide() {
@@ -88,6 +106,8 @@ private final class ShelfView: NSView, NSDraggingSource {
     private(set) var isHovered = false
     private(set) var isDragging = false
     private var files: [URL] = []
+    /// Message mode: the original, for Show (nothing to drag or copy).
+    private var original: URL?
     private var accent = NSColor.systemGreen
     private let stack = CALayer()
     private let title = NSTextField(labelWithString: "")
@@ -142,9 +162,44 @@ private final class ShelfView: NSView, NSDraggingSource {
         downPoint = nil
     }
 
+    func configureMessage(_ heading: String, _ detail: String, original: URL?, accent: NSColor) {
+        files = []
+        self.original = original
+        self.accent = accent
+        layer?.borderColor = accent.withAlphaComponent(0.55).cgColor
+        title.stringValue = heading
+        subtitle.stringValue = detail
+        subtitle.maximumNumberOfLines = 3
+        subtitle.lineBreakMode = .byWordWrapping
+        subtitle.frame = CGRect(x: 92, y: 40, width: 150, height: 30)
+        copyButton.isHidden = true
+        revealButton.isHidden = original == nil
+        revealButton.frame = CGRect(x: 92, y: 10, width: 58, height: 26)
+        setAccessibilityLabel("\(heading). \(detail)")
+        stack.sublayers?.forEach { $0.removeFromSuperlayer() }
+        stack.frame = CGRect(x: 12, y: 14, width: 72, height: 80)
+        if let original {
+            let card = CALayer()
+            card.frame = CGRect(x: 4, y: 6, width: 60, height: 60)
+            card.cornerRadius = 10
+            card.masksToBounds = true
+            card.contentsGravity = .resizeAspect
+            card.contentsScale = window?.backingScaleFactor ?? 2
+            card.contents = Self.thumbnail(original)
+            stack.addSublayer(card)
+        }
+    }
+
     func configure(_ files: [URL], accent: NSColor) {
         self.files = files
+        original = nil
         self.accent = accent
+        subtitle.maximumNumberOfLines = 1
+        subtitle.lineBreakMode = .byTruncatingMiddle
+        subtitle.frame = CGRect(x: 92, y: 52, width: 150, height: 16)
+        copyButton.isHidden = false
+        revealButton.isHidden = false
+        revealButton.frame = CGRect(x: 156, y: 14, width: 58, height: 26)
         layer?.borderColor = accent.withAlphaComponent(0.55).cgColor
         title.stringValue = files.count == 1 ? files[0].lastPathComponent : "\(files.count) files"
         let bytes = files.reduce(Int64(0)) { $0 + Int64((try? $1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
@@ -179,7 +234,7 @@ private final class ShelfView: NSView, NSDraggingSource {
     // Dragging out
     override func mouseDown(with event: NSEvent) { downPoint = convert(event.locationInWindow, from: nil) }
     override func mouseDragged(with event: NSEvent) {
-        guard let start = downPoint, !isDragging else { return }
+        guard let start = downPoint, !isDragging, !files.isEmpty else { return }
         let p = convert(event.locationInWindow, from: nil)
         guard hypot(p.x - start.x, p.y - start.y) > 4 else { return }
         isDragging = true
@@ -221,7 +276,7 @@ private final class ShelfView: NSView, NSDraggingSource {
     }
 
     @objc private func reveal() {
-        NSWorkspace.shared.activateFileViewerSelecting(files)
+        NSWorkspace.shared.activateFileViewerSelecting(files.isEmpty ? original.map { [$0] } ?? [] : files)
         onDone?()
     }
 
