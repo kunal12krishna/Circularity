@@ -45,12 +45,21 @@ public enum OfficeBackend {
     struct Sheet { var name: String?; var html: String; var base: URL }
 
     static func spreadsheetPDF(_ input: URL, source: Source, workDir: URL, output: URL) async throws {
-        let sheets: [Sheet] = switch source {
-        case .csv: [Sheet(name: nil, html: Table.page(CSV.rows(try DocumentBackend.read(input))), base: input.deletingLastPathComponent())]
-        case .openDocument: try await OpenDocument.sheets(input, workDir: workDir)
-        case .quickLook: try quickLookSheets(try await QuickLookExport.render(input, workDir: workDir))
+        var sheets: [Sheet]
+        switch source {
+        case .csv:
+            let rows = CSV.rows(try DocumentBackend.read(input))
+            guard rows.contains(where: { $0.contains { !$0.isEmpty } }) else { throw JobError.unsupported("\(input.lastPathComponent): it's empty") }
+            sheets = [Sheet(name: nil, html: Table.page(rows), base: input.deletingLastPathComponent())]
+        case .openDocument:
+            sheets = try await OpenDocument.sheets(input, workDir: workDir)
+        case .quickLook:
+            sheets = try quickLookSheets(try await QuickLookExport.render(input, workDir: workDir))
+            if ["xlsx", "xlsm"].contains(input.pathExtension.lowercased()) {
+                sheets = try await withEveryRow(sheets, input, workDir: workDir)
+            }
         }
-        guard !sheets.isEmpty else { throw JobError.unreadable(input.lastPathComponent) }
+        guard !sheets.isEmpty else { throw JobError.unsupported("\(input.lastPathComponent): it has no cells with anything in them") }
         // Landscape A4 / Letter: spreadsheets are wide.
         let paper = PaperSize.regional.size
         var parts: [URL] = []
@@ -65,15 +74,42 @@ public enum OfficeBackend {
         try merge(parts, into: output)
     }
 
+    /// Quick Look shows at most 4,096 rows of a sheet. Any sheet the workbook
+    /// itself has more rows of is printed from XLSXReader instead (plainer,
+    /// but complete); the rest keep Quick Look's formatting.
+    static func withEveryRow(_ sheets: [Sheet], _ input: URL, workDir: URL) async throws -> [Sheet] {
+        guard let dir = try? await OpenDocument.unzip(input, workDir: workDir, requiring: "xl/workbook.xml"),
+              let full = try? XLSXReader.sheets(in: dir), !full.isEmpty else { return sheets }
+        var out = sheets
+        for (i, sheet) in full.enumerated() {
+            let index = out.firstIndex { $0.name == sheet.name } ?? (out.count == full.count ? i : nil)
+            guard let index else { continue }
+            let shown = out[index].html.components(separatedBy: "<tr").count - 1
+            if sheet.rows.count > shown, sheet.rows.count >= XLSXReader.quickLookRowLimit - 1 {
+                out[index] = Sheet(name: sheet.name, html: Table.page(sheet.rows, header: false), base: dir)
+            }
+        }
+        return out
+    }
+
+    /// Quick Look fixes each column at its on-screen width and hides what
+    /// doesn't fit ("2026-11-2…"). On paper the columns grow to fit their
+    /// text instead; the page is then shrunk to fit the width.
+    static func unclipped(_ html: String) -> String {
+        let css = "<style>table, table.worksheet { table-layout: auto !important; } td, th { overflow: visible !important; text-overflow: clip !important; }</style>"
+        if let head = html.range(of: "</head>", options: .caseInsensitive) { return html.replacingCharacters(in: head, with: css + "</head>") }
+        return css + html
+    }
+
     /// Quick Look's workbook preview: sheet tabs, each linking to its own page; a single sheet is the preview itself.
     static func quickLookSheets(_ folder: URL) throws -> [Sheet] {
         let preview = try DocumentBackend.read(folder.appendingPathComponent("Preview.html"))
         let tabs = matches(#"<div class="TabHeader">(.*?)</div>\s*<a href="([^"]+)""#, in: preview)
-        guard !tabs.isEmpty else { return [Sheet(name: nil, html: preview, base: folder)] }
+        guard !tabs.isEmpty else { return [Sheet(name: nil, html: unclipped(withFontFallbacks(preview)), base: folder)] }
         return try tabs.map { tab in
             let page = folder.appendingPathComponent(tab[1].removingPercentEncoding ?? tab[1])
             guard page.deletingLastPathComponent().standardizedFileURL == folder.standardizedFileURL else { throw JobError.unreadable(tab[1]) }
-            return Sheet(name: Table.unescape(tab[0]), html: try DocumentBackend.read(page), base: folder)
+            return Sheet(name: Table.unescape(tab[0]), html: unclipped(withFontFallbacks(try DocumentBackend.read(page))), base: folder)
         }
     }
 
@@ -84,7 +120,12 @@ public enum OfficeBackend {
         switch source {
         case .quickLook:
             base = try await QuickLookExport.render(input, workDir: workDir)
-            html = dropLeakedImages(try DocumentBackend.read(base.appendingPathComponent("Preview.html")))
+            var deck: PPTXGeometry.Deck?
+            if input.pathExtension.lowercased() == "pptx",
+               let dir = try? await OpenDocument.unzip(input, workDir: workDir, requiring: "ppt/presentation.xml") {
+                deck = PPTXGeometry.read(dir)
+            }
+            html = withFontFallbacks(dropLeakedImages(try DocumentBackend.read(base.appendingPathComponent("Preview.html")), deck: deck))
         case .openDocument:
             (html, base) = try await OpenDocument.slides(input, workDir: workDir)
         case .csv:
@@ -111,24 +152,68 @@ public enum OfficeBackend {
         try merge(parts, into: output)
     }
 
-    /// macOS's Office engine sometimes writes a slide's drawn shapes into later
-    /// slides too (seen on macOS 27: slide 5 also showing slide 3's boxes,
-    /// over its own text). It gives each drawn shape its own picture file,
-    /// even identical shapes on different slides, so the very same picture at
-    /// the very same spot as on an earlier slide is one of those leaks: it's left out.
-    static func dropLeakedImages(_ html: String) -> String {
+    /// macOS's Office engine sometimes writes one slide's drawn shapes into
+    /// later slides too (seen on macOS 27: slide 5 also showing slide 3's
+    /// boxes, over its own text): the very same picture tag as on an earlier
+    /// slide. Pictures really are shared too (a background on every slide),
+    /// so a repeated picture is only dropped when the deck's own geometry
+    /// has nothing there: no shape on that slide, its layout or its master
+    /// sits at that spot, and it isn't a full-slide background. Without the
+    /// geometry (PPT, or a deck it can't read) nothing is dropped.
+    static func dropLeakedImages(_ html: String, deck: PPTXGeometry.Deck?) -> String {
         let slides = html.components(separatedBy: "<div class=\"slide\"")
-        guard slides.count > 2 else { return html }
+        guard let deck, slides.count - 1 == deck.slides.count, deck.size.width > 0 else { return html }
+        let size = slideSize(html), scale = size.width / deck.size.width
         var seen = Set<String>(), out = slides[0]
-        for slide in slides.dropFirst() {
+        for (k, slide) in slides.dropFirst().enumerated() {
+            let frames = deck.slides[k].map { CGRect(x: $0.minX * scale, y: $0.minY * scale, width: $0.width * scale, height: $0.height * scale) }
             var mine = Set<String>(), kept = slide
             for m in matches(#"(<img src="[^"]+"[^>]*>)"#, in: slide) {
-                if seen.contains(m[0]) { kept = kept.replacingOccurrences(of: m[0], with: "") } else { mine.insert(m[0]) }
+                let tag = m[0]
+                defer { mine.insert(tag) }
+                guard seen.contains(tag), let rect = imageRect(tag) else { continue }
+                if rect.width * rect.height >= 0.8 * size.width * size.height { continue } // a background
+                let placed = frames.contains { f in
+                    abs(rect.midX - f.midX) <= 8 && abs(rect.midY - f.midY) <= 8
+                        && rect.width >= f.width - 6 && rect.width <= f.width + 90
+                        && rect.height >= f.height - 6 && rect.height <= f.height + 90
+                }
+                if !placed { kept = kept.replacingOccurrences(of: tag, with: "") }
             }
             seen.formUnion(mine)
             out += "<div class=\"slide\"" + kept
         }
         return out
+    }
+
+    /// `top:95; left:23; width:461; height:212;` from a Quick Look picture tag.
+    static func imageRect(_ tag: String) -> CGRect? {
+        func value(_ key: String) -> CGFloat? {
+            matches(key + #":\s*(-?[0-9.]+)"#, in: tag).first.flatMap { Double($0[0]) }.map { CGFloat($0) }
+        }
+        guard let top = value("top"), let left = value("left"), let w = value("width"), let h = value("height") else { return nil }
+        return CGRect(x: left, y: top, width: w, height: h)
+    }
+
+    /// Fonts the file names but this Mac lacks (Saira, Inter, Roboto…) would
+    /// fall back to Times: each gets a Mac fallback after it, a serif one for
+    /// serif-looking names, Helvetica Neue for the rest.
+    static func withFontFallbacks(_ html: String) -> String {
+        let serif = ["serif", "cambria", "georgia", "times", "garamond", "playfair", "merriweather", "lora", "baskerville",
+                     "didot", "bodoni", "palatino", "book antiqua", "constantia", "caslon", "minion", "crimson", "spectral"]
+        var out = "", rest = html[...]
+        while let range = rest.range(of: #"font-family:\s*"([^"]+)""#, options: .regularExpression) {
+            out += rest[..<range.lowerBound]
+            let declaration = String(rest[range])
+            let name = declaration.split(separator: "\"").dropFirst().first.map(String.init)?.lowercased() ?? ""
+            let generic = ["monospace", "serif", "sans-serif", "cursive", "fantasy", "system-ui"].contains(name)
+            let fallback = name.contains("mono") || name.contains("courier") || name.contains("consol") ? "Menlo, monospace"
+                : serif.contains(where: name.contains) && !name.contains("sans") ? "Georgia, \"Times New Roman\", serif"
+                : "\"Helvetica Neue\", Helvetica, Arial, sans-serif"
+            out += generic ? declaration : declaration + ", " + fallback
+            rest = rest[range.upperBound...]
+        }
+        return out + rest
     }
 
     /// The slide size Quick Look (and OpenDocument.slides) writes: `div.slide, div.loading-slide { width: 960; height: 540;}`.
@@ -200,7 +285,7 @@ enum QuickLookExport {
         try await Tool.run("/usr/bin/qlmanage", ["-p", "-o", out.path, copy.path], timeout: 180)
         let folder = out.appendingPathComponent(copy.lastPathComponent + ".qlpreview", isDirectory: true)
         guard FileManager.default.fileExists(atPath: folder.appendingPathComponent("Preview.html").path) else {
-            throw JobError.unsupported("\(input.lastPathComponent): macOS couldn't open it (is it password-protected?)")
+            throw JobError.unsupported("\(input.lastPathComponent): macOS couldn't open it (it may be damaged or password-protected)")
         }
         return folder
     }

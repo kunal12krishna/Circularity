@@ -360,6 +360,42 @@ func runAll() async {
         check(text.contains("Subject 20") && text.contains("Student 60") && text.contains("Totals") && text.contains("Total students"),
               "XLSX → PDF: every column and row of a wide sheet, and the second sheet under its name (\(pages(pdf)) pages)")
     }
+    // A sheet longer than Quick Look shows (4,096 rows): every row must reach the PDF, dates and percentages shown.
+    do {
+        let parts = root.appendingPathComponent("long-xlsx", isDirectory: true)
+        func put(_ path: String, _ text: String) {
+            let url = parts.appendingPathComponent(path)
+            try? fm.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try? text.write(to: url, atomically: true, encoding: .utf8)
+        }
+        let ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+        put("[Content_Types].xml", #"<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>"#)
+        put("_rels/.rels", #"<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>"#)
+        put("xl/workbook.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><workbook xmlns=\"\(ns)\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\"><sheets><sheet name=\"Ledger\" sheetId=\"1\" r:id=\"rId1\"/></sheets></workbook>")
+        put("xl/_rels/workbook.xml.rels", #"<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>"#)
+        put("xl/styles.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><styleSheet xmlns=\"\(ns)\"><cellXfs count=\"3\"><xf numFmtId=\"0\"/><xf numFmtId=\"14\"/><xf numFmtId=\"9\"/></cellXfs></styleSheet>")
+        var rows = "<row r=\"1\"><c r=\"A1\" t=\"inlineStr\"><is><t>Entry</t></is></c><c r=\"B1\" t=\"inlineStr\"><is><t>Date</t></is></c><c r=\"C1\" t=\"inlineStr\"><is><t>Share</t></is></c></row>"
+        for r in 2...5001 { rows += "<row r=\"\(r)\"><c r=\"A\(r)\" t=\"inlineStr\"><is><t>Row \(r - 1)</t></is></c><c r=\"B\(r)\" s=\"1\"><v>46346</v></c><c r=\"C\(r)\" s=\"2\"><v>0.25</v></c></row>" }
+        put("xl/worksheets/sheet1.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><worksheet xmlns=\"\(ns)\"><sheetData>\(rows)</sheetData></worksheet>")
+        let long = root.appendingPathComponent("long.xlsx")
+        let zip = Process(); zip.executableURL = URL(fileURLWithPath: "/usr/bin/ditto"); zip.arguments = ["-c", "-k", parts.path, long.path]
+        try? zip.run(); zip.waitUntilExit()
+        let pdf = output(await run([long], .convert(.pdf)))
+        keep(pdf)
+        let text = pdfText(pdf)
+        check(text.contains("Row 5000") && text.contains("Row 4500") && text.contains("2026-11-20") && text.contains("25%"),
+              "XLSX → PDF: a 5,000-row sheet keeps every row (Quick Look stops at 4,096), dates and percentages shown (\(pages(pdf)) pages)")
+    }
+    let emptyCSV = root.appendingPathComponent("empty.csv")
+    try? "".write(to: emptyCSV, atomically: true, encoding: .utf8)
+    if case let .failure(error) = await run([emptyCSV], .convert(.pdf)) {
+        check(error.localizedDescription.contains("empty"), "an empty CSV says it's empty (\(error.localizedDescription))")
+    } else { check(false, "an empty CSV says it's empty instead of making a blank PDF") }
+    let damaged = root.appendingPathComponent("damaged.pptx")
+    try? Data((0..<4000).map { UInt8(truncatingIfNeeded: $0 &* 2654435761) }).write(to: damaged)
+    if case let .failure(error) = await run([damaged], .convert(.pdf)) {
+        check(error.localizedDescription.contains("damaged"), "a damaged PPTX fails with a clear message (\(error.localizedDescription))")
+    } else { check(false, "a damaged PPTX fails with a clear message") }
     if let ods = office("sample.ods") {
         let pdf = output(await run([ods], .convert(.pdf)))
         keep(pdf)

@@ -6,11 +6,13 @@ import Foundation
 /// position, size and fill of each box, its text (size, colour, weight,
 /// alignment, bullets) and its pictures.
 enum OpenDocument {
-    static func unzip(_ input: URL, workDir: URL) async throws -> URL {
-        let dir = workDir.appendingPathComponent("odf-\(UUID().uuidString)", isDirectory: true)
+    /// The file's zip contents in a new folder; `requiring` must be inside it.
+    static func unzip(_ input: URL, workDir: URL, requiring: String = "content.xml") async throws -> URL {
+        let dir = workDir.appendingPathComponent("zip-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        try await Tool.run("/usr/bin/ditto", ["-x", "-k", input.path, dir.path], timeout: 60)
-        guard FileManager.default.fileExists(atPath: dir.appendingPathComponent("content.xml").path) else {
+        do { try await Tool.run("/usr/bin/ditto", ["-x", "-k", input.path, dir.path], timeout: 60) } catch is CancellationError { throw CancellationError() }
+        catch { throw JobError.unsupported("\(input.lastPathComponent): it isn't a valid file (it may be damaged)") }
+        guard FileManager.default.fileExists(atPath: dir.appendingPathComponent(requiring).path) else {
             throw JobError.unreadable(input.lastPathComponent)
         }
         return dir

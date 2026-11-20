@@ -234,11 +234,23 @@ final class HTMLPrinter: NSObject, WKNavigationDelegate {
             var pages: [Data] = []
             for k in 0..<count {
                 try Task.checkCancellation()
+                // Show only slide k; then give its pictures time to load and
+                // decode (large photos decode in the background and would come
+                // out blank). The window is never on screen, so page timers and
+                // animation frames can't be relied on: the waiting is done here.
                 _ = try await webView.evaluateJavaScript("""
                     (function(k){ var s = document.querySelectorAll('div.slide');
                       for (var i = 0; i < s.length; i++) s[i].style.display = i === k ? '' : 'none';
                       window.scrollTo(0, 0); return document.body.offsetHeight; })(\(k))
                     """)
+                for _ in 0..<50 {
+                    let ready = try await webView.evaluateJavaScript("""
+                        Array.from(document.querySelectorAll('div.slide')[\(k)].querySelectorAll('img')).every(function(p){ return p.complete; })
+                        """) as? Bool ?? true
+                    if ready { break }
+                    try await Task.sleep(nanoseconds: 100_000_000)
+                }
+                try await Task.sleep(nanoseconds: 120_000_000)
                 pages.append(try await webView.pdf(configuration: config))
             }
             return pages
