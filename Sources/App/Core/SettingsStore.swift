@@ -101,10 +101,15 @@ final class SettingsStore {
 
     /// Applies known keys whose type matches the default; returns how many
     /// were applied and the names that were skipped.
+    ///
+    /// `wholeLook` is a group of settings that only make sense together (a
+    /// theme): when the file carries any of them, the ones it doesn't carry
+    /// (or carries in a form that's refused) go back to their defaults, so
+    /// nothing from the previous look is left mixed into the new one.
     @discardableResult
-    func importJSON(_ data: Data, only: Set<String>? = nil) throws -> (applied: Int, skipped: [String]) {
+    func importJSON(_ data: Data, only: Set<String>? = nil, wholeLook: Set<String> = []) throws -> (applied: Int, skipped: [String]) {
         let snapshot = try JSONDecoder().decode(Snapshot.self, from: data)
-        var applied = 0
+        var accepted: [(String, Any)] = []
         var skipped: [String] = []
         for (name, value) in snapshot.values {
             guard only.map({ $0.contains(name) }) ?? true, let key = SettingsKeys.all.first(where: { $0.name == name }), !key.reserved,
@@ -113,9 +118,14 @@ final class SettingsStore {
                 skipped.append(name)
                 continue
             }
-            defaults.set(object, forKey: name)
-            applied += 1
+            accepted.append((name, object))
         }
+        // Only a file that really brings a look replaces the current one.
+        if accepted.contains(where: { wholeLook.contains($0.0) }) {
+            for name in wholeLook where only.map({ $0.contains(name) }) ?? true { defaults.removeObject(forKey: name) }
+        }
+        for (name, object) in accepted { defaults.set(object, forKey: name) }
+        let applied = accepted.count
         changes.send("")
         return (applied, skipped.sorted())
     }

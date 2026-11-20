@@ -120,6 +120,28 @@ struct WheelStyle {
     /// `color` at `restOpacity` (the resting buttons only).
     func resting(_ color: CGColor) -> CGColor { color.copy(alpha: color.alpha * restOpacity) ?? color }
 
+    /// A More-fan chip's fill, in the same fill style as the ring's buttons.
+    /// Ring buttons sit on the disc, but chips float over the desktop, so the
+    /// style is laid over the chip's own `base` (the disc colour when one is
+    /// set): Outline, Duo and a low resting opacity still give a solid chip
+    /// that the theme's text colours read on.
+    func fanFill(slot: WheelSlot, index k: Int, base: CGColor, hot: Bool, categoryTint: Bool) -> CGColor {
+        let i = k % WheelGeometry.segmentCount
+        if hot { return hotFill(slot: slot, index: i) }
+        let base = discColor?.copy(alpha: max(base.alpha, 0.88)) ?? base
+        guard let fill = restFill(slot: slot, index: i) ?? (categoryTint ? tint(for: slot)?.copy(alpha: 0.22) : nil) else { return base }
+        return Self.over(resting(fill), base)
+    }
+
+    /// `top` composited over `base` (source-over, sRGB).
+    static func over(_ top: CGColor, _ base: CGColor) -> CGColor {
+        let t = RGB(cg: top), b = RGB(cg: base), ta = top.alpha, ba = base.alpha
+        let a = ta + ba * (1 - ta)
+        guard a > 0 else { return .clear }
+        func mix(_ x: Double, _ y: Double) -> CGFloat { (CGFloat(x) * ta + CGFloat(y) * ba * (1 - ta)) / a }
+        return CGColor(srgbRed: mix(t.r, b.r), green: mix(t.g, b.g), blue: mix(t.b, b.b), alpha: a)
+    }
+
     /// The resting tint for a slot's category, if one is set.
     func tint(for slot: WheelSlot) -> CGColor? {
         switch slot.category {

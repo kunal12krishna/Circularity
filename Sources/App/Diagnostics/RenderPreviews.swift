@@ -419,7 +419,8 @@ extension RenderPreviews {
     /// A wheel exactly as the app would draw it with `settings` (a HEIC photo,
     /// JPG lit, on `backdrop`), dots included. `--check-themes <file> <dir>`
     /// uses it to put each Wheel Studio export next to the Studio's own picture.
-    static func renderTheme(_ settings: SettingsStore, backdrop: UInt32 = 0x1F2228, to url: URL) throws {
+    /// `fanOpen`: the More fan open with its second chip lit, instead of a lit ring button.
+    static func renderTheme(_ settings: SettingsStore, backdrop: UInt32 = 0x1F2228, fanOpen: Bool = false, to url: URL) throws {
         let kind = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .halo
         let renderer: WheelRenderer = switch kind {
         case .ring: SectorRenderer(style: .ring)
@@ -436,7 +437,8 @@ extension RenderPreviews {
         effects.attach(renderer.layer)
         effects.configure(style: look, geometry: geometry, bounds: CGRect(x: 0, y: 0, width: geometry.size, height: geometry.size), contentsScale: 2)
         renderer.layer.frame = effects.root.bounds
-        var state = WheelVisualState(hover: .segment(1))
+        var state = WheelVisualState(hover: fanOpen ? .fanChip(1) : .segment(1))
+        state.fanOpen = fanOpen
         let o = WheelGeometry.offset(radius: geometry.contentRadius(hovered: true), angle: 60)
         state.cursor = CGPoint(x: o.x + 20, y: o.y + 20)
         CATransaction.begin(); CATransaction.setDisableActions(true)

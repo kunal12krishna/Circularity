@@ -263,7 +263,7 @@ enum DragTest {
 
         // A theme from the website's theme builder applies (same JSON as "Copy theme" there).
         let websiteTheme = ##"{"app":"Circularity","schemaVersion":2,"values":{"appearance.theme":"custom","appearance.accentHex":"#FF5CA8","wheel.layout":"ring","appearance.wheelScheme":"light","appearance.glassStrength":0.4,"appearance.tint.tools":"#5CE1FF","wheel.scale":1.1,"appearance.ringThickness":1.15,"appearance.segmentGap":4,"appearance.orbScale":0.95,"appearance.labelScale":1.05,"appearance.font":"mono","appearance.labelCase":"upper","menubar.colorScheme":"dark","general.paused":true}}"##
-        if let applied = try? settings.importJSON(Data(websiteTheme.utf8), only: SettingsModel.themeKeys) {
+        if let applied = try? settings.importJSON(Data(websiteTheme.utf8), only: SettingsModel.themeKeys, wholeLook: SettingsModel.lookKeys) {
             check(applied.applied == 14 && settings.value(SettingsKeys.accentHex) == "#FF5CA8" && settings.value(SettingsKeys.wheelLayout) == "ring"
                   && !settings.value(SettingsKeys.paused),
                   "a website theme applies its 14 look settings and nothing else (skipped \(applied.skipped))")

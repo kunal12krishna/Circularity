@@ -92,7 +92,9 @@ Tests: `xcodebuild -scheme Circularity test` (unit tests), the
 `EngineSmokeTest` target (every conversion through the real engine), and
 `Circularity.app/Contents/MacOS/Circularity --drag-test` (the real wheel,
 panel, settings and jobs), and `--check-themes Tests/Fixtures/studio-themes.json`
-(every Wheel Studio export, presets, rolls and extremes, pastes in intact). Manual checks are in `docs/MANUAL-TESTS.md`; the
+(every Wheel Studio export, presets, rolls and extremes, pastes in intact, and
+pasting one over another leaves nothing of the old look behind; with a folder
+after the file it also renders each wheel, rest and More fan open). Manual checks are in `docs/MANUAL-TESTS.md`; the
 release steps in `docs/RELEASE-CHECKLIST.md`.
 
 ## Recording a demo GIF

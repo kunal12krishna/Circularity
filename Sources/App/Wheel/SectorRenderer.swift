@@ -281,13 +281,7 @@ final class SectorRenderer: WheelRenderer {
             c.shape.path = CGPath(roundedRect: c.group.bounds.insetBy(dx: 0.5, dy: 0.5), cornerWidth: corner,
                                   cornerHeight: corner, transform: nil)
             c.shape.lineWidth = 1
-            if style == .ring {
-                c.shape.shadowPath = c.shape.path
-                c.shape.shadowColor = .black(1)
-                c.shape.shadowOpacity = 0.4
-                c.shape.shadowRadius = 12 * s
-                c.shape.shadowOffset = CGSize(width: 0, height: -10 * s)
-            }
+            c.shape.shadowPath = c.shape.path
             c.group.opacity = 0
             _ = slot
             return c
@@ -295,22 +289,35 @@ final class SectorRenderer: WheelRenderer {
         for k in chips.indices { styleChip(k, hot: false, animated: false) }
     }
 
+    /// A More chip in the theme's look: the ring buttons' fill style, inks,
+    /// outline, glow, weight and tracking (the defaults draw the boards exactly).
     private func styleChip(_ k: Int, hot: Bool, animated: Bool) {
         let c = chips[k], slot = menu.fan[k], s = geometry.scale
         let text = style == .ring ? look.label(slot.label) : slot.monoLabel
-        let font = NSFont(descriptor: tokens.chipFont.fontDescriptor, size: tokens.chipFont.pointSize * s) ?? tokens.chipFont
-        c.label.set(text, font: font, color: hot ? tokens.fgHot : tokens.fgRest, kern: tokens.chipKern * s,
+        let size = tokens.chipFont.pointSize * s * look.labelScale
+        let font = style == .ring ? look.labelFont(size, look.weight) : WheelFont.mono(size, look.weight)
+        c.label.set(text, font: font, color: hot ? tokens.fgHot : tokens.fgRest, kern: tokens.chipKern * s + look.tracking * size,
                     maxWidth: c.group.bounds.width - 6 * s, minScale: 0.7)
         c.label.position = CGPoint(x: c.group.bounds.midX, y: c.group.bounds.midY)
+        let outline = look.fillStyle == "outline" && !hot
+        let bright = look.brightFills && hot
+        let glow = look.glowAmount(halo: style == .halo)
         transact(0.12, animated: animated) {
-            c.shape.fillColor = hot ? accent : tokens.chipFill
-            c.shape.strokeColor = tokens.chipBorder
-            if style == .halo {
-                c.shape.shadowPath = c.shape.path
-                c.shape.shadowColor = accent
-                c.shape.shadowRadius = 10 * geometry.scale
+            c.shape.fillColor = look.fanFill(slot: slot, index: k, base: tokens.chipFill, hot: hot, categoryTint: true)
+            c.shape.strokeColor = outline ? (look.tint(for: slot) ?? accent).copy(alpha: 0.7) : bright ? .white(1) : tokens.chipBorder
+            c.shape.lineWidth = outline ? 2 : bright ? 3 : 1
+            if hot && glow > 0 {
+                c.shape.shadowColor = look.glowColor(sticker: WheelStyle.stickerColor(slot, index: k % WheelGeometry.segmentCount))
+                c.shape.shadowRadius = 10 * s * glow / 0.6
                 c.shape.shadowOffset = .zero
-                c.shape.shadowOpacity = hot ? 0.5 : 0
+                c.shape.shadowOpacity = Float(min(0.95, 0.5 * glow / 0.6))
+            } else if style == .ring {
+                c.shape.shadowColor = .black(1)
+                c.shape.shadowRadius = 12 * s
+                c.shape.shadowOffset = CGSize(width: 0, height: -10 * s)
+                c.shape.shadowOpacity = Float(0.4 * look.discShadow)
+            } else {
+                c.shape.shadowOpacity = 0
             }
         }
         chips[k].hot = hot

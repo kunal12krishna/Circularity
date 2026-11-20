@@ -215,23 +215,48 @@ final class OrbitRenderer: WheelRenderer {
             p.group.addSublayer(p.label)
             fanLayer.addSublayer(p.group)
             for l in [p.group, p.label] as [CALayer] { l.contentsScale = contentsScale }
-            let text = slot.category == .tool ? "\(slot.label)…" : slot.label
-            p.label.set(look.label(text), font: look.labelFont(12 * s * look.labelScale, .bold), color: ink)
+            setPillLabel(p, slot: slot, hot: false)
             let h = 36 * s, w = p.label.bounds.width + 28 * s
             p.group.bounds = CGRect(x: 0, y: 0, width: w, height: h)
             p.group.cornerRadius = h / 2
-            p.group.borderWidth = 1
-            p.group.borderColor = palette.buttonBorder
-            p.group.backgroundColor = palette.pill
-            p.group.shadowColor = Self.warmColor(1)
-            p.group.shadowOpacity = 0.16
-            p.group.shadowRadius = 10 * s
-            p.group.shadowOffset = CGSize(width: 0, height: -8 * s)
             p.group.shadowPath = CGPath(roundedRect: p.group.bounds, cornerWidth: h / 2, cornerHeight: h / 2, transform: nil)
             p.label.position = CGPoint(x: w / 2, y: h / 2)
             p.group.opacity = 0
             return p
         }
+        for k in pills.indices { stylePill(k, hot: false, animated: false) }
+    }
+
+    private func setPillLabel(_ p: Pill, slot: WheelSlot, hot: Bool) {
+        let size = 12 * geometry.scale * look.labelScale
+        let text = slot.category == .tool ? "\(slot.label)…" : slot.label
+        p.label.set(look.label(text), font: look.labelFont(size, look.weight), color: hot ? hotInk : restInk, kern: look.tracking * size)
+    }
+
+    /// A More pill in the theme's look: the buttons' fill style, inks, outline and glow.
+    private func stylePill(_ k: Int, hot: Bool, animated: Bool) {
+        let p = pills[k], slot = menu.fan[k], s = geometry.scale
+        setPillLabel(p, slot: slot, hot: hot)
+        let outline = look.fillStyle == "outline" && !hot
+        let bright = look.brightFills && hot
+        let glow = look.glowAmount(halo: false)
+        transact(0.14, animated: animated) {
+            p.group.backgroundColor = look.fanFill(slot: slot, index: k, base: palette.pill, hot: hot, categoryTint: false)
+            p.group.borderColor = outline ? (look.tint(for: slot) ?? accent).copy(alpha: 0.75) : bright ? .white(0.9) : palette.buttonBorder
+            p.group.borderWidth = outline ? 2 : bright ? 3 : 1
+            if hot && glow > 0 {
+                p.group.shadowColor = look.glowColor(sticker: WheelStyle.stickerColor(slot, index: k % WheelGeometry.segmentCount))
+                p.group.shadowOpacity = Float(min(0.95, 0.55 * glow / 0.6))
+                p.group.shadowRadius = 12 * s * glow / 0.6
+                p.group.shadowOffset = .zero
+            } else {
+                p.group.shadowColor = Self.warmColor(1)
+                p.group.shadowOpacity = Float(0.16 * look.discShadow)
+                p.group.shadowRadius = 10 * s
+                p.group.shadowOffset = CGSize(width: 0, height: -8 * s)
+            }
+        }
+        pills[k].hot = hot
     }
 
     private func configureOrb() {
@@ -347,15 +372,9 @@ final class OrbitRenderer: WheelRenderer {
             }
             let hot = chipHot == k
             if hot != p.hot {
-                pills[k].hot = hot
+                stylePill(k, hot: hot, animated: animate)
                 let scale = hot ? geometry.fanHoverScale : 1
-                let slot = menu.fan[k]
-                let text = slot.category == .tool ? "\(slot.label)…" : slot.label
-                p.label.set(look.label(text), font: look.labelFont(12 * s * look.labelScale, .bold), color: hot ? look.onAccent : ink)
-                transact(0.14, animated: animate) {
-                    p.group.backgroundColor = hot ? accent : palette.pill
-                    p.group.transform = CATransform3DMakeScale(scale, scale, 1)
-                }
+                transact(0.14, animated: animate) { p.group.transform = CATransform3DMakeScale(scale, scale, 1) }
             }
         }
 

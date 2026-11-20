@@ -205,6 +205,11 @@ final class SettingsModel: ObservableObject {
     /// appearance settings plus the wheel layout.
     static let themeKeys: Set<String> = Set(appearanceKeys.map(\.name) + [SettingsKeys.wheelLayout.name])
 
+    /// The look settings that are replaced as a whole when a theme comes in:
+    /// whatever the new theme doesn't mention goes back to its default rather
+    /// than keeping the old theme's value (the layout is kept if it's absent).
+    static let lookKeys: Set<String> = Set(appearanceKeys.map(\.name))
+
     func resetAppearance() {
         for key in Self.appearanceKeys { store.remove(key.name) }
         flash("Appearance reset.")
@@ -218,7 +223,7 @@ final class SettingsModel: ObservableObject {
         save.nameFieldStringValue = appearanceOnly ? "\(AppIdentity.name) Theme.json" : "\(AppIdentity.name) Settings.json"
         guard save.runModal() == .OK, let url = save.url else { return }
         do {
-            let data = try store.exportJSON(only: appearanceOnly ? Set(Self.appearanceKeys.map(\.name)) : nil)
+            let data = try store.exportJSON(only: appearanceOnly ? Self.themeKeys : nil)
             try data.write(to: url, options: .atomic)
             flash("Saved \(url.lastPathComponent).")
         } catch {
@@ -234,7 +239,7 @@ final class SettingsModel: ObservableObject {
             return
         }
         do {
-            let result = try store.importJSON(data, only: Self.themeKeys)
+            let result = try store.importJSON(data, only: Self.themeKeys, wholeLook: Self.lookKeys)
             flash(StudioThemes.message(applied: result.applied, skipped: result.skipped, store: store))
         } catch {
             flash("The clipboard doesn't hold a \(AppIdentity.name) theme. In the Wheel Studio, click Copy for the app first.")
@@ -255,7 +260,7 @@ final class SettingsModel: ObservableObject {
         open.allowedContentTypes = [.json]
         guard open.runModal() == .OK, let url = open.url else { return }
         do {
-            let result = try store.importJSON(Data(contentsOf: url))
+            let result = try store.importJSON(Data(contentsOf: url), wholeLook: Self.lookKeys)
             hotkeyFailures = host?.settingsApplyStored(includingLoginItem: true) ?? []
             loginError = nil
             flash("Imported \(result.applied) setting\(result.applied == 1 ? "" : "s")"
