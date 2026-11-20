@@ -12,7 +12,7 @@
 
 <p align="center">
   <a href="https://circularity.pages.dev/"><b>Website</b></a> ·
-  <a href="https://circularity.pages.dev/Circularity.dmg"><b>Download for macOS</b></a> ·
+  <a href="https://github.com/kunal12krishna/Circularity/releases/latest/download/Circularity.dmg"><b>Download for macOS</b></a> ·
   <a href="https://circularity.pages.dev/studio.html"><b>Wheel Studio</b></a>
 </p>
 
@@ -20,8 +20,8 @@
   <img src="docs/media/wheel-halo-hero.png" width="420" alt="The Halo wheel over a photo, with JPG lit and the centre saying Convert to JPG">
 </p>
 
-Circularity is a menu bar app for macOS. It converts images, PDFs and documents right where you're
-dragging them, and the new file lands next to the original.
+Circularity is a menu bar app for macOS. It converts images, PDFs, Word, Excel and PowerPoint files
+right where you're dragging them, and the new file lands next to the original.
 
 Everything happens on your Mac with Apple's own frameworks: your files are never uploaded, and the
 original is never changed. (The only time Circularity goes online is the update check, and that's
@@ -29,7 +29,8 @@ off unless you turn it on; see [Privacy](#privacy).)
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![macOS 13+](https://img.shields.io/badge/macOS-13%2B-black?logo=apple)](https://circularity.pages.dev/)
-[![Version 0.2.0](https://img.shields.io/badge/Version-0.2.0-FF4FA0.svg)](https://circularity.pages.dev/#changelog)
+[![GitHub Release](https://img.shields.io/github/v/release/kunal12krishna/Circularity?label=Latest%20Release&color=FF4FA0)](https://github.com/kunal12krishna/Circularity/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/kunal12krishna/Circularity/total?label=Total%20Downloads&color=FF4FA0)](https://github.com/kunal12krishna/Circularity/releases)
 [![Website](https://img.shields.io/badge/Website-circularity.pages.dev-2F5BFF.svg)](https://circularity.pages.dev/)
 
 Made by **[Kunal Krishna](https://github.com/kunal12krishna)**. Open source under the
@@ -48,9 +49,9 @@ the Tangerine design by LEAP STUDIO.
 
 ## Download
 
-Get **`Circularity.dmg`** from **[circularity.pages.dev](https://circularity.pages.dev/)**, open
-it and drag **Circularity** onto **Applications**. It runs on macOS 13 Ventura or later, on Apple
-silicon and Intel.
+Get **`Circularity.dmg`** from the **[Releases page](https://github.com/kunal12krishna/Circularity/releases/latest)** (or the
+[website](https://circularity.pages.dev/)), open it and drag **Circularity** onto **Applications**.
+It runs on macOS 13 Ventura or later, on Apple silicon and Intel.
 
 This early build isn't signed with an Apple Developer ID yet, so macOS asks before opening it the
 first time. You only need to allow it once:
@@ -91,7 +92,16 @@ whenever you want it.
      **Compress** by quality or to a target size, **resize**, **crop** (a movable box with ratio
      locks), and **combine** several into one PDF.
    - **PDFs:** pages to images, text out, compress, resize to A4 / Letter or a scale, crop, combine.
-   - **Documents:** Markdown, HTML, RTF, Word and plain text to PDF and to each other.
+   - **Documents:** Markdown, HTML and plain text to PDF and to each other.
+   - **Documents from Office**, with nothing extra installed (no Office, no permission asked):
+     - **Word:** DOCX / DOC / RTF / ODT → PDF, DOCX, TXT
+     - **Excel:** XLSX / XLS / ODS / CSV → PDF (every sheet, on landscape pages fitted to the width,
+       each under its name)
+     - **PowerPoint:** PPTX / PPT / ODP → PDF (one page per slide, at the slide's own size)
+
+     Word files go through macOS's `textutil`; Excel and PowerPoint files are laid out by macOS's own
+     Office engine, the one Quick Look previews them with; OpenDocument and CSV files are read
+     directly. Speaker notes are left out.
    - **Cut out** (macOS 14+): removes a photo's background with Apple's on-device subject lifting
      and saves a transparent PNG.
 
@@ -176,7 +186,8 @@ Your files never leave your Mac. Circularity:
 
 - needs **no special permission** (no Accessibility, no Input Monitoring, no Screen Recording)
 - sees mouse movements only to notice a file drag, and reads the clipboard only when you press ⌃⌥V
-- converts everything on your Mac with Apple's own ImageIO, PDFKit, Vision and WebKit
+- converts everything on your Mac with Apple's own ImageIO, PDFKit, Vision, WebKit, `textutil` and
+  Quick Look's Office engine
 - goes online for one thing only, the **update check**, which is **off unless you turn it on**
   (Settings → General). It downloads one small JSON file and sends nothing but a
   `User-Agent: Circularity/<version>` header (see [docs/UPDATES.md](docs/UPDATES.md)).
@@ -216,7 +227,9 @@ scripts/clean-rebuild.sh --test
 runs everything below in one go.
 
 - `xcodebuild -scheme Circularity test`: the unit tests.
-- The `EngineSmokeTest` target: every conversion through the real engine.
+- The `EngineSmokeTest` target: every conversion through the real engine, including the Word,
+  Excel and PowerPoint samples in `Tests/Fixtures/office` (`SMOKE_KEEP=<folder>` keeps their PDFs;
+  `SMOKE_OFFICE_EXTRA=<folder>` converts your own files too).
 - `Circularity.app/Contents/MacOS/Circularity --drag-test`: the real wheel, panel, settings and
   jobs (the wheel and windows flash briefly).
 - `--check-themes Tests/Fixtures/studio-themes.json [folder]`: every Wheel Studio export (presets,
@@ -238,15 +251,20 @@ These are the rough edges I know about.
   (see [Download](#download)).
 - **No video or audio yet.** They're coming in the next version.
 - **WebP** is only offered where macOS itself can write it. **Cut out** needs macOS 14 or later.
+- **Excel and PowerPoint → PDF** use macOS's built-in Office engine, so a PDF looks like the file's
+  Quick Look preview rather than exactly like Office: on busy slides a shape can be missing, and fonts
+  you don't have are swapped for the nearest Mac font (Calibri → Helvetica Neue). Password-protected
+  files can't be opened. ODP slides keep their text, boxes and pictures, but not gradients, lines or
+  animations.
 - **Update checks** need a feed address set at build time (`UPDATE_FEED_URL`, see
   [docs/UPDATES.md](docs/UPDATES.md)); a build without one says so in Settings and never goes
-  online. For now, new versions are on [the website](https://circularity.pages.dev/).
+  online. For now, new versions are on the [Releases page](https://github.com/kunal12krishna/Circularity/releases).
 
 ## How it's put together
 
 | Folder | What's in it |
 | --- | --- |
-| `Sources/Engine` | The conversion engine: a job queue (two at a time) with progress and cancellation, ImageIO / PDFKit / WebKit backends, Cut out (Vision), size estimates, output naming, and atomic writes so a failed job leaves nothing behind. |
+| `Sources/Engine` | The conversion engine: a job queue (two at a time) with progress and cancellation, ImageIO / PDFKit / WebKit backends, Word through `textutil`, Excel and PowerPoint through macOS's Office engine (`OfficeBackend`) and OpenDocument read directly (`OpenDocument`), Cut out (Vision), size estimates, output naming, and atomic writes so a failed job leaves nothing behind. |
 | `Sources/AppLogic` | Pure, unit-tested logic: the wheel's geometry and menu, the gesture state machine and shake detector, ⌘K parsing, presets, themes and colour contrast. |
 | `Sources/App/Gesture` | Watches for file drags and decides, once per drag, whether the wheel may open. |
 | `Sources/App/Wheel` | The wheel window and its three renderers (Ring and Halo in `SectorRenderer`, Orbit in `OrbitRenderer`), the look resolved from settings (`WheelStyle`), motion, sounds and the before/after loupe. |
@@ -260,6 +278,26 @@ These are the rough edges I know about.
 | `Sources/Widget` | The desktop widget. |
 | `website/` | The website ([circularity.pages.dev](https://circularity.pages.dev/)) and the Wheel Studio. |
 | `design/` | The design boards the app is drawn from. |
+
+## Publishing a release
+
+Releases are built and published by hand, and the website links to the newest one.
+
+1. Bump `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `Config/Base.xcconfig`, and add the
+   release to the changelog in `website/index.html`.
+2. Run the tests (`scripts/clean-rebuild.sh --test`), then `scripts/release.sh` →
+   `dist/Circularity-x.y.z.dmg`.
+3. Commit, push, and publish the DMG under the fixed name `Circularity.dmg`, so the
+   "latest" download link never changes:
+   ```sh
+   cp dist/Circularity-x.y.z.dmg dist/Circularity.dmg
+   gh release create vx.y.z dist/Circularity.dmg --title "Circularity x.y.z" --notes-file notes.md
+   ```
+4. `scripts/build-website.sh` (its Download button points at
+   `releases/latest/download/Circularity.dmg`), then upload `website/public/` to Cloudflare Pages:
+   `npx wrangler pages deploy website/public --project-name circularity`.
+
+The download count on this page comes from GitHub Releases.
 
 ## Feedback
 

@@ -13,17 +13,45 @@
 <title>Circularity</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=Outfit:wght@300;500;800&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=Sora:wght@400;600&family=Unbounded:wght@500;800&family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..800&family=Geist+Mono:wght@400..700&family=Silkscreen:wght@700&display=swap">
 <style>
-/* Layout: a working "desktop" demo is the hero; every section reskins live (Halo · Aqua · ASCII · Pixel · Glass). */
+/* Layout: a sticky product nav, a hero that is a working demo, then one idea per section
+   (numbers, a scroll story, tabbed features, use cases, the Studio teaser, lab, changelog).
+   "Riso" is the default look (paper, ink, fluorescent pink and blue); Neon and the other styles reskin the whole page. */
 :root {
-  --bg: #0B0D11; --bg2: #12151B; --panel: #171A21; --panel2: #1D2129; --line: rgba(255,255,255,.09);
-  --fg: #ECEEF2; --muted: #9AA1AF; --accent: #C6FF3D; --on-accent: #10140A; --danger: #FF8A80;
-  --display: "Unbounded", "Avenir Next", system-ui, sans-serif; --body: "Sora", "Avenir Next", system-ui, sans-serif;
-  --mono: "JetBrains Mono", ui-monospace, Menlo, monospace; --body-size: 16px; --radius: 14px; --shadow: 0 24px 60px rgba(0,0,0,.45);
-  --glow: 0 0 22px rgba(198,255,61,.45); --display-case: uppercase; --display-track: .02em;
+  /* Riso (default): warm paper, ink, and two fluorescent risograph inks, pink for actions
+     and blue for structure. Where they overlap they print purple. */
+  --bg: #F3EEE4; --bg2: #EAE3D6; --panel: #FBF8F2; --panel2: #F1EBE0; --line: rgba(23,20,15,.14);
+  --fg: #17140F; --muted: #645C51; --accent: #FF4FA0; --on-accent: #17140F; --accent-text: #C8006A; --accent-display: #E8127F; --danger: #C42B22;
+  --blue: #2F5BFF; --blue-text: #2448E0; --offset: #17140F;
+  --display: "Geist", "SF Pro Display", system-ui, sans-serif; --body: "Geist", "SF Pro Text", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Menlo, monospace; --body-size: 16px; --radius: 12px;
+  --shadow: 0 1px 0 rgba(23,20,15,.05), 0 18px 40px rgba(23,20,15,.10); --glow: none;
+  --display-case: none; --display-track: -.045em; --display-weight: 750;
+  --cta: #FF4FA0; --on-cta: #17140F; --plate: #1B1813; --mark: #FF4FA0; --nav: rgba(243,238,228,.84);
+  --s-heic: #FF6C2F; --s-png: #00A3AD; --s-jpg: #FF4FA0; --s-pdf: #FF665E; --s-webp: #765BA7; --on-webp: #FFF8EC; --s-avif: #FFE14D; --s-tiff: #00A95C;
+  --grid-line: 23,20,15; --grid-active: 47,91,255;
+  color-scheme: light;
+}
+/* Riso Ink: the same print on ink-black paper (the default on a Mac in Dark Mode). */
+:root[data-skin="ink"] {
+  --bg: #14110D; --bg2: #1B1813; --panel: #1E1A15; --panel2: #262119; --line: rgba(243,238,228,.12);
+  --fg: #F3EEE4; --muted: #ABA295; --accent-text: #FF7AB8; --accent-display: var(--accent); --danger: #FF8A80; --blue: #6F8CFF; --blue-text: #8FA6FF; --offset: #6F8CFF;
+  --shadow: 0 0 0 1px rgba(243,238,228,.03), 0 28px 60px rgba(0,0,0,.5); --nav: rgba(20,17,13,.8);
+  --grid-line: 243,238,228; --grid-active: 111,140,255; color-scheme: dark;
+}
+/* Neon: the graphite and lime of the app's Neon theme (an optional style). */
+:root[data-skin="neon"] {
+  --bg: #0A0C0F; --bg2: #101318; --panel: #14171D; --panel2: #1B1F26; --line: rgba(255,255,255,.11);
+  --fg: #ECEEF2; --muted: #9AA2AE; --accent: #C6FF3D; --on-accent: #0E1206; --accent-text: #C6FF3D; --danger: #FF8A80;
+  --shadow: 0 0 0 1px rgba(255,255,255,.03), 0 28px 60px rgba(0,0,0,.55); --glow: 0 0 26px rgba(198,255,61,.38);
+  --display-weight: 700; --cta: #C6FF3D; --on-cta: #0E1206; --plate: #0E1014; --mark: #C6FF3D; --nav: rgba(10,12,15,.74);
+  --s-heic: #FF9A3D; --s-png: #35D0E6; --s-jpg: #FF6FB5; --s-pdf: #FF5E5B; --s-webp: #9B6BFF; --on-webp: #0B0D10; --s-avif: #FFD23F; --s-tiff: #3ECF8E;
+  --grid-line: 255,255,255; --grid-active: 198,255,61;
   color-scheme: dark;
 }
+/* Every other style: buttons take the style's accent, headings its own weight. */
+:root[data-skin]:not([data-skin="neon"]):not([data-skin="riso"]):not([data-skin="ink"]) { --cta: var(--accent); --on-cta: var(--on-accent); --display-weight: 800; --nav: color-mix(in srgb, var(--bg) 84%, transparent); }
 :root[data-skin="aqua"] {
   --bg: #D9E3EF; --bg2: #E8EEF6; --panel: #F7F9FC; --panel2: #EAF0F7; --line: rgba(30,50,80,.16);
   --fg: #16202E; --muted: #4E5B6E; --accent: #1C6FE0; --on-accent: #FFFFFF; --danger: #C62828;
@@ -112,10 +140,9 @@ body {
 :root[data-skin="news"] :is(.card, .tb-card) { background: transparent; border: 0; border-top: 3px double var(--line); border-radius: 0; padding-inline: 0; }
 :root[data-skin="news"] :is(.desk, .play) { border: 1.5px solid var(--line); box-shadow: none; }
 :root[data-skin="news"] .section-head { border-bottom: 1px solid var(--line); padding-bottom: 14px; }
-:root[data-skin="news"] .eyebrow { font-family: var(--body); font-style: italic; text-transform: none; letter-spacing: 0; font-size: 15px; }
 :root[data-skin="news"] .thumb img { filter: grayscale(1) contrast(1.15); }
 
-a { color: var(--accent); }
+a { color: var(--accent-text, var(--accent)); }
 .skip { position: absolute; left: -9999px; top: 8px; z-index: 100; padding: 8px 14px; background: var(--accent); color: var(--on-accent); }
 .skip:focus { left: max(16px, env(safe-area-inset-left, 0px)); }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -127,11 +154,28 @@ button, input { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .wrap { max-width: 1180px; margin: 0 auto; }
 .mono { font-family: var(--mono); }
-.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-h1, h2, h3 { font-family: var(--display); text-transform: var(--display-case); letter-spacing: var(--display-track); text-wrap: balance; margin: 0; line-height: 1.08; }
-h1 { font-size: clamp(34px, 5.4vw, 64px); font-weight: 800; }
-h2 { font-size: clamp(26px, 3.4vw, 40px); font-weight: 800; }
-h3 { font-size: 18px; font-weight: 700; }
+h1, h2, h3 { font-family: var(--display); text-transform: var(--display-case); letter-spacing: var(--display-track); text-wrap: balance; margin: 0; line-height: 1.06; }
+h1 { font-size: clamp(42px, 7vw, 84px); font-weight: var(--display-weight); line-height: .98; }
+h2 { font-size: clamp(30px, 4.2vw, 52px); font-weight: var(--display-weight); }
+h3 { font-size: 19px; font-weight: 650; letter-spacing: -.01em; }
+/* Neon's personality: pixel tags, neon glow, a highlighted headline */
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"], [data-skin="neon"]) h1 { line-height: .94; letter-spacing: -.055em; }
+:root[data-skin="neon"] .hl { color: var(--accent); text-shadow: 0 0 34px rgba(198,255,61,.45); }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"], [data-skin="neon"]) :is(.btn, .ex-tab, .pill, .use-tab, .announce, .style-btn) { border-radius: 10px; }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"], [data-skin="neon"]) .btn { padding: 11px 18px; font-weight: 600; }
+:root[data-skin="neon"] .btn.primary { box-shadow: 0 0 0 1px rgba(198,255,61,.45), 0 10px 30px rgba(198,255,61,.22); }
+:root[data-skin="neon"] .btn.primary:hover { box-shadow: 0 0 0 1px rgba(198,255,61,.8), 0 12px 38px rgba(198,255,61,.38); }
+/* Riso: printed on paper. Ink outlines with a hard offset, pink and blue slightly out of register, grain. */
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"]) body {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .09 0 0 0 0 .08 0 0 0 0 .06 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E"); }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"]) .hl { color: var(--accent-display, var(--accent)); text-shadow: -.045em .03em 0 color-mix(in srgb, var(--blue) 80%, transparent); -webkit-text-stroke: 0; }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"]) .btn { border: 1.5px solid var(--fg); box-shadow: 3px 3px 0 var(--offset); transition: transform .12s, box-shadow .12s; }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"]) .btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--offset); }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"]) .btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--offset); }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"]) .btn.primary { background: var(--accent); color: var(--on-accent); }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"]) :is(.card, .win, .tb-card, .use-card, .lab-card, .skin-card, .studio-teaser) { border-color: color-mix(in srgb, var(--fg) 22%, transparent); }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"]) .sticker { box-shadow: 2px 2px 0 color-mix(in srgb, var(--fg) 75%, transparent); }
+:root:is(:not([data-skin]), [data-skin="riso"], [data-skin="ink"], [data-skin="neon"]) :is(.card, .win, .tb-card, .use-card, .desk, .play) { background-color: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
 :root[data-skin="pixel"] h1 { font-size: clamp(22px, 3.6vw, 40px); line-height: 1.35; }
 :root[data-skin="pixel"] h2 { font-size: clamp(18px, 2.4vw, 26px); line-height: 1.4; }
 :root[data-skin="pixel"] h3 { font-size: 13px; line-height: 1.6; }
@@ -139,17 +183,36 @@ h3 { font-size: 18px; font-weight: 700; }
 :root[data-skin="ascii"] h2 { font-size: clamp(34px, 4.6vw, 56px); }
 :root[data-skin="ascii"] h3 { font-size: 26px; }
 p { margin: 0; max-width: 62ch; }
-.accent { color: var(--accent); }
-:root[data-skin="halo"] .accent, :root:not([data-skin]) .accent, :root[data-skin="ascii"] .accent { text-shadow: var(--glow); }
+.accent { color: var(--accent-text, var(--accent)); }
+:root:is([data-skin="neon"], [data-skin="ascii"]) .accent { text-shadow: var(--glow); }
 
 /* Top bar */
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--bg); }
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
+.top-old { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))); padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
   background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
-.top .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+/* Sticky product nav (Apple-style sub-nav) with a scroll-progress line */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; margin: 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  background: var(--nav); backdrop-filter: saturate(1.6) blur(18px); -webkit-backdrop-filter: saturate(1.6) blur(18px); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: 18px; height: 56px; }
+.nav .progress { position: absolute; left: 0; bottom: -1px; height: 2px; width: 100%; background: var(--accent); transform-origin: 0 50%; transform: scaleX(var(--p, 0)); }
+.nav .links { display: flex; gap: 20px; margin-left: 8px; }
+.nav .links a { font-family: var(--body); font-size: 14px; color: var(--muted); text-decoration: none; letter-spacing: 0; }
+.nav .links a[aria-current="true"] { color: var(--fg); }
+.nav .right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.nav .btn.primary { padding: 7px 14px; font-size: 14px; }
+.style-menu { position: relative; }
+.nav .style-btn { width: auto; height: 34px; padding: 0 12px; gap: 8px; display: inline-flex; align-items: center; border-radius: 999px; font-size: 13px; font-family: var(--body); white-space: nowrap; }
+.style-dot { width: 12px; height: 12px; border-radius: 50%; background: conic-gradient(#FF4FA0, #2F5BFF, #C6FF3D, #FFCC33, #FF4FA0); }
+.style-pop { position: absolute; right: 0; top: calc(100% + 8px); width: 260px; padding: 8px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); display: grid; gap: 2px; z-index: 60; }
+.style-opt { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 9px; border: 0; background: transparent; cursor: pointer; text-align: left; font-family: var(--body); font-size: 14px; color: var(--fg); }
+.style-opt:hover, .style-opt:focus-visible { background: var(--panel2); }
+.style-opt[aria-pressed="true"]::after { content: "✓"; margin-left: auto; color: var(--accent-text, var(--accent)); }
+.style-opt i { width: 22px; height: 22px; border-radius: 6px; flex: none; border: 1px solid var(--line); }
+.style-opt small { color: var(--muted); font-size: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; text-transform: var(--display-case); font-size: 15px; text-decoration: none; color: var(--fg); }
 :root[data-skin="pixel"] .brand { font-size: 11px; }
-.glyph { width: 26px; height: 26px; color: var(--accent); }
+.glyph { width: 26px; height: 26px; color: var(--accent-text, var(--accent)); }
 .skins { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
 .pill { border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; transition: transform .15s, background .2s; }
 :root[data-skin="pixel"] .pill, :root[data-skin="ascii"] .pill { border-radius: 0; }
@@ -163,18 +226,82 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 section { padding-block: clamp(56px, 8vw, 96px); }
 
 /* Hero */
-.hero { display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr); gap: clamp(24px, 4vw, 56px); align-items: center; padding-block: clamp(28px, 5vw, 56px) 40px; }
+.hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); align-items: center; column-gap: clamp(24px, 4vw, 56px); padding-block: clamp(40px, 7vw, 88px) 36px; }
+.hero { overflow-x: clip; }
+.hero-copy { display: grid; justify-items: start; gap: 22px; min-width: 0; position: relative; z-index: 1; }
+.hero-wheel { margin: 0; justify-self: center; width: min(620px, 100%); display: grid; justify-items: center; position: relative; }
+.hero-wheel img { width: 128%; max-width: none; height: auto; display: block; margin: -19% -14% -15%; animation: hero-twirl 1.1s cubic-bezier(.16, 1.2, .3, 1) .15s both; }
+.hero-wheel figcaption { font: 500 12px var(--mono); color: var(--muted); letter-spacing: .02em; position: relative; }
+.hero .stickers { z-index: 2; }
+/* The app's own "Twirl in": the wheel spins a sixth of a turn into place, once. */
+@keyframes hero-twirl { from { opacity: 0; transform: rotate(-60deg) scale(.82); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-wheel img { animation: none; } }
 .hero > * { min-width: 0; }
+p, li, figcaption { text-wrap: pretty; }
+.announce { display: inline-flex; align-items: center; gap: 10px; padding: 5px 12px 5px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); text-decoration: none; font-size: 14px; }
+.announce .tag { border-radius: 999px; }
+.hero .lede { font-size: clamp(18px, 1.7vw, 21px); max-width: 40ch; margin: 0; }
+.req { color: var(--muted); font-size: 14px; margin-top: -8px; }
+.livekeys { line-height: 2.3; margin: 0; max-width: 46ch; }
+.livekeys kbd + kbd { margin-left: 4px; }
+.livekeys kbd { transition: transform .08s, background .12s, color .12s, border-bottom-width .08s; display: inline-block; min-width: 30px; text-align: center; padding: 2px 8px; font-size: 13px; line-height: 1.6; }
+.livekeys kbd.down { transform: translateY(2px); border-bottom-width: 1px; background: var(--accent); color: var(--on-accent); }
+.livekeys #keysHint { color: var(--fg); }
+.demo-wrap { padding-bottom: 12px; }
+/* Morph: format cards scatter, line up, ring like the wheel, then sweep into an arc as you scroll */
+.morph { height: 170vh; position: relative; padding-block: 0;
+  margin-left: calc(-1 * max(16px, env(safe-area-inset-left, 0px))); margin-right: calc(-1 * max(16px, env(safe-area-inset-right, 0px))); }
+.morph-pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; perspective: 1000px; }
+.morph-intro { position: absolute; left: 50%; top: 50%; translate: -50% -50%; text-align: center; pointer-events: none; z-index: 1;
+  width: min(calc(var(--r, 240px) * 1.45), 88vw); opacity: 0; transition: opacity .8s, filter .8s; filter: blur(8px); }
+.morph-intro.on { opacity: var(--io, 1); filter: blur(0); }
+.morph-intro h2 { font-size: clamp(24px, 3.8vw, 48px); line-height: 1; margin: 10px 0 12px; }
+@media (max-width: 767px) { .morph-intro { width: calc(var(--r, 160px) * 1.25); } .morph-intro h2 { font-size: 22px; } }
+.morph-hint { font: 12px var(--mono); letter-spacing: .2em; text-transform: uppercase; color: var(--muted); }
+.morph-copy { position: absolute; left: 50%; top: max(13%, 92px); width: min(620px, calc(100% - 32px)); text-align: center; pointer-events: none; z-index: 1;
+  opacity: var(--co, 0); transform: translate(-50%, calc((1 - var(--co, 0)) * 20px)); }
+.morph-copy h3 { font: var(--display-weight) clamp(26px, 4vw, 48px)/1.05 var(--display); letter-spacing: var(--display-track); margin-bottom: 12px; }
+.morph-copy p { color: var(--muted); font-size: 16px; line-height: 1.6; }
+.morph-cards { list-style: none; margin: 0; padding: 0; position: absolute; inset: 0; }
+.mc { position: absolute; left: 50%; top: 50%; width: 60px; height: 85px; margin: -42.5px 0 0 -30px; perspective: 600px; cursor: pointer; will-change: transform, opacity; opacity: 0; }
+.mc-in { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .6s cubic-bezier(.3,1.5,.5,1); }
+.mc:hover .mc-in, .mc.flip .mc-in { transform: rotateY(180deg); }
+.mc-f, .mc-b { position: absolute; inset: 0; border-radius: 10px; backface-visibility: hidden; -webkit-backface-visibility: hidden; display: flex; flex-direction: column; justify-content: space-between; padding: 6px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,.35); }
+.mc-f { background: var(--c); color: var(--on-c, #0B0D10); }
+.mc-f b { font: 800 13px/1 var(--mono); letter-spacing: -.02em; word-break: break-all; }
+.mc-f i { font: 700 11px/1 var(--mono); text-transform: uppercase; letter-spacing: .08em; font-style: normal; align-self: flex-end; }
+.mc-f::after { content: ""; position: absolute; right: 0; top: 0; width: 14px; height: 14px; background: linear-gradient(225deg, rgba(0,0,0,.0) 50%, rgba(0,0,0,.22) 50%); }
+.mc-b { background: var(--panel2); color: var(--fg); border: 1px solid var(--c); transform: rotateY(180deg); justify-content: center; text-align: center; gap: 4px; }
+.mc-b b { font: 700 8px/1 var(--mono); color: var(--c); letter-spacing: .1em; }
+.mc-b span { font-size: 7.5px; line-height: 1.25; }
+:root:is([data-skin="pixel"], [data-skin="ascii"], [data-skin="win95"]) :is(.mc-f, .mc-b) { border-radius: 0; }
+/* Container scroll: the demo tips back in its bezel and straightens as you scroll to it */
+.cs { padding-block: clamp(24px, 6vw, 72px) 12px; overflow-x: clip; }
+.cs-title { text-align: center; max-width: 18ch; margin: 0 auto clamp(20px, 3vw, 36px); font-size: clamp(30px, 4.6vw, 58px); transform: translateY(var(--ty, 0px)); will-change: transform; }
+.cs-stage { perspective: 1000px; }
+.cs-card { transform: rotateX(var(--rx, 0deg)) scale(var(--sc, 1)); transform-origin: 50% 0%; will-change: transform;
+  padding: clamp(6px, 1.2vw, 16px); border-radius: 30px; background: #16181D; border: 4px solid #3A3D45;
+  box-shadow: 0 0 #0000004d, 0 9px 20px #0000004a, 0 37px 37px #00000042, 0 84px 50px #00000026, 0 149px 60px #0000000a, 0 233px 65px #00000003, 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent); }
+.cs-card .desk { border-radius: 20px; box-shadow: none; }
+:root[data-skin="aqua"] .cs-card, :root[data-skin="news"] .cs-card, :root[data-skin="win95"] .cs-card { background: #D9DDE3; border-color: #A9AFB8; }
+:root[data-skin="pixel"] .cs-card, :root[data-skin="ascii"] .cs-card, :root[data-skin="win95"] .cs-card { border-radius: 0; }
+:root[data-skin="pixel"] .cs-card .desk, :root[data-skin="ascii"] .cs-card .desk, :root[data-skin="win95"] .cs-card .desk { border-radius: 0; }
+.demo-cap { color: var(--muted); font-size: 14px; margin-top: 12px; text-align: center; max-width: none; }
+.plate { margin: 0; border-radius: 20px; overflow: hidden; background: var(--plate); border: 1px solid var(--line); box-shadow: var(--shadow); transform: perspective(1200px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .2s ease-out; }
+.plate img { display: block; width: 100%; height: auto; }
+.reveal { transition: transform .8s cubic-bezier(.2,.75,.2,1); }
+.reveal.pre { transform: translateY(22px); }
 .lede { font-size: 1.08em; color: var(--muted); margin-top: 18px; }
 .steps { display: grid; gap: 10px; margin: 26px 0 0; padding: 0; list-style: none; }
 .steps li { display: flex; gap: 12px; align-items: baseline; }
-.steps b { font-family: var(--mono); color: var(--accent); min-width: 1.6em; }
+.steps b { font-family: var(--mono); color: var(--accent-text, var(--accent)); min-width: 1.6em; }
 kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); border-bottom-width: 3px; background: var(--panel); color: var(--fg); white-space: nowrap; }
 :root[data-skin="pixel"] kbd, :root[data-skin="ascii"] kbd { border-radius: 0; }
 .cta-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 28px; }
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); color: var(--fg); text-decoration: none; cursor: pointer; font-weight: 600; transition: transform .15s, box-shadow .2s; }
 .btn:hover { transform: translateY(-2px); }
-.btn.primary { background: var(--accent); color: var(--on-accent); border-color: transparent; box-shadow: var(--glow); }
+.btn.primary { background: var(--cta); color: var(--on-cta); border-color: transparent; box-shadow: var(--glow); }
+
 :root[data-skin="aqua"] .btn.primary { background: linear-gradient(#8CC8FF, #2A7CEB 52%, #1C62CF); box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 3px 10px rgba(28,111,224,.45); text-shadow: 0 -1px 0 rgba(0,0,0,.25); }
 :root[data-skin="pixel"] .btn { box-shadow: var(--shadow); }
 :root[data-skin="pixel"] .btn.primary { box-shadow: 4px 4px 0 #8A5A00; }
@@ -192,7 +319,7 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 :root[data-skin="ascii"] .lights { display: none; }
 :root[data-skin="pixel"] .lights i { border-radius: 0; }
 .menu-icon { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--fg); }
-.menu-icon svg { width: 18px; height: 18px; color: var(--accent); transition: transform .4s; }
+.menu-icon svg { width: 18px; height: 18px; color: var(--accent-text, var(--accent)); transition: transform .4s; }
 .menu-icon.pulse svg { animation: pulse .8s ease-out; }
 @keyframes pulse { 30% { transform: scale(1.45) rotate(30deg); } 100% { transform: scale(1); } }
 .cmd { display: flex; align-items: center; gap: 8px; margin: 12px; padding: 0 12px; height: 42px; border-radius: calc(var(--radius) - 4px); background: var(--bg2); border: 1px solid var(--line); }
@@ -200,6 +327,7 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 .cmd input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-family: var(--mono); font-size: 14px; }
 :root[data-skin="pixel"] .cmd input { font-size: 19px; }
 .cmd .k { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.cmd:focus-within { border-color: var(--accent-text, var(--accent)); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
 .cmd-hint { margin: -4px 14px 0; min-height: 20px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
 :root[data-skin="pixel"] .cmd-hint { font-size: 16px; }
 .files { position: relative; display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 10px 8px; padding: 14px 14px 18px; min-height: 300px; align-content: start; }
@@ -214,19 +342,19 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 :root[data-skin="ascii"] .thumb { border-radius: 0; box-shadow: none; border: 1px dashed var(--line); }
 :root[data-skin="ascii"] .thumb img { filter: grayscale(1) sepia(1) hue-rotate(60deg) saturate(3) contrast(1.1); }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
-.thumb .doc { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent); }
+.thumb .doc { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--accent-text, var(--accent)); }
 .badge { position: absolute; bottom: 4px; right: 4px; font-family: var(--mono); font-size: 9px; padding: 1px 4px; border-radius: 4px; background: rgba(0,0,0,.6); color: #fff; }
 .fname { font-size: 12px; line-height: 1.25; max-width: 104px; overflow-wrap: anywhere; }
 :root[data-skin="pixel"] .fname { font-size: 16px; }
 .fsize { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 :root[data-skin="pixel"] .fsize { font-size: 15px; }
-.fsize .down { color: var(--accent); }
+.fsize .down { color: var(--accent-text, var(--accent)); }
 .fsize .up { color: var(--danger); }
-.drop-note { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; text-align: center; }
+.drop-note { grid-column: 1 / -1; display: block; line-height: 1.6; text-wrap: balance; padding: 12px; border: 1.5px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 13px; text-align: center; }
 :root[data-skin="pixel"] .drop-note, :root[data-skin="ascii"] .drop-note { border-radius: 0; }
 :root[data-skin="pixel"] .drop-note { font-size: 17px; }
 .desk.dropping .drop-note { border-color: var(--accent); color: var(--fg); background: color-mix(in srgb, var(--accent) 10%, transparent); }
-.link-btn { background: none; border: 0; color: var(--accent); cursor: pointer; text-decoration: underline; padding: 0; }
+.link-btn { background: none; border: 0; color: var(--accent-text, var(--accent)); cursor: pointer; text-decoration: underline; padding: 0; }
 .stats { display: flex; gap: 16px; font-family: var(--mono); font-size: 12px; color: var(--muted); padding: 0 14px 12px; flex-wrap: wrap; }
 .stats b { color: var(--fg); }
 :root[data-skin="pixel"] .stats { font-size: 16px; }
@@ -250,6 +378,19 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 .section-head { display: grid; gap: 12px; margin-bottom: 32px; }
 .grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.card h3 .tag { font: 600 10px var(--mono); letter-spacing: .04em; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 2px 7px; margin-left: 6px; vertical-align: 3px; white-space: nowrap; }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+/* Small things that feel big: the card under the pointer grows, the rest step back */
+.feel .card { position: relative; transition: transform .32s cubic-bezier(.2,1.35,.4,1), box-shadow .3s, opacity .25s, border-color .2s; outline-offset: 4px; }
+.feel .card:hover, .feel .card:focus-visible { transform: scale(1.07) translateY(-4px) rotate(-.6deg); z-index: 2; border-color: var(--fg);
+  box-shadow: 6px 6px 0 var(--offset, color-mix(in srgb, var(--accent) 60%, transparent)), 0 26px 50px rgba(0,0,0,.16); }
+.feel .card:nth-child(even):hover, .feel .card:nth-child(even):focus-visible { transform: scale(1.07) translateY(-4px) rotate(.6deg); }
+.feel:hover .card:not(:hover), .feel:focus-within .card:not(:focus-visible):not(:hover) { transform: scale(.97); opacity: .7; }
+.feel .card h3 { transition: color .2s; }
+.feel .card:hover h3, .feel .card:focus-visible h3 { color: var(--accent-text, var(--accent)); }
+.feel-n { font: 700 11px var(--mono); color: var(--muted); letter-spacing: .1em; transition: color .2s, transform .3s cubic-bezier(.2,1.4,.4,1); justify-self: start; }
+.feel .card:hover .feel-n, .feel .card:focus-visible .feel-n { color: var(--on-accent); background: var(--accent); padding: 1px 6px; transform: rotate(-4deg) scale(1.1); }
+@media (prefers-reduced-motion: reduce) { .feel .card, .feel-n { transition: none; } .feel .card:hover, .feel .card:focus-visible, .feel:hover .card:not(:hover) { transform: none; opacity: 1; } }
 :root[data-skin="pixel"] .card { box-shadow: var(--shadow); }
 :root[data-skin="ascii"] .card { border-style: dashed; }
 .card p { color: var(--muted); font-size: .92em; }
@@ -261,21 +402,24 @@ kbd { font-family: var(--mono); font-size: .82em; padding: 2px 7px; border-radiu
 .shake-pad .meter { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--accent); width: 0; transition: width .2s; }
 .shake-pad.hit { color: var(--on-accent); background: var(--accent); }
 
-.play { position: relative; border-radius: var(--radius); border: 1px solid var(--line); background: var(--panel); overflow: hidden; box-shadow: var(--shadow); }
-.play canvas { display: block; width: 100%; height: clamp(360px, 52vw, 480px); touch-action: none; cursor: grab; }
-.play-hud { position: absolute; left: 14px; top: 12px; right: 14px; display: flex; justify-content: space-between; gap: 10px; pointer-events: none; font-family: var(--mono); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
-:root[data-skin="pixel"] .play-hud { font-size: 17px; }
-.play-hud b { color: var(--accent); font-size: 1.3em; }
-
-.skin-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.grid3 .card h3 { display: flex; gap: 10px; align-items: baseline; }
-.tag { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; background: var(--accent); color: var(--on-accent); }
-:root[data-skin="pixel"] .tag, :root[data-skin="ascii"] .tag, :root[data-skin="win95"] .tag, :root[data-skin="news"] .tag { border-radius: 0; }
-
-/* Theme builder */
+/* Wheel Studio teaser: the real Studio, embedded, cycling through its looks */
+.studio-teaser { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(20px, 4vw, 48px); align-items: center; text-decoration: none; color: inherit;
+  padding: clamp(18px, 3vw, 32px); border-radius: calc(var(--radius) + 8px); border: 1px solid var(--line); background: var(--panel); transition: border-color .2s, transform .2s; }
+.studio-teaser:hover { border-color: var(--accent); }
+.studio-teaser:hover .stz-frame { transform: rotate(-1.5deg) scale(1.02); }
+.stz-copy { display: grid; gap: 14px; justify-items: start; }
+.stz-copy h2 { margin: 0; }
+.stz-copy p { color: var(--muted); margin: 0; max-width: 46ch; }
+.stz-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.stz-list li { font: 12px var(--mono); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--fg); }
+.stz-frame { aspect-ratio: 1; border-radius: 22px; overflow: hidden; box-shadow: 0 30px 70px rgba(0,0,0,.45), 0 0 0 1px rgba(255,255,255,.06); transition: transform .4s cubic-bezier(.2,1.3,.4,1); background: #0A0C0F; }
+.stz-frame iframe { width: 100%; height: 100%; border: 0; display: block; pointer-events: none; }
+@media (max-width: 760px) { .studio-teaser { grid-template-columns: minmax(0, 1fr); } }
+/* Panels shared by the format lab */
 .builder { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; align-items: start; }
-.tb-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.tb-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; min-width: 0; }
+#cmdInput::placeholder { color: var(--muted); opacity: 1; }
+.tb-card select { width: 100%; min-width: 0; text-overflow: ellipsis; }
 .tb-preview canvas { width: 100%; max-width: 560px; aspect-ratio: 1; display: block; margin: 0 auto; border-radius: calc(var(--radius) - 2px); touch-action: none; }
 .tb-caption { font-family: var(--mono); font-size: 12px; color: var(--muted); text-align: center; min-height: 18px; }
 :root[data-skin="pixel"] .tb-caption { font-size: 16px; }
@@ -306,6 +450,7 @@ input[type="color"] { width: 38px; height: 30px; padding: 0; border: 1px solid v
 :root[data-skin="pixel"] .lab-card .fmt, :root[data-skin="pixel"] .lab-card .sz, :root[data-skin="pixel"] .lab-card .chg { font-size: 17px; }
 .lab-view canvas { width: 100%; height: clamp(260px, 36vw, 380px); display: block; background: var(--bg2); border-radius: calc(var(--radius) - 2px); touch-action: none; cursor: ew-resize; }
 select { font: inherit; color: var(--fg); background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; max-width: 100%; }
+.skin-cards { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .skin-card { border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; cursor: pointer; background: var(--panel); text-align: left; padding: 0; color: var(--fg); transition: transform .2s; }
 .skin-card:hover { transform: translateY(-4px) rotate(-1deg); }
 .skin-card[aria-pressed="true"] { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -313,6 +458,7 @@ select { font: inherit; color: var(--fg); background: var(--panel2); border: 1px
 .skin-card .sw span { width: 56px; height: 56px; border-radius: 50%; display: block; }
 .skin-card .lbl { padding: 10px 12px; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
 :root[data-skin="pixel"] .skin-card .lbl { font-size: 15px; }
+.sw-riso { background: #F3EEE4; } .sw-riso span { background: radial-gradient(circle at 42% 50%, #FF4FA0 0 34%, transparent 35%), radial-gradient(circle at 60% 50%, #2F5BFF 0 34%, transparent 35%); mix-blend-mode: multiply; }
 .sw-halo { background: #0B0D11; } .sw-halo span { background: conic-gradient(#C6FF3D 0 60deg, #1B1D23 60deg 360deg); box-shadow: 0 0 18px rgba(198,255,61,.5); }
 .sw-aqua { background: repeating-linear-gradient(0deg, #E8EEF6 0 2px, #D9E3EF 2px 4px); } .sw-aqua span { background: radial-gradient(circle at 50% 30%, #D5ECFF 0 18%, #3D8EF0 45%, #1A5CC0 100%); box-shadow: inset 0 -6px 10px rgba(0,0,0,.2), 0 4px 10px rgba(28,111,224,.45); }
 .sw-ascii { background: #040704; color: #39FF6A; font-family: "VT323", monospace; font-size: 30px; } .sw-ascii span { display: none; }
@@ -324,7 +470,7 @@ select { font: inherit; color: var(--fg); background: var(--panel2); border: 1px
 .sw-news { background: #EEECE6; color: #141414; font-family: "Playfair Display", Georgia, serif; font-weight: 900; font-size: 34px; } .sw-news span { display: none; }
 
 .privacy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.privacy .card b { font-family: var(--mono); color: var(--accent); }
+.privacy .card b { font-family: var(--mono); color: var(--accent-text, var(--accent)); }
 
 .install { display: grid; grid-template-columns: minmax(0, 640px); gap: 18px; align-items: start; }
 .term { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; font-family: var(--mono); font-size: 13px; min-width: 0; }
@@ -332,9 +478,10 @@ select { font: inherit; color: var(--fg); background: var(--panel2); border: 1px
 .term-line { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--line); min-width: 0; }
 .term-line:last-child { border-bottom: 0; }
 .term-line code { overflow-x: auto; white-space: nowrap; min-width: 0; }
-.term-line code::before { content: "$ "; color: var(--accent); }
+.term-line code::before { content: "$ "; color: var(--accent-text, var(--accent)); }
 .copy { flex: none; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 3px 8px; cursor: pointer; font-family: var(--mono); font-size: 11px; }
 footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; display: grid; gap: 8px; }
+footer a { color: var(--fg); text-underline-offset: 3px; }
 
 /* Preview modal and toast */
 .modal { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 24px; background: rgba(0,0,0,.6); }
@@ -342,14 +489,201 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 .modal-box { max-width: min(900px, 100%); max-height: 86vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 10px; }
 :root[data-skin="glass"] .modal-box { background: #1A1C3A; }
 .modal-box img { max-height: 64vh; width: auto; margin: 0 auto; border-radius: 8px; }
-.modal-box pre { font-size: 7px; line-height: 1; margin: 0; overflow: auto; color: var(--fg); }
+.modal-note { color: var(--muted); margin: 0; max-width: 62ch; }
+.crop-ratios { display: flex; flex-wrap: wrap; gap: 6px; }
+.crop-stage { position: relative; justify-self: center; overflow: hidden; border-radius: 8px; touch-action: none; user-select: none; -webkit-user-select: none; line-height: 0; }
+.crop-stage img { max-height: 56vh; max-width: 100%; width: auto; border-radius: 0; margin: 0; pointer-events: none; }
+.crop-box { position: absolute; border: 2px solid #fff; outline: 1px solid rgba(0,0,0,.5); box-shadow: 0 0 0 100vmax rgba(10,8,6,.55); cursor: grab; touch-action: none; }
+.crop-box.dragging { cursor: grabbing; }
+.crop-box:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.crop-box::before, .crop-box::after { content: ""; position: absolute; inset: 33.33% 0; border-block: 1px solid rgba(255,255,255,.45); pointer-events: none; }
+.crop-box::after { inset: 0 33.33%; border-block: 0; border-inline: 1px solid rgba(255,255,255,.45); }
+.crop-actions { display: flex; justify-content: flex-end; gap: 8px; }
 .modal-head { display: flex; justify-content: space-between; gap: 12px; align-items: center; font-family: var(--mono); font-size: 13px; }
 .toast { position: fixed; z-index: 99; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 20px); opacity: 0; background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-family: var(--mono); font-size: 13px; transition: .25s; pointer-events: none; max-width: calc(100vw - 32px); text-align: center; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 :root[data-skin="pixel"] .toast, :root[data-skin="ascii"] .toast { border-radius: 0; font-size: 16px; }
 
+/* Menu-bar status items: the app's own icon, a live clock */
+.status { display: flex; align-items: center; gap: 14px; color: var(--muted); font: 500 13px var(--mono); white-space: nowrap; }
+.status .clock { color: var(--fg); }
+.status svg { width: 16px; height: 16px; color: var(--accent-text, var(--accent)); }
+.status .pulse svg { animation: pulse .8s ease-out; }
+
+/* Format stickers you can toss around the hero */
+.hero { position: relative; }
+.stickers { position: absolute; inset: 0; pointer-events: none; }
+.sticker { position: absolute; pointer-events: auto; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+  font: 700 13px "Silkscreen", var(--mono); color: var(--on-c, #0B0D10); background: var(--c); padding: 6px 10px 5px; border-radius: 4px;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.45); rotate: var(--r, 0deg); animation: float 6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.sticker:active { cursor: grabbing; }
+.sticker.held { animation: none; scale: 1.08; z-index: 5; }
+@keyframes float { 50% { translate: 0 -8px; } }
+:root[data-skin]:not([data-skin="neon"]):not([data-skin="riso"]):not([data-skin="ink"]) .stickers { display: none; }
+.psst { font: 500 13px var(--mono); color: var(--muted); }
+.psst kbd { font-size: 12px; }
+
+/* Marquee */
+.marquee { overflow: hidden; border-block: 1px solid var(--line); margin-top: 28px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+.marquee .track { display: flex; width: max-content; gap: 34px; padding: 12px 0; font: 500 13px var(--mono); color: var(--muted); animation: marquee 38s linear infinite; }
+.marquee:hover .track { animation-play-state: paused; }
+.marquee b { color: var(--fg); font-weight: 600; }
+.marquee i { font-style: normal; color: var(--accent-text, var(--accent)); }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* Windows: cards that are little Mac windows */
+.win { border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; min-width: 0; }
+.win-bar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid var(--line); background: var(--panel2); font: 500 12px var(--mono); color: var(--muted); }
+.win-bar .lights { display: flex; gap: 6px; }
+.win-bar .lights i { width: 10px; height: 10px; border-radius: 50%; display: block; background: #FF5F57; }
+.win-bar .lights i:nth-child(2) { background: #FEBC2E; } .win-bar .lights i:nth-child(3) { background: #28C840; }
+.win-bar span:nth-child(2) { text-align: center; }
+.win-body { padding: 18px 20px; display: grid; gap: 10px; }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; font: 14px/1.55 var(--mono); }
+.checks li { display: grid; grid-template-columns: 3ch 1fr; gap: 8px; }
+.checks li::before { content: "[x]"; color: var(--accent-text, var(--accent)); }
+.checks li.no::before { content: "[ ]"; color: var(--muted); }
+.checks li.no { color: var(--muted); }
+.windows { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: 16px; align-items: start; }
+
+/* The page's own wheel: hold Shift anywhere */
+#buddy { position: fixed; left: 0; top: 0; z-index: 70; pointer-events: none; width: 20px; height: 20px; color: var(--accent-text, var(--accent)); opacity: 0; transition: opacity .2s; }
+#buddy.on { opacity: .9; }
+#buddy svg { width: 100%; height: 100%; animation: spin 8s linear infinite; }
+#mini { position: fixed; left: 0; top: 0; z-index: 71; pointer-events: none; width: 200px; height: 200px; margin: -100px 0 0 -100px; opacity: 0; scale: .6; transition: opacity .15s, scale .25s cubic-bezier(.2,1.5,.4,1); }
+#mini.open { opacity: 1; scale: 1; }
+#mini .ring { position: absolute; inset: 4px; border-radius: 50%; background: #0D0F14; border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); box-shadow: 0 18px 50px rgba(0,0,0,.55); }
+#mini .seg { position: absolute; left: 50%; top: 50%; width: 52px; height: 26px; margin: -13px 0 0 -26px; display: grid; place-items: center; border-radius: 6px;
+  font: 700 11px var(--mono); color: #ECEEF2; transform: rotate(var(--a)) translateY(-67px) rotate(calc(-1 * var(--a))); transition: background .1s, color .1s, scale .15s; }
+#mini .seg.hot { background: var(--c); color: #0B0D10; scale: 1.12; }
+#mini .core { position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; display: grid; place-items: center; text-align: center;
+  font: 600 10px/1.2 var(--mono); color: #A9AFBC; background: #1A1D24; }
+.spark { position: fixed; z-index: 72; width: 6px; height: 6px; pointer-events: none; background: var(--c); border-radius: 1px; animation: spark .7s ease-out forwards; }
+@keyframes spark { to { transform: translate(var(--dx), var(--dy)) rotate(200deg); opacity: 0; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Section titles: one idea per screen */
+.sec-title { margin-bottom: 14px; }
+.sec-sub { color: var(--muted); font-size: 18px; max-width: 52ch; margin-bottom: 36px; }
+
+/* Numbers that count up */
+.numbers { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; padding-block: 28px 8px; border-block: 1px solid var(--line); }
+.num { padding: 18px 16px; border-left: 1px solid var(--line); min-width: 0; }
+.num:first-child { border-left: 0; }
+.num b { font-family: var(--display); font-weight: var(--display-weight); font-size: clamp(30px, 3.6vw, 46px); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.num .unit { font-size: 18px; color: var(--muted); margin-left: 4px; }
+.num p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+.num-note { grid-column: 1 / -1; color: var(--muted); font-size: 13px; padding: 10px 16px 16px; }
+
+/* Scroll story: the picture follows the step you are reading */
+.story-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(24px, 5vw, 72px); align-items: start; }
+.story-stage { position: sticky; top: calc(76px + env(safe-area-inset-top, 0px)); height: min(520px, 70vh); border-radius: 22px; background: var(--plate);
+  border: 1px solid var(--line); box-shadow: var(--shadow); overflow: hidden; }
+.story-steps { list-style: none; margin: 0; padding: 0; }
+.story-step { min-height: 62vh; display: grid; align-content: center; gap: 10px; padding-block: 24px; }
+.story-step h3 { transition: color .35s; }
+.story-step:not(.on) h3, .story-step:not(.on) .n { color: var(--muted); }
+.story-step .n { font-family: var(--mono); font-size: 13px; color: var(--accent-text, var(--accent)); }
+.story-step h3 { font-size: clamp(30px, 3.6vw, 44px); font-weight: var(--display-weight); letter-spacing: var(--display-track); }
+.story-step p { color: var(--muted); font-size: 18px; }
+.stage { position: absolute; inset: 0; }
+.st-finder { position: absolute; inset: 24px 24px auto; height: 56%; border-radius: 12px; background: #1B1E24; border: 1px solid rgba(255,255,255,.08); }
+.st-finder::before { content: ""; position: absolute; left: 12px; top: 11px; width: 40px; height: 10px; background: radial-gradient(circle at 5px 5px, #FF5F57 4px, transparent 5px), radial-gradient(circle at 20px 5px, #FEBC2E 4px, transparent 5px), radial-gradient(circle at 35px 5px, #28C840 4px, transparent 5px); }
+.st-file { position: absolute; display: grid; justify-items: center; gap: 6px; font: 12px var(--mono); color: #ECEEF2; }
+.st-file i { width: 64px; height: 64px; border-radius: 12px; display: block; box-shadow: 0 8px 20px rgba(0,0,0,.4);
+  background: linear-gradient(180deg, #2B2D6E, #F06A4A 58%, #FFC27A 74%, #2A1D44 75%); }
+.st-file.orig { left: 10%; top: 16%; }
+.st-file.ghost { left: 18%; top: 26%; opacity: 0; translate: -50% -50%; }
+.st-file.ghost i { width: 52px; height: 52px; opacity: .85; }
+.st-file.result { left: 30%; top: 16%; opacity: 0; transform: scale(.4); transition: opacity .4s .3s, transform .5s .3s cubic-bezier(.2,1.5,.4,1); }
+.st-file.result i { filter: saturate(.9) contrast(1.05); }
+.st-cursor { position: absolute; width: 18px; height: 24px; left: 58%; top: 56%; opacity: 0; z-index: 3;
+  background: #FFFFFF; clip-path: polygon(0 0, 0 78%, 22% 62%, 38% 100%, 52% 94%, 37% 58%, 66% 58%); filter: drop-shadow(0 2px 3px rgba(0,0,0,.5)); }
+.st-wheel { position: absolute; width: min(64%, 360px); height: auto; aspect-ratio: 1; left: 58%; top: 56%; translate: -50% -50%; opacity: 0; transform: scale(.55); transform-origin: 50% 50%;
+  transition: opacity .25s, transform .45s cubic-bezier(.2,1.4,.4,1); filter: drop-shadow(0 20px 40px rgba(0,0,0,.45)); z-index: 2; }
+.st-key { position: absolute; right: 22px; bottom: 22px; opacity: 0; transition: opacity .3s; }
+.st-key kbd { background: #1B1E24; color: #ECEEF2; border-color: rgba(255,255,255,.2); font-size: 15px; padding: 8px 14px; }
+.st-caption { position: absolute; left: 22px; bottom: 22px; font: 13px var(--mono); color: #A9AFBC; }
+.stage[data-step="1"] .st-cursor, .stage[data-step="1"] .st-file.ghost { opacity: 1; animation: dragmove 2.8s ease-in-out infinite; }
+.stage[data-step="2"] .st-cursor { opacity: 1; }
+.stage[data-step="2"] .st-wheel { opacity: 1; transform: scale(1); }
+.stage[data-step="2"] .st-key { opacity: 1; }
+.stage[data-step="2"] .st-key kbd { animation: press 1.6s ease-in-out infinite; }
+.stage[data-step="2"] .st-finder, .stage[data-step="3"] .st-finder { opacity: .35; }
+.stage[data-step="3"] .st-wheel { opacity: 0; transform: scale(.2); }
+.stage[data-step="3"] .st-file.result { opacity: 1; transform: scale(1); }
+@keyframes dragmove { 0%, 8% { left: 18%; top: 26%; } 62%, 100% { left: 58%; top: 56%; } }
+
+/* Feature explorer: tabs that switch real product shots */
+.explorer { display: grid; gap: 22px; }
+.ex-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.ex-tab { position: relative; overflow: hidden; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 9px 16px; cursor: pointer; font: 500 14px var(--body); }
+.ex-tab[aria-selected="true"] { color: var(--fg); border-color: color-mix(in srgb, var(--fg) 30%, transparent); }
+.ex-tab .bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: var(--accent); transform: scaleX(0); transform-origin: 0 50%; }
+.ex-tab[aria-selected="true"] .bar.run { animation: tabbar var(--dur, 7s) linear forwards; }
+@keyframes tabbar { to { transform: scaleX(1); } }
+:root[data-skin="pixel"] .ex-tab, :root[data-skin="ascii"] .ex-tab, :root[data-skin="win95"] .ex-tab, :root[data-skin="news"] .ex-tab { border-radius: 0; }
+.ex-panel { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: clamp(20px, 4vw, 56px); align-items: center; }
+.ex-panel[hidden] { display: none; }
+.ex-copy { display: grid; gap: 14px; align-content: start; }
+.ex-copy h3 { font-size: clamp(26px, 2.8vw, 36px); font-weight: var(--display-weight); letter-spacing: var(--display-track); }
+.ex-copy p { color: var(--muted); font-size: 17px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.chip-row li { font: 500 12px var(--mono); padding: 4px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg); background: var(--panel); }
+.shots-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
+.shots-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.shots-3 figcaption, .shots-2 figcaption { font: 12px var(--mono); color: var(--muted); padding: 8px 2px 0; }
+.ex-panel.enter .plate, .ex-panel.enter .shots-2, .ex-panel.enter .shots-3 { animation: rise .5s cubic-bezier(.2,.8,.2,1); }
+@keyframes rise { from { transform: translateY(14px) scale(.985); } }
+
+/* Use cases */
+.uses { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(20px, 4vw, 48px); align-items: start; }
+.use-tabs { display: grid; gap: 6px; }
+.use-tab { text-align: left; border: 1px solid transparent; background: transparent; border-radius: 14px; padding: 14px 16px; cursor: pointer; color: var(--muted); font: 500 17px var(--body); display: flex; justify-content: space-between; gap: 10px; }
+.use-tab[aria-selected="true"] { background: var(--panel); border-color: var(--line); color: var(--fg); box-shadow: var(--shadow); }
+.use-card { border-radius: 22px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); padding: clamp(18px, 3vw, 32px); display: grid; gap: 18px; min-height: 280px; }
+.flow { display: grid; gap: 12px; }
+.flow > * { animation: rise .45s cubic-bezier(.2,.8,.2,1) both; }
+.flow > *:nth-child(2) { animation-delay: .08s; } .flow > *:nth-child(3) { animation-delay: .16s; }
+.file-chip { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: var(--panel2); border: 1px solid var(--line); min-width: 0; }
+.file-chip i { width: 38px; height: 38px; border-radius: 9px; flex: none; background: var(--plate); display: grid; place-items: center; font: 700 11px var(--mono); color: var(--mark); font-style: normal; }
+.file-chip b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-chip span { color: var(--muted); font-size: 13px; font-family: var(--mono); }
+.file-chip.result { border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+.via { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; padding-left: 18px; }
+.via kbd { font-size: 12px; }
+.use-line { color: var(--muted); font-size: 16px; }
+
+/* Changelog */
+.release { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 24px; padding-block: 26px; border-top: 1px solid var(--line); }
+.rel-meta { display: grid; gap: 4px; align-content: start; }
+.rel-meta b { font: 600 20px var(--display); letter-spacing: -.02em; }
+.rel-meta time { color: var(--muted); font-size: 14px; }
+.release ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.release li::marker { color: var(--accent-text, var(--accent)); }
+
+/* Download */
+.get { text-align: center; display: grid; justify-items: center; gap: 16px; padding-block: clamp(56px, 8vw, 96px); }
+.get .glyph { width: 56px; height: 56px; }
+.get p { color: var(--muted); max-width: 54ch; }
+#kgrid { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+:root[data-skin]:not([data-skin="neon"]):not([data-skin="riso"]):not([data-skin="ink"]) #kgrid { display: none; }
+
 @media (max-width: 960px) {
+  .windows { grid-template-columns: minmax(0, 1fr); }
+  .status .clock { display: none; }
+  .story-grid, .ex-panel, .uses { grid-template-columns: minmax(0, 1fr); }
+  .story-stage { height: 300px; z-index: 2; }
+  .story-step { min-height: 46vh; }
+  .numbers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .num:nth-child(4) { border-left: 0; }
+  .release { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .nav .links { display: none; }
   .hero, .install, .builder, .lab { grid-template-columns: minmax(0, 1fr); }
+  .hero-wheel { width: min(440px, 92%); margin-top: 8px; }
+  .hero .stickers { display: none; } /* they frame the two-column hero; stacked, they'd sit on the wheel */
+  .nav .dl { white-space: nowrap; padding-inline: 12px; }
+  .style-pop { position: fixed; top: 64px; left: 16px; right: 16px; width: auto; max-height: calc(100dvh - 80px); overflow-y: auto; overscroll-behavior: contain; }
   .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .links { display: none; }
   .grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -359,64 +693,96 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 @media (max-width: 560px) {
   .grid4, .skin-cards, .grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .grid3 { grid-template-columns: minmax(0, 1fr); }
+  .numbers { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .num:nth-child(odd) { border-left: 0; } .num:nth-child(4) { border-left: 1px solid var(--line); }
+  .shots-3 { grid-template-columns: 1fr; }
+  .nav .style-btn .lbl-text { display: none; }
+  .stickers { display: none; }
   .skins { overflow-x: auto; flex-wrap: nowrap; max-width: 100%; padding-bottom: 2px; }
   .skins { margin-left: 0; }
   .files { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
 }
 @media (prefers-reduced-motion: reduce) {
+  .marquee .track { animation: none; flex-wrap: wrap; width: auto; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   html { scroll-behavior: auto; }
 }
 </style>
 </head>
 <body>
+<script>try { var l = localStorage.getItem("circularity-style-pick"); document.documentElement.dataset.skin = ["riso","ink","neon","aqua","ascii","pixel","glass","win95","blueprint","news"].indexOf(l) >= 0 ? l : (matchMedia("(prefers-color-scheme: dark)").matches ? "ink" : "riso"); } catch (e) { document.documentElement.dataset.skin = matchMedia("(prefers-color-scheme: dark)").matches ? "ink" : "riso"; }</script>
+
 <a class="skip" href="#desk">Skip to the demo</a>
+<canvas id="kgrid" aria-hidden="true"></canvas>
 <div class="blobs" aria-hidden="true"><i></i><i></i><i></i></div>
 
-<header class="top">
+<header class="nav" id="nav">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="Circularity home">
-      <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true">
-        <path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/>
-      </svg>
+    <a class="brand" href="#top" aria-label="Circularity, back to the top">
+      <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg>
       Circularity
     </a>
     <nav class="links" aria-label="Sections">
-      <a href="#desk">Try it</a><a href="#theme">Theme builder</a><a href="#lab">Format lab</a><a href="#play">Game</a>
+      <a href="#how">How it works</a><a href="#features">Features</a><a href="#theme">Studio</a><a href="#lab">Format lab</a><a href="#changelog">Changelog</a>
     </nav>
-    <nav class="skins" aria-label="Skin">
-      <button class="pill" data-skin-btn="halo">Halo</button>
-      <button class="pill" data-skin-btn="aqua">Aqua</button>
-      <button class="pill" data-skin-btn="ascii">ASCII</button>
-      <button class="pill" data-skin-btn="pixel">Pixel</button>
-      <button class="pill" data-skin-btn="glass">Glass</button>
-      <button class="pill" data-skin-btn="win95">Win95</button>
-      <button class="pill" data-skin-btn="blueprint">Blueprint</button>
-      <button class="pill" data-skin-btn="news">Paper</button>
-    </nav>
-    <button class="icon-btn" id="soundBtn" aria-pressed="false" title="Sound" aria-label="Sound off">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWaves" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" opacity=".25"/></svg>
-    </button>
+    <div class="right">
+      <div class="status" aria-hidden="true"><span id="navGlyph" title="Circularity in the menu bar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg></span><span class="clock" id="menuClock">9:41</span></div>
+      <div class="style-menu">
+        <button class="icon-btn style-btn" id="styleBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="stylePop"><span class="style-dot" aria-hidden="true"></span><span class="lbl-text">Style</span></button>
+        <div class="style-pop" id="stylePop" hidden role="group" aria-label="Page style">
+          <button class="style-opt" type="button" data-skin-btn="riso"><i style="background:linear-gradient(135deg,#FF4FA0 0 50%,#2F5BFF 50%)"></i><span>Riso<br><small>paper · light Macs</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="ink"><i style="background:linear-gradient(135deg,#14110D 0 50%,#FF4FA0 50%)"></i><span>Riso Ink<br><small>ink · dark Macs</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="neon"><i style="background:conic-gradient(#C6FF3D 0 60deg,#14171D 60deg)"></i><span>Neon<br><small>lime on graphite</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="aqua"><i style="background:radial-gradient(circle at 50% 30%,#D5ECFF,#1A5CC0)"></i><span>Aqua<br><small>2001 gel</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="ascii"><i style="background:#040704"></i><span>ASCII<br><small>terminal</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="pixel"><i style="background:#FFCC33"></i><span>Pixel<br><small>8-bit</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="glass"><i style="background:linear-gradient(135deg,#5B4BFF,#FF4FB0,#00C2FF)"></i><span>Liquid glass<br><small>frosted</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="win95"><i style="background:#008080"></i><span>Windows 95<br><small>bevels</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="blueprint"><i style="background:#123E7C"></i><span>Blueprint<br><small>drafting</small></span></button>
+          <button class="style-opt" type="button" data-skin-btn="news"><i style="background:#EEECE6"></i><span>Newspaper<br><small>ink on paper</small></span></button>
+        </div>
+      </div>
+      <button class="icon-btn" id="soundBtn" type="button" aria-pressed="false" title="Sound" aria-label="Sound off">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path id="soundWaves" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11" opacity=".25"/></svg>
+      </button>
+      <a class="btn primary dl" href="#install">Download</a>
+    </div>
   </div>
+  <span class="progress" aria-hidden="true"></span>
 </header>
 
 <main id="top">
-  <div class="wrap hero">
-    <div>
-      <div class="eyebrow">Mac menu bar app · macOS 13+</div>
-      <h1 style="margin-top:14px">Convert files <span class="accent">without opening</span> anything.</h1>
-      <p class="lede">Drag a file, tap Shift, and a wheel of formats opens around your pointer. Let go on one. The new file lands next to the original.</p>
-      <ol class="steps">
-        <li><b>01</b><span>Press on a picture in the window and start dragging.</span></li>
-        <li><b>02</b><span>Tap <kbd>⇧ Shift</kbd>, shake the pointer, or just hold still.</span></li>
-        <li><b>03</b><span>Let go on <b class="mono" style="color:inherit">JPG</b>, rest on <b class="mono" style="color:inherit">••• MORE</b> for the fun ones.</span></li>
-      </ol>
-      <div class="cta-row">
-        <a class="btn primary" href="#install">Get Circularity</a>
-        <a class="btn" href="#play">Play the fling game</a>
-      </div>
+  <section class="wrap hero" aria-labelledby="heroTitle">
+    <div class="stickers" id="stickers" aria-hidden="true">
+      <span class="sticker" style="--c:var(--s-heic);left:53%;top:12%;--r:-8deg">HEIC</span>
+      <span class="sticker" style="--c:var(--s-png);left:91%;top:20%;--r:6deg;--d:-1.5s">PNG</span>
+      <span class="sticker" style="--c:var(--s-jpg);left:52%;top:74%;--r:-4deg;--d:-3s">JPG</span>
+      <span class="sticker" style="--c:var(--s-pdf);left:94%;top:58%;--r:9deg;--d:-2s">PDF</span>
+      <span class="sticker" style="--c:var(--s-webp);--on-c:var(--on-webp, #0B0D10);left:66%;top:2%;--r:4deg;--d:-4s">WEBP</span>
+      <span class="sticker" style="--c:var(--s-avif);left:80%;top:3%;--r:-3deg;--d:-5s">AVIF</span>
     </div>
+    <div class="hero-copy">
+      <a class="announce" href="#changelog"><span class="tag">New in 0.3</span> Excel and PowerPoint to PDF →</a>
+      <h1 id="heroTitle">Convert files<br><span class="hl">mid-drag.</span></h1>
+      <p class="lede">Drag a picture, PDF or document, tap Shift, and let go on a format. The new file lands next to the original. Nothing opens, nothing is uploaded.</p>
+      <div class="cta-row">
+        <a class="btn primary dl" href="#install">Download for Mac</a>
+        <a class="btn" href="#desk">Try it below</a>
+      </div>
+      <p class="req">Free · macOS 13 or later · Apple silicon and Intel<span id="dmgSize"> · 3.6 MB</span></p>
+      <p class="psst livekeys" id="psst">psst: hold <kbd data-key="Shift">⇧ Shift</kbd> anywhere on this page, or press <kbd data-key="Control">⌃</kbd><kbd data-key="Alt">⌥</kbd><kbd data-key="Meta">⌘</kbd> and watch them light up. <span id="keysHint"></span></p>
+    </div>
+    <figure class="hero-wheel">
+      <img src="assets/wheel-halo-hero.png" width="900" height="900" fetchpriority="high"
+           alt="The Circularity wheel open around an iPhone photo, with JPG lit and the centre reading “Convert to JPG, small, best for photos”.">
+      <figcaption>the real wheel, rendered by the app</figcaption>
+    </figure>
+  </section>
 
+  <div class="wrap demo-wrap cs" id="cs">
+    <h2 class="cs-title" id="csTitle">Try it. <span class="hl">It's not a video.</span></h2>
+    <div class="cs-stage">
+    <div class="cs-card" id="csCard">
     <div class="desk" id="desk" aria-label="Try it: a pretend Mac desktop">
       <div class="desk-bar">
         <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -427,7 +793,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       </div>
       <label class="cmd" for="cmdInput">
         <span class="k">⌘K</span>
-        <input id="cmdInput" autocomplete="off" spellcheck="false" placeholder="try: webp · 50kb · 800w · ascii · pixel · pdf">
+        <input id="cmdInput" autocomplete="off" spellcheck="false" placeholder="try: webp · 50kb · 800w · pdf · tiff">
       </label>
       <div class="cmd-hint" id="cmdHint">Runs on the selected file. Press ↩.</div>
       <div class="files" id="files">
@@ -435,11 +801,66 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       </div>
       <div class="stats" aria-live="polite"><span>converted <b id="statCount">0</b></span><span>saved <b id="statSaved">0 KB</b></span><span id="statHint">click a file to open the wheel without dragging</span></div>
     </div>
+    </div>
+    </div>
+    <p class="demo-cap">This is the real thing, in your browser: press on a picture, drag a little, tap ⇧ Shift, let go on a format.</p>
   </div>
+  <div class="marquee" aria-hidden="true"><div class="track">
+    <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word · excel · powerpoint → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
+    <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word · excel · powerpoint → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
+  </div></div>
+
+  <section class="wrap" aria-label="Measured numbers" style="padding-block: 40px 24px">
+    <div class="numbers">
+      <div class="num"><b data-count="12.5" data-dec="1">12.5</b><span class="unit">MB</span><p>memory at rest</p></div>
+      <div class="num"><b data-count="0.02" data-dec="2">0.02</b><span class="unit">%</span><p>CPU when idle</p></div>
+      <div class="num"><b data-count="0" data-dec="0">0</b><p>permissions to grant</p></div>
+      <div class="num"><b data-count="0" data-dec="0">0</b><p>files uploaded, ever</p></div>
+      <div class="num"><b data-count="0.7" data-dec="1">0.7</b><span class="unit">s</span><p>to start</p></div>
+      <p class="num-note">Measured with the app's own performance report on a MacBook Air, November 2026.</p>
+    </div>
+  </section>
+
+  <section class="wrap" id="how" aria-labelledby="howTitle">
+    <h2 class="sec-title" id="howTitle">How it works</h2>
+    <p class="sec-sub">Three moves, wherever a file is: Finder, the desktop, Mail, a browser download.</p>
+    <div class="story-grid">
+      <div class="story-stage" aria-hidden="true">
+        <div class="stage" id="stage" data-step="1">
+          <div class="st-finder"></div>
+          <div class="st-file orig"><i></i>IMG_2041.HEIC</div>
+          <div class="st-file ghost"><i></i></div>
+          <div class="st-cursor"></div>
+          <img class="st-wheel" src="assets/wheel-halo-hover-jpg.png" alt="" width="760" height="760">
+          <div class="st-key"><kbd>⇧ Shift</kbd></div>
+          <div class="st-file result"><i></i>IMG_2041.jpg · 1.1 MB</div>
+          <div class="st-caption" id="stageCaption">Drag</div>
+        </div>
+      </div>
+      <ol class="story-steps">
+        <li class="story-step on" data-step="1"><span class="n">01</span><h3>Drag.</h3><p>Press on any file and start dragging. Several at once work too, and so do files from other apps.</p></li>
+        <li class="story-step" data-step="2"><span class="n">02</span><h3>Tap Shift.</h3><p>A wheel of formats opens around your pointer. Shaking the pointer works too. No Accessibility permission, no key logging.</p></li>
+        <li class="story-step" data-step="3"><span class="n">03</span><h3>Let go.</h3><p>Release on JPG and IMG_2041.jpg appears next to the original a moment later. The original is never changed.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="morph" id="orbit" aria-labelledby="orbitTitle">
+    <div class="morph-pin" id="morphPin">
+      <div class="morph-intro" id="morphIntro">
+        <h2 id="orbitTitle">One wheel.<br><span class="hl">Every way out.</span></h2>
+        <p class="morph-hint">scroll ↓</p>
+      </div>
+      <div class="morph-copy" id="morphCopy">
+        <h3>Twenty ways out</h3>
+        <p>Images, PDFs and documents, plus Compress, Resize, Crop, Combine and Cut out. Hover or tap a card to flip it.</p>
+      </div>
+      <ul class="morph-cards" id="morphCards" aria-label="Formats and tools"></ul>
+    </div>
+  </section>
 
   <section class="wrap" id="ways">
     <div class="section-head">
-      <div class="eyebrow">No permissions needed</div>
       <h2>Four ways to open the wheel</h2>
     </div>
     <div class="grid4">
@@ -456,7 +877,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <div class="card">
         <div class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd class="press">C</kbd></div>
         <h3>⌃⌥C in Finder</h3>
-        <p>Select files and press it. The wheel opens where your pointer is.</p>
+        <p>Select files and press Control-Option-C. The wheel opens where your pointer is.</p>
       </div>
       <div class="card">
         <div class="keys"><kbd>⌃</kbd><kbd>⌥</kbd><kbd class="press">Space</kbd></div>
@@ -466,70 +887,95 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     </div>
   </section>
 
-  <section class="wrap" id="new">
-    <div class="section-head">
-      <div class="eyebrow">New in 0.2</div>
-      <h2>Small things that feel big</h2>
-    </div>
-    <div class="grid3">
-      <div class="card"><h3>Cut out <span class="tag">macOS 14+</span></h3><p>Removes the background from a photo with Apple's on-device subject lifting and saves a transparent PNG.</p></div>
-      <div class="card"><h3>Drop shelf</h3><p>The result floats next to your pointer. Drag it straight into Mail, Slack or a chat, or copy it with one click.</p></div>
-      <div class="card"><h3>Before and after</h3><p>Hover JPG, HEIC or Compress and a magnifier shows a piece of your picture, half as it is and half as it will be.</p></div>
-      <div class="card"><h3>Your own buttons</h3><p>Choose what sits in each of the six spots on the wheel. Everything else waits under More.</p></div>
-      <div class="card"><h3>Milestones</h3><p>Your first conversion, 1 GB saved, 10,000 files. A small celebration in the menu bar each time.</p></div>
-      <div class="card"><h3>Themes from here</h3><p>Build a theme below, copy it, and paste it into the app in one click.</p></div>
+  <section class="wrap" id="features" aria-labelledby="featTitle">
+    <h2 class="sec-title" id="featTitle">One wheel, a lot inside</h2>
+    <p class="sec-sub">Real pictures from the app. Pick a tab, or let them play.</p>
+    <div class="explorer" id="explorer">
+      <div class="ex-tabs" role="tablist" aria-label="Features">
+        <button class="ex-tab" role="tab" type="button" id="ex-t0" aria-controls="ex-p0" aria-selected="true">The wheel<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t1" aria-controls="ex-p1" aria-selected="false" tabindex="-1">More<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t2" aria-controls="ex-p2" aria-selected="false" tabindex="-1">Cut out<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t3" aria-controls="ex-p3" aria-selected="false" tabindex="-1">Menu bar panel<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t4" aria-controls="ex-p4" aria-selected="false" tabindex="-1">Settings<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t5" aria-controls="ex-p5" aria-selected="false" tabindex="-1">Three looks<span class="bar"></span></button>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p0" aria-labelledby="ex-t0">
+        <div class="ex-copy"><h3>Six buttons around your pointer.</h3><p>The formats that fit what you're holding, plus Compress and Resize. Hover one and the centre tells you the size you'll get.</p>
+          <ul class="chip-row"><li>PNG</li><li>JPG</li><li>HEIC</li><li>AVIF</li><li>WebP</li><li>TIFF</li><li>GIF</li><li>BMP</li><li>PDF</li><li>TXT</li><li>DOCX</li><li>HTML</li><li>XLSX → PDF</li><li>PPTX → PDF</li></ul></div>
+        <figure class="plate tilt"><img src="assets/wheel-halo.jpg" alt="The Halo wheel with JPG highlighted: the centre reads Convert to JPG, small, best for photos" width="820" height="820" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p1" aria-labelledby="ex-t1" hidden>
+        <div class="ex-copy"><h3>Rest on More for the rest.</h3><p>Crop, Cut out, one PDF from many pictures or one per picture, and the formats that didn't fit on the ring. Buttons you save from Resize or Compress show up here too.</p></div>
+        <figure class="plate tilt"><img src="assets/wheel-halo-more.jpg" alt="The More fan open under the wheel with Crop, Cut, PDF, BMP, GIF and TIFF" width="900" height="900" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p2" aria-labelledby="ex-t2" hidden>
+        <div class="ex-copy"><h3>Cut out the background.</h3><p>Apple's on-device subject lifting keeps the subject and makes everything else transparent, saved as a PNG. Nothing leaves your Mac. Needs macOS 14 or later.</p></div>
+        <figure class="plate tilt"><img src="assets/cutout.jpg" alt="Before and after: an orange mug on a table, then the same mug on a transparent background" width="1500" height="570" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p3" aria-labelledby="ex-t3" hidden>
+        <div class="ex-copy"><h3>A panel in the menu bar.</h3><p>Drop files on a preset, type commands like <span class="mono">50kb</span> or <span class="mono">1920w</span> after ⌘K, and find every result in Recent. Dark, light, or three layouts.</p>
+          <ul class="chip-row"><li>⌃⌥Space</li><li>⌘K</li><li>&lt; 2mb</li><li>1920w</li><li>no gps</li></ul></div>
+        <div class="shots-2">
+          <figure class="plate tilt" style="margin:0"><img src="assets/panel-dark.jpg" alt="The Stack+ panel in dark: stats, a job in progress, preset tiles and recent results" width="600" height="1100" loading="lazy"></figure>
+          <figure class="plate tilt" style="margin:0"><img src="assets/panel-light.jpg" alt="The Tabs panel in light: today, space saved, quick presets" width="731" height="1100" loading="lazy"></figure>
+        </div>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p4" aria-labelledby="ex-t4" hidden>
+        <div class="ex-copy"><h3>Settings that show what they do.</h3><p>Layouts, colours, sizes, shortcuts, output folder and naming. Every change previews live and applies at once.</p></div>
+        <figure class="plate tilt"><img src="assets/settings.jpg" alt="The Settings window on the General page: startup, shortcuts and help" width="1500" height="1108" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p5" aria-labelledby="ex-t5" hidden>
+        <div class="ex-copy"><h3>Halo, Ring or Orbit.</h3><p>The same wheel in three designs. Halo is the default; Ring sits on frosted glass; Orbit floats separate buttons.</p></div>
+        <div class="shots-3">
+          <figure style="margin:0"><div class="plate tilt"><img src="assets/wheel-halo.jpg" alt="Halo layout" width="820" height="820" loading="lazy"></div><figcaption>Halo</figcaption></figure>
+          <figure style="margin:0"><div class="plate tilt"><img src="assets/wheel-ring.jpg" alt="Ring layout" width="820" height="820" loading="lazy"></div><figcaption>Ring</figcaption></figure>
+          <figure style="margin:0"><div class="plate tilt"><img src="assets/wheel-orbit.jpg" alt="Orbit layout" width="820" height="820" loading="lazy"></div><figcaption>Orbit</figcaption></figure>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section class="wrap" id="theme">
+  <section class="wrap" id="uses" aria-labelledby="usesTitle">
+    <h2 class="sec-title" id="usesTitle">What will you convert?</h2>
+    <p class="sec-sub">Pick one. These are typical examples, sizes included.</p>
+    <div class="uses">
+      <div class="use-tabs" role="tablist" aria-label="Examples" id="useTabs"></div>
+      <div class="use-card" role="tabpanel" id="usePanel" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <section class="wrap" id="new">
     <div class="section-head">
-      <div class="eyebrow">Theme builder</div>
-      <h2>Build your wheel, then paste it into the app</h2>
-      <p style="color:var(--muted)">This preview draws the app's real layouts. When you like it, copy the theme and in Circularity open Settings → Appearance → <b>Paste theme</b>.</p>
+      <h2>Small things that feel big</h2>
     </div>
-    <div class="builder">
-      <div class="tb-card tb-preview">
-        <canvas id="tbCanvas" width="560" height="560" tabindex="0" role="img" aria-label="Preview of the wheel"></canvas>
-        <div class="tb-caption" id="tbCaption" aria-live="polite">Hover the wheel, or use the arrow keys</div>
-      </div>
-      <div class="tb-card" id="tbControls">
-        <div class="tb-group"><div class="lbl" id="tbThemeLbl">Start from a theme</div><div class="chips" role="group" aria-labelledby="tbThemeLbl" id="tbThemes"></div></div>
-        <div class="tb-group"><div class="lbl" id="tbAccentLbl">Accent</div>
-          <div class="chips" role="group" aria-labelledby="tbAccentLbl" id="tbSwatches"></div>
-          <label class="tint-row"><input type="color" id="tbAccent" value="#c6ff3d"> Any colour</label></div>
-        <div class="tb-group"><div class="lbl" id="tbLayoutLbl">Layout</div><div class="chips" role="group" aria-labelledby="tbLayoutLbl">
-          <button class="pill" type="button" data-tb-layout="halo">Halo</button><button class="pill" type="button" data-tb-layout="ring">Ring</button><button class="pill" type="button" data-tb-layout="orbit">Orbit</button></div></div>
-        <div class="tb-group"><div class="lbl" id="tbSchemeLbl">Wheel colours <span>Halo is always dark</span></div><div class="chips" role="group" aria-labelledby="tbSchemeLbl">
-          <button class="pill" type="button" data-tb-scheme="auto">Automatic</button><button class="pill" type="button" data-tb-scheme="dark">Dark</button><button class="pill" type="button" data-tb-scheme="light">Light</button><button class="pill" type="button" data-tb-scheme="system">Match macOS</button></div></div>
-        <div class="tb-group"><label class="lbl" for="tbGlass">Glass (Ring) <output id="tbGlassOut"></output></label><input type="range" id="tbGlass" min="0" max="1" step="0.05"></div>
-        <div class="tb-group"><div class="lbl">Tint by kind</div>
-          <div class="tint-row"><label><input type="checkbox" id="tbTintImagesOn"> Image formats</label><input type="color" id="tbTintImages" value="#5ce1ff" aria-label="Image formats tint"></div>
-          <div class="tint-row"><label><input type="checkbox" id="tbTintToolsOn"> Tools (compress, resize)</label><input type="color" id="tbTintTools" value="#ff5ca8" aria-label="Tools tint"></div>
-          <div class="tint-row"><label><input type="checkbox" id="tbTintDocsOn"> PDF and document formats</label><input type="color" id="tbTintDocs" value="#ffb020" aria-label="PDF and document formats tint"></div></div>
-        <div class="tb-group"><label class="lbl" for="tbScale">Wheel size <output id="tbScaleOut"></output></label><input type="range" id="tbScale" min="0.7" max="1.4" step="0.05"></div>
-        <div class="tb-group"><label class="lbl" for="tbThick">Ring thickness <output id="tbThickOut"></output></label><input type="range" id="tbThick" min="0.8" max="1.2" step="0.05"></div>
-        <div class="tb-group"><label class="lbl" for="tbGap">Gap between buttons <output id="tbGapOut"></output></label><input type="range" id="tbGap" min="1" max="8" step="1"></div>
-        <div class="tb-group"><label class="lbl" for="tbOrb">Centre size <output id="tbOrbOut"></output></label><input type="range" id="tbOrb" min="0.85" max="1.15" step="0.05"></div>
-        <div class="tb-group"><label class="lbl" for="tbLabel">Label size <output id="tbLabelOut"></output></label><input type="range" id="tbLabel" min="0.85" max="1.3" step="0.05"></div>
-        <div class="tb-group"><div class="lbl" id="tbFontLbl">Font <span>Halo keeps mono</span></div><div class="chips" role="group" aria-labelledby="tbFontLbl">
-          <button class="pill" type="button" data-tb-font="rounded">Rounded</button><button class="pill" type="button" data-tb-font="default">System</button><button class="pill" type="button" data-tb-font="mono">Mono</button>
-          <button class="pill" type="button" data-tb-case="title">Title case</button><button class="pill" type="button" data-tb-case="upper">UPPER</button></div></div>
-        <div class="tb-group"><div class="lbl" id="tbPanelLbl">Menu bar panel</div><div class="chips" role="group" aria-labelledby="tbPanelLbl">
-          <button class="pill" type="button" data-tb-panel="auto">Automatic</button><button class="pill" type="button" data-tb-panel="dark">Dark</button><button class="pill" type="button" data-tb-panel="light">Light</button></div></div>
-        <div class="tb-export">
-          <button class="btn primary" type="button" id="tbCopy">Copy theme</button>
-          <button class="btn" type="button" id="tbShow" aria-expanded="false" aria-controls="tbJSON">Show the code</button>
-          <button class="btn" type="button" id="tbReset">Reset</button>
-        </div>
-        <p class="tb-status" id="tbStatus" role="status"></p>
-        <textarea id="tbJSON" readonly hidden aria-label="Theme code to paste into Circularity"></textarea>
-      </div>
+    <div class="grid3 feel" role="list">
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">01</span><h3>Quiet by default</h3><p>Update checks stay off unless you turn them on, and the app sleeps until you drag a file. No account, no sign-in.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">02</span><h3>Drop shelf</h3><p>The result floats next to your pointer. Drag it straight into Mail, Slack or a chat, or copy it with one click.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">03</span><h3>Before and after</h3><p>Hover JPG, HEIC or Compress and a magnifier shows a piece of your picture, half as it is and half as it will be.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">04</span><h3>Your own buttons</h3><p>Choose what sits in each of the six spots on the wheel. Everything else waits under More.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">05</span><h3>Milestones</h3><p>Your first conversion, 1 GB saved, 10,000 files. A small celebration in the menu bar each time.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">06</span><h3>Themes from here</h3><p>Design a wheel in the Wheel Studio below, copy it, and paste it into the app in one click.</p></div>
     </div>
+  </section>
+
+  <section class="wrap" id="theme" aria-labelledby="studioTitle">
+    <a class="studio-teaser" href="studio.html">
+      <div class="stz-copy">
+        <h2 id="studioTitle">Wheel Studio</h2>
+        <p>A whole page for one wheel, and every knob is something the app really draws: fills from stickers to outline, colours, rounded corners, glow, a wheel that breathes, a ring of orbiting dots, a twirl as it opens, sparks. Paste it into Circularity and it looks exactly like this.</p>
+        <ul class="stz-list" aria-label="Some of the knobs">
+          <li>38 knobs, all in the app</li><li>19 presets</li><li>🎲 surprise me</li><li>breathe · orbit · twirl</li>
+        </ul>
+        <span class="btn primary">Open the Studio →</span>
+      </div>
+      <div class="stz-frame" aria-hidden="true">
+        <iframe src="studio.html#embed" title="Wheel Studio preview" loading="lazy" tabindex="-1"></iframe>
+      </div>
+    </a>
   </section>
 
   <section class="wrap" id="lab">
     <div class="section-head">
-      <div class="eyebrow">Format lab</div>
       <h2>Same picture, every format</h2>
       <p style="color:var(--muted)">Pick a picture (or drop your own on the desktop above), move the quality, then drag across the comparison to see what each format really does. Everything is encoded in your browser.</p>
     </div>
@@ -550,27 +996,15 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     </div>
   </section>
 
-  <section class="wrap" id="play">
-    <div class="section-head">
-      <div class="eyebrow">Physics break</div>
-      <h2>Fling files into the wheel</h2>
-      <p style="color:var(--muted)">Grab a file and throw it into the centre. Every hit converts it and adds to the bytes you've saved. Chain hits for a combo.</p>
-    </div>
-    <div class="play">
-      <canvas id="playCanvas" tabindex="0" aria-label="Fling game: throw file bubbles into the wheel. With the keyboard, press Space to throw one." aria-describedby="playHelp"></canvas>
-      <p class="sr-only" id="playHelp">Press Space or Enter to throw the nearest file into the wheel.</p>
-      <div class="play-hud"><span>saved <b id="playSaved">0 MB</b></span><span id="playCombo">combo ×1</span><span>converted <b id="playCount">0</b></span></div>
-    </div>
-  </section>
-
   <section class="wrap" id="skins">
     <div class="section-head">
-      <div class="eyebrow">Themes, like the app</div>
       <h2>Pick a skin. Everything follows.</h2>
-      <p style="color:var(--muted)">The app ships with themes and three wheel layouts. This page does the same trick: the wheel, the game and every button redraw in the style you choose. Secret: type <span class="mono">shift</span> anywhere.</p>
+      <p style="color:var(--muted)">The app ships with themes and three wheel layouts. This page does the same trick: the wheel and every button redraw in the style you choose. Secret: type <span class="mono">shift</span> anywhere.</p>
     </div>
     <div class="skin-cards">
-      <button class="skin-card" data-skin-btn="halo"><div class="sw sw-halo"><span></span></div><div class="lbl">Halo · neon</div></button>
+      <button class="skin-card" data-skin-btn="riso"><div class="sw sw-riso"><span></span></div><div class="lbl">Riso · light</div></button>
+      <button class="skin-card" data-skin-btn="ink"><div class="sw sw-riso" style="background:#14110D"><span style="mix-blend-mode:screen"></span></div><div class="lbl">Riso Ink · dark</div></button>
+      <button class="skin-card" data-skin-btn="neon"><div class="sw sw-halo"><span></span></div><div class="lbl">Neon</div></button>
       <button class="skin-card" data-skin-btn="aqua"><div class="sw sw-aqua"><span></span></div><div class="lbl">Aqua · 2001</div></button>
       <button class="skin-card" data-skin-btn="ascii"><div class="sw sw-ascii">[(o)]<span></span></div><div class="lbl">ASCII · tty</div></button>
       <button class="skin-card" data-skin-btn="pixel"><div class="sw sw-pixel"><span></span></div><div class="lbl">Pixel · 8-bit</div></button>
@@ -583,37 +1017,85 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 
   <section class="wrap" id="privacy">
     <div class="section-head">
-      <div class="eyebrow">What it doesn't touch</div>
       <h2>Small, quiet, private</h2>
     </div>
-    <div class="privacy">
-      <div class="card"><b>0 permissions</b><p>No Accessibility, no Input Monitoring, no Screen Recording. macOS never asks.</p></div>
-      <div class="card"><b>12.5 MB at rest</b><p>Measured idle memory, 0.02 % CPU. It sleeps until you drag a file.</p></div>
-      <div class="card"><b>On your Mac</b><p>Apple's own ImageIO, PDFKit and WebKit do the work. Nothing is uploaded, ever.</p></div>
-    </div>
-  </section>
-
-  <section class="wrap" id="install">
-    <div class="section-head">
-      <div class="eyebrow">Version 0.2.0 · 3.4 MB · Apple silicon and Intel</div>
-      <h2>Get Circularity</h2>
-    </div>
-    <div class="install">
-      <div class="card">
-        <h3>Download</h3>
-        <p>Open the disk image and drag Circularity to Applications.</p>
-        <div><a class="btn primary" id="downloadBtn" href="#install">Download for Mac</a></div>
-        <p id="downloadNote"></p>
-        <p><b style="color:var(--fg)">First launch:</b> macOS 15 and later: open it once, then System Settings → Privacy &amp; Security → Open Anyway. macOS 13–14: right-click the app → Open.</p>
+    <div class="windows">
+      <div class="win">
+        <div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>promises.txt</span><span></span></div>
+        <div class="win-body"><ul class="checks">
+          <li>0 permissions: no Accessibility, no Input Monitoring, no Screen Recording. macOS never asks.</li>
+          <li>works on your Mac with Apple's own ImageIO, PDFKit and WebKit</li>
+          <li>never changes your original file</li>
+          <li>reads the clipboard only when you press ⌃⌥V (Control-Option-V)</li>
+          <li class="no">uploads your files (it can't: there is no server)</li>
+          <li class="no">checks for updates, unless you turn that on</li>
+        </ul></div>
+      </div>
+      <div class="win">
+        <div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>why.txt</span><span></span></div>
+        <div class="win-body"><p style="font:14px/1.7 var(--mono);color:var(--muted)">converting a file usually means: open an app, find export, pick a format, pick a folder, close the app.</p>
+          <p style="font:14px/1.7 var(--mono)">circularity makes it one move, right where the file already is.</p></div>
       </div>
     </div>
   </section>
 
+  <section class="wrap" id="changelog" aria-labelledby="logTitle">
+    <h2 class="sec-title" id="logTitle">Changelog</h2>
+    <p class="sec-sub">What changed, and when.</p>
+    <div class="win"><div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>changelog.txt</span><span></span></div><div class="win-body">
+    <article class="release" style="border-top:0">
+      <div class="rel-meta"><b>0.3.0</b><time datetime="2026-11-20">20 November 2026</time></div>
+      <ul>
+        <li>Excel to PDF: XLSX, XLS, ODS and CSV, every sheet fitted to the page.</li>
+        <li>PowerPoint to PDF: PPTX, PPT and ODP, one page per slide.</li>
+        <li>Word: DOCX, DOC, RTF and ODT to PDF, DOCX and TXT.</li>
+        <li>All with nothing extra installed: no Office, no permissions.</li>
+        <li>The More fan follows your theme, and a pasted theme replaces the whole look.</li>
+        <li>Downloads now come from GitHub Releases.</li>
+      </ul>
+    </article>
+    <article class="release">
+      <div class="rel-meta"><b>0.2.0</b><time datetime="2026-11-18">18 November 2026</time></div>
+      <ul>
+        <li>Cut out: remove a photo's background on your Mac (macOS 14 or later).</li>
+        <li>Drop shelf: the result floats by your pointer, ready to drag into Mail or a chat.</li>
+        <li>Before and after: hover JPG, HEIC or Compress for a magnified preview.</li>
+        <li>Choose your own six wheel buttons for pictures.</li>
+        <li>Milestones in Stats, from your first conversion to 100 GB saved.</li>
+        <li>Paste a theme from this website into Settings → Appearance.</li>
+        <li>Update checks, off unless you turn them on.</li>
+        <li>The menu bar panel is readable in every colour setting; long file names no longer overflow the wheel.</li>
+      </ul>
+    </article>
+    <article class="release">
+      <div class="rel-meta"><b>0.1.0</b><time datetime="2026-11-17">17 November 2026</time></div>
+      <ul>
+        <li>The wheel in three looks, opened with Shift, a shake or ⌃⌥C in Finder.</li>
+        <li>Images, PDFs and documents converted with Apple's own frameworks.</li>
+        <li>Menu bar panel with presets, ⌘K, history and stats; watch folders; clipboard conversion.</li>
+        <li>Settings with themes, shortcuts and output naming; a welcome and an interactive tutorial.</li>
+      </ul>
+    </article>
+    </div></div>
+  </section>
+
+  <section class="wrap get" id="install" aria-labelledby="getTitle">
+    <svg class="glyph" style="color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg>
+    <h2 id="getTitle">Drag. Tap. Done.</h2>
+    <p>Free for macOS 13 or later, on Apple silicon and Intel. Open the disk image and drag Circularity to Applications.</p>
+    <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.3.0</a>
+    <p id="downloadNote" role="status"></p>
+    <p style="font-size:14px">The first time, macOS asks before opening it, because this early build isn't signed with an Apple Developer ID yet. On macOS 15 and later, open it once, then go to System Settings → Privacy &amp; Security → Open Anyway. On macOS 13 and 14, right-click the app and choose Open.</p>
+  </section>
+
   <footer class="wrap">
-    <span>Circularity · MIT licence · made for macOS 13 and later</span>
+    <span>Circularity · MIT licence · made for macOS 13 and later · <a href="https://github.com/kunal12krishna/Circularity">Source on GitHub</a></span>
     <span>Inspired by Circularity for Windows by Atharv Gogia. The Tangerine theme follows the Tangerine design by LEAP STUDIO.</span>
   </footer>
 </main>
+
+<div id="buddy" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg></div>
+<div id="mini" aria-hidden="true"><div class="ring"></div><span class="seg" data-fmt="PNG" style="--a:0deg;--c:var(--s-png)">PNG</span><span class="seg" data-fmt="JPG" style="--a:60deg;--c:var(--s-jpg)">JPG</span><span class="seg" data-fmt="WEBP" style="--a:120deg;--c:var(--s-webp)">WEBP</span><span class="seg" data-fmt="PDF" style="--a:180deg;--c:var(--s-pdf)">PDF</span><span class="seg" data-fmt="AVIF" style="--a:240deg;--c:var(--s-avif)">AVIF</span><span class="seg" data-fmt="TIFF" style="--a:300deg;--c:var(--s-tiff)">TIFF</span><div class="core" id="miniCore">let go<br>on one</div></div>
 
 <div id="wheel" aria-hidden="true"><div class="disc"></div><canvas id="wheelCanvas"></canvas></div>
 <div id="ghost"><img alt=""></div>
@@ -627,7 +1109,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
 (() => {
 "use strict";
 // Put the hosted DMG's address here when it's online; until then the button explains.
-const DOWNLOAD_URL = "";
+const DOWNLOAD_URL = "https://github.com/kunal12krishna/Circularity/releases/latest/download/Circularity.dmg";
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -670,21 +1152,40 @@ $("#soundBtn").addEventListener("click", () => {
 });
 
 // ---------- Skins ----------
-const SKINS = ["halo", "aqua", "ascii", "pixel", "glass", "win95", "blueprint", "news"];
+const SKINS = ["riso", "ink", "neon", "aqua", "ascii", "pixel", "glass", "win95", "blueprint", "news"];
 const LIGHT_SKINS = ["aqua", "win95", "news"];
+// `skin` is how the wheel is drawn; Studio pages show the app's own (Halo) wheel.
 let skin = "halo";
+let pageStyle = "";
+// The other styles' fonts load only when someone is about to see them.
+const loadStyleFonts = (() => { let done = false; return () => {
+  if (done) return; done = true;
+  const l = document.createElement("link"); l.rel = "stylesheet";
+  l.href = "https://fonts.googleapis.com/css2?family=Architects+Daughter&family=JetBrains+Mono:wght@400;700&family=Nunito:wght@400;700;900&family=Old+Standard+TT:wght@400;700&family=Outfit:wght@300;500;800&family=Playfair+Display:wght@700;900&family=Press+Start+2P&family=VT323&display=swap"; document.head.append(l);
+}; })();
+// The hero wheel is the app's own render: its Neon theme under Neon, Riso everywhere else.
+function syncHeroWheel() {
+  const img = $(".hero-wheel img"); if (!img) return;
+  const want = root.dataset.skin === "neon" ? "assets/wheel-neon-hero.png" : "assets/wheel-halo-hero.png";
+  if (img.getAttribute("src") !== want) img.setAttribute("src", want);
+}
 function setSkin(name, announce) {
-  if (!SKINS.includes(name) || name === skin && root.dataset.skin) return;
+  if (!SKINS.includes(name) || name === pageStyle) return;
+  if (!["riso", "ink"].includes(name)) loadStyleFonts();
   const apply = () => {
-    skin = name; root.dataset.skin = name;
+    pageStyle = name; skin = ["riso", "ink", "neon"].includes(name) ? "halo" : name; root.dataset.skin = name; syncHeroWheel();
     $$("[data-skin-btn]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.skinBtn === name));
-    store.set("circularity-skin", name);
-    drawWheel(); play.restyle(); if (typeof lab !== "undefined") lab.draw();
+    if (announce !== "silent") store.set("circularity-style-pick", name); // only a real pick is remembered
+    drawWheel(); if (typeof lab !== "undefined") lab.draw(); if (typeof kgridRedraw !== "undefined") kgridRedraw();
   };
   if (document.startViewTransition && !reduceMotion && announce !== "silent") document.startViewTransition(apply); else apply();
-  if (announce === true) { toast("Skin: " + name.toUpperCase()); sfx.skin(); }
+  if (announce === true) { toast("Style: " + ($(`.style-opt[data-skin-btn="${name}"] span`)?.firstChild?.textContent || name)); sfx.skin(); }
 }
 $$("[data-skin-btn]").forEach((b) => b.addEventListener("click", () => setSkin(b.dataset.skinBtn, true)));
+syncHeroWheel();
+$("#styleBtn").addEventListener("pointerenter", loadStyleFonts, { once: true });
+$("#styleBtn").addEventListener("focus", loadStyleFonts, { once: true });
+if ("IntersectionObserver" in window) { const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { loadStyleFonts(); io.disconnect(); } }, { rootMargin: "800px 0px" }); io.observe($("#skins")); } else loadStyleFonts();
 
 // Easter eggs: type "shift" for ASCII, the Konami code for Pixel.
 let typed = "";
@@ -734,7 +1235,7 @@ function drawScreenshot() {
   for (let i = 0; i < 9; i++) { x.fillStyle = i === 2 ? "#3B82F6" : "#C9D1DC"; x.fillRect(80, 120 + i * 40, i === 2 ? 150 : 120, 14); }
   x.fillStyle = "#1F2937"; x.fillRect(300, 130, 360, 26);
   for (let i = 0; i < 10; i++) { x.fillStyle = "#AEB8C5"; x.fillRect(300, 190 + i * 30, 560 - (i * 37) % 180, 10); }
-  x.fillStyle = "#C6FF3D"; x.fillRect(300, 520, 140, 40); return c;
+  x.fillStyle = "#FF4FA0"; x.fillRect(300, 520, 140, 40); return c;
 }
 function drawKitty() {
   const w = 900, h = 900, c = makeCanvas(w, h), x = c.getContext("2d");
@@ -753,11 +1254,13 @@ function drawKitty() {
   noise(x, w, h, 7); return c;
 }
 
-async function addFile({ name, blob, kind = "image", text = null, from = null, w = 0, h = 0, preview = null }) {
+async function addFile({ name, blob, kind = "image", from = null, w = 0, h = 0, preview = null, look = null, pages = 0 }) {
   const url = URL.createObjectURL(blob);
   let img = null;
-  if (kind === "image") { try { img = await loadImage(url); w = img.naturalWidth; h = img.naturalHeight; } catch { toast("That file isn't a picture this browser can read."); return null; } }
-  const file = { id: nextId++, name, blob, url, img, kind, text, bytes: blob.size, from, w, h, preview };
+  // `look`: a PNG stand-in for formats a browser can't show (TIFF in most), so the file still has a thumbnail.
+  if (kind === "image") { try { img = await loadImage(url); } catch { img = look ? await loadImage(look).catch(() => null) : null; }
+    if (!img) { toast("That file isn't a picture this browser can read."); return null; } w = img.naturalWidth; h = img.naturalHeight; }
+  const file = { id: nextId++, name, blob, url, img, kind, bytes: blob.size, from, w, h, preview, look, pages };
   files.push(file);
   renderFile(file);
   onFilesChanged();
@@ -775,7 +1278,7 @@ function middleTruncate(s, max) { return s.length <= max ? s : s.slice(0, Math.c
 function renderFile(f) {
   const el = document.createElement("button");
   el.type = "button"; el.className = "file"; el.dataset.id = f.id;
-  const thumb = f.kind === "image" ? `<img src="${f.url}" alt="">` : f.kind === "pdf" ? `<img src="${f.preview}" alt=""><span class="badge">PDF</span>` : `<span class="doc">TXT</span>`;
+  const thumb = f.kind === "image" ? `<img src="${f.look || f.url}" alt="">` : f.kind === "pdf" ? `<img src="${f.preview}" alt=""><span class="badge">PDF</span>` : `<span class="doc">${ext(f.name).toUpperCase() || "FILE"}</span>`;
   let delta = "";
   if (f.from) {
     const pct = Math.round((f.bytes / f.from.bytes - 1) * 100);
@@ -841,7 +1344,7 @@ const ACTIONS = {
   jpg:   { label: "JPG",  mono: "JPG",  caption: "PHOTO",    kicker: "CONVERT TO", hint: "small, best for photos",       run: async (f) => ({ blob: await encodeAs(f, "jpg"), name: `${base(f.name)}.jpg` }) },
   webp:  { label: "WebP", mono: "WEBP", caption: "WEB",      kicker: "CONVERT TO", hint: "smaller, for websites",        run: async (f) => ({ blob: await encodeAs(f, "webp"), name: `${base(f.name)}.webp` }) },
   pdf:   { label: "PDF",  mono: "PDF",  caption: "DOCUMENT", kicker: "CONVERT TO", hint: "a one-page PDF",               run: async (f) => makePDF(f) },
-  more:  { label: "More", mono: "•••",  caption: "MORE",     kicker: "REST HERE FOR", hint: "the fun ones" },
+  more:  { label: "More", mono: "•••",  caption: "MORE",     kicker: "REST HERE FOR", hint: "6 more options" },
   sqz:   { label: "Compress", mono: "SQZ", caption: "COMPRESS", kicker: "MAKE IT", hint: "smaller, same look", run: async (f) => {
     const fmt = sameFormat(f) === "png" ? "webp" : sameFormat(f);
     let blob; try { blob = await encodeAs(f, fmt, { q: 0.55 }); } catch { blob = await encodeAs(f, "jpg", { q: 0.55 }); }
@@ -853,54 +1356,185 @@ const ACTIONS = {
     x.imageSmoothingQuality = "high"; x.drawImage(f.img, 0, 0, c.width, c.height);
     let blob; try { blob = await encodeAs(f, fmt, { canvas: c }); } catch { blob = await encodeAs(f, "png", { canvas: c }); }
     return { blob, name: `${base(f.name)} (resized).${blob.type === "image/jpeg" ? "jpg" : blob.type === "image/webp" ? "webp" : "png"}` }; } },
-  ascii: { label: "ASCII", mono: "ASCII", caption: "TEXT ART", kicker: "TURN IT INTO", hint: "a text file of characters", run: async (f) => {
-    const text = asciiArt(f, 110); return { blob: new Blob([text], { type: "text/plain" }), name: `${base(f.name)}.txt`, kind: "text", text }; } },
-  pixel: { label: "Pixel", mono: "PIXEL", caption: "8-BIT", kicker: "TURN IT INTO", hint: "chunky pixel art", run: async (f) => {
-    const small = alphaCanvas(f, 72), c = makeCanvas(small.width * 8, small.height * 8), x = c.getContext("2d");
-    x.imageSmoothingEnabled = false; x.drawImage(small, 0, 0, c.width, c.height);
-    return { blob: await toBlob(c, "image/png"), name: `${base(f.name)} (pixel).png` }; } },
-  gray:  { label: "Mono", mono: "MONO", caption: "GRAYSCALE", kicker: "TURN IT INTO", hint: "black and white", run: async (f) => {
-    const c = alphaCanvas(f, 1600), x = c.getContext("2d"), d = x.getImageData(0, 0, c.width, c.height), p = d.data;
-    for (let i = 0; i < p.length; i += 4) { const l = p[i] * .2126 + p[i + 1] * .7152 + p[i + 2] * .0722; p[i] = p[i + 1] = p[i + 2] = l; }
-    x.putImageData(d, 0, 0);
-    const fmt = sameFormat(f) === "jpg" ? "jpg" : "png";
-    return { blob: await encodeAs(f, fmt, { canvas: fmt === "jpg" ? flatten(c) : c }), name: `${base(f.name)} (mono).${fmt}` }; } },
+  // The More fan, as in the app: Crop, Cut out, Combine, BMP, GIF, TIFF.
+  crop: { label: "Crop", mono: "CROP", caption: "TRIM", kicker: "OPEN", hint: "pick the area to keep", run: (f) => cropDialog(f) },
+  cut: { label: "Cut out", mono: "CUT", caption: "NO BG", kicker: "CUT OUT THE", hint: "in the Mac app", run: async () => { showCutout(); return null; } },
+  combine: { label: "Combine", mono: "COMBINE", caption: "ONE PDF", kicker: "COMBINE INTO", hint: "one PDF of every picture here", run: async () => {
+    const pics = files.filter((x) => x.kind === "image" && x.img);
+    return makePDF(pics, `Combined (${pics.length} pictures).pdf`); } },
+  bmp: { label: "BMP", mono: "BMP", caption: "BITMAP", kicker: "CONVERT TO", hint: "for older software", run: async (f) => {
+    const c = opaqueCanvas(f); return { blob: encodeBMP(c), name: `${base(f.name)}.bmp`, note: scaledNote(f, c) }; } },
+  gif: { label: "GIF", mono: "GIF", caption: "256 COLOURS", kicker: "CONVERT TO", hint: "256 colours", run: async (f) => {
+    const c = alphaCanvas(f, 1600); return { blob: encodeGIF(c), name: `${base(f.name)}.gif`, note: scaledNote(f, c) }; } },
+  tiff: { label: "TIFF", mono: "TIFF", caption: "PRINT", kicker: "CONVERT TO", hint: "lossless, for print", run: async (f) => {
+    const c = alphaCanvas(f); return { blob: encodeTIFF(c), name: `${base(f.name)}.tiff`, note: scaledNote(f, c), look: c }; } },
 };
 function flatten(c) { const o = makeCanvas(c.width, c.height), x = o.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, o.width, o.height); x.drawImage(c, 0, 0); return o; }
 
-function asciiArt(f, cols) {
-  const ramp = "@%#*+=-:. ";
-  const rows = Math.max(8, Math.round(cols * (f.h / f.w) * 0.5));
-  const c = makeCanvas(cols, rows), x = c.getContext("2d");
-  x.fillStyle = "#fff"; x.fillRect(0, 0, cols, rows); x.drawImage(f.img, 0, 0, cols, rows);
-  const p = x.getImageData(0, 0, cols, rows).data; let out = "";
-  for (let y = 0; y < rows; y++) { for (let i = 0; i < cols; i++) { const k = (y * cols + i) * 4; const l = (p[k] * .2126 + p[k + 1] * .7152 + p[k + 2] * .0722) / 255; out += ramp[Math.min(ramp.length - 1, Math.floor(l * ramp.length))]; } out += "\n"; }
-  return out;
-}
-
-// A real one-page PDF: the picture as a JPEG image object (DCTDecode).
-async function makePDF(f) {
-  const c = opaqueCanvas(f, 2000);
-  const jpeg = new Uint8Array(await (await toBlob(c, "image/jpeg", 0.85)).arrayBuffer());
-  const W = Math.round(c.width * 0.75), H = Math.round(c.height * 0.75);
+// A real PDF, one picture per page, each a JPEG image object (DCTDecode).
+async function makePDF(pics, name) {
+  if (!Array.isArray(pics)) { name = `${base(pics.name)}.pdf`; pics = [pics]; }
+  if (!pics.length) throw new Error("There are no pictures on the desk to combine.");
   const enc = new TextEncoder(), parts = [], offsets = []; let length = 0;
   const push = (data) => { const b = typeof data === "string" ? enc.encode(data) : data; parts.push(b); length += b.length; };
-  push("%PDF-1.4\n");
   const obj = (n, body) => { offsets[n] = length; push(`${n} 0 obj\n${body}\nendobj\n`); };
+  push("%PDF-1.4\n");
+  const n = pics.length, kids = pics.map((_, i) => `${3 + i * 3} 0 R`).join(" ");
   obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
-  obj(2, "<< /Type /Pages /Kids [3 0 R] /Count 1 >>");
-  obj(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`);
-  offsets[4] = length;
-  push(`4 0 obj\n<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
-  push(jpeg); push("\nendstream\nendobj\n");
-  const content = `q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
-  obj(5, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
-  const xref = length;
-  let table = "xref\n0 6\n0000000000 65535 f \n";
-  for (let n = 1; n <= 5; n++) table += String(offsets[n]).padStart(10, "0") + " 00000 n \n";
-  push(table + `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
-  const preview = URL.createObjectURL(await toBlob(opaqueCanvas(f, 300), "image/jpeg", 0.8));
-  return { blob: new Blob(parts, { type: "application/pdf" }), name: `${base(f.name)}.pdf`, kind: "pdf", preview };
+  obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
+  for (let i = 0; i < n; i++) {
+    const c = opaqueCanvas(pics[i], 2000), page = 3 + i * 3;
+    const jpeg = new Uint8Array(await (await toBlob(c, "image/jpeg", 0.85)).arrayBuffer());
+    const W = Math.round(c.width * 0.75), H = Math.round(c.height * 0.75);
+    obj(page, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${page + 1} 0 R >> >> /Contents ${page + 2} 0 R >>`);
+    offsets[page + 1] = length;
+    push(`${page + 1} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+    push(jpeg); push("\nendstream\nendobj\n");
+    const content = `q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+    obj(page + 2, `<< /Length ${content.length} >>\nstream\n${content}\nendstream`);
+  }
+  const count = 3 + n * 3, xref = length;
+  let table = `xref\n0 ${count}\n0000000000 65535 f \n`;
+  for (let k = 1; k < count; k++) table += String(offsets[k]).padStart(10, "0") + " 00000 n \n";
+  push(table + `trailer\n<< /Size ${count} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  const preview = URL.createObjectURL(await toBlob(opaqueCanvas(pics[0], 300), "image/jpeg", 0.8));
+  return { blob: new Blob(parts, { type: "application/pdf" }), name, kind: "pdf", preview, pages: n };
+}
+
+// The demo works on copies up to 2,400 px; say so when that shrank a picture.
+function scaledNote(f, c) { return c.width < f.w ? `made at ${c.width} × ${c.height} here; the app keeps every pixel` : ""; }
+
+// BMP: 24-bit, bottom-up rows padded to 4 bytes (what the app writes; no alpha).
+function encodeBMP(c) {
+  const w = c.width, h = c.height, d = c.getContext("2d").getImageData(0, 0, w, h).data, row = (w * 3 + 3) & ~3, size = 54 + row * h;
+  const buf = new ArrayBuffer(size), v = new DataView(buf), u = new Uint8Array(buf);
+  u[0] = 66; u[1] = 77; v.setUint32(2, size, true); v.setUint32(10, 54, true); v.setUint32(14, 40, true);
+  v.setInt32(18, w, true); v.setInt32(22, h, true); v.setUint16(26, 1, true); v.setUint16(28, 24, true);
+  v.setUint32(34, row * h, true); v.setInt32(38, 2835, true); v.setInt32(42, 2835, true);
+  for (let y = 0; y < h; y++) { let o = 54 + (h - 1 - y) * row; for (let x = 0; x < w; x++) { const k = (y * w + x) * 4; u[o++] = d[k + 2]; u[o++] = d[k + 1]; u[o++] = d[k]; } }
+  return new Blob([buf], { type: "image/bmp" });
+}
+
+// TIFF: baseline, uncompressed RGBA with unassociated alpha (transparency kept).
+function encodeTIFF(c) {
+  const w = c.width, h = c.height, px = c.getContext("2d").getImageData(0, 0, w, h).data;
+  const tags = 14, ifd = 8, extra = ifd + 2 + tags * 12 + 4, bps = extra, xres = extra + 8, yres = extra + 16, data = extra + 24;
+  const buf = new ArrayBuffer(data + px.length), v = new DataView(buf), u = new Uint8Array(buf);
+  u[0] = 73; u[1] = 73; v.setUint16(2, 42, true); v.setUint32(4, ifd, true); v.setUint16(ifd, tags, true);
+  let o = ifd + 2;
+  const tag = (id, type, count, value) => { v.setUint16(o, id, true); v.setUint16(o + 2, type, true); v.setUint32(o + 4, count, true);
+    if (type === 3 && count === 1) v.setUint16(o + 8, value, true); else v.setUint32(o + 8, value, true); o += 12; };
+  tag(256, 4, 1, w); tag(257, 4, 1, h); tag(258, 3, 4, bps); tag(259, 3, 1, 1); tag(262, 3, 1, 2); tag(273, 4, 1, data);
+  tag(277, 3, 1, 4); tag(278, 4, 1, h); tag(279, 4, 1, px.length); tag(282, 5, 1, xres); tag(283, 5, 1, yres);
+  tag(284, 3, 1, 1); tag(296, 3, 1, 2); tag(338, 3, 1, 2);
+  v.setUint32(o, 0, true);
+  for (let i = 0; i < 4; i++) v.setUint16(bps + i * 2, 8, true);
+  v.setUint32(xres, 72, true); v.setUint32(xres + 4, 1, true); v.setUint32(yres, 72, true); v.setUint32(yres + 4, 1, true);
+  u.set(px, data);
+  return new Blob([buf], { type: "image/tiff" });
+}
+
+// GIF: 256 colours (a 6 × 7 × 6 palette with Floyd–Steinberg dithering), LZW, transparency kept.
+function encodeGIF(c) {
+  const w = c.width, h = c.height, px = c.getContext("2d").getImageData(0, 0, w, h).data;
+  const R = 6, G = 7, B = 6, CLEAR_INDEX = R * G * B; // 252 colours + one transparent slot
+  const level = (v, n) => Math.max(0, Math.min(n - 1, Math.round(v / 255 * (n - 1))));
+  const err = new Float32Array(w * h * 3), idx = new Uint8Array(w * h); let transparent = false;
+  for (let i = 0; i < w * h; i++) { err[i * 3] = px[i * 4]; err[i * 3 + 1] = px[i * 4 + 1]; err[i * 3 + 2] = px[i * 4 + 2]; }
+  const spread = (x, y, er, eg, eb, k) => { if (x < 0 || x >= w || y >= h) return; const j = (y * w + x) * 3; err[j] += er * k; err[j + 1] += eg * k; err[j + 2] += eb * k; };
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = y * w + x;
+    if (px[i * 4 + 3] < 128) { idx[i] = CLEAR_INDEX; transparent = true; continue; }
+    const r = err[i * 3], g = err[i * 3 + 1], b = err[i * 3 + 2], ri = level(r, R), gi = level(g, G), bi = level(b, B);
+    idx[i] = ri * G * B + gi * B + bi;
+    const er = r - ri * 255 / (R - 1), eg = g - gi * 255 / (G - 1), eb = b - bi * 255 / (B - 1);
+    spread(x + 1, y, er, eg, eb, 7 / 16); spread(x - 1, y + 1, er, eg, eb, 3 / 16); spread(x, y + 1, er, eg, eb, 5 / 16); spread(x + 1, y + 1, er, eg, eb, 1 / 16);
+  }
+  const out = []; const bytes = (...b) => out.push(...b); const word = (n) => bytes(n & 255, (n >> 8) & 255);
+  bytes(...[..."GIF89a"].map((ch) => ch.charCodeAt(0))); word(w); word(h); bytes(0xF7, 0, 0);
+  for (let i = 0; i < 256; i++) {
+    if (i < CLEAR_INDEX) { const ri = Math.floor(i / (G * B)), gi = Math.floor(i / B) % G, bi = i % B; bytes(Math.round(ri * 255 / (R - 1)), Math.round(gi * 255 / (G - 1)), Math.round(bi * 255 / (B - 1))); }
+    else bytes(0, 0, 0);
+  }
+  if (transparent) bytes(0x21, 0xF9, 4, 1, 0, 0, CLEAR_INDEX, 0);
+  bytes(0x2C); word(0); word(0); word(w); word(h); bytes(0);
+  // LZW, minimum code size 8 (as omggif does it).
+  const minCode = 8, clear = 1 << minCode, eoi = clear + 1, lzw = [];
+  let size = minCode + 1, next = eoi + 1, table = new Map(), cur = 0, bits = 0;
+  const emit = (code) => { cur |= code << bits; bits += size; while (bits >= 8) { lzw.push(cur & 255); cur >>>= 8; bits -= 8; } };
+  emit(clear); let prefix = idx[0];
+  for (let i = 1; i < idx.length; i++) {
+    const k = idx[i], key = (prefix << 8) | k, found = table.get(key);
+    if (found !== undefined) { prefix = found; continue; }
+    emit(prefix);
+    if (next === 4096) { emit(clear); next = eoi + 1; size = minCode + 1; table = new Map(); }
+    else { if (next >= (1 << size)) size++; table.set(key, next++); }
+    prefix = k;
+  }
+  emit(prefix); emit(eoi); if (bits > 0) lzw.push(cur & 255);
+  bytes(minCode);
+  for (let i = 0; i < lzw.length; i += 255) { const chunk = lzw.slice(i, i + 255); bytes(chunk.length, ...chunk); }
+  bytes(0, 0x3B);
+  return new Blob([new Uint8Array(out)], { type: "image/gif" });
+}
+
+// Cut out needs Apple's on-device Vision, which a browser doesn't have: show the app's real result.
+function showCutout() {
+  openModal("Cut out · in the app", (body) => {
+    const img = document.createElement("img"); img.src = "assets/cutout.jpg"; img.alt = "A drawn mug before and after Cut out in Circularity: the background is gone.";
+    const p = document.createElement("p"); p.className = "modal-note";
+    p.textContent = "Cut out lifts the subject off its background with Apple's on-device Vision (macOS 14 or later) and saves a transparent PNG. A browser can't do that, so this is the app's real result on a test picture.";
+    body.append(img, p);
+  });
+}
+
+// Crop: the app opens an editor with ratio locks. A small one here: drag the box (or use the arrow keys).
+const CANCELLED = new Error("cancelled");
+function cropDialog(f) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const RATIOS = [["free", "Original"], ["1:1", "1:1"], ["4:3", "4:3"], ["3:2", "3:2"], ["16:9", "16:9"], ["9:16", "9:16"]];
+    let ratio = "free", box = null, drag = null;
+    const fit = (r) => { // the largest centred box of ratio r (width ÷ height, in pixels) at 80 %, as fractions
+      const ir = f.w / f.h, k = r || ir; let w = 0.8, h = 0.8;
+      if (ir > k) w = 0.8 * k / ir; else h = 0.8 * ir / k;
+      return { x: (1 - w) / 2, y: (1 - h) / 2, w, h };
+    };
+    const ratioValue = (id) => id === "free" ? null : (([a, b]) => a / b)(id.split(":").map(Number));
+    openModal(`Crop ${f.name}`, (body) => {
+      body.innerHTML = `<div class="crop-ratios" role="group" aria-label="Ratio">${RATIOS.map(([id, l]) => `<button class="pill" type="button" data-r="${id}">${l}</button>`).join("")}</div>
+        <div class="crop-stage"><img src="${f.url}" alt="${f.name}" draggable="false"><div class="crop-box" tabindex="0" role="slider" aria-label="Crop area: drag, or use the arrow keys" aria-valuetext=""></div></div>
+        <p class="modal-note">In the app you can also resize the box. Saves next to the original as “${base(f.name)} (cropped)”.</p>
+        <div class="crop-actions"><button class="btn" type="button" data-act="cancel">Cancel</button><button class="btn primary" type="button" data-act="crop">Crop</button></div>`;
+      const stage = $(".crop-stage", body), el = $(".crop-box", body), img = $("img", body);
+      const draw = () => { Object.assign(el.style, { left: box.x * 100 + "%", top: box.y * 100 + "%", width: box.w * 100 + "%", height: box.h * 100 + "%" });
+        el.setAttribute("aria-valuetext", `${Math.round(box.w * f.w)} × ${Math.round(box.h * f.h)} at ${Math.round(box.x * 100)}%, ${Math.round(box.y * 100)}%`);
+        $$("[data-r]", body).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.r === ratio))); };
+      const setRatio = (id) => { ratio = id; box = fit(ratioValue(id)); draw(); };
+      const moveTo = (x, y) => { box.x = Math.min(1 - box.w, Math.max(0, x)); box.y = Math.min(1 - box.h, Math.max(0, y)); draw(); };
+      $$("[data-r]", body).forEach((b) => b.addEventListener("click", () => setRatio(b.dataset.r)));
+      const end = () => { if (drag) { try { el.releasePointerCapture(drag.id); } catch {} drag = null; el.classList.remove("dragging"); } };
+      el.addEventListener("pointerdown", (e) => { if (drag) return; e.preventDefault(); const r = stage.getBoundingClientRect();
+        drag = { id: e.pointerId, sx: e.clientX, sy: e.clientY, bx: box.x, by: box.y, w: r.width, h: r.height }; el.setPointerCapture(e.pointerId); el.classList.add("dragging"); });
+      el.addEventListener("pointermove", (e) => { if (!drag || e.pointerId !== drag.id) return; moveTo(drag.bx + (e.clientX - drag.sx) / drag.w, drag.by + (e.clientY - drag.sy) / drag.h); });
+      ["pointerup", "pointercancel", "lostpointercapture"].forEach((t) => el.addEventListener(t, end));
+      el.addEventListener("keydown", (e) => { const d = e.shiftKey ? 0.1 : 0.02, k = { ArrowLeft: [-d, 0], ArrowRight: [d, 0], ArrowUp: [0, -d], ArrowDown: [0, d] }[e.key];
+        if (k) { e.preventDefault(); moveTo(box.x + k[0], box.y + k[1]); } });
+      img.addEventListener("load", () => draw(), { once: true });
+      $('[data-act="cancel"]', body).addEventListener("click", () => closeModal());
+      $('[data-act="crop"]', body).addEventListener("click", async () => {
+        const sx = Math.round(box.x * f.w), sy = Math.round(box.y * f.h), sw = Math.max(1, Math.round(box.w * f.w)), sh = Math.max(1, Math.round(box.h * f.h));
+        const k = Math.min(1, CAP / Math.max(sw, sh)), c = makeCanvas(Math.max(1, Math.round(sw * k)), Math.max(1, Math.round(sh * k))), x = c.getContext("2d");
+        const fmt = sameFormat(f); if (fmt === "jpg") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); }
+        x.imageSmoothingQuality = "high"; x.drawImage(f.img, sx, sy, sw, sh, 0, 0, c.width, c.height);
+        let blob; try { blob = await encodeAs(f, fmt, { canvas: c }); } catch { blob = await encodeAs(f, "png", { canvas: c }); }
+        const e2 = blob.type === "image/jpeg" ? "jpg" : blob.type === "image/webp" ? "webp" : "png";
+        settled = true; closeModal(); resolve({ blob, name: `${base(f.name)} (cropped).${e2}` });
+      });
+      setRatio(ratio);
+      setTimeout(() => el.focus(), 0);
+    }, () => { if (!settled) reject(CANCELLED); });
+  });
 }
 
 // Compress under a byte target: quality search, then shrink if needed (like the app).
@@ -923,48 +1557,68 @@ async function runAction(f, key, extra) {
   const a = ACTIONS[key];
   try {
     const r = extra ? await extra() : await a.run(f);
-    const out = await addFile({ name: uniqueName(r.name), blob: r.blob, kind: r.kind || "image", text: r.text, from: f, preview: r.preview });
+    if (!r) return; // Cut out shows the app's result instead of making a file here
+    const look = r.look ? URL.createObjectURL(await toBlob(r.look, "image/png")) : null;
+    const out = await addFile({ name: uniqueName(r.name), blob: r.blob, kind: r.kind || "image", from: f, preview: r.preview, look, pages: r.pages });
     if (!out) return;
     converted++; if (out.bytes < f.bytes) saved += f.bytes - out.bytes;
     $("#statCount").textContent = converted; $("#statSaved").textContent = fmtBytes(saved);
-    const icon = $("#menuIcon"); icon.classList.remove("pulse"); void icon.offsetWidth; icon.classList.add("pulse");
+    for (const icon of [$("#menuIcon"), $("#navGlyph")]) { icon.classList.remove("pulse"); void icon.offsetWidth; icon.classList.add("pulse"); }
     sfx.drop();
     const change = Math.round((out.bytes / f.bytes - 1) * 100);
     toast(`${out.name} · ${fmtBytes(out.bytes)} (${change > 0 ? "+" : ""}${change}%)${r.note ? " · " + r.note : ""}`);
     select(out);
-  } catch (err) { toast(err.message || "That didn't work"); sfx.cancel(); }
+  } catch (err) { if (err !== CANCELLED) toast(err.message || "That didn't work"); sfx.cancel(); }
 }
 
 // Preview a file on double-click / Enter after selecting.
 function preview(f) {
-  $("#modalTitle").textContent = `${f.name} · ${fmtBytes(f.bytes)}${f.w ? ` · ${f.w} × ${f.h}` : ""}`;
-  const body = $("#modalBody"); body.textContent = "";
-  if (f.kind === "text") { const pre = document.createElement("pre"); pre.textContent = f.text; body.append(pre); }
-  else { const img = document.createElement("img"); img.src = f.kind === "pdf" ? f.preview : f.url; img.alt = f.name; body.append(img);
-    if (f.kind === "pdf") { const p = document.createElement("p"); p.style.color = "var(--muted)"; p.textContent = "A real one-page PDF, made in your browser. The app saves it next to the original."; body.append(p); } }
-  $("#modal").hidden = false; $("#modalClose").focus();
+  openModal(`${f.name} · ${fmtBytes(f.bytes)}${f.w ? ` · ${f.w} × ${f.h}` : ""}`, (body) => {
+    const img = document.createElement("img"); img.src = f.kind === "pdf" ? f.preview : (f.look || f.url); img.alt = f.name; body.append(img);
+    if (f.kind === "pdf") { const p = document.createElement("p"); p.className = "modal-note"; p.textContent = `A real ${f.pages > 1 ? `${f.pages}-page` : "one-page"} PDF, made in your browser. The app saves it next to the original.`; body.append(p); }
+  });
 }
-$("#modalClose").addEventListener("click", () => { $("#modal").hidden = true; });
-$("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") $("#modal").hidden = true; });
+let modalOnClose = null, modalReturn = null;
+function openModal(title, fill, onClose = null) {
+  if (!$("#modal").hidden) closeModal();
+  modalReturn = document.activeElement; modalOnClose = onClose;
+  $("#modalTitle").textContent = title; const body = $("#modalBody"); body.textContent = ""; fill(body);
+  $("#modal").hidden = false; if (!body.contains(document.activeElement)) $("#modalClose").focus();
+}
+function closeModal() {
+  if ($("#modal").hidden) return;
+  $("#modal").hidden = true;
+  const done = modalOnClose; modalOnClose = null; done?.();
+  if (modalReturn?.isConnected) modalReturn.focus({ preventScroll: true }); modalReturn = null;
+}
+$("#modalClose").addEventListener("click", closeModal);
+$("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
 
 // ---------- The wheel ----------
 const wheelEl = $("#wheel"), wc = $("#wheelCanvas"), wx = wc.getContext("2d"), disc = $(".disc", wheelEl);
-const G = { size: 400, rin: 62, rout: 150, bulge: 10, orb: 54, span: 56, fanR: 206, chipW: 70, chipH: 30, step: 23 };
+const G = { size: 540, rin: 62, rout: 150, bulge: 10, orb: 54, span: 58, fanR: 206, chipW: 70, chipH: 30, step: 23, ring: 360 };
 const W = { open: false, mode: "drag", file: null, cx: 0, cy: 0, scale: 1, ring: [], fan: [], hover: { t: "none" }, fanOpen: false, flipped: false, fanTimer: 0, est: {} };
 
 function menuFor(f) {
   const src = sameFormat(f);
   const formats = ["png", "jpg", "webp", "pdf"].filter((k) => k !== src).slice(0, 3);
   const rest = ["png", "jpg", "webp", "pdf"].filter((k) => k !== src && !formats.includes(k));
-  return { ring: [...formats, "more", "sqz", "size"], fan: [...rest, "ascii", "pixel", "gray"] };
+  // The app's More fan order: formats on the right, then the tools, Crop last (on the left).
+  return { ring: [...formats, "more", "sqz", "size"], fan: [...rest, "tiff", "gif", "bmp", "combine", "cut", "crop"] };
 }
 
 function openWheel(f, x, y, mode) {
   if (W.open) return;
   const m = menuFor(f);
   W.file = f; W.mode = mode; W.ring = m.ring; W.fan = m.fan; W.hover = { t: "none" }; W.fanOpen = false; W.est = {};
-  W.scale = Math.min(1, (innerWidth - 16) / G.size);
-  const half = G.size * W.scale / 2;
+  ACTIONS.more.hint = `${m.fan.length} more options`;
+  const pics = files.filter((x) => x.kind === "image" && x.img).length;
+  ACTIONS.combine.hint = pics > 1 ? `${pics} pictures, one PDF` : "a one-page PDF";
+  // Drag mode stays at the pointer (it can't move), so it fits the ring; click mode can
+  // move, so it keeps room for the whole More fan too.
+  const reach = mode === "click" ? G.fanR + G.chipW / 2 + 10 : G.ring / 2;
+  W.scale = Math.min(1, (innerWidth - 16) / (2 * reach));
+  const half = reach * W.scale;
   W.cx = mode === "click" ? Math.min(Math.max(x, half), innerWidth - half) : x;
   W.cy = mode === "click" ? Math.min(Math.max(y, half), innerHeight - half) : y;
   W.flipped = W.cy + (G.fanR + 30) * W.scale > innerHeight;
@@ -1024,7 +1678,12 @@ function keyFor(h) { return h.t === "seg" ? W.ring[h.i] : h.t === "chip" ? W.fan
 // Live size estimate on hover, by really encoding a small copy.
 async function estimate(key) {
   W.est[key] = null; const f = W.file;
-  if (!["png", "jpg", "webp", "sqz", "gray"].includes(key)) return;
+  if (key === "bmp" || key === "tiff") {
+    const k = Math.min(1, CAP / Math.max(f.w, f.h)), w = Math.max(1, Math.round(f.w * k)), h = Math.max(1, Math.round(f.h * k));
+    W.est[key] = key === "bmp" ? 54 + ((w * 3 + 3) & ~3) * h : 8 + 2 + 14 * 12 + 4 + 24 + w * h * 4;
+    if (W.open) drawWheel(); return;
+  }
+  if (!["png", "jpg", "webp", "sqz"].includes(key)) return;
   try {
     const s = Math.min(1, 480 / Math.max(f.w, f.h)), c = makeCanvas(Math.max(1, Math.round(f.w * s)), Math.max(1, Math.round(f.h * s)));
     const x = c.getContext("2d"); if (key !== "png" && key !== "webp") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); } x.drawImage(f.img, 0, 0, c.width, c.height);
@@ -1070,7 +1729,7 @@ function segColors(i, hot, style) {
     case "win95": return { fill: hot ? "#000080" : "#C0C0C0", text: hot ? "#FFFFFF" : "#000000", cap: hot ? "#C8D0FF" : "#303030", stroke: "#808080", bevel: !hot };
     case "blueprint": return { fill: hot ? "rgba(255,255,255,.92)" : "rgba(255,255,255,.04)", text: hot ? "#123E7C" : "#F1F6FF", cap: hot ? "#123E7C" : "#BFD2F0", stroke: "rgba(255,255,255,.9)", dashed: !hot };
     case "news": return { fill: hot ? "#B3001B" : "#F6F4EF", text: hot ? "#FFFFFF" : "#141414", cap: hot ? "#FFE1E1" : "#46423A", stroke: "#141414", halftone: !hot };
-    default: return { fill: hot ? style.accent : "#1B1D23", text: hot ? style.onAccent : "#ECEEF2", cap: hot ? "#2A3300" : "#9097A6", stroke: null };
+    default: return { fill: hot ? style.accent : "#1B1D23", text: hot ? style.onAccent : "#ECEEF2", cap: hot ? style.onAccent : "#9097A6", stroke: null };
   }
 }
 
@@ -1318,7 +1977,7 @@ wheelEl.addEventListener("click", (e) => {
 document.addEventListener("pointerdown", (e) => { if (W.open && W.mode === "click" && !wheelEl.contains(e.target)) { const h = hitTest(e.clientX, e.clientY); if (h.t === "none") { closeWheel(); sfx.cancel(); } } }, true);
 document.addEventListener("keydown", (e) => {
   if (e.key === "Shift" && D.active && D.moved && !W.open && D.f.kind === "image") { openWheel(D.f, D.x, D.y, "drag"); return; }
-  if (e.key === "Escape") { if (!$("#modal").hidden) { $("#modal").hidden = true; return; } if (W.open) { closeWheel(); cleanupDrag(); sfx.cancel(); } }
+  if (e.key === "Escape") { if (!$("#modal").hidden) { closeModal(); return; } if (W.open) { closeWheel(); cleanupDrag(); sfx.cancel(); } }
   if (W.open && W.mode === "click" && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
     const i = W.hover.t === "seg" ? W.hover.i : -1; setHover({ t: "seg", i: ((i + (e.key === "ArrowRight" ? 1 : 5)) % 6 + 6) % 6 }); e.preventDefault();
   }
@@ -1339,20 +1998,21 @@ function parseCommand(q) {
     const h = Math.round(f.h * w / f.w), c = makeCanvas(w, Math.max(1, h)), x = c.getContext("2d"); const fmt = sameFormat(f);
     if (fmt === "jpg") { x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); } x.imageSmoothingQuality = "high"; x.drawImage(f.img, 0, 0, c.width, c.height);
     return { blob: await encodeAs(f, fmt === "webp" ? "webp" : fmt, { canvas: c }), name: `${base(f.name)} (resized).${fmt}` }; }) }; }
-  const map = { jpg: "jpg", jpeg: "jpg", png: "png", webp: "webp", pdf: "pdf", ascii: "ascii", pixel: "pixel", gray: "gray", grey: "gray", mono: "gray", compress: "sqz", resize: "size", half: "size" };
+  const map = { jpg: "jpg", jpeg: "jpg", png: "png", webp: "webp", pdf: "pdf", bmp: "bmp", gif: "gif", tiff: "tiff", tif: "tiff",
+    compress: "sqz", resize: "size", half: "size", crop: "crop", combine: "combine" };
   const hit = Object.keys(map).find((k) => k.startsWith(q) || q === k);
-  const titles = { sqz: "Compress", size: "Resize to half", ascii: "Turn into ASCII art", pixel: "Turn into pixel art", gray: "Make it black and white" };
-  if (hit) { const key = map[hit]; return { title: titles[key] || `Convert to ${ACTIONS[key].label}`, run: (f) => runAction(f, key) }; }
-  if (/^(shift|halo|aqua|ascii|pixel|glass|win95|blueprint|news)$/.test(q)) return { title: `Switch skin to ${q}`, run: () => setSkin(q === "shift" ? "ascii" : q, true) };
+  const titles = { sqz: "Compress", size: "Resize to half", crop: "Crop…", combine: "Combine every picture here into one PDF" };
+  if (hit) { const key = map[hit]; return { key, title: titles[key] || `Convert to ${ACTIONS[key].label}`, run: (f) => runAction(f, key) }; }
   return null;
 }
-cmdInput.addEventListener("input", () => { const c = parseCommand(cmdInput.value); cmdHint.textContent = cmdInput.value ? (c ? `↩ ${c.title}${selected ? ` · ${middleTruncate(selected.name, 28)}` : ""}` : "Try webp, 50kb, 800w, ascii, pixel, pdf") : "Runs on the selected file. Press ↩."; });
+cmdInput.addEventListener("input", () => { const c = parseCommand(cmdInput.value); cmdHint.textContent = cmdInput.value ? (c ? `↩ ${c.title}${selected ? ` · ${middleTruncate(selected.name, 28)}` : ""}` : "Try webp, 50kb, 800w, pdf or tiff") : "Runs on the selected file. Press ↩."; });
 cmdInput.addEventListener("keydown", (e) => {
   if (e.key !== "Enter") return;
   const c = parseCommand(cmdInput.value);
-  if (!c) { toast("Try webp, 50kb, 800w, ascii, pixel or pdf"); return; }
+  if (!c) { toast("Try webp, 50kb, 800w, pdf or tiff"); return; }
   const f = selected || files[0]; if (!f) return;
-  if (f.kind !== "image" && !/skin/i.test(c.title)) { toast("Pick a picture first. That one isn't an image."); return; }
+  // Combine gathers every picture on the desk, so it doesn't care what's selected.
+  if (f.kind !== "image" && c.key !== "combine") { toast(`Pick a picture first: ${f.name} isn't one. (The app crops and converts PDFs too.)`); return; }
   c.run(f); cmdInput.value = ""; cmdHint.textContent = "Runs on the selected file. Press ↩.";
 });
 document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); cmdInput.focus(); } });
@@ -1377,361 +2037,6 @@ document.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.
     const r = pad.getBoundingClientRect(); lastX = lastX ?? r.left + r.width / 2;
     pad.dispatchEvent(new PointerEvent("pointermove", { clientX: lastX + (e.key === "ArrowRight" ? 30 : -30), bubbles: true }));
   });
-})();
-
-// ---------- The fling game ----------
-const play = (() => {
-  const canvas = $("#playCanvas"), ctx = canvas.getContext("2d");
-  const lowRes = makeCanvas(10, 10);
-  const KINDS = [["HEIC", 3.2], ["PNG", 6.1], ["TIFF", 48], ["PDF", 18], ["PNG", 2.4], ["HEIC", 4.8], ["BMP", 24], ["RAW", 32]];
-  let w = 0, h = 0, dpr = 1, bodies = [], parts = [], grab = null, visible = false, running = false, last = 0, spawnAt = 0, angle = 0;
-  let savedMB = 0, count = 0, combo = 1, comboUntil = 0, colors = {};
-  function resize() { const r = canvas.getBoundingClientRect(); dpr = Math.min(2, devicePixelRatio || 1); w = r.width; h = r.height; canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr); }
-  function restyle() { colors = { accent: css("--accent"), fg: css("--fg"), muted: css("--muted"), panel: css("--panel2"), line: css("--line"), on: css("--on-accent"), mono: css("--mono"), display: css("--display") }; }
-  function wheel() { return { x: w / 2, y: h * .46, r: Math.min(w, h) * .2 }; }
-  function spawn() {
-    if (bodies.length >= 12) return;
-    const [label, mb] = KINDS[Math.floor(Math.random() * KINDS.length)];
-    const r = 22 + Math.min(22, Math.sqrt(mb) * 4);
-    bodies.push({ x: 40 + Math.random() * (w - 80), y: -r, vx: (Math.random() - .5) * 2, vy: 0, r, label, mb, done: 0, alive: true });
-  }
-  function step(dt) {
-    const g = 900, wh = wheel();
-    angle += dt * .5;
-    for (const b of bodies) {
-      if (b === grab?.b) continue;
-      if (b.done) { b.done += dt; b.x += (wh.x - b.x) * Math.min(1, dt * 10); b.y += (wh.y - b.y) * Math.min(1, dt * 10); if (b.done > .6) b.alive = false; continue; }
-      b.vy += g * dt; b.x += b.vx * dt; b.y += b.vy * dt;
-      if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx) * .7; } if (b.x > w - b.r) { b.x = w - b.r; b.vx = -Math.abs(b.vx) * .7; }
-      if (b.y > h - b.r) { b.y = h - b.r; b.vy = -Math.abs(b.vy) * .45; b.vx *= .96; }
-      const d = Math.hypot(b.x - wh.x, b.y - wh.y);
-      if (d < wh.r * .45) hit(b);
-      else if (d < wh.r + b.r && d > wh.r * .45) { // bounce off the ring
-        const nx = (b.x - wh.x) / d, ny = (b.y - wh.y) / d, vn = b.vx * nx + b.vy * ny;
-        if (vn < 0 && d > wh.r * .8) { b.vx -= 1.6 * vn * nx; b.vy -= 1.6 * vn * ny; b.x = wh.x + nx * (wh.r + b.r); b.y = wh.y + ny * (wh.r + b.r); }
-      }
-    }
-    for (let i = 0; i < bodies.length; i++) for (let j = i + 1; j < bodies.length; j++) {
-      const a = bodies[i], b = bodies[j]; if (a.done || b.done) continue;
-      const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy), min = a.r + b.r;
-      if (d > 0 && d < min) { const nx = dx / d, ny = dy / d, push = (min - d) / 2; a.x -= nx * push; a.y -= ny * push; b.x += nx * push; b.y += ny * push;
-        const rel = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny; if (rel < 0) { a.vx += rel * nx * .9; a.vy += rel * ny * .9; b.vx -= rel * nx * .9; b.vy -= rel * ny * .9; } }
-    }
-    bodies = bodies.filter((b) => b.alive);
-    for (const p of parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 300 * dt; p.life -= dt; }
-    parts = parts.filter((p) => p.life > 0);
-  }
-  function hit(b) {
-    const now = performance.now(); combo = now < comboUntil ? combo + 1 : 1; comboUntil = now + 2500;
-    const before = b.mb, out = before * (0.2 + Math.random() * 0.4); b.done = 0.001; b.label = "JPG"; b.mb = out;
-    savedMB += before - out; count++;
-    $("#playSaved").textContent = savedMB < 1000 ? savedMB.toFixed(1) + " MB" : (savedMB / 1000).toFixed(2) + " GB"; $("#playCount").textContent = count; $("#playCombo").textContent = `combo ×${combo}`;
-    if (document.activeElement === canvas) announce(`Converted. ${count} so far, combo ${combo}.`);
-    const wh = wheel(); for (let i = 0; i < 22; i++) { const a = Math.random() * Math.PI * 2, s = 120 + Math.random() * 260; parts.push({ x: wh.x, y: wh.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 120, life: .6 + Math.random() * .5 }); }
-    sfx.drop();
-  }
-  function drawScene(c, scale) {
-    c.save(); c.scale(scale, scale);
-    const wh = wheel(), pixel = skin === "pixel", ascii = skin === "ascii";
-    // wheel ring: six rotating segments
-    for (let i = 0; i < 6; i++) {
-      const a0 = angle + i * Math.PI / 3 + .06, a1 = a0 + Math.PI / 3 - .12;
-      sector(c, wh.x, wh.y, wh.r * .55, wh.r, a0, a1);
-      c.fillStyle = i === 0 ? colors.accent : (skin === "aqua" ? "#C9D6E6" : skin === "glass" ? "rgba(255,255,255,.18)" : skin === "win95" ? "#D4D0C8" : colors.panel);
-      c.fill(); if (!pixel) { c.strokeStyle = colors.line; c.lineWidth = 1; c.stroke(); }
-    }
-    c.fillStyle = LIGHT_SKINS.includes(skin) ? "#FFFFFF" : (skin === "glass" ? "rgba(255,255,255,.12)" : "rgba(0,0,0,.35)");
-    c.beginPath(); c.arc(wh.x, wh.y, wh.r * .45, 0, Math.PI * 2); c.fill();
-    c.fillStyle = colors.accent; c.textAlign = "center"; c.textBaseline = "middle"; c.font = `800 ${Math.round(wh.r * .2)}px ${colors.display}`;
-    c.fillText(ascii ? "[ IN ]" : "DROP", wh.x, wh.y);
-    for (const b of bodies) {
-      const s = b.done ? Math.max(0, 1 - b.done / .6) : 1;
-      if (s <= 0) continue;
-      c.save(); c.translate(b.x, b.y); c.scale(s, s);
-      if (ascii) { c.fillStyle = b.done ? colors.accent : colors.fg; c.font = `700 ${Math.round(b.r * .55)}px ${colors.mono}`; c.fillText(`[${b.label}]`, 0, 0); }
-      else {
-        c.beginPath(); c.arc(0, 0, b.r, 0, Math.PI * 2);
-        if (skin === "aqua") { const g = c.createRadialGradient(-b.r * .3, -b.r * .4, 2, 0, 0, b.r); g.addColorStop(0, "#E9F4FF"); g.addColorStop(.5, b.done ? "#2C83F2" : "#7FB2E8"); g.addColorStop(1, "#1A5CC0"); c.fillStyle = g; }
-        else c.fillStyle = b.done ? colors.accent : (skin === "glass" ? "rgba(255,255,255,.22)" : colors.panel);
-        c.fill(); if (!pixel) { c.strokeStyle = colors.line; c.lineWidth = 1.5; c.stroke(); }
-        c.fillStyle = b.done ? colors.on : (skin === "aqua" ? "#FFFFFF" : colors.fg);
-        c.font = `700 ${Math.round(b.r * .42)}px ${pixel ? colors.display : colors.mono}`; c.textAlign = "center"; c.textBaseline = "middle";
-        c.fillText(b.label, 0, -b.r * .12); c.font = `${Math.round(b.r * .3)}px ${colors.mono}`; c.globalAlpha = .75; c.fillText(b.mb >= 10 ? b.mb.toFixed(0) + "MB" : b.mb.toFixed(1) + "MB", 0, b.r * .32);
-      }
-      c.restore();
-    }
-    c.fillStyle = colors.accent; for (const p of parts) { c.globalAlpha = Math.max(0, p.life); c.fillRect(p.x - 2, p.y - 2, pixel ? 6 : 4, pixel ? 6 : 4); }
-    c.globalAlpha = 1;
-    if (grab) { c.strokeStyle = colors.accent; c.setLineDash([4, 6]); c.beginPath(); c.moveTo(grab.b.x, grab.b.y); c.lineTo(grab.b.x + grab.vx * .12, grab.b.y + grab.vy * .12); c.stroke(); c.setLineDash([]); }
-    c.restore();
-  }
-  function frame(t) {
-    if (!running) return;
-    const dt = Math.min(1 / 30, (t - last) / 1000 || 0); last = t;
-    if (t > spawnAt) { spawn(); spawnAt = t + 1300; }
-    step(dt);
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if (skin === "pixel") {
-      const k = 4; lowRes.width = Math.ceil(w / k); lowRes.height = Math.ceil(h / k);
-      const lc = lowRes.getContext("2d"); lc.imageSmoothingEnabled = false; drawScene(lc, 1 / k);
-      ctx.imageSmoothingEnabled = false; ctx.drawImage(lowRes, 0, 0, canvas.width, canvas.height);
-    } else drawScene(ctx, dpr);
-    requestAnimationFrame(frame);
-  }
-  function start() { if (running || !visible) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
-  function stop() { running = false; }
-  const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
-  canvas.addEventListener("pointerdown", (e) => {
-    const p = pos(e); const b = bodies.filter((b) => !b.done).find((b) => Math.hypot(b.x - p.x, b.y - p.y) < b.r + 8);
-    if (!b) return; grab = { b, x: p.x, y: p.y, t: performance.now(), vx: 0, vy: 0 }; canvas.setPointerCapture(e.pointerId); sfx.tick();
-  });
-  canvas.addEventListener("pointermove", (e) => {
-    if (!grab) return; const p = pos(e), now = performance.now(), dt = Math.max(1, now - grab.t) / 1000;
-    grab.vx = grab.vx * .5 + ((p.x - grab.x) / dt) * .5; grab.vy = grab.vy * .5 + ((p.y - grab.y) / dt) * .5;
-    grab.b.x = p.x; grab.b.y = p.y; grab.x = p.x; grab.y = p.y; grab.t = now;
-  });
-  const release = () => { if (!grab) return; grab.b.vx = Math.max(-2200, Math.min(2200, grab.vx)); grab.b.vy = Math.max(-2200, Math.min(2200, grab.vy)); grab = null; };
-  canvas.addEventListener("pointerup", release); canvas.addEventListener("pointercancel", release);
-  // Keyboard: Space or Enter throws the file nearest the wheel straight at it.
-  canvas.addEventListener("keydown", (e) => {
-    if (e.key !== " " && e.key !== "Enter") return;
-    e.preventDefault();
-    const wh = wheel(), free = bodies.filter((b) => !b.done);
-    if (!free.length) { spawn(); return; }
-    const b = free.reduce((a, x) => Math.hypot(x.x - wh.x, x.y - wh.y) < Math.hypot(a.x - wh.x, a.y - wh.y) ? x : a);
-    const dx = wh.x - b.x, dy = wh.y - b.y, d = Math.hypot(dx, dy) || 1, sp = 900;
-    b.vx = dx / d * sp; b.vy = dy / d * sp - 120; sfx.tick();
-    if (!running) { visible = true; start(); }
-  });
-  new IntersectionObserver((entries) => { visible = entries[0].isIntersecting; if (visible) { resize(); start(); } else stop(); }).observe(canvas);
-  addEventListener("resize", () => { resize(); });
-  resize(); restyle();
-  for (let i = 0; i < 5; i++) { spawn(); bodies[bodies.length - 1].y = 40 + i * 20; }
-  return { restyle };
-})();
-
-// ---------- Theme builder (exports the app's own theme format) ----------
-const builder = (() => {
-  const THEMES = [
-    { id: "neon", name: "Neon", accent: "#C6FF3D", glass: 0.55, font: "rounded" },
-    { id: "tangerine", name: "Tangerine", accent: "#FF8A00", glass: 0.55, font: "rounded" },
-    { id: "glass", name: "Glass", accent: "#7C8CFF", glass: 0.3, font: "rounded" },
-    { id: "graphite", name: "Graphite", accent: "#9BA3AF", glass: 0.75, font: "default" },
-    { id: "midnight", name: "Midnight", accent: "#5C7CFA", glass: 0.8, font: "rounded" },
-    { id: "mono", name: "Mono", accent: "#F2F2F2", glass: 0.6, font: "default" },
-  ];
-  const SWATCHES = ["#FF8A00", "#FF5E3A", "#FFB020", "#7C8CFF", "#C6FF3D", "#5CE1FF", "#FF5CA8", "#9BA3AF"];
-  const DEFAULT = { theme: "neon", accent: "#C6FF3D", layout: "halo", scheme: "auto", panel: "auto", glass: 0.55,
-    tints: { images: "", tools: "", documents: "" }, scale: 1, thick: 1, gap: 3, orb: 1, label: 1, font: "rounded", case: "title" };
-  let st = (() => { try { const v = JSON.parse(store.get("circularity-theme-builder") || "null"); return v && v.tints ? { ...DEFAULT, ...v } : structuredClone(DEFAULT); } catch { return structuredClone(DEFAULT); } })();
-  const canvas = $("#tbCanvas"), ctx = canvas.getContext("2d");
-  let hover = 1, userHover = false, visible = false;
-
-  // WCAG maths, the same rule the app uses for text on the accent.
-  const rgb = (hex) => { const v = parseInt(hex.slice(1), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255].map((c) => c / 255); };
-  const lum = (hex) => { const [r, g, b] = rgb(hex).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
-  const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-  const onAccent = (hex) => (contrast(hex, "#1A1206") >= contrast(hex, "#FFFFFF") ? "#1A1206" : "#FFFFFF");
-  const alpha = (hex, a) => { const [r, g, b] = rgb(hex); return `rgba(${Math.round(r * 255)},${Math.round(g * 255)},${Math.round(b * 255)},${a})`; };
-
-  const SEGMENTS = [
-    { label: "PNG", mono: "PNG", cap: "LOSSLESS", kind: "images", kicker: "CONVERT TO", hint: "lossless, keeps transparency" },
-    { label: "JPG", mono: "JPG", cap: "PHOTO", kind: "images", kicker: "CONVERT TO", hint: "small, best for photos" },
-    { label: "Cut out", mono: "CUT", cap: "NO BG", kind: "tools", kicker: "CUT OUT THE", hint: "background made transparent" },
-    { label: "More", mono: "•••", cap: "MORE", kind: null, kicker: "REST HERE FOR", hint: "8 more options" },
-    { label: "Compress", mono: "SQZ", cap: "COMPRESS", kind: "tools", kicker: "OPEN", hint: "quality or target size" },
-    { label: "Resize", mono: "SIZE", cap: "RESIZE", kind: "tools", kicker: "OPEN", hint: "width × height" },
-  ];
-
-  function isLight() {
-    if (st.layout === "halo") return false;
-    if (st.scheme === "light") return true;
-    if (st.scheme === "dark") return false;
-    if (st.scheme === "system") return matchMedia("(prefers-color-scheme: light)").matches;
-    return st.layout === "orbit";
-  }
-  // The app's geometry (WheelGeometry + WheelTweaks), in app points.
-  function geometry() {
-    const base = { ring: { rin: 98, rout: 204, bulge: 12, orb: 180, disc: 436, gap: 3 }, halo: { rin: 120, rout: 188, bulge: 10, orb: 230, disc: 424, gap: 2 },
-      orbit: { buttonR: 165, buttonD: 88, orb: 150 } }[st.layout];
-    const g = { ...base };
-    if (st.layout === "orbit") { g.orb = base.orb * st.orb; return g; }
-    g.rout = g.rin + (base.rout - base.rin) * st.thick;
-    g.span = 60 - st.gap * (st.layout === "halo" ? 2 / 3 : 1);
-    g.orb = Math.min(base.orb * st.orb, g.rin * 2 - 8);
-    g.disc = Math.max(base.disc, (g.rout + g.bulge + 2) * 2);
-    return g;
-  }
-  const fontFamily = (mono) => (mono || st.font === "mono" ? '"JetBrains Mono", ui-monospace, monospace' : st.font === "default" ? "system-ui, -apple-system, sans-serif" : '"Nunito", ui-rounded, system-ui, sans-serif');
-  const text = (t) => (st.case === "upper" ? t.toUpperCase() : t);
-
-  function draw() {
-    const dpr = Math.min(2, devicePixelRatio || 1), cssW = canvas.clientWidth || 480;
-    if (canvas.width !== Math.round(cssW * dpr)) { canvas.width = Math.round(cssW * dpr); canvas.height = canvas.width; }
-    const W2 = canvas.width / dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const light = isLight(), g = geometry(), c = W2 / 2;
-    // Desktop-like backdrop.
-    const bg = ctx.createLinearGradient(0, 0, W2, W2);
-    bg.addColorStop(0, light ? "#DCD6CC" : "#2B3242"); bg.addColorStop(1, light ? "#B9C4D0" : "#14171E");
-    ctx.fillStyle = bg; ctx.fillRect(0, 0, W2, W2);
-    const k = (W2 * 0.92) / (470 * 1.4) * st.scale; // app points → preview px (1.4× fits)
-    ctx.save(); ctx.translate(c, c); ctx.scale(k, k);
-    // 100 % reference ring
-    ctx.strokeStyle = light ? "rgba(0,0,0,.18)" : "rgba(255,255,255,.14)"; ctx.setLineDash([4 / k, 6 / k]); ctx.lineWidth = 1 / k;
-    ctx.beginPath(); ctx.arc(0, 0, 218 / st.scale, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-    const accent = st.accent, on = onAccent(accent);
-    const ls = st.label;
-    if (st.layout === "orbit") drawOrbit(g, light, accent, on, ls); else drawSectors(g, light, accent, on, ls);
-    ctx.restore();
-    ctx.fillStyle = light ? "rgba(0,0,0,.5)" : "rgba(255,255,255,.55)"; ctx.font = `11px ${fontFamily(true)}`; ctx.textAlign = "left";
-    ctx.fillText(`${Math.round(st.scale * 100)} % · dashed ring = 100 %`, 12, W2 - 12);
-  }
-
-  function orbBlock(g, light, accent, on, ls, orbFill) {
-    const seg = SEGMENTS[hover];
-    ctx.fillStyle = orbFill; ctx.beginPath(); ctx.arc(0, 0, g.orb / 2, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = light ? "rgba(60,40,20,.15)" : "rgba(255,255,255,.16)"; ctx.lineWidth = 1.5; ctx.stroke();
-    const orbHex = light ? "#F4F2EF" : (st.layout === "halo" ? "#1A1D24" : "#141416");
-    const ink = light ? "#1D1B18" : "#ECEEF2";
-    const big = contrast(accent, orbHex) >= 3 ? accent : ink;
-    const f = g.orb / (st.layout === "halo" ? 230 : 180);
-    ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.fillStyle = light ? "#5A544B" : "#A9AFBC"; ctx.font = `600 ${10 * f * ls}px ${fontFamily(false)}`; ctx.fillText(seg.kicker, 0, -30 * f);
-    ctx.fillStyle = big; ctx.font = `800 ${(st.layout === "halo" ? 34 : 30) * f * ls}px ${fontFamily(st.layout === "halo")}`;
-    ctx.fillText(st.layout === "halo" ? seg.mono : text(seg.label), 0, 0);
-    ctx.fillStyle = light ? "#2A2622" : "#D5D9E1"; ctx.font = `600 ${11 * f * ls}px ${fontFamily(false)}`; ctx.fillText(seg.hint, 0, 28 * f);
-  }
-
-  function drawSectors(g, light, accent, on, ls) {
-    const halo = st.layout === "halo";
-    const discFill = halo ? "#0D0F14" : (light ? `rgba(255,255,255,${st.glass})` : `rgba(24,24,28,${st.glass})`);
-    ctx.save(); ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 40; ctx.shadowOffsetY = 20;
-    ctx.fillStyle = discFill; ctx.beginPath(); ctx.arc(0, 0, g.disc / 2, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-    if (halo) { ctx.strokeStyle = alpha(accent, 0.22); ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, g.disc / 2 - 4, 0, Math.PI * 2); ctx.stroke(); }
-    else { ctx.strokeStyle = light ? "rgba(0,0,0,.1)" : "rgba(255,255,255,.12)"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, g.disc / 2 - .5, 0, Math.PI * 2); ctx.stroke(); }
-    SEGMENTS.forEach((seg, i) => {
-      const hot = i === hover, mid = i * 60, half = g.span / 2;
-      const rout = g.rout + (hot ? g.bulge : 0), rin = g.rin - (hot ? 6 : 0);
-      ctx.beginPath(); ctx.arc(0, 0, rout, rad(mid - half), rad(mid + half)); ctx.arc(0, 0, rin, rad(mid + half), rad(mid - half), true); ctx.closePath();
-      const tint = seg.kind && st.tints[seg.kind];
-      let fill = halo ? "#1B1D23" : (light ? "rgba(0,0,0,.06)" : "rgba(255,255,255,.07)");
-      if (tint) fill = alpha(tint, halo ? 0.2 : 0.22);
-      ctx.save();
-      if (hot) { fill = accent; if (halo) { ctx.shadowColor = accent; ctx.shadowBlur = 22; } }
-      ctx.fillStyle = fill; ctx.fill(); ctx.restore();
-      if (!halo) { ctx.strokeStyle = hot ? (light ? "rgba(0,0,0,.25)" : "rgba(255,255,255,.35)") : (light ? "rgba(0,0,0,.1)" : "rgba(255,255,255,.1)"); ctx.lineWidth = 1; ctx.stroke(); }
-      const r = (g.rin + g.rout) / 2 + (hot ? 4 : 0), a = rad(mid), x = Math.cos(a) * r, y = Math.sin(a) * r;
-      const fg = hot ? on : (halo ? "#ECEEF2" : light ? "#1D1B18" : "#F4F1EC");
-      ctx.fillStyle = fg; ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = `700 ${15 * ls}px ${fontFamily(halo)}`; ctx.fillText(halo ? seg.mono : text(seg.label), x, y - 7 * ls);
-      ctx.fillStyle = hot ? alpha(on, 0.75) : (halo ? "#9097A6" : light ? "#4A453E" : "#C9C3B9");
-      ctx.font = `600 ${10 * ls}px ${fontFamily(false)}`; ctx.fillText(seg.cap, x, y + 11 * ls);
-    });
-    orbBlock(g, light, accent, on, ls, halo ? "#1A1D24" : (light ? "rgba(255,255,255,.86)" : "rgba(14,14,16,.78)"));
-  }
-
-  function drawOrbit(g, light, accent, on, ls) {
-    ctx.strokeStyle = light ? "rgba(60,40,20,.16)" : "rgba(255,255,255,.16)"; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(0, 0, g.buttonR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-    SEGMENTS.forEach((seg, i) => {
-      const hot = i === hover, a = rad(i * 60), x = Math.cos(a) * g.buttonR, y = Math.sin(a) * g.buttonR, r = g.buttonD / 2 * (hot ? 1.16 : 1);
-      ctx.save(); ctx.shadowColor = "rgba(60,40,20,.25)"; ctx.shadowBlur = 16; ctx.shadowOffsetY = 8;
-      ctx.fillStyle = hot ? accent : (light ? "rgba(255,255,255,.72)" : "rgba(38,38,43,.88)");
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-      const tint = seg.kind && st.tints[seg.kind];
-      ctx.fillStyle = hot ? "rgba(255,255,255,.85)" : (tint || (light ? "#E4E0DA" : "#3A3A40"));
-      ctx.beginPath(); ctx.arc(x, y - 10, 15, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = hot ? on : (light ? "#1D1B18" : "#F4F1EC"); ctx.textAlign = "center"; ctx.textBaseline = "middle";
-      ctx.font = `700 ${12 * ls}px ${fontFamily(false)}`; ctx.fillText(text(seg.label), x, y + 20);
-    });
-    orbBlock(g, light, accent, on, ls, light ? "rgba(255,255,255,.78)" : "rgba(30,30,34,.88)");
-  }
-
-  function json() {
-    const r2 = (n) => Math.round(n * 100) / 100;
-    const themeId = THEMES.some((t) => t.id === st.theme && t.accent === st.accent) ? st.theme : "custom";
-    return JSON.stringify({ app: "Circularity", schemaVersion: 2, values: {
-      "appearance.theme": themeId, "appearance.accentHex": st.accent.toUpperCase(), "appearance.glassStrength": r2(st.glass),
-      "appearance.wheelScheme": st.scheme, "menubar.colorScheme": st.panel, "wheel.layout": st.layout,
-      "appearance.tint.images": (st.tints.images || "").toUpperCase(), "appearance.tint.documents": (st.tints.documents || "").toUpperCase(),
-      "appearance.tint.tools": (st.tints.tools || "").toUpperCase(),
-      "wheel.scale": r2(st.scale), "appearance.ringThickness": r2(st.thick), "appearance.segmentGap": st.gap,
-      "appearance.orbScale": r2(st.orb), "appearance.labelScale": r2(st.label), "appearance.font": st.font, "appearance.labelCase": st.case,
-    } }, null, 2);
-  }
-
-  function describe() {
-    const t = THEMES.find((x) => x.accent === st.accent);
-    return `Preview: ${st.layout} layout, ${t ? t.name : "custom " + st.accent} accent, ${isLight() ? "light" : "dark"}, hovering ${SEGMENTS[hover].label}`;
-  }
-
-  function sync() {
-    $$("#tbThemes .pill").forEach((b) => b.setAttribute("aria-pressed", b.dataset.id === st.theme && THEMES.find((t) => t.id === st.theme)?.accent === st.accent));
-    $$("#tbSwatches .swatch").forEach((b) => b.setAttribute("aria-pressed", b.dataset.hex === st.accent));
-    $("#tbAccent").value = st.accent.toLowerCase();
-    $$("[data-tb-layout]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tbLayout === st.layout));
-    $$("[data-tb-scheme]").forEach((b) => { b.setAttribute("aria-pressed", b.dataset.tbScheme === st.scheme); b.disabled = st.layout === "halo"; });
-    $$("[data-tb-panel]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tbPanel === st.panel));
-    $$("[data-tb-font]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tbFont === st.font));
-    $$("[data-tb-case]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.tbCase === st.case));
-    const ranges = { tbGlass: ["glass", (v) => Math.round(v * 100) + " %"], tbScale: ["scale", (v) => Math.round(v * 100) + " %"],
-      tbThick: ["thick", (v) => Math.round(v * 100) + " %"], tbGap: ["gap", (v) => v + "°"], tbOrb: ["orb", (v) => Math.round(v * 100) + " %"],
-      tbLabel: ["label", (v) => Math.round(v * 100) + " %"] };
-    for (const [id, [key, fmt]] of Object.entries(ranges)) { $("#" + id).value = st[key]; $("#" + id + "Out").textContent = fmt(st[key]); $("#" + id).setAttribute("aria-valuetext", fmt(st[key])); }
-    $("#tbGlass").disabled = st.layout !== "ring";
-    for (const [kind, id] of [["images", "tbTintImages"], ["tools", "tbTintTools"], ["documents", "tbTintDocs"]]) {
-      $("#" + id + "On").checked = !!st.tints[kind]; if (st.tints[kind]) $("#" + id).value = st.tints[kind].toLowerCase();
-    }
-    const code = $("#tbJSON"); code.value = json();
-    canvas.setAttribute("aria-label", describe());
-    store.set("circularity-theme-builder", JSON.stringify(st));
-    draw();
-  }
-
-  // Controls
-  THEMES.forEach((t) => { const b = document.createElement("button"); b.type = "button"; b.className = "pill"; b.dataset.id = t.id; b.textContent = t.name;
-    b.addEventListener("click", () => { Object.assign(st, { theme: t.id, accent: t.accent, glass: t.glass, font: t.font }); sync(); }); $("#tbThemes").append(b); });
-  SWATCHES.forEach((hex) => { const b = document.createElement("button"); b.type = "button"; b.className = "swatch"; b.dataset.hex = hex; b.style.background = hex;
-    b.setAttribute("aria-label", "Accent " + hex); b.addEventListener("click", () => { st.accent = hex; st.theme = THEMES.find((t) => t.accent === hex)?.id || "custom"; sync(); }); $("#tbSwatches").append(b); });
-  $("#tbAccent").addEventListener("input", (e) => { st.accent = e.target.value.toUpperCase(); st.theme = "custom"; sync(); });
-  for (const [attr, key] of [["tbLayout", "layout"], ["tbScheme", "scheme"], ["tbPanel", "panel"], ["tbFont", "font"], ["tbCase", "case"]]) {
-    $$(`[data-${attr.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())}]`).forEach((b) => b.addEventListener("click", () => { st[key] = b.dataset[attr]; sync(); }));
-  }
-  for (const [id, key] of [["tbGlass", "glass"], ["tbScale", "scale"], ["tbThick", "thick"], ["tbGap", "gap"], ["tbOrb", "orb"], ["tbLabel", "label"]]) {
-    $("#" + id).addEventListener("input", (e) => { st[key] = parseFloat(e.target.value); sync(); });
-  }
-  for (const [kind, id] of [["images", "tbTintImages"], ["tools", "tbTintTools"], ["documents", "tbTintDocs"]]) {
-    $("#" + id + "On").addEventListener("change", (e) => { st.tints[kind] = e.target.checked ? $("#" + id).value.toUpperCase() : ""; sync(); });
-    $("#" + id).addEventListener("input", (e) => { st.tints[kind] = e.target.value.toUpperCase(); sync(); });
-  }
-  $("#tbCopy").addEventListener("click", async () => {
-    const status = $("#tbStatus");
-    try { await navigator.clipboard.writeText(json()); status.textContent = "Copied. In Circularity: Settings → Appearance → Paste theme."; sfx.drop(); }
-    catch { const code = $("#tbJSON"); code.hidden = false; $("#tbShow").setAttribute("aria-expanded", "true"); code.focus(); code.select(); status.textContent = "Selected the code below. Press ⌘C, then Paste theme in the app."; }
-  });
-  $("#tbShow").addEventListener("click", () => { const code = $("#tbJSON"); code.hidden = !code.hidden; $("#tbShow").setAttribute("aria-expanded", String(!code.hidden)); $("#tbShow").textContent = code.hidden ? "Show the code" : "Hide the code"; });
-  $("#tbReset").addEventListener("click", () => { st = structuredClone(DEFAULT); sync(); $("#tbStatus").textContent = "Back to the defaults."; });
-
-  // Hover with the pointer, the keyboard, or by itself.
-  function pick(e) {
-    const r = canvas.getBoundingClientRect(), x = e.clientX - r.left - r.width / 2, y = e.clientY - r.top - r.height / 2;
-    let deg = Math.atan2(x, -y) * 180 / Math.PI; if (deg < 0) deg += 360;
-    const i = Math.floor((deg + 30) / 60) % 6;
-    if (i !== hover) { hover = i; userHover = true; $("#tbCaption").textContent = `${SEGMENTS[i].label}: ${SEGMENTS[i].hint}`; draw(); canvas.setAttribute("aria-label", describe()); }
-  }
-  canvas.addEventListener("pointermove", pick);
-  canvas.addEventListener("pointerdown", pick);
-  canvas.addEventListener("pointerleave", () => { userHover = false; });
-  canvas.addEventListener("keydown", (e) => {
-    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-    e.preventDefault(); userHover = true; hover = (hover + (e.key === "ArrowRight" ? 1 : 5)) % 6;
-    $("#tbCaption").textContent = `${SEGMENTS[hover].label}: ${SEGMENTS[hover].hint}`; draw(); canvas.setAttribute("aria-label", describe());
-  });
-  new IntersectionObserver((en) => { visible = en[0].isIntersecting; if (visible) draw(); }).observe(canvas);
-  if (!reduceMotion) setInterval(() => { if (visible && !userHover && document.activeElement !== canvas) { hover = (hover + 1) % 6; draw(); } }, 1600);
-  addEventListener("resize", draw);
-  sync();
-  return { draw };
 })();
 
 // ---------- Format lab ----------
@@ -1872,18 +2177,514 @@ $$(".copy").forEach((b) => { if (b.id === "modalClose") return; b.addEventListen
   try { await navigator.clipboard.writeText(text); b.textContent = "copied"; } catch { const r = document.createRange(); r.selectNodeContents(b.previousElementSibling); const s = getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = "selected"; }
   setTimeout(() => (b.textContent = "copy"), 1500);
 }); });
-const dl = $("#downloadBtn");
-if (DOWNLOAD_URL) { dl.href = DOWNLOAD_URL; dl.target = "_blank"; dl.rel = "noopener"; }
-else { dl.addEventListener("click", (e) => { e.preventDefault(); $("#downloadNote").textContent = "The download link arrives with the first public release. Check back soon."; }); }
+const touchOnly = matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches;
+if (touchOnly) $("#statHint").textContent = "tap a file to open the wheel without dragging";
+if (innerWidth < 600) cmdInput.placeholder = "try: webp · 50kb · pdf";
+// On a phone or tablet a .dmg is no use: offer to send the page to the Mac instead.
+const sendToMac = touchOnly; // no Mac is touch-only
+$$(".dl").forEach((dl) => {
+  if (sendToMac) {
+    dl.textContent = dl.closest(".nav") ? "Send to Mac" : "Send the link to my Mac";
+    dl.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const url = location.origin + location.pathname, note = $("#downloadNote");
+      try { if (navigator.share) { await navigator.share({ title: "Circularity for Mac", url }); return; } } catch (err) { if (err?.name === "AbortError") return; }
+      try { await navigator.clipboard.writeText(url); note.textContent = "Link copied. Open it on your Mac to download."; }
+      catch { note.textContent = `Open ${url} on your Mac to download.`; }
+      $("#install").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    });
+    return;
+  }
+  if (DOWNLOAD_URL) { dl.href = DOWNLOAD_URL; return; } // a .dmg link downloads by itself
+  // No disk image yet: don't promise a size or a version.
+  $("#dmgSize")?.remove();
+  if (dl.id === "downloadBtn") dl.textContent = "Download (coming soon)";
+  dl.addEventListener("click", (e) => {
+    e.preventDefault();
+    $("#install").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth" });
+    $("#downloadNote").textContent = "The download arrives with the first public release. Check back soon.";
+  });
+});
+
+// ---------- Kinetic grid behind the page (Neon): warps toward the pointer, ripples on click ----------
+// A plain-JS port of the kinetic-grid idea: no framework, and it only draws
+// while something moves, so an idle page costs nothing.
+(() => {
+  const canvas = $("#kgrid"), ctx = canvas.getContext("2d");
+  const CELL = 56, RADIUS = 260, WARP = 24, DOTS = 28, LERP = 0.09;
+  let W = 0, H = 0, dpr = 1, raf = 0, lastMove = 0;
+  const mouse = { x: -9999, y: -9999 }, target = { x: -9999, y: -9999 };
+  const ripples = [];
+  const active = () => ["riso", "ink", "neon"].includes(root.dataset.skin || "riso");
+  const rgb = (name, fallback) => (css(name) || fallback).split(",").map((v) => parseFloat(v));
+
+  function size() {
+    dpr = Math.min(1.5, devicePixelRatio || 1); W = innerWidth; H = innerHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    draw(performance.now());
+  }
+
+  function warped(gx, gy, col, row, cols, rows) {
+    const m = 1.5, pin = Math.min(col / m, (cols - 1 - col) / m, 1) ** 2 * Math.min(row / m, (rows - 1 - row) / m, 1) ** 2;
+    const dx = gx - mouse.x, dy = gy - mouse.y, dist = Math.hypot(dx, dy);
+    const prox = Math.max(0, 1 - dist / RADIUS) * pin;
+    let rx = 0, ry = 0;
+    for (const r of ripples) {
+      const rdx = gx - r.x, rdy = gy - r.y, rd = Math.hypot(rdx, rdy), diff = rd - r.radius;
+      if (Math.abs(diff) < 55) {
+        const str = (1 - Math.abs(diff) / 55) * r.opacity * 18 * pin, a = Math.atan2(rdy, rdx), sign = diff < 0 ? 1 : -1;
+        rx += Math.cos(a) * str * sign; ry += Math.sin(a) * str * sign;
+      }
+    }
+    if (dist < RADIUS && dist > 0 && pin > 0) {
+      const t = dist / RADIUS, eased = (1 - t) * (1 - t) * Math.min(1, dist / 60), amt = eased * WARP * pin, a = Math.atan2(dy, dx);
+      return [gx - Math.cos(a) * amt + rx, gy - Math.sin(a) * amt + ry, prox];
+    }
+    return [gx + rx, gy + ry, prox];
+  }
+
+  function draw(now) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    if (!active()) return;
+    const [lr, lg, lb] = rgb("--grid-line", "255,255,255"), [ar, ag, ab] = rgb("--grid-active", "198,255,61");
+    ctx.fillStyle = `rgba(${lr},${lg},${lb},0.05)`;
+    for (let x = DOTS / 2; x < W; x += DOTS) for (let y = DOTS / 2; y < H; y += DOTS) ctx.fillRect(x - 0.7, y - 0.7, 1.4, 1.4);
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const r = ripples[i], age = (now - r.born) / 1000;
+      r.radius = Math.max(0, age * 420); r.opacity = Math.max(0, 1 - age * 1.2);
+      if (r.opacity <= 0) ripples.splice(i, 1);
+    }
+    const cols = Math.max(2, Math.ceil(W / CELL)) + 1, rows = Math.max(2, Math.ceil(H / CELL)) + 1;
+    const cw = W / (cols - 1), ch = H / (rows - 1), pts = [];
+    for (let r = 0; r < rows; r++) { pts[r] = []; for (let c = 0; c < cols; c++) pts[r][c] = warped(c * cw, r * ch, c, r, cols, rows); }
+    const mix = (t) => [lr + (ar - lr) * t, lg + (ag - lg) * t, lb + (ab - lb) * t];
+    const seg = (p, q) => {
+      const avg = (p[2] + q[2]) / 2, t = avg * avg * (3 - 2 * avg), [r, g, b] = mix(t);
+      ctx.strokeStyle = `rgba(${r | 0},${g | 0},${b | 0},${(0.07 + t * 0.8).toFixed(3)})`;
+      ctx.lineWidth = 0.8 + t * 0.7;
+      ctx.beginPath(); ctx.moveTo(p[0], p[1]); ctx.lineTo(q[0], q[1]); ctx.stroke();
+    };
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols - 1; c++) seg(pts[r][c], pts[r][c + 1]);
+    for (let c = 0; c < cols; c++) for (let r = 0; r < rows - 1; r++) seg(pts[r][c], pts[r + 1][c]);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const p = pts[r][c], t = p[2] * p[2] * (3 - 2 * p[2]), rad = 1.4 + t * 1.8;
+      if (t > 0.3) {
+        const g = ctx.createRadialGradient(p[0], p[1], rad * 0.5, p[0], p[1], rad + 6 * (t - 0.3) / 0.7);
+        g.addColorStop(0, `rgba(${ar},${ag},${ab},${(t * 0.35).toFixed(3)})`); g.addColorStop(1, `rgba(${ar},${ag},${ab},0)`);
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p[0], p[1], rad + 6, 0, Math.PI * 2); ctx.fill();
+      }
+      const [cr, cg, cb] = mix(t);
+      ctx.fillStyle = `rgba(${cr | 0},${cg | 0},${cb | 0},${(0.16 + t * 0.84).toFixed(3)})`;
+      ctx.beginPath(); ctx.arc(p[0], p[1], rad, 0, Math.PI * 2); ctx.fill();
+    }
+    for (const r of ripples) {
+      ctx.strokeStyle = `rgba(${ar},${ag},${ab},${(r.opacity * 0.32).toFixed(3)})`; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2); ctx.stroke();
+    }
+  }
+
+  function loop(now) {
+    raf = 0;
+    mouse.x += (target.x - mouse.x) * LERP; mouse.y += (target.y - mouse.y) * LERP;
+    draw(now);
+    const settling = Math.hypot(target.x - mouse.x, target.y - mouse.y) > 0.4;
+    if (!document.hidden && active() && (settling || ripples.length || now - lastMove < 400)) raf = requestAnimationFrame(loop);
+  }
+  const wake = () => { if (!raf && !reduceMotion) raf = requestAnimationFrame(loop); };
+
+  addEventListener("pointermove", (e) => {
+    if (e.pointerType === "touch") return;
+    if (target.x === -9999) { mouse.x = e.clientX; mouse.y = e.clientY; }
+    target.x = e.clientX; target.y = e.clientY; lastMove = performance.now(); wake();
+  }, { passive: true });
+  addEventListener("pointerdown", (e) => {
+    if (reduceMotion || !active()) return;
+    ripples.push({ x: e.clientX, y: e.clientY, radius: 0, opacity: 1, born: performance.now() });
+    if (ripples.length > 6) ripples.shift();
+    wake();
+  }, { passive: true });
+  document.addEventListener("pointerleave", () => { target.x = target.y = -9999; wake(); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) draw(performance.now()); });
+  addEventListener("resize", size);
+  size();
+  return null;
+})();
+// Redraw (or clear) the grid when the style changes.
+const kgridRedraw = () => dispatchEvent(new Event("resize"));
+
+// ---------- Container scroll: tilt 20° → 0°, scale 1.05 → 1 (0.94 → 1 on phones), title rises ----------
+(() => {
+  const box = $("#cs"), card = $("#csCard"), title = $("#csTitle");
+  if (reduceMotion) return;
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const r = box.getBoundingClientRect(), vh = innerHeight;
+    // 0 when the section's top meets the bottom of the window, 1 when its bottom does.
+    const p = Math.min(1, Math.max(0, (vh - r.top) / Math.max(1, r.height)));
+    const mobile = innerWidth <= 768;
+    card.style.setProperty("--rx", (20 * (1 - p)).toFixed(2) + "deg");
+    // Start a little larger, but never wider than the window (perspective widens the near edge).
+    const top = Math.min(1.05, (innerWidth - 24) / Math.max(1, card.offsetWidth * 1.04));
+    card.style.setProperty("--sc", (mobile ? 0.94 + 0.06 * p : top - (top - 1) * p).toFixed(4));
+    title.style.setProperty("--ty", (-36 * p).toFixed(1) + "px");
+  };
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  addEventListener("resize", update);
+  update();
+})();
+
+// ---------- Morph: scatter → line → circle (the wheel) → arc on scroll ----------
+(() => {
+  const sec = $("#orbit"), pin = $("#morphPin"), list = $("#morphCards"), intro = $("#morphIntro"), copy = $("#morphCopy");
+  const CARDS = [
+    ["HEIC", "image", "--s-heic", "iPhone photos at half the size"], ["PNG", "image", "--s-png", "lossless, keeps transparency"],
+    ["JPG", "image", "--s-jpg", "opens everywhere"], ["PDF", "image", "--s-pdf", "one page per picture"],
+    ["WEBP", "image", "--s-webp", "small, for the web"], ["AVIF", "image", "--s-avif", "the smallest of all"],
+    ["TIFF", "image", "--s-tiff", "uncompressed, for print"], ["GIF", "image", "--s-png", "256 colours"],
+    ["BMP", "image", "--s-tiff", "for old software"], ["MD", "doc", "--s-webp", "Markdown to PDF, HTML, Word"],
+    ["HTML", "doc", "--s-heic", "a web page to PDF"], ["RTF", "doc", "--s-jpg", "rich text, to and fro"],
+    ["DOCX", "doc", "--s-png", "Word to PDF and back"], ["TXT", "doc", "--s-avif", "plain text out of anything"],
+    ["XLSX", "doc", "--s-tiff", "Excel sheets to PDF"], ["PPTX", "doc", "--s-heic", "slides to PDF, one per page"],
+    ["COMPRESS", "tool", "--accent", "to a quality or a size: < 2 MB"], ["RESIZE", "tool", "--accent", "1920w, A4, Letter or a scale"],
+    ["CROP", "tool", "--accent", "trim pictures and PDF pages"], ["COMBINE", "tool", "--accent", "many files into one PDF"],
+    ["CUT OUT", "tool", "--accent", "lift the subject off its background"], ["PAGES", "tool", "--accent", "PDF pages to images"],
+  ];
+  const N = CARDS.length, rnd = (a) => (Math.random() - 0.5) * a;
+  const cards = CARDS.map(([name, kind, color, what]) => {
+    const li = document.createElement("li");
+    li.className = "mc"; li.style.setProperty("--c", `var(${color})`);
+    if (color === "--s-webp") li.style.setProperty("--on-c", "var(--on-webp, #0B0D10)");
+    li.innerHTML = `<div class="mc-in"><div class="mc-f"><b>${name}</b><i>${kind}</i></div><div class="mc-b"><b>${name}</b><span>${what}</span></div></div>`;
+    li.addEventListener("click", () => li.classList.toggle("flip"));
+    list.append(li);
+    return { el: li, x: rnd(1500), y: rnd(1000), r: rnd(180), s: 0.6, o: 0, scatter: { x: rnd(1500), y: rnd(1000), r: rnd(180), s: 0.6, o: 0 } };
+  });
+  let phase = reduceMotion ? "circle" : "scatter", W = 0, H = 0, raf = 0, near = false, started = false;
+  let morph = 0, rot = 0, par = 0, morphT = 0, rotT = 0, parT = 0;
+  const K = reduceMotion ? 1 : 0.075, clamp = (v) => Math.min(1, Math.max(0, v)), lerp = (a, b, t) => a + (b - a) * t;
+
+  const ringRadius = () => W < 768 ? Math.min(W * 0.42, H * 0.3) : Math.min(Math.min(W, H) * 0.35, 350);
+  function measure() {
+    W = pin.clientWidth; H = pin.clientHeight;
+    pin.style.setProperty("--r", ringRadius() + "px");
+    readScroll();
+  }
+  function readScroll() {
+    const r = sec.getBoundingClientRect(), p = clamp(-r.top / Math.max(1, r.height - innerHeight));
+    morphT = clamp(p / 0.3); rotT = clamp((p - 0.3) / 0.7);
+  }
+  function target(i) {
+    if (phase === "scatter") return cards[i].scatter;
+    if (phase === "line") { const gap = Math.min(70, (W - 32) / N); return { x: (i - (N - 1) / 2) * gap, y: 0, r: 0, s: gap / 70, o: 1 }; }
+    const mobile = W < 768, cr = ringRadius(), ca = (i / N) * 360, cad = ca * Math.PI / 180;
+    const circ = { x: Math.cos(cad) * cr, y: Math.sin(cad) * cr, r: ca + 90, s: mobile ? 0.62 : 1 };
+    const ar = mobile ? W * 1.25 : Math.min(W, H * 1.5) * 1.1, apex = H * (mobile ? 0.1 : 0.22), spread = mobile ? 130 : 130;
+    const a = -90 - spread / 2 + i * (spread / (N - 1)) - rot * spread * 0.6, ad = a * Math.PI / 180;
+    // Turn the short way round, so no card spins upside down on the way to the arc.
+    const ra = a + 90 + 360 * Math.round((circ.r - (a + 90)) / 360);
+    const arc = { x: Math.cos(ad) * ar + par, y: Math.sin(ad) * ar + apex + ar, r: ra, s: mobile ? 0.95 : 1.8 };
+    return { x: lerp(circ.x, arc.x, morph), y: lerp(circ.y, arc.y, morph), r: lerp(circ.r, arc.r, morph), s: lerp(circ.s, arc.s, morph), o: 1 };
+  }
+  function frame() {
+    raf = 0;
+    morph = lerp(morph, morphT, K * 1.2); rot = lerp(rot, rotT, K * 1.2); par = lerp(par, parT, K * 0.8);
+    let moving = Math.abs(morph - morphT) + Math.abs(rot - rotT) + Math.abs(par - parT) > 0.002;
+    const k = phase === "circle" ? K : K * 0.7;
+    cards.forEach((c, i) => {
+      const t = target(i);
+      c.x = lerp(c.x, t.x, k); c.y = lerp(c.y, t.y, k); c.r = lerp(c.r, t.r, k); c.s = lerp(c.s, t.s, k); c.o = lerp(c.o, t.o, k);
+      if (Math.abs(c.x - t.x) + Math.abs(c.y - t.y) + Math.abs(c.r - t.r) > 0.3 || Math.abs(c.o - t.o) > 0.01) moving = true;
+      c.el.style.transform = `translate(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px) rotate(${c.r.toFixed(2)}deg) scale(${c.s.toFixed(3)})`;
+      c.el.style.opacity = c.o.toFixed(3);
+    });
+    intro.classList.toggle("on", phase === "circle");
+    intro.style.setProperty("--io", clamp(1 - morph * 2).toFixed(3));
+    copy.style.setProperty("--co", clamp((morph - 0.8) / 0.2).toFixed(3));
+    if (moving && near) raf = requestAnimationFrame(frame);
+  }
+  const wake = () => { if (!raf && near) raf = requestAnimationFrame(frame); };
+  const go = (ph) => { phase = ph; wake(); };
+
+  new IntersectionObserver(([e]) => {
+    near = e.isIntersecting;
+    if (near && !started) {
+      started = true;
+      readScroll();
+      // Arriving part-way (a link, a jump, a fast scroll): no intro, straight to where the scroll is.
+      if (phase === "scatter" && (morphT > 0.02 || sec.getBoundingClientRect().top < -40)) go("circle");
+      else if (phase === "scatter") { setTimeout(() => go("line"), 300); setTimeout(() => go("circle"), 2100); }
+    }
+    if (near) { measure(); wake(); }
+  }, { rootMargin: "100px 0px" }).observe(sec);
+  addEventListener("scroll", () => { if (near) { readScroll(); wake(); } }, { passive: true });
+  addEventListener("resize", () => { if (near) { measure(); wake(); } });
+  pin.addEventListener("pointermove", (e) => {
+    if (reduceMotion || e.pointerType === "touch") return;
+    const r = pin.getBoundingClientRect(); parT = ((e.clientX - r.left) / r.width * 2 - 1) * 100; wake();
+  });
+  pin.addEventListener("pointerleave", () => { parT = 0; wake(); });
+  measure(); frame();
+})();
+
+// ---------- Menu bar clock ----------
+(() => {
+  const clock = $("#menuClock");
+  const tick = () => { clock.textContent = new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }); };
+  tick(); setInterval(tick, 20000);
+})();
+
+// ---------- Stickers: grab one and toss it somewhere else ----------
+(() => {
+  const box = $("#stickers");
+  for (const st of $$(".sticker", box)) {
+    st.addEventListener("pointerdown", (e) => {
+      e.preventDefault(); st.setPointerCapture(e.pointerId); st.classList.add("held"); sfx.tick();
+      const r = box.getBoundingClientRect(), s0 = st.getBoundingClientRect(), ox = e.clientX - s0.left, oy = e.clientY - s0.top;
+      const move = (ev) => {
+        st.style.left = Math.min(96, Math.max(0, (ev.clientX - ox - r.left) / r.width * 100)) + "%";
+        st.style.top = Math.min(92, Math.max(0, (ev.clientY - oy - r.top) / r.height * 100)) + "%";
+      };
+      const up = () => { st.classList.remove("held"); st.removeEventListener("pointermove", move); st.removeEventListener("pointerup", up); st.removeEventListener("pointercancel", up); };
+      st.addEventListener("pointermove", move); st.addEventListener("pointerup", up); st.addEventListener("pointercancel", up);
+    });
+  }
+})();
+
+// ---------- The page's own wheel: hold Shift anywhere, let go on a format ----------
+(() => {
+  if (!matchMedia("(pointer: fine)").matches) { $("#psst").innerHTML = "psst: on a Mac it opens around your pointer. try the demo below."; return; }
+  const buddy = $("#buddy"), mini = $("#mini"), segs = $$("#mini .seg"), core = $("#miniCore");
+  let x = -100, y = -100, bx = -100, by = -100, raf = 0, open = false, hot = null, anchor = null, seen = false, jokes = 0;
+  const typing = () => document.activeElement?.closest?.("input, textarea, select, [contenteditable]");
+  const loop = () => {
+    raf = 0; bx += (x - bx) * 0.2; by += (y - by) * 0.2;
+    buddy.style.transform = `translate(${bx + 16}px, ${by + 16}px)`;
+    if (Math.hypot(x - bx, y - by) > 0.5) raf = requestAnimationFrame(loop);
+  };
+  const pick = () => {
+    const dx = x - anchor.x, dy = y - anchor.y; let next = null;
+    if (Math.hypot(dx, dy) > 38) { let deg = Math.atan2(dx, -dy) * 180 / Math.PI; if (deg < 0) deg += 360; next = segs[Math.floor((deg + 30) / 60) % 6]; }
+    if (next === hot) return;
+    hot?.classList.remove("hot"); hot = next; hot?.classList.add("hot");
+    core.innerHTML = hot ? `make it<br>.${hot.dataset.fmt.toLowerCase()}` : "let go<br>on one";
+    if (hot) sfx.tick();
+  };
+  addEventListener("pointermove", (e) => {
+    x = e.clientX; y = e.clientY;
+    if (!seen && !reduceMotion) { seen = true; buddy.classList.add("on"); }
+    buddy.classList.toggle("on", !reduceMotion && !open && !D.active && !W.open);
+    if (open) pick();
+    if (!raf && !reduceMotion) raf = requestAnimationFrame(loop);
+  }, { passive: true });
+  addEventListener("keydown", (e) => {
+    if (open && e.key !== "Shift") { close(false); return; } // part of a shortcut such as ⌘⇧4
+    if (e.key !== "Shift" || e.repeat || open || e.metaKey || e.ctrlKey || e.altKey || typing() || D.active || W.open || x < 0) return;
+    open = true; anchor = { x, y };
+    mini.style.left = x + "px"; mini.style.top = y + "px"; mini.classList.add("open"); buddy.classList.remove("on");
+    sfx.open(); pick();
+  });
+  function close(fire) {
+    if (!open) return; open = false; mini.classList.remove("open");
+    if (fire && hot) {
+      const c = getComputedStyle(hot).getPropertyValue("--c") || "var(--accent)";
+      for (let i = 0; i < 16; i++) {
+        const sp = document.createElement("span"), a = Math.random() * Math.PI * 2, d = 50 + Math.random() * 90;
+        sp.className = "spark"; sp.style.left = anchor.x + "px"; sp.style.top = anchor.y + "px"; sp.style.setProperty("--c", c);
+        sp.style.setProperty("--dx", Math.cos(a) * d + "px"); sp.style.setProperty("--dy", Math.sin(a) * d + "px");
+        document.body.append(sp); setTimeout(() => sp.remove(), 800);
+      }
+      const fmt = hot.dataset.fmt.toLowerCase();
+      const lines = [`this page is now a .${fmt}. (it isn't. your files can be, though.)`, `converted this page to .${fmt}. kidding. try a real file below.`, `.${fmt}! that's the gesture. in the app it works on any file.`];
+      toast(lines[jokes++ % lines.length]); sfx.drop();
+    } else sfx.cancel();
+    hot?.classList.remove("hot"); hot = null; core.innerHTML = "let go<br>on one";
+  }
+  addEventListener("keyup", (e) => { if (e.key === "Shift") close(true); });
+  addEventListener("blur", () => close(false));
+})();
+
+// ---------- Style menu (all page styles) ----------
+(() => {
+  const btn = $("#styleBtn"), pop = $("#stylePop");
+  const close = (focus) => { pop.hidden = true; btn.setAttribute("aria-expanded", "false"); if (focus) btn.focus(); };
+  btn.addEventListener("click", () => {
+    const open = pop.hidden; pop.hidden = !open; btn.setAttribute("aria-expanded", String(open));
+    if (open) ($(".style-opt[aria-pressed='true']", pop) || $(".style-opt", pop)).focus();
+  });
+  pop.addEventListener("click", (e) => { if (e.target.closest(".style-opt")) close(true); });
+  pop.addEventListener("keydown", (e) => {
+    const opts = $$(".style-opt", pop), i = opts.indexOf(document.activeElement);
+    if (e.key === "Escape") { e.stopPropagation(); close(true); }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); opts[(i + (e.key === "ArrowDown" ? 1 : opts.length - 1)) % opts.length].focus(); }
+  });
+  document.addEventListener("pointerdown", (e) => { if (!pop.hidden && !e.target.closest(".style-menu")) close(false); });
+})();
+
+// ---------- Live keycaps: press a key anywhere and it lights up ----------
+(() => {
+  const caps = $$(".livekeys kbd"); let used = false;
+  const set = (key, down) => { for (const k of caps) if (k.dataset.key === key) k.classList.toggle("down", down); };
+  document.addEventListener("keydown", (e) => {
+    set(e.key, true);
+    if (!used && caps.some((k) => k.dataset.key === e.key) && $("#keysHint")) { used = true; $("#keysHint").textContent = "now try it on a file below: drag, then tap ⇧ Shift"; }
+  });
+  document.addEventListener("keyup", (e) => set(e.key, false));
+  addEventListener("blur", () => caps.forEach((k) => k.classList.remove("down")));
+})();
+
+// ---------- Nav: scroll progress and the section you are in ----------
+(() => {
+  const nav = $("#nav"), links = $$(".nav .links a");
+  let ticking = false;
+  const update = () => {
+    ticking = false;
+    const max = document.documentElement.scrollHeight - innerHeight;
+    nav.style.setProperty("--p", max > 0 ? Math.min(1, scrollY / max).toFixed(4) : 0);
+  };
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+  update();
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) links.forEach((a) => a.setAttribute("aria-current", String(a.getAttribute("href") === "#" + en.target.id)));
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  links.forEach((a) => { const sec = $(a.getAttribute("href")); if (sec) io.observe(sec); });
+})();
+
+// ---------- Numbers count up when they arrive ----------
+(() => {
+  const nums = $$(".num b[data-count]");
+  if (reduceMotion) return;
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      if (!en.isIntersecting) continue;
+      io.unobserve(en.target);
+      const el = en.target, to = parseFloat(el.dataset.count), dec = +el.dataset.dec, t0 = performance.now();
+      const tick = (t) => { const k = Math.min(1, (t - t0) / 1100), e = 1 - Math.pow(1 - k, 3); el.textContent = (to * e).toFixed(dec); if (k < 1) requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
+    }
+  }, { threshold: 0.6 });
+  nums.forEach((n) => io.observe(n));
+})();
+
+// ---------- How it works: the stage follows the step being read ----------
+(() => {
+  const stage = $("#stage"), steps = $$(".story-step"), caption = $("#stageCaption");
+  const names = { 1: "Drag", 2: "Tap Shift", 3: "Let go: IMG_2041.jpg is ready" };
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) if (en.isIntersecting) {
+      const n = en.target.dataset.step;
+      stage.dataset.step = n; caption.textContent = names[n];
+      steps.forEach((st) => st.classList.toggle("on", st === en.target));
+    }
+  }, { rootMargin: "-45% 0px -45% 0px" });
+  steps.forEach((st) => io.observe(st));
+})();
+
+// ---------- Feature explorer: tabs that play by themselves ----------
+(() => {
+  const root = $("#explorer"), tabs = $$(".ex-tab", root), panels = $$(".ex-panel", root);
+  const DUR = 7000; let current = 0, timer = 0, paused = false, visible = false;
+  function show(i, focus) {
+    current = (i + tabs.length) % tabs.length;
+    tabs.forEach((t, k) => { const on = k === current; t.setAttribute("aria-selected", String(on)); t.tabIndex = on ? 0 : -1; $(".bar", t).classList.remove("run"); });
+    panels.forEach((p, k) => { p.hidden = k !== current; p.classList.remove("enter"); });
+    const panel = panels[current]; void panel.offsetWidth; panel.classList.add("enter");
+    if (focus) tabs[current].focus();
+    schedule();
+  }
+  function schedule() {
+    clearTimeout(timer);
+    if (reduceMotion || paused || !visible) return;
+    const bar = $(".bar", tabs[current]); bar.style.setProperty("--dur", DUR + "ms"); void bar.offsetWidth; bar.classList.add("run");
+    timer = setTimeout(() => show(current + 1), DUR);
+  }
+  tabs.forEach((t, k) => {
+    t.addEventListener("click", () => { paused = true; show(k); });
+    t.addEventListener("keydown", (e) => {
+      const d = { ArrowRight: 1, ArrowLeft: -1, Home: -current, End: tabs.length - 1 - current }[e.key];
+      if (d === undefined) return; e.preventDefault(); paused = true; show(current + d, true);
+    });
+  });
+  root.addEventListener("pointerenter", () => { paused = true; clearTimeout(timer); $$(".bar", root).forEach((b) => b.classList.remove("run")); });
+  root.addEventListener("focusin", () => { paused = true; clearTimeout(timer); });
+  new IntersectionObserver((en) => { visible = en[0].isIntersecting; schedule(); }, { threshold: 0.35 }).observe(root);
+})();
+
+// ---------- Use cases ----------
+(() => {
+  const USES = [
+    { tab: "Photos from an iPhone", icon: "HEIC", from: ["IMG_2041.HEIC", "3.2 MB"], via: ["drag", "⇧", "JPG"], to: ["IMG_2041.jpg", "1.1 MB"],
+      line: "For websites, forms and friends whose apps won't open HEIC." },
+    { tab: "Screenshots", icon: "PNG", from: ["Screenshot 2026-11-18 at 09.41.png", "4.8 MB"], via: ["⌘K", "< 500kb"], to: ["Screenshot 2026-11-18 at 09.41 (compressed).jpg", "486 KB"],
+      line: "Small enough for any chat or email, without opening an editor." },
+    { tab: "Scans and PDFs", icon: "PDF", from: ["Lease scan.pdf", "18.4 MB"], via: ["drag", "⇧", "Compress", "Balanced"], to: ["Lease scan (compressed).pdf", "4.1 MB"],
+      line: "Every page is checked against the original before the smaller file is kept." },
+    { tab: "Notes and documents", icon: "MD", from: ["Meeting notes.md", "6 KB"], via: ["drag", "⇧", "PDF"], to: ["Meeting notes.pdf", "A4, selectable text"],
+      line: "Markdown, HTML, Word, Excel and PowerPoint, printed with proper margins." },
+    { tab: "Product photos", icon: "PNG", from: ["Mug.png", "2.1 MB"], via: ["drag", "⇧", "More", "Cut out"], to: ["Mug (cut out).png", "transparent background"],
+      line: "Ready for a listing or a slide, cut out on your Mac." },
+    { tab: "A whole folder", icon: "DIR", from: ["Screenshots", "folder"], via: ["Watch folder", "JPG"], to: ["each new screenshot.jpg", "a second later"],
+      line: "Turn it on once and new files convert themselves." },
+  ];
+  const tabsEl = $("#useTabs"), panel = $("#usePanel"); let current = 0;
+  const esc = (t) => t.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
+  function render() {
+    const u = USES[current];
+    panel.setAttribute("aria-labelledby", "use-t" + current);
+    panel.innerHTML = `<div class="flow">
+      <div class="file-chip"><i>${u.icon}</i><div style="min-width:0"><b title="${esc(u.from[0])}">${esc(u.from[0])}</b><span>${esc(u.from[1])}</span></div></div>
+      <div class="via">↓ ${u.via.map((v) => `<kbd>${esc(v)}</kbd>`).join(" ")}</div>
+      <div class="file-chip result"><i>${esc((u.to[0].split(".").pop() || "").slice(0, 4).toUpperCase())}</i><div style="min-width:0"><b title="${esc(u.to[0])}">${esc(u.to[0])}</b><span>${esc(u.to[1])}</span></div></div>
+    </div><p class="use-line">${esc(u.line)}</p>`;
+  }
+  USES.forEach((u, i) => {
+    const b = document.createElement("button");
+    b.className = "use-tab"; b.type = "button"; b.setAttribute("role", "tab"); b.id = "use-t" + i; b.setAttribute("aria-controls", "usePanel");
+    b.innerHTML = `<span>${esc(u.tab)}</span><span aria-hidden="true">→</span>`;
+    b.addEventListener("click", () => select(i));
+    b.addEventListener("keydown", (e) => { const d = { ArrowDown: 1, ArrowUp: -1 }[e.key]; if (d) { e.preventDefault(); select((current + d + USES.length) % USES.length, true); } });
+    tabsEl.append(b);
+  });
+  function select(i, focus) {
+    current = i;
+    $$(".use-tab", tabsEl).forEach((b, k) => { b.setAttribute("aria-selected", String(k === i)); b.tabIndex = k === i ? 0 : -1; });
+    if (focus) $$(".use-tab", tabsEl)[i].focus();
+    render();
+  }
+  select(0);
+})();
+
+// ---------- Polish: product shots tilt toward the pointer; sections rise in ----------
+(() => {
+  if (reduceMotion || matchMedia("(pointer: coarse)").matches) return;
+  document.addEventListener("pointermove", (e) => {
+    const plate = e.target.closest?.(".tilt");
+    if (!plate) return;
+    const r = plate.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+    plate.style.setProperty("--ry", (x * 6).toFixed(2) + "deg"); plate.style.setProperty("--rx", (-y * 6).toFixed(2) + "deg");
+  });
+  document.addEventListener("pointerout", (e) => { const plate = e.target.closest?.(".tilt"); if (plate && !plate.contains(e.relatedTarget)) { plate.style.setProperty("--rx", "0deg"); plate.style.setProperty("--ry", "0deg"); } });
+})();
+(() => {
+  if (reduceMotion) return;
+  const items = $$("main > section, .demo-wrap").filter((el) => el.getBoundingClientRect().top > innerHeight);
+  items.forEach((el) => el.classList.add("reveal", "pre"));
+  const io = new IntersectionObserver((entries) => { for (const en of entries) if (en.isIntersecting) { en.target.classList.remove("pre"); io.unobserve(en.target); } }, { rootMargin: "0px 0px -8% 0px" });
+  items.forEach((el) => io.observe(el));
+})();
 
 // ---------- Start ----------
-const savedSkin = store.get("circularity-skin");
-setSkin(SKINS.includes(savedSkin) ? savedSkin : "halo", "silent");
+const savedSkin = store.get("circularity-style-pick");
+const systemDark = matchMedia("(prefers-color-scheme: dark)");
+// No pick yet: follow the Mac, live (Dark → Riso Ink, Light → Riso paper).
+setSkin(SKINS.includes(savedSkin) ? savedSkin : (systemDark.matches ? "ink" : "riso"), "silent");
+systemDark.addEventListener?.("change", (e) => { if (!SKINS.includes(store.get("circularity-style-pick"))) setSkin(e.matches ? "ink" : "riso", "silent"); });
 (async () => {
   const samples = [["Sunset over the hills.png", drawSunset], ["Screenshot 2026-11-18 at 09.41.png", drawScreenshot], ["Kitty.png", drawKitty]];
   for (const [name, draw] of samples) { const c = draw(); const blob = await toBlob(c, "image/png"); const f = await addFile({ name, blob }); if (f && !selected) select(f); }
 })();
-document.fonts?.ready.then(() => { drawWheel(); play.restyle(); });
+document.fonts?.ready.then(() => { drawWheel(); });
 })();
 </script>
 </body>

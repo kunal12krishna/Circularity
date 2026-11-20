@@ -470,6 +470,7 @@ select { font: inherit; color: var(--fg); background: var(--panel2); border: 1px
 .term-line code::before { content: "$ "; color: var(--accent-text, var(--accent)); }
 .copy { flex: none; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 3px 8px; cursor: pointer; font-family: var(--mono); font-size: 11px; }
 footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; display: grid; gap: 8px; }
+footer a { color: var(--fg); text-underline-offset: 3px; }
 
 /* Preview modal and toast */
 .modal { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 24px; background: rgba(0,0,0,.6); }
@@ -748,7 +749,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       <span class="sticker" style="--c:var(--s-avif);left:80%;top:3%;--r:-3deg;--d:-5s">AVIF</span>
     </div>
     <div class="hero-copy">
-      <a class="announce" href="#changelog"><span class="tag">New in 0.2</span> Cut out, drop shelf and themes →</a>
+      <a class="announce" href="#changelog"><span class="tag">New in 0.3</span> Excel and PowerPoint to PDF →</a>
       <h1 id="heroTitle">Convert files<br><span class="hl">mid-drag.</span></h1>
       <p class="lede">Drag a picture, PDF or document, tap Shift, and let go on a format. The new file lands next to the original. Nothing opens, nothing is uploaded.</p>
       <div class="cta-row">
@@ -792,8 +793,8 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     <p class="demo-cap">This is the real thing, in your browser: press on a picture, drag a little, tap ⇧ Shift, let go on a format.</p>
   </div>
   <div class="marquee" aria-hidden="true"><div class="track">
-    <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
-    <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
+    <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word · excel · powerpoint → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
+    <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word · excel · powerpoint → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
   </div></div>
 
   <section class="wrap" aria-label="Measured numbers" style="padding-block: 40px 24px">
@@ -887,7 +888,7 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
       </div>
       <div class="ex-panel" role="tabpanel" id="ex-p0" aria-labelledby="ex-t0">
         <div class="ex-copy"><h3>Six buttons around your pointer.</h3><p>The formats that fit what you're holding, plus Compress and Resize. Hover one and the centre tells you the size you'll get.</p>
-          <ul class="chip-row"><li>PNG</li><li>JPG</li><li>HEIC</li><li>AVIF</li><li>WebP</li><li>TIFF</li><li>GIF</li><li>BMP</li><li>PDF</li><li>TXT</li><li>DOCX</li><li>HTML</li></ul></div>
+          <ul class="chip-row"><li>PNG</li><li>JPG</li><li>HEIC</li><li>AVIF</li><li>WebP</li><li>TIFF</li><li>GIF</li><li>BMP</li><li>PDF</li><li>TXT</li><li>DOCX</li><li>HTML</li><li>XLSX → PDF</li><li>PPTX → PDF</li></ul></div>
         <figure class="plate tilt"><img src="assets/wheel-halo.jpg" alt="The Halo wheel with JPG highlighted: the centre reads Convert to JPG, small, best for photos" width="820" height="820" loading="lazy"></figure>
       </div>
       <div class="ex-panel" role="tabpanel" id="ex-p1" aria-labelledby="ex-t1" hidden>
@@ -1030,6 +1031,17 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     <p class="sec-sub">What changed, and when.</p>
     <div class="win"><div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>changelog.txt</span><span></span></div><div class="win-body">
     <article class="release" style="border-top:0">
+      <div class="rel-meta"><b>0.3.0</b><time datetime="2026-11-20">20 November 2026</time></div>
+      <ul>
+        <li>Excel to PDF: XLSX, XLS, ODS and CSV, every sheet fitted to the page.</li>
+        <li>PowerPoint to PDF: PPTX, PPT and ODP, one page per slide.</li>
+        <li>Word: DOCX, DOC, RTF and ODT to PDF, DOCX and TXT.</li>
+        <li>All with nothing extra installed: no Office, no permissions.</li>
+        <li>The More fan follows your theme, and a pasted theme replaces the whole look.</li>
+        <li>Downloads now come from GitHub Releases.</li>
+      </ul>
+    </article>
+    <article class="release">
       <div class="rel-meta"><b>0.2.0</b><time datetime="2026-11-18">18 November 2026</time></div>
       <ul>
         <li>Cut out: remove a photo's background on your Mac (macOS 14 or later).</li>
@@ -1058,13 +1070,13 @@ footer { padding-block: 40px 60px; border-top: 1px solid var(--line); color: var
     <svg class="glyph" style="color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg>
     <h2 id="getTitle">Drag. Tap. Done.</h2>
     <p>Free for macOS 13 or later, on Apple silicon and Intel. Open the disk image and drag Circularity to Applications.</p>
-    <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.2.0</a>
+    <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.3.0</a>
     <p id="downloadNote" role="status"></p>
     <p style="font-size:14px">The first time, macOS asks before opening it, because this early build isn't signed with an Apple Developer ID yet. On macOS 15 and later, open it once, then go to System Settings → Privacy &amp; Security → Open Anyway. On macOS 13 and 14, right-click the app and choose Open.</p>
   </section>
 
   <footer class="wrap">
-    <span>Circularity · MIT licence · made for macOS 13 and later</span>
+    <span>Circularity · MIT licence · made for macOS 13 and later · <a href="https://github.com/kunal12krishna/Circularity">Source on GitHub</a></span>
     <span>Inspired by Circularity for Windows by Atharv Gogia. The Tangerine theme follows the Tangerine design by LEAP STUDIO.</span>
   </footer>
 </main>
@@ -2321,6 +2333,7 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     ["BMP", "image", "--s-tiff", "for old software"], ["MD", "doc", "--s-webp", "Markdown to PDF, HTML, Word"],
     ["HTML", "doc", "--s-heic", "a web page to PDF"], ["RTF", "doc", "--s-jpg", "rich text, to and fro"],
     ["DOCX", "doc", "--s-png", "Word to PDF and back"], ["TXT", "doc", "--s-avif", "plain text out of anything"],
+    ["XLSX", "doc", "--s-tiff", "Excel sheets to PDF"], ["PPTX", "doc", "--s-heic", "slides to PDF, one per page"],
     ["COMPRESS", "tool", "--accent", "to a quality or a size: < 2 MB"], ["RESIZE", "tool", "--accent", "1920w, A4, Letter or a scale"],
     ["CROP", "tool", "--accent", "trim pictures and PDF pages"], ["COMBINE", "tool", "--accent", "many files into one PDF"],
     ["CUT OUT", "tool", "--accent", "lift the subject off its background"], ["PAGES", "tool", "--accent", "PDF pages to images"],
@@ -2595,7 +2608,7 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     { tab: "Scans and PDFs", icon: "PDF", from: ["Lease scan.pdf", "18.4 MB"], via: ["drag", "⇧", "Compress", "Balanced"], to: ["Lease scan (compressed).pdf", "4.1 MB"],
       line: "Every page is checked against the original before the smaller file is kept." },
     { tab: "Notes and documents", icon: "MD", from: ["Meeting notes.md", "6 KB"], via: ["drag", "⇧", "PDF"], to: ["Meeting notes.pdf", "A4, selectable text"],
-      line: "Markdown, HTML, Word and RTF, printed with proper margins." },
+      line: "Markdown, HTML, Word, Excel and PowerPoint, printed with proper margins." },
     { tab: "Product photos", icon: "PNG", from: ["Mug.png", "2.1 MB"], via: ["drag", "⇧", "More", "Cut out"], to: ["Mug (cut out).png", "transparent background"],
       line: "Ready for a listing or a slide, cut out on your Mac." },
     { tab: "A whole folder", icon: "DIR", from: ["Screenshots", "folder"], via: ["Watch folder", "JPG"], to: ["each new screenshot.jpg", "a second later"],
