@@ -38,7 +38,7 @@ enum ThemeCheck {
               let values = theme["values"] as? [String: Any] else { return "not a theme" }
         let suite = "\(AppIdentity.bundleID).themecheck.\(UUID().uuidString)"
         guard let defaults = UserDefaults(suiteName: suite) else { return "no scratch defaults" }
-        defer { defaults.removePersistentDomain(forName: suite) }
+        defer { discard(defaults, suite) }
         let store = SettingsStore(defaults: defaults, suiteName: suite)
         guard let result = try? store.importJSON(json, only: SettingsModel.themeKeys, wholeLook: SettingsModel.lookKeys) else { return "Paste theme refused it" }
         if !result.skipped.isEmpty { return "skipped \(result.skipped.joined(separator: ", "))" }
@@ -112,9 +112,19 @@ enum ThemeCheck {
         return nil
     }
 
+    /// Empties a scratch settings store and deletes its file: emptying alone
+    /// leaves ~/Library/Preferences/<suite>.plist behind, one per wheel checked.
+    static func discard(_ defaults: UserDefaults, _ suite: String) {
+        defaults.removePersistentDomain(forName: suite)
+        defaults.synchronize()
+        let file = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Preferences/\(suite).plist")
+        try? FileManager.default.removeItem(at: file)
+    }
+
     private struct Scratch {
         let suite: String, defaults: UserDefaults, store: SettingsStore
-        func drop() { defaults.removePersistentDomain(forName: suite) }
+        func drop() { ThemeCheck.discard(defaults, suite) }
     }
 
     private static func scratch() -> Scratch {
