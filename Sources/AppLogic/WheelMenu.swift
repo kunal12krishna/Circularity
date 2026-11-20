@@ -175,7 +175,7 @@ nonisolated enum SlotProvider {
             return WheelMenu(ring: [combine(count: count), nil, nil, nil, nil, nil], fan: [], notice: nil)
         }
         if case let .document(flavor) = first, kinds.allSatisfy({ $0 == first }) {
-            return documentMenu(flavor: flavor, count: count)
+            return documentMenu(flavor: flavor, count: count, compressible: types.allSatisfy(OfficeCompressor.canCompress))
         }
         let ext = types.count == 1 ? (types[0].preferredFilenameExtension?.uppercased() ?? "File") : "Mixed"
         return WheelMenu(ring: Array(repeating: nil, count: 6), fan: [],
@@ -235,13 +235,15 @@ nonisolated enum SlotProvider {
         return WheelMenu(ring: ring, fan: fan, notice: nil)
     }
 
-    static func documentMenu(flavor: DocumentFlavor, count: Int) -> WheelMenu {
+    /// Office files (Word, Excel, PowerPoint and their open formats) get two
+    /// buttons: PDF, and Compress where the file is a zip package (DOCX, XLSX,
+    /// PPTX, ODT, ODS, ODP); DOC, XLS, PPT, RTF and CSV get PDF alone.
+    static func documentMenu(flavor: DocumentFlavor, count: Int, compressible: Bool = false) -> WheelMenu {
         let outputs: [OutputFormat] = switch flavor {
         case .markdown: [.pdf, .html, .txt]
         case .html: [.pdf, .txt, .docx]
         case .plainText: [.pdf, .docx, .html]
-        case let .rich(own): [.pdf, .txt, .docx, .html].filter { $0 != own }
-        case .spreadsheet, .presentation: [.pdf]
+        case .rich, .spreadsheet, .presentation: [.pdf]
         }
         var ring: [WheelSlot?] = outputs.prefix(3).map { slot -> WheelSlot in
             var s = formatSlot(slot, count: count)
@@ -253,6 +255,15 @@ nonisolated enum SlotProvider {
                 }
             }
             return s
+        }
+        let office: Bool = switch flavor {
+        case .rich, .spreadsheet, .presentation: true
+        default: false
+        }
+        if office, compressible {
+            var compress = compressSlot(count: count, pdf: false)
+            compress.hint = "smaller pictures, same file"
+            ring.append(compress)
         }
         while ring.count < 6 { ring.append(nil) }
         return WheelMenu(ring: ring, fan: [], notice: nil)

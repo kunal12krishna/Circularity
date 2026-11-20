@@ -325,7 +325,9 @@ final class AppCoordinator: PanelHost {
         let cancel: () -> Void = { [weak self] in self?.dialogs.close() }
         switch action {
         case .compress:
-            dialogs.present(CompressDialog(files: files, isPDF: isPDF, accent: accent, onRun: run, onCancel: cancel), title: "Compress")
+            let isOffice = files.allSatisfy(OfficeCompressor.canCompress)
+            dialogs.present(CompressDialog(files: files, isPDF: isPDF, isOffice: isOffice, accent: accent, onRun: run, onCancel: cancel),
+                            title: "Compress")
         case .resize:
             dialogs.present(ResizeDialog(files: files, isPDF: isPDF, accent: accent, onRun: run, onCancel: cancel), title: "Resize")
         case .crop:

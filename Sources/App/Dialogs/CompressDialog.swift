@@ -2,12 +2,15 @@ import CircularityEngine
 import SwiftUI
 
 /// Compress (BRIEF.md): images by quality or target size with a live estimate;
-/// PDFs Light / Balanced / Strong with page-by-page verification.
+/// PDFs Light / Balanced / Strong with page-by-page verification; Office
+/// files (DOCX, XLSX, PPTX, ODT, ODS, ODP) the same three levels for the
+/// pictures inside, keeping the file's own format.
 struct CompressDialog: View {
     enum Mode { case quality, target }
 
     let files: [URL]
     let isPDF: Bool
+    let isOffice: Bool
     let accent: Color
     let onRun: (CircularityEngine.Operation, Preset?) -> Void
     let onCancel: () -> Void
@@ -15,10 +18,11 @@ struct CompressDialog: View {
     private let totalBytes: Int64
     private let outputFormat: OutputFormat
 
-    init(files: [URL], isPDF: Bool, accent: Color, onRun: @escaping (CircularityEngine.Operation, Preset?) -> Void,
-         onCancel: @escaping () -> Void) {
+    init(files: [URL], isPDF: Bool, isOffice: Bool = false, accent: Color,
+         onRun: @escaping (CircularityEngine.Operation, Preset?) -> Void, onCancel: @escaping () -> Void) {
         self.files = files
         self.isPDF = isPDF
+        self.isOffice = isOffice
         self.accent = accent
         self.onRun = onRun
         self.onCancel = onCancel
@@ -36,7 +40,7 @@ struct CompressDialog: View {
     @State private var estimateTask: Task<Void, Never>?
 
     private var subtitle: String {
-        let what = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(isPDF ? "PDFs" : "images")"
+        let what = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(isOffice ? "files" : isPDF ? "PDFs" : "images")"
         return "\(what) · \(Bytes.text(totalBytes))"
     }
     private var targetBytes: Int64? {
@@ -46,9 +50,9 @@ struct CompressDialog: View {
 
     var body: some View {
         DialogFrame(title: "Compress", subtitle: subtitle, accent: accent, primaryTitle: "Compress",
-                    primaryEnabled: isPDF || mode == .quality || targetBytes != nil, addButton: $addButton,
-                    onPrimary: run, onCancel: onCancel) {
-            if isPDF { pdfOptions } else { imageOptions }
+                    primaryEnabled: isPDF || isOffice || mode == .quality || targetBytes != nil,
+                    addButton: isOffice ? nil : $addButton, onPrimary: run, onCancel: onCancel) {
+            if isOffice { levelOptions(office: true) } else if isPDF { levelOptions(office: false) } else { imageOptions }
         }
         .onAppear(perform: refreshEstimate)
         .onDisappear { estimateTask?.cancel() }
@@ -96,13 +100,13 @@ struct CompressDialog: View {
         }
     }
 
-    private var pdfOptions: some View {
+    private func levelOptions(office: Bool) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             ForEach(PDFCompression.allCases, id: \.self) { option in
                 Button { level = option } label: {
                     HStack(spacing: 12) {
                         Text(option.rawValue.uppercased()).font(Halo.mono(13)).frame(width: 96, alignment: .leading)
-                        Text(Self.describe(option)).font(Halo.rounded(12)).foregroundStyle(level == option ? Halo.background : Halo.secondary)
+                        Text(office ? Self.describeOffice(option) : Self.describe(option)).font(Halo.rounded(12)).foregroundStyle(level == option ? Halo.background : Halo.secondary)
                         Spacer()
                     }
                     .foregroundStyle(level == option ? Halo.background : Halo.text)
@@ -112,7 +116,9 @@ struct CompressDialog: View {
                 }
                 .buttonStyle(.plain)
             }
-            Text("Only embedded images are recompressed. Every page is checked against the original; if anything would change, the original is kept.")
+            Text(office
+                 ? "Only the pictures inside are made smaller; text, layout and the file's format stay as they are. If it can't get smaller, the original is kept."
+                 : "Only embedded images are recompressed. Every page is checked against the original; if anything would change, the original is kept.")
                 .font(Halo.rounded(11)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -125,6 +131,14 @@ struct CompressDialog: View {
         }
     }
 
+    static func describeOffice(_ level: PDFCompression) -> String {
+        switch level {
+        case .light: "pictures up to 2560 px, barely visible"
+        case .balanced: "up to 1920 px, good for sharing"
+        case .strong: "up to 1280 px, smallest"
+        }
+    }
+
     private func resultLine(_ text: String) -> some View {
         Text(text).font(Halo.rounded(13, .semibold)).foregroundStyle(Halo.text)
             .padding(.horizontal, 12).frame(maxWidth: .infinity, minHeight: 36, alignment: .leading)
@@ -132,7 +146,7 @@ struct CompressDialog: View {
     }
 
     private func refreshEstimate() {
-        guard !isPDF, mode == .quality, let url = files.first else { return }
+        guard !isPDF, !isOffice, mode == .quality, let url = files.first else { return }
         estimateTask?.cancel()
         let q = quality / 100, format = outputFormat
         let original = Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
@@ -155,6 +169,10 @@ struct CompressDialog: View {
     private func run() {
         let operation: CircularityEngine.Operation
         let preset: Preset.Action
+        if isOffice {
+            onRun(.compressOffice(level), nil)
+            return
+        }
         if isPDF {
             operation = .compressPDF(level)
             preset = .compressPDF(level)

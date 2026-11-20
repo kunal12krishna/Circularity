@@ -749,7 +749,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
       <span class="sticker" style="--c:var(--s-avif);left:80%;top:3%;--r:-3deg;--d:-5s">AVIF</span>
     </div>
     <div class="hero-copy">
-      <a class="announce" href="#changelog"><span class="tag">New in 0.3</span> Excel and PowerPoint to PDF →</a>
+      <a class="announce" href="#changelog"><span class="tag">New in 0.3</span> Office to PDF, and Compress for Office →</a>
       <h1 id="heroTitle">Convert files<br><span class="hl">mid-drag.</span></h1>
       <p class="lede">Drag a picture, PDF or document, tap Shift, and let go on a format. The new file lands next to the original. Nothing opens, nothing is uploaded.</p>
       <div class="cta-row">
@@ -1031,6 +1031,14 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     <p class="sec-sub">What changed, and when.</p>
     <div class="win"><div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>changelog.txt</span><span></span></div><div class="win-body">
     <article class="release" style="border-top:0">
+      <div class="rel-meta"><b>0.3.1</b><time datetime="2026-11-20">20 November 2026</time></div>
+      <ul>
+        <li>Office files get two buttons: PDF and Compress.</li>
+        <li>Compress for Word, Excel and PowerPoint (DOCX, XLSX, PPTX, ODT, ODS, ODP): the pictures inside get smaller, the file stays the same kind of file.</li>
+        <li>Long spreadsheets keep every row; slide backgrounds, photos and fonts come through better in PDFs.</li>
+      </ul>
+    </article>
+    <article class="release">
       <div class="rel-meta"><b>0.3.0</b><time datetime="2026-11-20">20 November 2026</time></div>
       <ul>
         <li>Excel to PDF: XLSX, XLS, ODS and CSV, every sheet fitted to the page.</li>
@@ -1070,7 +1078,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     <svg class="glyph" style="color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg>
     <h2 id="getTitle">Drag. Tap. Done.</h2>
     <p>Free for macOS 13 or later, on Apple silicon and Intel. Open the disk image and drag Circularity to Applications.</p>
-    <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.3.0</a>
+    <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.3.1</a>
     <p id="downloadNote" role="status"></p>
     <p style="font-size:14px">The first time, macOS asks before opening it, because this early build isn't signed with an Apple Developer ID yet. On macOS 15 and later, open it once, then go to System Settings → Privacy &amp; Security → Open Anyway. On macOS 13 and 14, right-click the app and choose Open.</p>
   </section>
@@ -2330,10 +2338,10 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     ["JPG", "image", "--s-jpg", "opens everywhere"], ["PDF", "image", "--s-pdf", "one page per picture"],
     ["WEBP", "image", "--s-webp", "small, for the web"], ["AVIF", "image", "--s-avif", "the smallest of all"],
     ["TIFF", "image", "--s-tiff", "uncompressed, for print"], ["GIF", "image", "--s-png", "256 colours"],
-    ["BMP", "image", "--s-tiff", "for old software"], ["MD", "doc", "--s-webp", "Markdown to PDF, HTML, Word"],
-    ["HTML", "doc", "--s-heic", "a web page to PDF"], ["RTF", "doc", "--s-jpg", "rich text, to and fro"],
-    ["DOCX", "doc", "--s-png", "Word to PDF and back"], ["TXT", "doc", "--s-avif", "plain text out of anything"],
-    ["XLSX", "doc", "--s-tiff", "Excel sheets to PDF"], ["PPTX", "doc", "--s-heic", "slides to PDF, one per page"],
+    ["BMP", "image", "--s-tiff", "for old software"], ["MD", "doc", "--s-webp", "Markdown to PDF, HTML, text"],
+    ["HTML", "doc", "--s-heic", "a web page to PDF"], ["RTF", "doc", "--s-jpg", "rich text to PDF"],
+    ["DOCX", "doc", "--s-png", "Word to PDF, or smaller"], ["TXT", "doc", "--s-avif", "plain text out of anything"],
+    ["XLSX", "doc", "--s-tiff", "Excel to PDF, or smaller"], ["PPTX", "doc", "--s-heic", "slides to PDF, or smaller"],
     ["COMPRESS", "tool", "--accent", "to a quality or a size: < 2 MB"], ["RESIZE", "tool", "--accent", "1920w, A4, Letter or a scale"],
     ["CROP", "tool", "--accent", "trim pictures and PDF pages"], ["COMBINE", "tool", "--accent", "many files into one PDF"],
     ["CUT OUT", "tool", "--accent", "lift the subject off its background"], ["PAGES", "tool", "--accent", "PDF pages to images"],

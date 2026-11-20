@@ -7,8 +7,8 @@ SWIFT_STRICT_CONCURRENCY = complete
 
 // Universal binary (arm64 + x86_64). Debug builds only the active arch.
 ARCHS = arm64 x86_64
-MARKETING_VERSION = 0.3.0
-CURRENT_PROJECT_VERSION = 3
+MARKETING_VERSION = 0.3.1
+CURRENT_PROJECT_VERSION = 4
 
 // Where the opt-in update check looks for appcast.json (https only). Empty = no
 // update checks in this build. See docs/UPDATES.md.

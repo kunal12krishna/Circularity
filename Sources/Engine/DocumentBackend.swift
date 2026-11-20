@@ -119,11 +119,12 @@ enum TextUtil {
 /// A macOS command-line tool as a short-lived child process: cancellable,
 /// and stopped after `timeout` so a stuck tool can't hold a queue slot.
 enum Tool {
-    static func run(_ path: String, _ arguments: [String], timeout: TimeInterval = 120) async throws {
+    static func run(_ path: String, _ arguments: [String], timeout: TimeInterval = 120, in directory: URL? = nil) async throws {
         let name = URL(fileURLWithPath: path).lastPathComponent
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
         process.arguments = arguments
+        if let directory { process.currentDirectoryURL = directory }
         let errors = Pipe()
         process.standardError = errors
         process.standardOutput = FileHandle.nullDevice

@@ -69,6 +69,8 @@ public enum Operation: Sendable, Equatable {
     case extractText
     case combinePDF
     case compressPDF(PDFCompression)
+    /// DOCX / XLSX / PPTX / ODT / ODS / ODP: the pictures inside shrunk, same format (OfficeCompressor).
+    case compressOffice(PDFCompression)
     case resizePDF(PDFResize)
     /// Normalised rect (0…1, top-left origin) applied to every page's crop box.
     case cropPDF(CGRect)
@@ -79,7 +81,7 @@ public enum Operation: Sendable, Equatable {
         switch self {
         case .convert: .convert
         case .resize, .resizePDF: .resize
-        case .compressImage, .compressPDF: .compress
+        case .compressImage, .compressPDF, .compressOffice: .compress
         case .cropImage, .cropPDF: .crop
         case .pdfPages: .pdfToImages
         case .extractText: .extractText

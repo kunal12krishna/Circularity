@@ -125,27 +125,29 @@ final class SlotProviderTests: XCTestCase {
     func testDocumentMenus() {
         let md = SlotProvider.menu(for: [UTType("net.daringfireball.markdown")!], canWrite: everything)
         XCTAssertEqual(labels(md.ring), ["PDF", "HTML", "TXT", "—", "—", "—"])
-        let docx = SlotProvider.menu(for: [UTType("org.openxmlformats.wordprocessingml.document")!], canWrite: everything)
-        XCTAssertEqual(labels(docx.ring), ["PDF", "TXT", "HTML", "—", "—", "—"])
-        // Word's older and open formats: PDF, TXT and DOCX (as on Windows).
-        for id in ["com.microsoft.word.doc", "org.oasis-open.opendocument.text", "public.rtf"] {
-            XCTAssertEqual(labels(SlotProvider.menu(for: [UTType(id)!], canWrite: everything).ring), ["PDF", "TXT", "DOCX", "—", "—", "—"], id)
-        }
     }
 
-    func testSpreadsheetAndPresentationMenus() {
-        // Excel (XLSX / XLS / ODS / CSV) and PowerPoint (PPTX / PPT / ODP) → PDF. CSV is plain text too, but gets this wheel.
-        for (id, hint) in [("org.openxmlformats.spreadsheetml.sheet", "every sheet, fitted to the page"),
-                           ("com.microsoft.excel.xls", "every sheet, fitted to the page"),
-                           ("org.oasis-open.opendocument.spreadsheet", "every sheet, fitted to the page"),
-                           ("public.comma-separated-values-text", "every sheet, fitted to the page"),
-                           ("org.openxmlformats.presentationml.presentation", "one page per slide"),
-                           ("com.microsoft.powerpoint.ppt", "one page per slide"),
-                           ("org.oasis-open.opendocument.presentation", "one page per slide")] {
+    func testOfficeFilesGetPDFAndCompressOnly() {
+        // Word, Excel, PowerPoint and their open formats: PDF, plus Compress where the file is a zip package.
+        for id in ["org.openxmlformats.wordprocessingml.document", "org.oasis-open.opendocument.text",
+                   "org.openxmlformats.spreadsheetml.sheet", "org.oasis-open.opendocument.spreadsheet",
+                   "org.openxmlformats.presentationml.presentation", "org.oasis-open.opendocument.presentation"] {
             let menu = SlotProvider.menu(for: [UTType(id)!], canWrite: everything)
-            XCTAssertEqual(labels(menu.ring), ["PDF", "—", "—", "—", "—", "—"], id)
+            XCTAssertEqual(labels(menu.ring), ["PDF", "Compress", "—", "—", "—", "—"], id)
             XCTAssertEqual(menu.ring[0]?.action, .convert(.pdf), id)
-            XCTAssertEqual(menu.ring[0]?.hint, hint, id)
+            XCTAssertEqual(menu.ring[1]?.action, .compress, id)
+            XCTAssertTrue(menu.fan.isEmpty, id)
+        }
+        // The older binary formats, RTF and CSV can't be compressed: PDF alone.
+        for id in ["com.microsoft.word.doc", "public.rtf", "com.microsoft.excel.xls", "com.microsoft.powerpoint.ppt",
+                   "public.comma-separated-values-text"] {
+            XCTAssertEqual(labels(SlotProvider.menu(for: [UTType(id)!], canWrite: everything).ring), ["PDF", "—", "—", "—", "—", "—"], id)
+        }
+        let hints = [("org.openxmlformats.spreadsheetml.sheet", "every sheet, fitted to the page"),
+                     ("org.openxmlformats.presentationml.presentation", "one page per slide"),
+                     ("org.openxmlformats.wordprocessingml.document", "every page, as a PDF")]
+        for (id, hint) in hints {
+            XCTAssertEqual(SlotProvider.menu(for: [UTType(id)!], canWrite: everything).ring[0]?.hint, hint, id)
         }
         // A workbook and a deck together aren't one kind: nothing to offer.
         let mixed = SlotProvider.menu(for: [UTType("org.openxmlformats.spreadsheetml.sheet")!,

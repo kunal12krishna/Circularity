@@ -422,6 +422,51 @@ func runAll() async {
         check(text.contains("Hello from ODP") && text.contains("Second point") && !text.contains("SECRET SPEAKER NOTES"),
               "ODP → PDF keeps titles and bullets, leaves speaker notes out")
     }
+    // Compress for Office files: big photos inside a PPTX and an ODP shrink; same format, same parts, still opens.
+    func sh(_ tool: String, _ args: [String], in dir: URL? = nil) {
+        let p = Process(); p.executableURL = URL(fileURLWithPath: tool); p.arguments = args
+        if let dir { p.currentDirectoryURL = dir }
+        p.standardOutput = FileHandle.nullDevice; p.standardError = FileHandle.nullDevice
+        try? p.run(); p.waitUntilExit()
+    }
+    func zipEntries(_ url: URL) -> [String] {
+        let p = Process(); p.executableURL = URL(fileURLWithPath: "/usr/bin/zipinfo"); p.arguments = ["-1", url.path]
+        let pipe = Pipe(); p.standardOutput = pipe; try? p.run()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile(); p.waitUntilExit()
+        return String(decoding: data, as: UTF8.self).split(separator: "\n").map(String.init).filter { !$0.hasSuffix("/") }
+    }
+    for (name, media, expected) in [("sample.pptx", "ppt/media", 3), ("sample.odp", "Pictures", 2)] {
+        guard let source = office(name) else { continue }
+        let parts = root.appendingPathComponent("big-\(name)", isDirectory: true)
+        sh("/usr/bin/ditto", ["-x", "-k", source.path, parts.path])
+        let pictures = (try? fm.contentsOfDirectory(at: parts.appendingPathComponent(media), includingPropertiesForKeys: nil)) ?? []
+        for picture in pictures where ["jpg", "jpeg", "png"].contains(picture.pathExtension.lowercased()) {
+            writeImage(photoLikeImage(3200, 2400), picture.pathExtension.lowercased() == "png" ? .png : .jpeg, to: picture)
+        }
+        let big = root.appendingPathComponent("photos-" + name)
+        if name.hasSuffix(".odp") {
+            sh("/usr/bin/zip", ["-X", "-0", "-q", big.path, "mimetype"], in: parts)
+            sh("/usr/bin/zip", ["-X", "-r", "-q", big.path, ".", "-x", "mimetype"], in: parts)
+        } else {
+            sh("/usr/bin/zip", ["-X", "-r", "-q", big.path, "."], in: parts)
+        }
+        let result = await run([big], .compressOffice(.balanced))
+        let out = output(result)
+        let kind = name.hasSuffix(".odp") ? "ODP" : "PPTX"
+        check(out.map { $0.pathExtension == big.pathExtension && $0.lastPathComponent.contains("(compressed)") } == true
+              && out.map(fileSize).map { $0 < fileSize(big) / 2 } == true,
+              "Compress \(kind): photos inside shrink, same format (\(fileSize(big) / 1000) KB → \(out.map(fileSize).map { $0 / 1000 } ?? 0) KB)")
+        if let out {
+            check(Set(zipEntries(out)) == Set(zipEntries(big)) && (kind == "PPTX" || zipEntries(out).first == "mimetype"),
+                  "Compress \(kind): exactly the same parts\(kind == "ODP" ? ", mimetype first" : "")")
+            let pdf = output(await run([out], .convert(.pdf)))
+            check(pages(pdf) == expected, "Compress \(kind): the compressed file still opens and converts (\(pages(pdf)) pages)")
+            let again = try? await run([out], .compressOffice(.balanced)).get()
+            check(again?.outputs.isEmpty == true && again?.notes.first?.contains("Kept the original") == true,
+                  "Compress \(kind) again: nothing left to shrink, the original is kept")
+        }
+    }
+
     // SMOKE_OFFICE_EXTRA=<folder>: also converts every file there to PDF (real decks and workbooks; kept with SMOKE_KEEP).
     if let extra = ProcessInfo.processInfo.environment["SMOKE_OFFICE_EXTRA"],
        let names = try? fm.contentsOfDirectory(atPath: extra) {
@@ -434,6 +479,19 @@ func runAll() async {
             keep(pdf)
             if case let .failure(error) = result { print("EXTRA \(name): \(error.localizedDescription)") }
             print("EXTRA \(name) → \(pages(pdf)) pages, \(Int(pageSize(pdf).width))×\(Int(pageSize(pdf).height)), \(String(format: "%.1f", Date().timeIntervalSince(started))) s")
+            if OfficeCompressor.canCompress(copy) {
+                let squeezed = await run([copy], .compressOffice(.balanced))
+                let out = output(squeezed)
+                let note = (try? squeezed.get())?.notes.first ?? ""
+                keep(out)
+                let reopened = out.map { url in Task { await output(run([url], .convert(.pdf))) } }
+                let reopenedPDF = await reopened?.value
+                if let reopenedPDF, let dir = ProcessInfo.processInfo.environment["SMOKE_KEEP"] {
+                    try? fm.copyItem(at: reopenedPDF, to: URL(fileURLWithPath: dir).appendingPathComponent("compressed-" + reopenedPDF.lastPathComponent))
+                }
+                let reopenedPages = pages(reopenedPDF)
+                print("EXTRA \(name) compressed → \(out.map { "\(fileSize(copy) / 1000) KB → \(fileSize($0) / 1000) KB, same parts: \(Set(zipEntries($0)) == Set(zipEntries(copy))), reopens: \(reopenedPages) pages" } ?? note)")
+            }
         }
     }
 

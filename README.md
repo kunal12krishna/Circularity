@@ -93,11 +93,17 @@ whenever you want it.
      locks), and **combine** several into one PDF.
    - **PDFs:** pages to images, text out, compress, resize to A4 / Letter or a scale, crop, combine.
    - **Documents:** Markdown, HTML and plain text to PDF and to each other.
-   - **Documents from Office**, with nothing extra installed (no Office, no permission asked):
-     - **Word:** DOCX / DOC / RTF / ODT → PDF, DOCX, TXT
+   - **Office files** get two buttons, **PDF** and **Compress**, with nothing extra installed (no
+     Office, no permission asked):
+     - **Word:** DOCX / DOC / RTF / ODT → PDF
      - **Excel:** XLSX / XLS / ODS / CSV → PDF (every sheet, on landscape pages fitted to the width,
-       each under its name)
+       each under its name; long sheets keep every row)
      - **PowerPoint:** PPTX / PPT / ODP → PDF (one page per slide, at the slide's own size)
+     - **Compress** (DOCX, XLSX, PPTX, ODT, ODS, ODP): like Office's own "Compress Pictures". The
+       pictures inside are made smaller (Light, Balanced or Strong) and the file is zipped again at
+       the strongest setting: `deck.pptx` → `deck (compressed).pptx`. Text, layout and the format
+       stay as they are, and if it can't get smaller the original is kept. The older DOC, XLS and
+       PPT, and RTF and CSV, get PDF only.
 
      Word files go through macOS's `textutil`; Excel and PowerPoint files are laid out by macOS's own
      Office engine, the one Quick Look previews them with; OpenDocument and CSV files are read
@@ -228,8 +234,9 @@ runs everything below in one go.
 
 - `xcodebuild -scheme Circularity test`: the unit tests.
 - The `EngineSmokeTest` target: every conversion through the real engine, including the Word,
-  Excel and PowerPoint samples in `Tests/Fixtures/office` (`SMOKE_KEEP=<folder>` keeps their PDFs;
-  `SMOKE_OFFICE_EXTRA=<folder>` converts your own files too).
+  Excel and PowerPoint samples in `Tests/Fixtures/office` and Compress for Office files
+  (`SMOKE_KEEP=<folder>` keeps their results; `SMOKE_OFFICE_EXTRA=<folder>` converts and compresses
+  your own files too).
 - `Circularity.app/Contents/MacOS/Circularity --drag-test`: the real wheel, panel, settings and
   jobs (the wheel and windows flash briefly).
 - `--check-themes Tests/Fixtures/studio-themes.json [folder]`: every Wheel Studio export (presets,

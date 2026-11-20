@@ -173,7 +173,7 @@ final class JobCenter: ObservableObject {
         case .combinePDF: "PDF (combined)"
         case .resize, .resizePDF: "Resize"
         case .compressImage: "Compress"
-        case let .compressPDF(level): "Compress · \(level.rawValue)"
+        case let .compressPDF(level), let .compressOffice(level): "Compress · \(level.rawValue)"
         case .removeBackground: "Cut out"
         case .cropImage, .cropPDF: "Crop"
         }
@@ -225,7 +225,7 @@ final class JobCenter: ObservableObject {
         case let .convert(f): f == .pdf ? .pdfs : (f.imageTypeIdentifier != nil ? .images : .documents)
         case .pdfPages, .resize, .compressImage, .cropImage, .removeBackground: .images
         case .combinePDF, .resizePDF, .compressPDF, .cropPDF: .pdfs
-        case .extractText: .documents
+        case .extractText, .compressOffice: .documents
         }
     }
 

@@ -69,7 +69,9 @@ public final class ConversionEngine: Sendable {
         let policy = request.output
         var context = NamingContext(sourceURL: input, format: .png, operation: request.operation.kind)
 
-        func finish(_ staged: URL?, format: OutputFormat, note: String? = nil, folder: Bool = false) async throws -> JobOutcome {
+        /// `keepExtension`: the output keeps this extension instead of the format's (an Office file compressed as itself).
+        func finish(_ staged: URL?, format: OutputFormat, note: String? = nil, folder: Bool = false,
+                    keepExtension: String? = nil) async throws -> JobOutcome {
             try Task.checkCancellation()
             guard let staged else {
                 return JobOutcome(inputs: [input], outputs: [], bytesIn: bytesIn, bytesOut: 0, note: note,
@@ -77,7 +79,7 @@ public final class ConversionEngine: Sendable {
             }
             context.format = format
             let final = try await staging.publish(staged, planner: planner, template: policy.template, context: context,
-                                                  fileExtension: folder ? "" : nil, fallbacks: policy.fallbackFolders,
+                                                  fileExtension: folder ? "" : keepExtension, fallbacks: policy.fallbackFolders,
                                                   collision: policy.collision)
             return JobOutcome(inputs: [input], outputs: [final], bytesIn: bytesIn, bytesOut: Self.size(of: final), note: note,
                               usedFallbackFolder: staging.usedFallback || final.deletingLastPathComponent() != staging.destination)
@@ -182,6 +184,17 @@ public final class ConversionEngine: Sendable {
             case .smaller: return try await finish(out, format: .pdf)
             case .notSmaller: return try await finish(nil, format: .pdf, note: "Kept the original: the PDF is already compact.")
             case let .changed(why): return try await finish(nil, format: .pdf, note: "Kept the original: \(why).")
+            }
+
+        case let .compressOffice(level):
+            guard OfficeCompressor.canCompress(input) else { throw JobError.unsupported("compressing \(input.lastPathComponent)") }
+            let ext = input.pathExtension
+            let out = staging.scratch(ext)
+            // {format} in a naming template reads DOCX for every Office file: OutputFormat has no XLSX or PPTX.
+            let verdict = try await OfficeCompressor.compress(input, level: level, workDir: staging.workDir, to: out) { progress($0, "") }
+            switch verdict {
+            case .smaller: return try await finish(out, format: .docx, keepExtension: ext)
+            case .notSmaller: return try await finish(nil, format: .docx, note: "Kept the original: its pictures are already small.")
             }
 
         case let .resizePDF(spec):
