@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 330 80" width="330" height="80" role="img" aria-label="Circularity">
+  <g transform="translate(8 8) scale(2.67)" fill="none" stroke="#FF4FA0" stroke-width="2.6" stroke-linecap="round">
+    <path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/>
+  </g>
+  <text x="88" y="53" fill="#17140F" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="-0.5">Circularity</text>
+</svg>

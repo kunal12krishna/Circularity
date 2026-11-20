@@ -5,3 +5,7 @@ DerivedData/
 Circularity.xcodeproj/
 dist/
 website/public/*.dmg
+
+# Copies made by scripts/build-website.sh (the sources are website/assets and website/studio.html)
+website/public/assets/
+website/public/studio.html
