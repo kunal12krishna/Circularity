@@ -41,7 +41,10 @@ nonisolated enum SettingsKeys {
     static let hotkeyClipboard = SettingsKey("general.hotkey.clipboard", "9:6144")  // ⌃⌥V
 
     // MARK: Gesture (all three triggers on by default, PLAN.md A3)
-    static let triggerKey = SettingsKey("gesture.triggerKey", "shift")          // shift | option | control
+    static let triggerKey = SettingsKey("gesture.triggerKey", "shift")          // shift | option | control | command (the Convert wheel)
+    static let toolsKey = SettingsKey("gesture.toolsKey", "command")            // … | off (the Tools wheel)
+    static let actionsKey = SettingsKey("gesture.actionsKey", "control")        // … | off (the Actions wheel)
+    static let keyGuide = SettingsKey("gesture.keyGuide", true)                 // keycaps above the wheel: which key opens which wheel
     static let triggerMode = SettingsKey("gesture.triggerMode", "tap")          // tap | hold
     static let triggerDelayMs = SettingsKey("gesture.triggerDelayMs", 0)
     static let shakeEnabled = SettingsKey("gesture.shake.enabled", true)
@@ -166,7 +169,7 @@ nonisolated enum SettingsKeys {
 
     static let all: [AnySettingsKey] = [
         paused.erased, showInMenuBar.erased, launchAtLogin.erased, onboardingCompleted.erased, hotkeyPanel.erased, hotkeyClipboard.erased,
-        triggerKey.erased, triggerMode.erased, triggerDelayMs.erased, shakeEnabled.erased, shakeSensitivity.erased,
+        triggerKey.erased, toolsKey.erased, actionsKey.erased, keyGuide.erased, triggerMode.erased, triggerDelayMs.erased, shakeEnabled.erased, shakeSensitivity.erased,
         skipFullScreen.erased, serviceShortcutInstalled.erased, excludedApps.erased,
         wheelLayout.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased, beforeAfter.erased, soundPack.erased,
         animationStyle.erased, animationSpeed.erased, imageFormatOrder.erased, imageSlots.erased, milestones.erased,

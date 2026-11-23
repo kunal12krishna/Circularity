@@ -67,8 +67,9 @@ final class JobCenter: ObservableObject {
     /// `policy` nil = Settings → Output. `interactive` jobs (the wheel, the
     /// panel, ⌘K, Services) also run the after-conversion actions; watch
     /// folders and the clipboard pass false and handle their own results.
+    /// `record` false: not in History or Stats (Copy text's temporary file).
     func run(_ operation: CircularityEngine.Operation, files: [URL], label: String, policy: OutputPolicy? = nil,
-             interactive: Bool = true, completion: ((Result<JobResult, Error>) -> Void)? = nil) {
+             interactive: Bool = true, record: Bool = true, completion: ((Result<JobResult, Error>) -> Void)? = nil) {
         guard !files.isEmpty else { return }
         // Practice pictures: results next to them, no after-actions.
         let practice = PracticeFiles.all(files)
@@ -88,7 +89,7 @@ final class JobCenter: ObservableObject {
                     Task { @MainActor in self.update(id, progress) }
                 })
             } catch { result = .failure(error) }
-            self.finish(id, operation: operation, result, record: !practice)
+            self.finish(id, operation: operation, result, record: !practice && record)
             if interactive, case let .success(r) = result { self.afterConversion(r) }
             self.completed.send((Self.title(operation, files: files), result, interactive))
             completion?(result)
@@ -156,6 +157,16 @@ final class JobCenter: ObservableObject {
             case .crop: "Cropped"
             case .combine: "Combined \(outcome.inputs.count) files"
             case .cutout: "Cut out"
+            case .trim: "Trimmed"
+            case .mute: "Sound removed"
+            case .split: "Split into pages"
+            case .fit: "Made to fit"
+            case .searchable: "Made searchable"
+            case .locked: "Locked"
+            case .unlocked: "Unlocked"
+            case .arranged: "Pages edited"
+            case .faster: "Faster"
+            case .slower: "Slower"
             }
             history.add(HistoryItem(id: UUID().uuidString, date: Date(), inputs: outcome.inputs.map(\.path),
                                     outputs: outcome.outputs.map(\.path), bytesIn: outcome.bytesIn, bytesOut: outcome.bytesOut,
@@ -176,6 +187,18 @@ final class JobCenter: ObservableObject {
         case let .compressPDF(level), let .compressOffice(level): "Compress · \(level.rawValue)"
         case .removeBackground: "Cut out"
         case .cropImage, .cropPDF: "Crop"
+        case .splitPDF: "Pages"
+        case .trimMedia: "Trim"
+        case let .compressMedia(level): "Compress · \(level.rawValue)"
+        case .removeAudio: "No sound"
+        case .combineMedia: "Joined"
+        case let .fitTo(bytes, _): "Fit \(Bytes.text(bytes))"
+        case .recognizeText: "Text"
+        case .searchablePDF: "Searchable PDF"
+        case .protectPDF: "Locked"
+        case .unlockPDF: "Unlocked"
+        case .arrangePDF: "Pages"
+        case let .changeSpeed(rate): "\(SpeedDialog.label(rate))"
         }
         return "\(name) → \(target)"
     }
@@ -204,6 +227,7 @@ final class JobCenter: ObservableObject {
             case .images: settings.value(SettingsKeys.folderImages)
             case .pdfs: settings.value(SettingsKeys.folderPDFs)
             case .documents: settings.value(SettingsKeys.folderDocuments)
+            case .media: ""
             }
             let path = perType.isEmpty ? settings.value(SettingsKeys.outputFolder) : perType
             if !path.isEmpty { policy.destination = .folder(URL(fileURLWithPath: (path as NSString).expandingTildeInPath, isDirectory: true)) }
@@ -218,14 +242,18 @@ final class JobCenter: ObservableObject {
         return policy
     }
 
-    enum OutputGroup { case images, pdfs, documents }
+    /// Video and audio have no folder of their own: they use the main output folder.
+    enum OutputGroup { case images, pdfs, documents, media }
 
     static func outputGroup(_ operation: CircularityEngine.Operation) -> OutputGroup {
         switch operation {
-        case let .convert(f): f == .pdf ? .pdfs : (f.imageTypeIdentifier != nil ? .images : .documents)
+        case let .convert(f): f == .pdf ? .pdfs : (f.imageTypeIdentifier != nil ? .images : (f.isMedia ? .media : .documents))
         case .pdfPages, .resize, .compressImage, .cropImage, .removeBackground: .images
-        case .combinePDF, .resizePDF, .compressPDF, .cropPDF: .pdfs
+        case .combinePDF, .resizePDF, .compressPDF, .cropPDF, .splitPDF: .pdfs
         case .extractText, .compressOffice: .documents
+        case .trimMedia, .compressMedia, .removeAudio, .combineMedia, .changeSpeed: .media
+        case .searchablePDF, .protectPDF, .unlockPDF, .arrangePDF: .pdfs
+        case .recognizeText, .fitTo: .documents
         }
     }
 
@@ -241,7 +269,9 @@ final class JobCenter: ObservableObject {
                 guard isFile, output.standardizedFileURL != input.standardizedFileURL,
                       FileManager.default.fileExists(atPath: input.path) else { continue }
                 do {
-                    try FileManager.default.trashItem(at: input, resultingItemURL: nil)
+                    var inTrash: NSURL?
+                    try FileManager.default.trashItem(at: input, resultingItemURL: &inTrash)
+                    if let inTrash { history.noteTrashed(original: input, at: inTrash as URL, output: output) }
                 } catch {
                     Log.app.error("Couldn't move the original to the Trash: \(error.localizedDescription, privacy: .public)")
                 }
@@ -286,7 +316,11 @@ final class JobCenter: ObservableObject {
         case .combinePDF: .combinePDF
         case .cutout: .removeBackground
         case let .preset(id): presets.first { $0.id == id }?.operation
-        case .compress, .resize, .crop, .more: nil
+        case .splitPDF: .splitPDF
+        case .mute: .removeAudio
+        case .combineMedia: .combineMedia
+        case .searchable: .searchablePDF
+        case .compress, .resize, .crop, .more, .trim, .stripLocation, .file, .fit, .copyText, .password, .editPages, .speed: nil
         }
     }
 

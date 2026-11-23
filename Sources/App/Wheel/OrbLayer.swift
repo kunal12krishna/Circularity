@@ -131,15 +131,27 @@ final class OrbLayer {
         transact(0.15, animated: true) { thumb.contents = image }
     }
 
+    /// The GIF preview: frames played in the centre while GIF is hovered; nil stops it.
+    func playThumbnail(_ frames: [CGImage]?) {
+        thumb.removeAnimation(forKey: "play")
+        guard let frames, frames.count > 1, !Motion.reduceMotion else { return }
+        let play = CAKeyframeAnimation(keyPath: "contents")
+        play.values = frames
+        play.calculationMode = .discrete
+        play.duration = Double(frames.count) / 8
+        play.repeatCount = .infinity
+        thumb.add(play, forKey: "play")
+    }
+
     func show(_ text: OrbText, animated: Bool) {
         guard text != current else { return }
         let previous = current
         current = text
         let s = scaleFactor
-        kicker.set(text.kicker, font: tokens.kickerFont, color: tokens.kickerColor, kern: tokens.kickerKern,
-                   maxWidth: tokens.diameter * 0.74)
-        big.set(text.big, font: tokens.bigFont, color: text.cancelHot ? cancelColor : bigColor,
-                kern: tokens.bigKern, maxWidth: tokens.bigMaxWidth)
+        kicker.setFitting([text.kicker], font: tokens.kickerFont, color: tokens.kickerColor, kern: tokens.kickerKern,
+                          maxWidth: tokens.diameter * 0.74, minScale: 0.75, floor: 0.55)
+        big.setFitting([text.big], font: tokens.bigFont, color: text.cancelHot ? cancelColor : bigColor,
+                       kern: tokens.bigKern, maxWidth: tokens.bigMaxWidth, minScale: 0.75, floor: 0.5)
         detail.set(text.detail, font: WheelFont.rounded(12 * s * labelScale, .semibold), color: tokens.detailColor,
                    maxWidth: tokens.diameter * 0.74, minScale: 0.9, wraps: true)
         let cancelBorder: CGColor = style == .ring ? .hex(0xFF7A6E) : tokens.border
@@ -168,8 +180,8 @@ final class OrbLayer {
     private func morphBigLabel(from previous: OrbText) {
         let ghost = makeLabel()
         ghost.contentsScale = big.contentsScale
-        ghost.set(previous.big, font: tokens.bigFont, color: previous.cancelHot ? cancelColor : bigColor,
-                  kern: tokens.bigKern, maxWidth: tokens.bigMaxWidth)
+        ghost.setFitting([previous.big], font: tokens.bigFont, color: previous.cancelHot ? cancelColor : bigColor,
+                         kern: tokens.bigKern, maxWidth: tokens.bigMaxWidth, minScale: 0.75, floor: 0.5)
         ghost.position = big.position
         layer.addSublayer(ghost)
         let slide = 6 * scaleFactor, duration = 0.16

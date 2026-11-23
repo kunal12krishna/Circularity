@@ -26,6 +26,10 @@ final class AppCoordinator: PanelHost {
     private let windows = WindowPresenter()
     private let hud = DevHUD()
     private let shelf = DropShelf()
+    private lazy var fileActions = FileActionPerformer(shelf: shelf) { [weak self] in
+        self.map { Appearance.accentNS($0.settings) } ?? .systemPink
+    }
+    private let trimWindow = TrimWindow()
     private lazy var updates = UpdateChecker(settings: settings)
     private var tutorial: TutorialModel?
     private var bag: Set<AnyCancellable> = []
@@ -61,7 +65,23 @@ final class AppCoordinator: PanelHost {
 
         wheel.prepare()
         wheel.onFinished = { [weak self] choice in self?.handle(choice) }
-        wheel.onShown = { [weak self] in self?.tutorial?.wheelShown() }
+        wheel.onShown = { [weak self] in
+            self?.tutorial?.wheelShown()
+            self?.shelf.hide() // a new wheel: the last result card makes way (and lets go of Esc)
+        }
+        fileActions.record = { [weak self] item in self?.jobs.history.add(item) }
+        shelf.onUndo = { [weak self] outputs in
+            guard let self else { return nil }
+            if let item = jobs.history.item(writing: outputs) { return jobs.history.undo(item.id) }
+            NSWorkspace.shared.recycle(outputs) { _, _ in }
+            return nil
+        }
+        shelf.onTurnOff = { [weak self] in
+            guard let self else { return }
+            settings.set(false, for: SettingsKeys.afterShelf)
+            panelModel.notice = "The result card is off. Turn it back on in Settings → Output."
+            Log.app.notice("Result card turned off from its menu")
+        }
         gesture.onDragReport = { [weak self] report in
             let how = report.opened.map { $0 == .shake ? "opened by shake" : "opened by \(self?.triggerName ?? "Shift")" } ?? "not opened"
             self?.lastDrag = report.verdict == "allowed" ? "Last file drag: wheel \(how)" : "Last file drag: skipped (\(report.verdict))"
@@ -88,7 +108,10 @@ final class AppCoordinator: PanelHost {
             case let .success(r):
                 tutorial?.jobFinished(r)
                 if event.interactive, !r.outputs.isEmpty, settings.value(SettingsKeys.afterShelf) {
-                    shelf.show(r.outputs, accent: accent)
+                    // Undo puts the result in the Trash and brings back an original that went there.
+                    let oneToOne = r.outputs.count == r.outcomes.filter { !$0.outputs.isEmpty }.count
+                    shelf.show(r.outputs, accent: accent, bytesIn: oneToOne ? r.outcomes.filter { !$0.outputs.isEmpty }.reduce(0) { $0 + $1.bytesIn } : nil,
+                               undoable: true)
                 } else if event.interactive, r.outputs.isEmpty, let note = r.notes.first {
                     // Nothing written (already small, say): say so where the user is looking.
                     let detail = note.hasPrefix("Kept the original: ") ? String(note.dropFirst("Kept the original: ".count)) : note
@@ -134,6 +157,9 @@ final class AppCoordinator: PanelHost {
             }
         }
         updates.checkIfDue()
+        // Text from pictures: macOS prepares its accurate reader once (about a
+        // minute, in the background); until then Text uses the instant fast reader.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) { TextReader.prepare() }
         if !settings.value(SettingsKeys.onboardingCompleted) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.settingsShowOnboarding() }
         }
@@ -198,8 +224,14 @@ final class AppCoordinator: PanelHost {
         guard let action = choice.action else { return }
         if !choice.files.isEmpty { recentFiles = choice.files }
         switch action {
-        case .compress, .resize, .crop:
+        case .compress, .resize, .crop, .trim, .fit, .password, .editPages, .speed:
             openDialog(action, files: choice.files)
+        case .copyText:
+            copyText(choice.files)
+        case .stripLocation:
+            jobs.run(Command.stripGPS, files: choice.files)
+        case let .file(fileAction):
+            fileActions.perform(fileAction, files: choice.files)
         default:
             jobs.run(action, files: choice.files)
         }
@@ -334,10 +366,42 @@ final class AppCoordinator: PanelHost {
             jobs.run(operation, files: files, label: action.usageKey)
         }
         let cancel: () -> Void = { [weak self] in self?.dialogs.close() }
+        let types = files.map(DraggedFiles.type(of:))
+        let kinds = Set(types.map(SlotProvider.kind(of:)))
+        let media: Bool? = kinds == [.video] ? true : (kinds == [.audio] ? false : nil)
         switch action {
+        case .fit:
+            dialogs.present(FitDialog(files: files, accent: accent, onRun: run, onCancel: cancel), title: "Make it fit")
+        case .password:
+            let pdfs = files.filter { DraggedFiles.type(of: $0).conforms(to: .pdf) }
+            guard !pdfs.isEmpty else { return }
+            let locked = pdfs.filter(PDFTools.isEncrypted)
+            if !locked.isEmpty, locked.count < pdfs.count {
+                shelf.showMessage("Some have a password", "\(locked.count) of \(pdfs.count) PDFs are locked. Lock or unlock them in two goes.",
+                                  original: locked.first, accent: Appearance.accentNS(settings))
+                return
+            }
+            let unlock = !locked.isEmpty
+            dialogs.present(PasswordDialog(files: pdfs, unlock: unlock, accent: accent, onRun: run, onCancel: cancel),
+                            title: unlock ? "Unlock" : "Lock")
+        case .editPages:
+            guard let file = files.first, isPDF else { return }
+            if PDFTools.isEncrypted(file) {
+                shelf.showMessage("It has a password", "Unlock it first: Tools → Lock.", original: file, accent: Appearance.accentNS(settings))
+                return
+            }
+            dialogs.present(PagesDialog(file: file, accent: accent, onRun: run, onCancel: cancel), title: "Pages")
+        case .speed:
+            dialogs.present(SpeedDialog(files: files, accent: accent, onRun: run, onCancel: cancel), title: "Speed")
+        case .trim:
+            guard let file = files.first, let media else { return }
+            trimWindow.show(file, isVideo: media) { [weak self] start, end in
+                self?.jobs.run(.trimMedia(start: start, end: end), files: [file], label: action.usageKey)
+            }
         case .compress:
             let isOffice = files.allSatisfy(OfficeCompressor.canCompress)
-            dialogs.present(CompressDialog(files: files, isPDF: isPDF, isOffice: isOffice, accent: accent, onRun: run, onCancel: cancel),
+            dialogs.present(CompressDialog(files: files, isPDF: isPDF, isOffice: isOffice, media: media, accent: accent,
+                                           onRun: run, onCancel: cancel),
                             title: "Compress")
         case .resize:
             dialogs.present(ResizeDialog(files: files, isPDF: isPDF, accent: accent, onRun: run, onCancel: cancel), title: "Resize")
@@ -348,15 +412,62 @@ final class AppCoordinator: PanelHost {
         }
     }
 
-    // MARK: Names
+    #if DEBUG
+    /// Testing only: chooses a wheel button as if it were dropped on.
+    func debugChoose(_ token: String, files: [URL]) {
+        let action: WheelAction? = switch token {
+        case "password": .password
+        case "editPages": .editPages
+        case "fit": .fit
+        case "speed": .speed
+        case "copyText": .copyText
+        case "searchable": .searchable
+        case "trim": .trim
+        default: nil
+        }
+        guard let action else { return }
+        handle(WheelChoice(action: action, label: token, files: files, count: files.count))
+    }
+    #endif
 
-    private var triggerName: String {
-        switch settings.value(SettingsKeys.triggerKey) {
-        case "option": "Option"
-        case "control": "Control"
-        default: "Shift"
+    // MARK: Copy text
+
+    /// The words from pictures and scans, straight to the clipboard: the .txt
+    /// is written to a private temporary folder, read, and thrown away.
+    private func copyText(_ files: [URL]) {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("\(AppIdentity.name)-Text-\(UUID().uuidString)", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        var policy = OutputPolicy(destination: .folder(folder))
+        policy.fallbackFolder = folder
+        jobs.run(.recognizeText, files: files, label: "copyText", policy: policy, interactive: false, record: false) { [weak self] result in
+            defer { try? FileManager.default.removeItem(at: folder) }
+            guard let self else { return }
+            let accent = Appearance.accentNS(settings)
+            switch result {
+            case let .success(r):
+                let texts = zip(r.outcomes, r.outcomes.map { $0.outputs.first.flatMap { try? String(contentsOf: $0, encoding: .utf8) } })
+                    .compactMap { outcome, text in text.map { (outcome.inputs.first?.lastPathComponent ?? "", $0) } }
+                guard !texts.isEmpty else {
+                    shelf.showMessage("No text found", r.notes.first ?? "There are no words to read in that.", original: files.first, accent: accent)
+                    return
+                }
+                let joined = texts.count == 1 ? texts[0].1 : texts.map { "\($0.0)\n\n\($0.1)" }.joined(separator: "\n\n———\n\n")
+                NSPasteboard.general.clearContents()
+                NSPasteboard.general.setString(joined, forType: .string)
+                let lines = joined.split(whereSeparator: \.isNewline).count
+                let first = joined.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
+                shelf.showMessage("Text copied", "\(lines) line\(lines == 1 ? "" : "s") · “\(first.prefix(48))”", original: files.first, accent: accent)
+            case let .failure(error) where !(error is CancellationError):
+                shelf.showMessage("No text found", error.localizedDescription, original: files.first, accent: accent)
+            default:
+                break
+            }
         }
     }
+
+    // MARK: Names
+
+    private var triggerName: String { WheelKeyMap.displayName(settings.value(SettingsKeys.triggerKey)) }
 
     /// Click-mode wheel on the last files, or a generated practice picture.
     private func showTestWheel() {

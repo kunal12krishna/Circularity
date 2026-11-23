@@ -19,8 +19,10 @@ public struct FormatSupport: Sendable, Equatable {
         readableImageTypes = readable
     }
 
-    /// Image formats depend on ImageIO; document formats are always offered.
+    /// Image formats depend on ImageIO; FLAC on Core Audio's encoder; document,
+    /// video and the other audio formats are always offered.
     public func canWrite(_ format: OutputFormat) -> Bool {
+        if format == .flac { return MediaSupport.canWriteFLAC }
         guard let identifier = format.imageTypeIdentifier else { return true }
         return writableImageTypes.contains(identifier)
     }
@@ -38,7 +40,7 @@ extension OutputFormat {
         case .tiff: "public.tiff"
         case .gif: "com.compuserve.gif"
         case .bmp: "com.microsoft.bmp"
-        case .pdf, .txt, .html, .docx: nil
+        case .pdf, .txt, .html, .docx, .mp4, .mov, .m4v, .m4a, .wav, .aiff, .flac: nil
         }
     }
 }

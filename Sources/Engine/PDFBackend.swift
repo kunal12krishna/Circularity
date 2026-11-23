@@ -69,6 +69,31 @@ enum PDFBackend {
         }
     }
 
+    // MARK: Split (one PDF per page)
+
+    /// Every page as its own PDF ("report page 01.pdf"), links and annotations kept.
+    static func split(_ url: URL, baseName: String, into folder: URL, progress: (Int, Int) -> Void) throws {
+        _ = try open(url) // a readable, unlocked PDF
+        guard let doc = PDFDocument(url: url), doc.pageCount > 0 else { throw JobError.unreadable(url.lastPathComponent) }
+        let n = doc.pageCount
+        guard n > 1 else { throw JobError.unsupported("splitting a one-page PDF") }
+        let digits = String(n).count
+        for i in 0..<n {
+            try Task.checkCancellation()
+            try autoreleasepool {
+                guard let page = doc.page(at: i)?.copy() as? PDFPage else { return }
+                let single = PDFDocument()
+                single.insert(page, at: 0)
+                let number = String(repeating: "0", count: digits - String(i + 1).count) + String(i + 1)
+                let name = OutputNaming.sanitize("\(baseName) page \(number)")
+                guard single.write(to: folder.appendingPathComponent(name).appendingPathExtension("pdf")) else {
+                    throw JobError.encodeFailed("page \(i + 1)")
+                }
+            }
+            progress(i + 1, n)
+        }
+    }
+
     // MARK: Text
 
     static func extractText(_ url: URL, to output: URL) throws {

@@ -42,11 +42,47 @@ final class HistoryStore: ObservableObject {
         AppSupport.save(items, to: file)
     }
 
-    /// Undo = move the result(s) to the Trash and forget the entry.
-    func undo(_ id: String) {
-        guard let item = items.first(where: { $0.id == id }) else { return }
-        for path in item.outputs { try? FileManager.default.trashItem(at: URL(fileURLWithPath: path), resultingItemURL: nil) }
+    /// Undo: the result(s) go to the Trash and any original that went there
+    /// comes back. A move goes back where it came from. Returns what it said
+    /// it did, for the card by the pointer.
+    @discardableResult
+    func undo(_ id: String) -> String? {
+        guard let item = items.first(where: { $0.id == id }) else { return nil }
+        let fm = FileManager.default
+        var message = "The result is in the Trash."
+        if item.kind == "move" {
+            var back = 0
+            for (output, input) in zip(item.outputs, item.inputs) where !fm.fileExists(atPath: input) {
+                if (try? fm.moveItem(atPath: output, toPath: input)) != nil { back += 1 }
+            }
+            message = back == 1 ? "It's back where it was." : "\(back) items are back where they were."
+        } else {
+            for path in item.outputs { try? fm.trashItem(at: URL(fileURLWithPath: path), resultingItemURL: nil) }
+            var restored = 0
+            for (original, inTrash) in item.trashed ?? [:] where !fm.fileExists(atPath: original) && fm.fileExists(atPath: inTrash) {
+                if (try? fm.moveItem(atPath: inTrash, toPath: original)) != nil { restored += 1 }
+            }
+            if restored > 0 { message = restored == 1 ? "The result is in the Trash and the original is back." : "The results are in the Trash and \(restored) originals are back." }
+        }
         remove(id)
+        Log.app.notice("Undo \(item.kind ?? "conversion", privacy: .public): \(message, privacy: .public)")
+        return message
+    }
+
+    /// The entry that wrote exactly these files (the card's Undo).
+    func item(writing outputs: [URL]) -> HistoryItem? {
+        let paths = Set(outputs.map(\.path))
+        return items.first { !$0.outputs.isEmpty && Set($0.outputs).isSubset(of: paths) && paths.isSubset(of: Set($0.outputs)) }
+            ?? items.first { !Set($0.outputs).isDisjoint(with: paths) }
+    }
+
+    /// Remembers where "Move the original to the Trash" put an original.
+    func noteTrashed(original: URL, at trashURL: URL, output: URL) {
+        guard let i = items.firstIndex(where: { $0.outputs.contains(output.path) }) else { return }
+        var trashed = items[i].trashed ?? [:]
+        trashed[original.path] = trashURL.path
+        items[i].trashed = trashed
+        AppSupport.save(items, to: file)
     }
 
     func clear() {

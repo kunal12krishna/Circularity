@@ -57,6 +57,17 @@ public enum PDFResize: Sendable, Equatable, Codable {
     case paper(PaperSize)
 }
 
+/// One page of an edited PDF: which original page (0-based) and how much to turn it.
+public struct PageEdit: Sendable, Equatable, Codable, Hashable {
+    public var index: Int
+    /// Extra clockwise turn: 0, 90, 180 or 270.
+    public var rotation: Int
+    public init(index: Int, rotation: Int = 0) {
+        self.index = index
+        self.rotation = rotation
+    }
+}
+
 public enum Operation: Sendable, Equatable {
     /// Images ↔ images/PDF, documents ↔ PDF/HTML/TXT/DOCX.
     case convert(OutputFormat)
@@ -76,6 +87,31 @@ public enum Operation: Sendable, Equatable {
     case cropPDF(CGRect)
     /// Keeps the subject and makes the background transparent (PNG). macOS 14+.
     case removeBackground
+    /// Every page of a PDF as its own PDF, in a folder.
+    case splitPDF
+    /// Video or audio: keep `start…end` seconds, same format (audio AVFoundation can't write becomes M4A).
+    case trimMedia(start: Double, end: Double)
+    /// Video: HEVC at a lower bit rate (and size); audio: AAC at a lower bit rate.
+    case compressMedia(PDFCompression)
+    /// Video without its sound track.
+    case removeAudio
+    /// Several videos (or several audio files) one after another, in drop order.
+    case combineMedia
+    /// Smallest change that gets each file under `bytes` (pictures, PDFs, Office,
+    /// video, audio). `together`: the files share the limit, in proportion to their size.
+    case fitTo(bytes: Int64, together: Bool)
+    /// The words in a picture or a scanned PDF as a .txt (on-device text recognition).
+    case recognizeText
+    /// A PDF whose text can be searched, selected and copied (an invisible text layer).
+    case searchablePDF
+    /// A PDF that asks for this password to open.
+    case protectPDF(password: String)
+    /// The same PDF without its password (it must be the right one).
+    case unlockPDF(password: String)
+    /// Pages in a new order, some turned, some left out.
+    case arrangePDF([PageEdit])
+    /// Video or audio played faster (> 1) or slower (< 1); voices keep their pitch.
+    case changeSpeed(Double)
 
     public var kind: OperationKind {
         switch self {
@@ -85,8 +121,19 @@ public enum Operation: Sendable, Equatable {
         case .cropImage, .cropPDF: .crop
         case .pdfPages: .pdfToImages
         case .extractText: .extractText
-        case .combinePDF: .combine
+        case .combinePDF, .combineMedia: .combine
         case .removeBackground: .cutout
+        case .splitPDF: .split
+        case .trimMedia: .trim
+        case .compressMedia: .compress
+        case .removeAudio: .mute
+        case .fitTo: .fit
+        case .recognizeText: .extractText
+        case .searchablePDF: .searchable
+        case .protectPDF: .locked
+        case .unlockPDF: .unlocked
+        case .arrangePDF: .arranged
+        case let .changeSpeed(rate): rate >= 1 ? .faster : .slower
         }
     }
 }
@@ -182,6 +229,8 @@ public enum JobError: LocalizedError, Equatable {
     case toolFailed(String)
     case targetUnreachable(Int64)
     case verificationFailed(String)
+    /// Said as it is (no "Can't convert" in front).
+    case message(String)
 
     public var errorDescription: String? {
         switch self {
@@ -192,6 +241,7 @@ public enum JobError: LocalizedError, Equatable {
         case let .toolFailed(why): "The converter failed: \(why)"
         case let .targetUnreachable(bytes): "Couldn't get under \(ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file))."
         case let .verificationFailed(why): "The result didn't match the original (\(why)); kept the original."
+        case let .message(text): text
         }
     }
 }

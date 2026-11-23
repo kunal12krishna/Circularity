@@ -205,6 +205,8 @@ final class SectorRenderer: WheelRenderer {
         orb.setThumbnail(image)
     }
 
+    func playThumbnail(_ frames: [CGImage]?) { orb.playThumbnail(frames) }
+
     private func configureSegment(_ i: Int) {
         let s = geometry.scale
         var seg = segments[i]
@@ -242,8 +244,8 @@ final class SectorRenderer: WheelRenderer {
         let fg = hot ? tokens.fgHot : tokens.fgRest
         let ls = look.labelScale
         if style == .ring {
-            seg.label.set(look.label(slot.label), font: look.labelFont(15 * s * ls, look.weight), color: fg,
-                          kern: 0.3 * s + look.tracking * 15 * s * ls, maxWidth: 96 * s, minScale: 0.7)
+            seg.label.setFitting([look.label(slot.label), look.label(slot.monoLabel)], font: look.labelFont(15 * s * ls, look.weight), color: fg,
+                                 kern: 0.3 * s + look.tracking * 15 * s * ls, maxWidth: 96 * s, minScale: 0.7)
             if let image = hot ? seg.hotIcon : seg.restIcon {
                 seg.icon.contents = image
                 seg.icon.bounds = CGRect(x: 0, y: 0, width: CGFloat(image.width) / contentsScale,
@@ -253,8 +255,9 @@ final class SectorRenderer: WheelRenderer {
             seg.label.set(slot.monoLabel, font: WheelFont.mono(15 * s * ls, look.weight), color: fg,
                           kern: 1.2 * s + look.tracking * 15 * s * ls, maxWidth: 80 * s, minScale: 0.7)
             let caption: CGColor = hot ? hotCaptionColor : tokens.captionRest
-            seg.caption.set(slot.caption, font: WheelFont.rounded(10 * s * ls, .semibold), color: caption,
-                            kern: 0.4 * s + look.tracking * 10 * s * ls, maxWidth: 80 * s, minScale: 0.7)
+            // A caption that can't fit is left out rather than cut.
+            seg.caption.setFitting([slot.caption, ""], font: WheelFont.rounded(10 * s * ls, .semibold), color: caption,
+                                   kern: 0.4 * s + look.tracking * 10 * s * ls, maxWidth: 80 * s, minScale: 0.7)
         }
     }
 
@@ -296,8 +299,8 @@ final class SectorRenderer: WheelRenderer {
         let text = style == .ring ? look.label(slot.label) : slot.monoLabel
         let size = tokens.chipFont.pointSize * s * look.labelScale
         let font = style == .ring ? look.labelFont(size, look.weight) : WheelFont.mono(size, look.weight)
-        c.label.set(text, font: font, color: hot ? tokens.fgHot : tokens.fgRest, kern: tokens.chipKern * s + look.tracking * size,
-                    maxWidth: c.group.bounds.width - 6 * s, minScale: 0.7)
+        c.label.setFitting(style == .ring ? [text, look.label(slot.monoLabel)] : [text], font: font, color: hot ? tokens.fgHot : tokens.fgRest,
+                           kern: tokens.chipKern * s + look.tracking * size, maxWidth: c.group.bounds.width - 6 * s, minScale: 0.6)
         c.label.position = CGPoint(x: c.group.bounds.midX, y: c.group.bounds.midY)
         let outline = look.fillStyle == "outline" && !hot
         let bright = look.brightFills && hot

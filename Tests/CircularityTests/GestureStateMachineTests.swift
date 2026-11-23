@@ -138,6 +138,44 @@ final class GestureStateMachineTests: XCTestCase {
         }
         XCTAssertFalse(opened)
     }
+
+    // MARK: Three wheels
+
+    func testEachKeyOpensItsOwnWheel() {
+        _ = startFileDrag()
+        t += 0.1
+        XCTAssertEqual(send(.keysChanged([.tools], time: t)), [.showWheel(at: CGPoint(x: 110, y: 100), reason: .trigger, kind: .tools)])
+        XCTAssertEqual(machine.shownKind, .tools)
+    }
+
+    func testAnotherKeySwitchesTheOpenWheel() {
+        _ = startFileDrag()
+        t += 0.1
+        _ = send(.keysChanged([.convert], time: t))
+        _ = send(.keysChanged([], time: t + 0.1))
+        XCTAssertEqual(send(.keysChanged([.actions], time: t + 0.2)), [.switchWheel(.actions)])
+        XCTAssertEqual(send(.keysChanged([.actions, .convert], time: t + 0.3)), [.switchWheel(.convert)])
+        XCTAssertEqual(send(.keysChanged([.convert], time: t + 0.4)), [], "releasing a key never switches")
+        XCTAssertEqual(machine.phase, .wheelShown)
+    }
+
+    func testCommandHeldForAFinderMoveStaysOutOfTheWay() {
+        _ = send(.press(CGPoint(x: 100, y: 100), keys: [.tools], time: t))
+        _ = send(.mouseMoved(CGPoint(x: 120, y: 100), time: t + 0.05))
+        _ = send(.fileDragDetected(allowed: true, time: t + 0.05))
+        XCTAssertFalse(isShow(send(.keysChanged([.tools], time: t + 0.3))), "⌘ held from the start: Finder's own move")
+        XCTAssertTrue(isShow(send(.keysChanged([.tools, .convert], time: t + 0.4))), "Shift still opens Convert")
+        XCTAssertEqual(machine.shownKind, .convert)
+    }
+
+    func testShakeAlwaysOpensConvert() {
+        _ = startFileDrag()
+        var opened: [GestureEffect] = []
+        for (i, x) in [110, 170, 110, 170, 110].enumerated() {
+            opened += send(.mouseMoved(CGPoint(x: CGFloat(x), y: 100), time: t + Double(i) * 0.08))
+        }
+        XCTAssertTrue(opened.contains { if case .showWheel(_, .shake, .convert) = $0 { return true }; return false })
+    }
 }
 
 final class ShakeDetectorTests: XCTestCase {
@@ -184,4 +222,5 @@ final class ShakeDetectorTests: XCTestCase {
         XCTAssertFalse(run(path([0, 45, 0, 45, 0], samplesPerLeg: 6), every: 1.0 / 60, thresholds: .low))
         XCTAssertTrue(run(path([0, 45, 0, 45, 0], samplesPerLeg: 6), every: 1.0 / 60, thresholds: .medium))
     }
+
 }

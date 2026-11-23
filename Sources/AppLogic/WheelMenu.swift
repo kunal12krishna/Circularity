@@ -12,6 +12,26 @@ nonisolated enum DocumentFlavor: Sendable, Hashable {
     case presentation // PPTX / PPT / ODP
 }
 
+/// The three wheels, each on its own key (Settings → Gesture): formats,
+/// tools, and things to do with the files themselves.
+nonisolated enum WheelKind: String, Sendable, CaseIterable, Hashable {
+    case convert, tools, actions
+
+    var title: String {
+        switch self {
+        case .convert: "Convert"
+        case .tools: "Tools"
+        case .actions: "Actions"
+        }
+    }
+}
+
+/// Things done with files as they are (the Actions wheel). They work on
+/// anything: folders, mixed selections, files nothing can convert.
+nonisolated enum FileAction: String, Sendable, Hashable, CaseIterable {
+    case airDrop, copy, zip, copyPath, stash, mail, terminal, moveTo, copyTo, quickLook, reveal
+}
+
 /// What a wheel button does. Milestone (d) maps these onto engine jobs.
 nonisolated enum WheelAction: Sendable, Hashable {
     case convert(OutputFormat)
@@ -24,6 +44,24 @@ nonisolated enum WheelAction: Sendable, Hashable {
     case more
     /// A saved one-click button (id of a `Preset`).
     case preset(String)
+    /// Same picture, location (GPS) removed.
+    case stripLocation
+    case splitPDF
+    /// Video and audio.
+    case trim, mute, combineMedia
+    /// Make it fit (a size limit), Text (copy the words), Searchable PDF,
+    /// a PDF password (add or remove), Pages (reorder, turn, remove), Speed.
+    case fit, copyText, searchable, password, editPages, speed
+    /// The Actions wheel.
+    case file(FileAction)
+
+    /// Opens a window first (Orbit marks these with "…").
+    var opensDialog: Bool {
+        switch self {
+        case .compress, .resize, .crop, .trim, .fit, .password, .editPages, .speed, .file(.moveTo), .file(.copyTo): true
+        default: false
+        }
+    }
 
     /// Stable key for smart-ordering usage counts.
     var usageKey: String {
@@ -38,6 +76,18 @@ nonisolated enum WheelAction: Sendable, Hashable {
         case .cutout: "cutout"
         case .more: "more"
         case let .preset(id): "preset.\(id)"
+        case .stripLocation: "stripLocation"
+        case .splitPDF: "splitPDF"
+        case .trim: "trim"
+        case .mute: "mute"
+        case .combineMedia: "combineMedia"
+        case let .file(a): "file.\(a.rawValue)"
+        case .fit: "fit"
+        case .copyText: "copyText"
+        case .searchable: "searchable"
+        case .password: "password"
+        case .editPages: "editPages"
+        case .speed: "speed"
         }
     }
 }
@@ -72,6 +122,9 @@ nonisolated struct WheelMenu: Sendable, Equatable {
     var ring: [WheelSlot?]
     var fan: [WheelSlot]
     var notice: WheelNotice?
+    /// Which wheel this is, and the line the centre shows at rest ("⌘ tools · ⌃ actions").
+    var kind: WheelKind = .convert
+    var restHint: String?
 
     var isEmpty: Bool { ring.allSatisfy { $0 == nil } }
 }
@@ -81,8 +134,8 @@ nonisolated enum SlotProvider {
     static func kind(of type: UTType) -> FileKind {
         if type.conforms(to: .pdf) { return .pdf }
         if type.conforms(to: .image) { return .image }
-        if type.conforms(to: .movie) || type.conforms(to: .video) { return .video }
-        if type.conforms(to: .audio) { return .audio }
+        if type.conforms(to: .movie) || type.conforms(to: .video) { return MediaSupport.canRead(type) ? .video : .other }
+        if type.conforms(to: .audio) { return MediaSupport.canRead(type) ? .audio : .other }
         if let markdown = UTType("net.daringfireball.markdown"), type.conforms(to: markdown) { return .document(.markdown) }
         if type.conforms(to: .html) { return .document(.html) }
         if type.conforms(to: .rtf) || type.conforms(to: .rtfd) { return .document(.rich(nil)) }
@@ -154,11 +207,15 @@ nonisolated enum SlotProvider {
             return WheelMenu(ring: Array(repeating: nil, count: 6), fan: [],
                              notice: WheelNotice(kicker: "NOTHING TO", big: "Convert", detail: "drop files here"))
         }
-        if kinds.contains(where: { $0 == .video || $0 == .audio }) {
-            let isVideo = kinds.contains(.video)
-            return WheelMenu(ring: Array(repeating: nil, count: 6), fan: [],
-                             notice: WheelNotice(kicker: "COMING SOON", big: isVideo ? "Video" : "Audio",
-                                                 detail: "Video & audio arrive in the next update"))
+        if kinds.allSatisfy({ $0 == .video }) {
+            return videoMenu(count: count, source: commonMediaFormat(types), canWrite: canWrite)
+        }
+        if kinds.allSatisfy({ $0 == .audio }) {
+            return audioMenu(count: count, source: commonMediaFormat(types), canWrite: canWrite)
+        }
+        if kinds.allSatisfy({ $0 == .video || $0 == .audio }) {
+            // Videos and songs together: the sound of each, as an audio file.
+            return audioMenu(count: count, source: nil, canWrite: canWrite, joinable: false)
         }
         if kinds.allSatisfy({ $0 == .image }) {
             let formats = Set(types.compactMap(imageFormat(of:)))
@@ -177,9 +234,248 @@ nonisolated enum SlotProvider {
         if case let .document(flavor) = first, kinds.allSatisfy({ $0 == first }) {
             return documentMenu(flavor: flavor, count: count, compressible: types.allSatisfy(OfficeCompressor.canCompress))
         }
-        let ext = types.count == 1 ? (types[0].preferredFilenameExtension?.uppercased() ?? "File") : "Mixed"
         return WheelMenu(ring: Array(repeating: nil, count: 6), fan: [],
-                         notice: WheelNotice(kicker: "CAN'T CONVERT", big: ext, detail: "try images, PDFs or documents"))
+                         notice: WheelNotice(kicker: "CAN'T CONVERT", big: noticeName(types),
+                                             detail: "try images, PDFs, documents, video or audio"))
+    }
+
+    /// "Folder", "MKV", "Mixed" for a centre notice.
+    static func noticeName(_ types: [UTType]) -> String {
+        guard types.count == 1 else { return "Mixed" }
+        if types[0].conforms(to: .folder) || types[0].conforms(to: .directory) { return "Folder" }
+        return types[0].preferredFilenameExtension?.uppercased() ?? "File"
+    }
+
+    /// The one writable format every file is already in, if they share one.
+    static func commonMediaFormat(_ types: [UTType]) -> OutputFormat? {
+        let formats = Set(types.map { t in t.preferredFilenameExtension.flatMap { MediaSupport.format(of: URL(fileURLWithPath: "x.\($0)")) } })
+        guard formats.count == 1, let only = formats.first else { return nil }
+        return only
+    }
+
+    // MARK: Video and audio (AVFoundation)
+
+    /// Ring: two video formats, GIF, More, Compress, Trim (one file) or Join (several).
+    /// More: the other video format, the sound as audio, and Mute.
+    static func videoMenu(count: Int, source: OutputFormat?, canWrite: (OutputFormat) -> Bool) -> WheelMenu {
+        let videos = OutputFormat.videoFormats.filter { $0 != source }
+        var fan = videos.dropFirst(2).map { mediaSlot($0, count: count, fromVideo: true) }
+        fan += OutputFormat.audioFormats.filter(canWrite).map { mediaSlot($0, count: count, fromVideo: true) }
+        fan.append(muteSlot(count: count))
+        var ring: [WheelSlot?] = videos.prefix(2).map { mediaSlot($0, count: count, fromVideo: true) }
+        ring.append(gifSlot(count: count))
+        ring.append(moreSlot(fanCount: fan.count))
+        ring.append(mediaCompressSlot(count: count, video: true))
+        ring.append(count > 1 ? joinSlot(count: count, video: true) : trimSlot(count: count))
+        return WheelMenu(ring: ring, fan: fan, notice: nil)
+    }
+
+    /// Ring: three audio formats, More (the fourth), Compress, Trim (one file)
+    /// or Join (several of one kind; a mix of video and audio can't be joined).
+    static func audioMenu(count: Int, source: OutputFormat?, canWrite: (OutputFormat) -> Bool, joinable: Bool = true) -> WheelMenu {
+        let formats = OutputFormat.audioFormats.filter { $0 != source && canWrite($0) }
+        var ring: [WheelSlot?] = formats.prefix(3).map { mediaSlot($0, count: count, fromVideo: false) }
+        let fan = formats.dropFirst(3).map { mediaSlot($0, count: count, fromVideo: false) }
+        while ring.count < 3 { ring.append(nil) }
+        ring.append(fan.isEmpty ? nil : moreSlot(fanCount: fan.count))
+        ring.append(mediaCompressSlot(count: count, video: false))
+        ring.append(count > 1 ? (joinable ? joinSlot(count: count, video: false) : nil) : trimSlot(count: count))
+        return WheelMenu(ring: ring, fan: fan, notice: nil)
+    }
+
+    static func mediaSlot(_ f: OutputFormat, count: Int, fromVideo: Bool) -> WheelSlot {
+        let (caption, hint): (String, String) = switch f {
+        case .mp4: ("VIDEO", "plays everywhere")
+        case .mov: ("QUICKTIME", "for Apple apps and editing")
+        case .m4v: ("APPLE TV", "for Apple TV and iTunes")
+        case .m4a: (fromVideo ? "SOUND" : "AAC", fromVideo ? "just the sound, small" : "small, plays everywhere")
+        case .wav: ("PCM", fromVideo ? "just the sound, uncompressed" : "uncompressed, for editing")
+        case .aiff: ("APPLE PCM", "uncompressed, for Apple apps")
+        case .flac: ("LOSSLESS", "lossless and smaller than WAV")
+        default: (f.displayName, "")
+        }
+        let symbol = f.isVideo ? "film" : "waveform"
+        let kicker = fromVideo && f.isAudio ? "SOUND AS" : "CONVERT TO"
+        let verb = fromVideo && f.isAudio ? "Save the sound\(many(count)) as \(f.displayName)" : "Convert\(many(count)) to \(f.displayName)"
+        return WheelSlot(action: .convert(f), category: .format, label: f.displayName, monoLabel: f.displayName.uppercased(),
+                         caption: caption, symbol: symbol, kicker: kicker, big: f.displayName, hint: hint, verb: verb)
+    }
+
+    static func gifSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .convert(.gif), category: .format, label: "GIF", monoLabel: "GIF", caption: "LOOP",
+                  symbol: "photo.stack", kicker: "CONVERT TO", big: "GIF", hint: "a looping GIF, 480 px",
+                  verb: "Make\(many(count)) GIF\(count > 1 ? "s" : "")")
+    }
+
+    static func trimSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .trim, category: .tool, label: "Trim", monoLabel: "TRIM", caption: "LENGTH",
+                  symbol: "timeline.selection", kicker: "OPEN", big: "Trim", hint: "keep just the part you want",
+                  verb: "Trim…")
+    }
+
+    static func muteSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .mute, category: .tool, label: "Mute", monoLabel: "MUTE", caption: "NO SOUND",
+                  symbol: "speaker.slash", kicker: "REMOVE THE", big: "Sound", hint: "same picture, silent",
+                  verb: "Remove the sound\(many(count))")
+    }
+
+    static func joinSlot(count: Int, video: Bool) -> WheelSlot {
+        WheelSlot(action: .combineMedia, category: .tool, label: "Join", monoLabel: "JOIN", caption: "JOIN",
+                  symbol: "rectangle.stack.badge.plus", kicker: "JOIN INTO", big: video ? "1 video" : "1 track",
+                  hint: "\(count) files, in drop order", verb: "Join \(count) files into one")
+    }
+
+    static func mediaCompressSlot(count: Int, video: Bool) -> WheelSlot {
+        WheelSlot(action: .compress, category: .tool, label: "Compress", monoLabel: "SQZ", caption: "COMPRESS",
+                  symbol: "arrow.up.right.and.arrow.down.left", kicker: "OPEN", big: "Compress",
+                  hint: video ? "HEVC · light · balanced · strong" : "AAC · light · balanced · strong", verb: "Compress\(many(count))…")
+    }
+
+    // MARK: The Tools wheel
+
+    /// Tools for the files being dragged: what changes the file rather than its
+    /// format. More than six: the first five on the ring, the rest under More.
+    static func toolsMenu(for types: [UTType], cutout: Bool = Cutout.isAvailable) -> WheelMenu {
+        let count = types.count
+        let kinds = types.map(kind(of:))
+        var tools: [WheelSlot] = []
+        if !kinds.isEmpty, kinds.allSatisfy({ $0 == .image }) {
+            tools = [compressSlot(count: count, pdf: false), fitSlot(count: count), copyTextSlot(count: count),
+                     cropSlot(count: count), resizeSlot(count: count, pdf: false)]
+            if cutout { tools.append(cutoutSlot(count: count)) }
+            tools.append(count > 1 ? combine(count: count) : formatSlot(.pdf, count: count))
+            tools.append(searchableSlot(count: count, scan: true))
+            tools.append(stripLocationSlot(count: count))
+        } else if !kinds.isEmpty, kinds.allSatisfy({ $0 == .pdf }) {
+            tools = [compressSlot(count: count, pdf: true), fitSlot(count: count), copyTextSlot(count: count)]
+            if count == 1 { tools += [editPagesSlot(), passwordSlot(count: count)] } else { tools += [combine(count: count), passwordSlot(count: count)] }
+            tools += [searchableSlot(count: count, scan: false), splitSlot(count: count), resizeSlot(count: count, pdf: true), cropSlot(count: count)]
+        } else if !kinds.isEmpty, kinds.allSatisfy({ $0 == .image || $0 == .pdf }) {
+            tools = [combine(count: count), fitSlot(count: count), copyTextSlot(count: count)]
+
+        } else if !kinds.isEmpty, kinds.allSatisfy({ $0 == .video }) {
+            if count == 1 { tools.append(trimSlot(count: count)) }
+            tools += [mediaCompressSlot(count: count, video: true), fitSlot(count: count), speedSlot(count: count),
+                      muteSlot(count: count), gifSlot(count: count), mediaSlot(.m4a, count: count, fromVideo: true)]
+            if count > 1 { tools.insert(joinSlot(count: count, video: true), at: 0) }
+        } else if !kinds.isEmpty, kinds.allSatisfy({ $0 == .audio }) {
+            if count == 1 { tools.append(trimSlot(count: count)) }
+            tools += [mediaCompressSlot(count: count, video: false), fitSlot(count: count), speedSlot(count: count)]
+            if count > 1 { tools.append(joinSlot(count: count, video: false)) }
+        } else if let first = kinds.first, case .document = first, kinds.allSatisfy({ $0 == first }),
+                  types.allSatisfy(OfficeCompressor.canCompress) {
+            var compress = compressSlot(count: count, pdf: false)
+            compress.hint = "smaller pictures, same file"
+            tools = [compress, fitSlot(count: count)]
+        } else if !kinds.isEmpty, zip(kinds, types).allSatisfy({ kind, type in
+            [.image, .pdf, .video, .audio].contains(kind) || OfficeCompressor.canCompress(type)
+        }) {
+            // A mix (photos and a video for one email, say): Fit works on every kind.
+            tools = [fitSlot(count: count)]
+        }
+        guard !tools.isEmpty else {
+            return WheelMenu(ring: Array(repeating: nil, count: 6), fan: [],
+                             notice: WheelNotice(kicker: "NO TOOLS FOR", big: types.isEmpty ? "These" : noticeName(types),
+                                                 detail: "try the Actions wheel"), kind: .tools)
+        }
+        var menu = ringWithMore(tools)
+        menu.kind = .tools
+        return menu
+    }
+
+    static func fitSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .fit, category: .tool, label: "Fit", monoLabel: "FIT", caption: "TO SEND",
+                  symbol: "paperplane", kicker: "MAKE IT", big: "Fit", hint: "under a size: email, WhatsApp, Discord…",
+                  verb: "Make\(many(count)) fit…")
+    }
+
+    static func copyTextSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .copyText, category: .tool, label: "Text", monoLabel: "TEXT", caption: "COPY WORDS",
+                  symbol: "text.viewfinder", kicker: "COPY THE", big: "Text", hint: "the words, even from a photo or scan",
+                  verb: "Copy the text")
+    }
+
+    static func searchableSlot(count: Int, scan: Bool) -> WheelSlot {
+        WheelSlot(action: .searchable, category: .tool, label: "OCR", monoLabel: "OCR", caption: "SEARCHABLE",
+                  symbol: "doc.text.magnifyingglass", kicker: "SEARCHABLE", big: "PDF",
+                  hint: scan ? "a PDF you can search and copy from" : "find and copy text in scanned pages",
+                  verb: "Make\(many(count)) searchable")
+    }
+
+    static func passwordSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .password, category: .tool, label: "Lock", monoLabel: "LOCK", caption: "PASSWORD",
+                  symbol: "lock", kicker: "PASSWORD", big: "Lock", hint: "add a password, or remove one",
+                  verb: "Password…")
+    }
+
+    static func editPagesSlot() -> WheelSlot {
+        WheelSlot(action: .editPages, category: .tool, label: "Pages", monoLabel: "PAGES", caption: "REORDER",
+                  symbol: "square.grid.2x2", kicker: "EDIT", big: "Pages", hint: "reorder, turn or remove pages",
+                  verb: "Edit pages…")
+    }
+
+    static func speedSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .speed, category: .tool, label: "Speed", monoLabel: "SPEED", caption: "FASTER",
+                  symbol: "gauge.with.dots.needle.67percent", kicker: "CHANGE THE", big: "Speed", hint: "0.25× to 4×, voices keep their pitch",
+                  verb: "Speed…")
+    }
+
+    static func stripLocationSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .stripLocation, category: .tool, label: "No GPS", monoLabel: "NO GPS", caption: "PRIVACY",
+                  symbol: "location.slash", kicker: "REMOVE THE", big: "Location", hint: "same picture, no GPS",
+                  verb: "Remove the location\(many(count))")
+    }
+
+    static func splitSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .splitPDF, category: .tool, label: "Split", monoLabel: "SPLIT", caption: "PAGES",
+                  symbol: "square.split.2x1", kicker: "SPLIT INTO", big: "Pages", hint: "a PDF for every page",
+                  verb: "Split\(many(count)) into pages")
+    }
+
+    // MARK: The Actions wheel
+
+    /// The same for every selection, folders included. Ring: send, copy, zip,
+    /// More, path, stash; More: Mail, Terminal, Move to…, Copy to…, Look, Finder.
+    static func actionsMenu(count: Int) -> WheelMenu {
+        let fan: [WheelSlot] = [.mail, .terminal, .moveTo, .copyTo, .quickLook, .reveal].map { actionSlot($0, count: count) }
+        let ring: [WheelSlot?] = [actionSlot(.airDrop, count: count), actionSlot(.copy, count: count),
+                                  actionSlot(.zip, count: count), moreSlot(fanCount: fan.count),
+                                  actionSlot(.copyPath, count: count), actionSlot(.stash, count: count)]
+        var menu = WheelMenu(ring: ring, fan: fan, notice: nil)
+        menu.kind = .actions
+        return menu
+    }
+
+    static func actionSlot(_ action: FileAction, count: Int) -> WheelSlot {
+        let them = count > 1 ? "them" : "it"
+        let (label, mono, caption, symbol, kicker, big, hint, verb): (String, String, String, String, String, String, String, String) =
+            switch action {
+            case .airDrop: ("AirDrop", "AIRDROP", "NEARBY", "dot.radiowaves.left.and.right", "SEND WITH", "AirDrop", "to a nearby Mac, iPhone or iPad", "AirDrop")
+            case .copy: ("Copy", "COPY", "CLIPBOARD", "doc.on.doc", "TO CLIPBOARD", "Copy",
+                         count > 1 ? "paste them into a folder or a chat" : "pastes as a file, or a picture in chats", "Copy")
+            case .zip: ("Zip", "ZIP", "ARCHIVE", "archivebox", "PACK INTO", "Zip", count > 1 ? "one .zip with all \(count)" : "a .zip next to \(them)", "Zip")
+            case .copyPath: ("Path", "PATH", "AS TEXT", "link", "COPY THE", "Path", count > 1 ? "one path per line" : "the full path, as text", "Copy path")
+            case .stash: ("Stash", "STASH", "COLLECT", "tray.and.arrow.down", "ADD TO THE", "Stash",
+                          "collect files, drag them out together", "Add to the Stash")
+            case .mail: ("Mail", "MAIL", "ATTACH", "envelope", "ATTACH TO", "Email", "a new message with \(them) attached", "Email")
+            case .terminal: ("Shell", "TERM", "TERMINAL", "terminal", "OPEN IN", "Terminal", "a new window in this folder", "Open in Terminal")
+            case .moveTo: ("Move to", "MOVE TO", "FOLDER", "folder", "MOVE TO", "Folder…", "choose where \(them) go", "Move to…")
+            case .copyTo: ("Copy to", "COPY TO", "FOLDER", "folder.badge.plus", "COPY TO", "Folder…", "the original stays", "Copy to…")
+            case .quickLook: ("Look", "LOOK", "PREVIEW", "eye", "QUICK", "Look", "preview without opening", "Quick Look")
+            case .reveal: ("Finder", "SHOW", "FINDER", "magnifyingglass", "SHOW IN", "Finder", "select \(them) in a Finder window", "Show in Finder")
+            }
+        return WheelSlot(action: .file(action), category: .tool, label: label, monoLabel: mono, caption: caption, symbol: symbol,
+                         kicker: kicker, big: big, hint: hint, verb: verb)
+    }
+
+    /// Up to six on the ring; more than six: five, then More with the rest.
+    static func ringWithMore(_ slots: [WheelSlot]) -> WheelMenu {
+        if slots.count <= 6 {
+            return WheelMenu(ring: slots.map(Optional.some) + Array(repeating: nil, count: 6 - slots.count), fan: [], notice: nil)
+        }
+        let fan = Array(slots.dropFirst(5))
+        let ring: [WheelSlot?] = Array(slots.prefix(3)) + [moreSlot(fanCount: fan.count)] + Array(slots.dropFirst(3).prefix(2))
+        return WheelMenu(ring: ring, fan: fan, notice: nil)
     }
 
     // MARK: Images
@@ -287,6 +583,7 @@ nonisolated enum SlotProvider {
         case .txt: ("TEXT", "plain text only")
         case .html: ("WEB", "a web page")
         case .docx: ("WORD", "a Word document")
+        case .mp4, .mov, .m4v, .m4a, .wav, .aiff, .flac: (f.displayName, "")
         }
         let isDocument = f.imageTypeIdentifier == nil
         return WheelSlot(action: .convert(f), category: .format, label: f.displayName,

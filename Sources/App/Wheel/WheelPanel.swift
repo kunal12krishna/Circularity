@@ -99,6 +99,12 @@ final class WheelHostView: NSView {
         controller?.click(at: convert(event.locationInWindow, from: nil))
     }
 
+    /// Click mode: a wheel key switches wheels, as it does mid-drag.
+    override func flagsChanged(with event: NSEvent) {
+        controller?.modifiersChanged(event.modifierFlags)
+        super.flagsChanged(with: event)
+    }
+
     override func keyDown(with event: NSEvent) {
         if controller?.key(event) != true { super.keyDown(with: event) }
     }

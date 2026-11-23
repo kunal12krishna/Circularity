@@ -175,7 +175,7 @@ final class TutorialModel: ObservableObject {
     }
 
     var accent: Color { Color(nsColor: Appearance.accentNS(settings)) }
-    var triggerName: String { settings.value(SettingsKeys.triggerKey).capitalized }
+    var triggerName: String { WheelKeyMap.displayName(settings.value(SettingsKeys.triggerKey)) }
 
     /// A new copy each time, in its own folder, so results are easy to find and to throw away.
     static func freshPractice() -> URL? {

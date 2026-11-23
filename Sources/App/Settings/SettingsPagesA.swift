@@ -86,12 +86,24 @@ struct GesturePage: View {
 
     var body: some View {
         let a = model.accent
-        let key = model.store.value(SettingsKeys.triggerKey).capitalized
+        let key = WheelKeyMap.displayName(model.store.value(SettingsKeys.triggerKey))
         VStack(alignment: .leading, spacing: 20) {
             PageTitle(title: "Gesture", subtitle: "How the wheel opens while you drag files. No permissions are used.", accent: a)
-            SettingsCard(title: "Trigger") {
-                ChipRow(title: "Key", detail: "Tap it while dragging files.", options: [("shift", "Shift"), ("option", "Option"), ("control", "Control")],
+            SettingsCard(title: "Wheels", footer: "Tap a key while dragging files. With a wheel open, tap another wheel's key to switch; the centre shows which keys do what.") {
+                let keys: [(id: String, name: String)] = [("shift", "⇧ Shift"), ("option", "⌥ Option"), ("control", "⌃ Control"), ("command", "⌘ Command")]
+                let map = GestureController.keyMap(model.store)
+                ChipRow(title: "Convert", detail: "Formats: JPG, PDF, MP4, M4A…", options: keys,
                         selection: model.binding(SettingsKeys.triggerKey), accent: a)
+                ChipRow(title: "Tools", detail: map.conflict(for: .tools, wanted: model.store.value(SettingsKeys.toolsKey))
+                        ?? "Compress, resize, crop, trim, split, join…", options: keys + [("off", "Off")],
+                        selection: model.binding(SettingsKeys.toolsKey), accent: a)
+                ChipRow(title: "Actions", detail: map.conflict(for: .actions, wanted: model.store.value(SettingsKeys.actionsKey))
+                        ?? "AirDrop, copy, zip, copy path, stash, Mail, Terminal… Works on folders too.", options: keys + [("off", "Off")],
+                        selection: model.binding(SettingsKeys.actionsKey), accent: a)
+                ToggleRow(title: "Show the keys above the wheel", detail: "⇧ Convert · ⌘ Tools · ⌃ Actions, with the wheel you're on lit up.",
+                          isOn: model.binding(SettingsKeys.keyGuide), accent: a)
+            }
+            SettingsCard(title: "Trigger") {
                 ChipRow(title: "Style", detail: model.store.value(SettingsKeys.triggerMode) == "hold"
                         ? "Hold \(key): the wheel stays while the key is down."
                         : "Tap \(key) once: the wheel stays until you drop or move away.",
@@ -406,8 +418,8 @@ struct OutputPage: View {
                 ToggleRow(title: "Open the result", detail: "At most five files from a batch.", isOn: model.binding(SettingsKeys.afterOpen), accent: a)
                 ToggleRow(title: "Show it in Finder", isOn: model.binding(SettingsKeys.afterReveal), accent: a)
                 ToggleRow(title: "Copy it to the clipboard", isOn: model.binding(SettingsKeys.afterCopy), accent: a)
-                ToggleRow(title: "Show it on a shelf by the pointer",
-                          detail: "Drag the result straight into Mail, Slack or a chat. It goes away by itself after a few seconds.",
+                ToggleRow(title: "Show a result card by the pointer",
+                          detail: "Drag the result into Mail, Slack or a chat, copy it, or undo it. It leaves by itself after a few seconds; Esc closes it at once.",
                           isOn: model.binding(SettingsKeys.afterShelf), accent: a)
                 ToggleRow(title: "Move the original to the Trash",
                           detail: "Only when one file becomes one new file. You can put it back from the Trash.",

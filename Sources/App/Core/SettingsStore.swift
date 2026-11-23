@@ -141,7 +141,9 @@ enum SettingsValidation {
                                            SettingsKeys.updatesLastCheck.name, SettingsKeys.updatesAutomatic.name]
 
     static let choices: [String: Set<String>] = [
-        SettingsKeys.triggerKey.name: ["shift", "option", "control"],
+        SettingsKeys.triggerKey.name: ["shift", "option", "control", "command"],
+        SettingsKeys.toolsKey.name: ["shift", "option", "control", "command", "off"],
+        SettingsKeys.actionsKey.name: ["shift", "option", "control", "command", "off"],
         SettingsKeys.triggerMode.name: ["tap", "hold"],
         SettingsKeys.shakeSensitivity.name: ["low", "medium", "high"],
         SettingsKeys.wheelLayout.name: ["ring", "orbit", "halo"],

@@ -22,23 +22,40 @@ nonisolated enum WheelOpenReason: String, Sendable {
 }
 
 nonisolated enum GestureEvent: Sendable, Equatable {
-    case mouseDown(CGPoint, triggerDown: Bool, time: TimeInterval)
+    /// `keys`: the wheels whose keys are down at the press.
+    case press(CGPoint, keys: Set<WheelKind>, time: TimeInterval)
     case mouseMoved(CGPoint, time: TimeInterval)
     case mouseUp(time: TimeInterval)
-    case triggerChanged(isDown: Bool, time: TimeInterval)
+    /// The wheel keys that are down now (Shift → Convert, ⌘ → Tools, ⌃ → Actions by default).
+    case keysChanged(Set<WheelKind>, time: TimeInterval)
     /// The drag pasteboard now carries files; `allowed` is the trigger policy's verdict.
     case fileDragDetected(allowed: Bool, time: TimeInterval)
     case tick(time: TimeInterval)
     /// The drag left the wheel; the wheel hid itself and the drag goes on.
-    case wheelDismissed(triggerDown: Bool, time: TimeInterval)
+    case dismissed(keys: Set<WheelKind>, time: TimeInterval)
     /// Something was dropped on the wheel (a segment or the centre).
     case wheelFinished
+
+    /// One trigger key (the Convert wheel's), as before there were three wheels.
+    static func mouseDown(_ point: CGPoint, triggerDown: Bool, time: TimeInterval) -> GestureEvent {
+        .press(point, keys: triggerDown ? [.convert] : [], time: time)
+    }
+
+    static func triggerChanged(isDown: Bool, time: TimeInterval) -> GestureEvent {
+        .keysChanged(isDown ? [.convert] : [], time: time)
+    }
+
+    static func wheelDismissed(triggerDown: Bool, time: TimeInterval) -> GestureEvent {
+        .dismissed(keys: triggerDown ? [.convert] : [], time: time)
+    }
 }
 
 nonisolated enum GestureEffect: Sendable, Equatable {
     case startSampling
     case stopSampling
-    case showWheel(at: CGPoint, reason: WheelOpenReason)
+    case showWheel(at: CGPoint, reason: WheelOpenReason, kind: WheelKind = .convert)
+    /// Another wheel's key went down while a wheel was showing.
+    case switchWheel(WheelKind)
     case hideWheel
 }
 
@@ -62,11 +79,15 @@ nonisolated struct GestureStateMachine: Sendable {
     }
 
     private var pressPoint: CGPoint = .zero
-    private var triggerDown = false
-    /// The trigger was already down when the drag started: stay out of the way
-    /// until it is released and pressed again.
-    private var mustReleaseTrigger = false
+    /// Wheel keys down now. A key only counts when it goes down during the
+    /// drag: one already held when the drag started (Finder's own ⌘- or
+    /// Shift-drag) stays out of the way until it is released and pressed again.
+    private var keysDown: Set<WheelKind> = []
     private var triggerPressedAt: TimeInterval?
+    /// The wheel the last key press asked for.
+    private var pendingKind: WheelKind = .convert
+    /// The wheel on screen.
+    private(set) var shownKind: WheelKind = .convert
     private var shake: ShakeDetector
 
     init(config: GestureConfig = GestureConfig()) {
@@ -83,14 +104,13 @@ nonisolated struct GestureStateMachine: Sendable {
 
     mutating func handle(_ event: GestureEvent) -> [GestureEffect] {
         switch event {
-        case let .mouseDown(point, down, _):
+        case let .press(point, keys, _):
             let effects = endEffects()
             resetDrag()
             phase = .pressed
             pressPoint = point
             lastPoint = point
-            triggerDown = down
-            mustReleaseTrigger = down
+            keysDown = keys
             return effects
 
         case let .mouseMoved(point, time):
@@ -116,23 +136,25 @@ nonisolated struct GestureStateMachine: Sendable {
             phase = .idle
             return effects
 
-        case let .triggerChanged(isDown, time):
-            guard isDown != triggerDown else { return [] }
-            triggerDown = isDown
-            guard isDown else {
-                mustReleaseTrigger = false
-                if config.triggerMode == .hold { triggerPressedAt = nil }
-                return []
-            }
+        case let .keysChanged(keys, time):
+            let pressed = keys.subtracting(keysDown)
+            let released = keysDown.subtracting(keys)
+            keysDown = keys
+            if config.triggerMode == .hold, released.contains(pendingKind) { triggerPressedAt = nil }
+            // Several at once (unlikely): Convert, then Tools, then Actions.
+            guard let kind = WheelKind.allCases.first(where: pressed.contains) else { return [] }
             switch phase {
             case .pressed:
                 // Pressed before the drag really started: counts as "held at start".
-                mustReleaseTrigger = true
                 return []
             case .dragging, .fileDrag:
-                guard !mustReleaseTrigger else { return [] }
+                pendingKind = kind
                 triggerPressedAt = time
                 return phase == .fileDrag ? evaluateTrigger(now: time) : []
+            case .wheelShown:
+                guard kind != shownKind else { return [] }
+                shownKind = kind
+                return [.switchWheel(kind)]
             default:
                 return []
             }
@@ -151,11 +173,10 @@ nonisolated struct GestureStateMachine: Sendable {
         case let .tick(time):
             return phase == .fileDrag ? evaluateTrigger(now: time) : []
 
-        case let .wheelDismissed(down, _):
+        case let .dismissed(keys, _):
             guard phase == .wheelShown else { return [] }
             phase = .fileDrag
-            triggerDown = down
-            mustReleaseTrigger = down
+            keysDown = keys
             triggerPressedAt = nil
             shake.reset()
             return []
@@ -172,7 +193,7 @@ nonisolated struct GestureStateMachine: Sendable {
         case .tap:
             if now - since >= config.triggerDelay { return open(.trigger) }
         case .hold:
-            if triggerDown, now - since >= max(config.triggerDelay, config.minimumHold) { return open(.trigger) }
+            if keysDown.contains(pendingKind), now - since >= max(config.triggerDelay, config.minimumHold) { return open(.trigger) }
         }
         return []
     }
@@ -181,7 +202,9 @@ nonisolated struct GestureStateMachine: Sendable {
         phase = .wheelShown
         triggerPressedAt = nil
         shake.reset()
-        return [.showWheel(at: lastPoint, reason: reason)]
+        // A shake always opens Convert.
+        shownKind = reason == .shake ? .convert : pendingKind
+        return [.showWheel(at: lastPoint, reason: reason, kind: shownKind)]
     }
 
     private func endEffects() -> [GestureEffect] {
@@ -193,7 +216,7 @@ nonisolated struct GestureStateMachine: Sendable {
 
     private mutating func resetDrag() {
         triggerPressedAt = nil
-        mustReleaseTrigger = false
+        pendingKind = .convert
         shake.reset()
     }
 }

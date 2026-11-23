@@ -1,6 +1,7 @@
 import CircularityEngine
 import CoreGraphics
 import UniformTypeIdentifiers
+import AppKit
 import XCTest
 
 final class WheelGeometryTests: XCTestCase {
@@ -155,10 +156,120 @@ final class SlotProviderTests: XCTestCase {
         XCTAssertTrue(mixed.isEmpty)
     }
 
-    func testVideoShowsTheFriendlyNotice() {
+    func testVideoGetsFormatsGIFCompressAndTrim() {
         let menu = SlotProvider.menu(for: [.mpeg4Movie], canWrite: everything)
+        XCTAssertNil(menu.notice)
+        XCTAssertEqual(menu.ring.map { $0?.action }, [.convert(.mov), .convert(.m4v), .convert(.gif), .more, .compress, .trim],
+                       "an MP4 isn't offered MP4")
+        XCTAssertEqual(menu.fan.map(\.action), [.convert(.m4a), .convert(.wav), .convert(.aiff), .convert(.flac), .mute])
+        XCTAssertEqual(menu.fan.first?.kicker, "SOUND AS")
+    }
+
+    func testSeveralVideosJoinInsteadOfTrim() {
+        let menu = SlotProvider.menu(for: [.quickTimeMovie, .quickTimeMovie], canWrite: everything)
+        XCTAssertEqual(menu.ring.map { $0?.action }, [.convert(.mp4), .convert(.m4v), .convert(.gif), .more, .compress, .combineMedia])
+        XCTAssertFalse(menu.fan.contains { $0.action == .trim })
+    }
+
+    func testAudioGetsAudioFormats() {
+        let menu = SlotProvider.menu(for: [.mp3], canWrite: everything)
+        XCTAssertEqual(menu.ring.map { $0?.action }, [.convert(.m4a), .convert(.wav), .convert(.aiff), .more, .compress, .trim])
+        XCTAssertEqual(menu.fan.map(\.action), [.convert(.flac)])
+        // No FLAC encoder on this Mac: no More either.
+        let noFLAC = SlotProvider.menu(for: [.wav], canWrite: { $0 != .flac })
+        XCTAssertEqual(noFLAC.ring.map { $0?.action }, [.convert(.m4a), .convert(.aiff), nil, nil, .compress, .trim])
+    }
+
+    func testVideoAndAudioTogetherOfferTheSoundButNoJoin() {
+        let menu = SlotProvider.menu(for: [.mpeg4Movie, .mp3], canWrite: everything)
+        XCTAssertEqual(menu.ring[0]?.action, .convert(.m4a))
+        XCTAssertNil(menu.ring[5])
+    }
+
+    // MARK: Tools and Actions wheels
+
+    func testToolsWheelPerKind() {
+        let image = SlotProvider.toolsMenu(for: [.jpeg], cutout: true)
+        XCTAssertEqual(image.kind, .tools)
+        XCTAssertEqual(image.ring.map { $0?.action }, [.compress, .fit, .copyText, .more, .crop, .resize])
+        XCTAssertEqual(image.fan.map(\.action), [.cutout, .convert(.pdf), .searchable, .stripLocation])
+        let pdf = SlotProvider.toolsMenu(for: [.pdf])
+        XCTAssertEqual(pdf.ring.map { $0?.action }, [.compress, .fit, .copyText, .more, .editPages, .password])
+        XCTAssertEqual(pdf.fan.map(\.action), [.searchable, .splitPDF, .resize, .crop])
+        let pdfs = SlotProvider.toolsMenu(for: [.pdf, .pdf])
+        XCTAssertEqual(pdfs.ring[4]?.action, .combinePDF, "two PDFs: Combine instead of Pages")
+        let video = SlotProvider.toolsMenu(for: [.mpeg4Movie])
+        XCTAssertEqual(video.ring.map { $0?.action }, [.trim, .compress, .fit, .more, .speed, .mute])
+        XCTAssertEqual(video.fan.map(\.action), [.convert(.gif), .convert(.m4a)])
+        let songs = SlotProvider.toolsMenu(for: [.mp3, .mp3])
+        XCTAssertEqual(songs.ring.map { $0?.action }, [.compress, .fit, .speed, .combineMedia, nil, nil])
+        let word = SlotProvider.toolsMenu(for: [UTType("org.openxmlformats.wordprocessingml.document")!])
+        XCTAssertEqual(word.ring.map { $0?.action }, [.compress, .fit, nil, nil, nil, nil])
+    }
+
+    /// Every button on every wheel: words that fit their spot, and an icon this Mac has.
+    func testEveryButtonFitsAndHasAnIcon() {
+        let docx = UTType("org.openxmlformats.wordprocessingml.document")!
+        let kinds: [[UTType]] = [[.heic], [.png, .png], [.pdf], [.pdf, .pdf], [.mpeg4Movie], [.mpeg4Movie, .mpeg4Movie],
+                                 [.mp3], [.mp3, .wav], [docx], [.folder], [.heic, .pdf]]
+        var menus: [WheelMenu] = kinds.flatMap { types in
+            [SlotProvider.menu(for: types, canWrite: everything), SlotProvider.toolsMenu(for: types, cutout: true)]
+        }
+        menus += [SlotProvider.actionsMenu(count: 1), SlotProvider.actionsMenu(count: 3)]
+        for slot in menus.flatMap({ $0.ring.compactMap { $0 } + $0.fan }) {
+            XCTAssertLessThanOrEqual(slot.label.count, 8, "Ring/Orbit label too long: \(slot.label)")
+            XCTAssertLessThanOrEqual(slot.monoLabel.count, 7, "Halo label too long: \(slot.monoLabel)")
+            XCTAssertLessThanOrEqual(slot.caption.count, 11, "caption too long: \(slot.caption)")
+            XCTAssertLessThanOrEqual(slot.big.count, 9, "centre word too long: \(slot.big)")
+            XCTAssertLessThanOrEqual(slot.kicker.count, 13, "centre line too long: \(slot.kicker)")
+            XCTAssertNotNil(NSImage(systemSymbolName: slot.symbol, accessibilityDescription: nil), "no such icon: \(slot.symbol)")
+        }
+    }
+
+    func testAMixOfKindsCanStillBeMadeToFit() {
+        let menu = SlotProvider.toolsMenu(for: [.heic, .mpeg4Movie, .pdf])
+        XCTAssertEqual(menu.ring[0]?.action, .fit)
+        XCTAssertNil(menu.notice)
+        XCTAssertTrue(SlotProvider.toolsMenu(for: [.heic, .folder]).isEmpty, "a folder can't be made to fit")
+    }
+
+    func testToolsWheelHasNothingForAFolder() {
+        let menu = SlotProvider.toolsMenu(for: [.folder])
         XCTAssertTrue(menu.isEmpty)
-        XCTAssertEqual(menu.notice?.detail, "Video & audio arrive in the next update")
+        XCTAssertEqual(menu.notice?.big, "Folder")
+    }
+
+    func testMoreThanSixToolsUseMore() {
+        let slots = (0..<8).map { _ in SlotProvider.cropSlot(count: 1) }
+        let menu = SlotProvider.ringWithMore(slots)
+        XCTAssertEqual(menu.ring.count, 6)
+        XCTAssertEqual(menu.ring.firstIndex { $0?.action == .more }, 3)
+        XCTAssertEqual(menu.fan.count, 3)
+    }
+
+    func testActionsWheelIsTheSameForEverything() {
+        let menu = SlotProvider.actionsMenu(count: 2)
+        XCTAssertEqual(menu.kind, .actions)
+        XCTAssertEqual(menu.ring.map { $0?.action }, [.file(.airDrop), .file(.copy), .file(.zip), .more, .file(.copyPath), .file(.stash)])
+        XCTAssertEqual(menu.fan.map(\.action), [.file(.mail), .file(.terminal), .file(.moveTo), .file(.copyTo), .file(.quickLook), .file(.reveal)])
+        XCTAssertEqual(menu.ring[4]?.hint, "one path per line")
+        XCTAssertEqual(menu.ring[2]?.hint, "one .zip with all 2")
+    }
+
+    func testWheelKeysNeverShareAKey() {
+        let map = WheelKeyMap(convert: "shift", tools: "command", actions: "control")
+        XCTAssertEqual(map.kinds(down: ["command", "option"]), [.tools])
+        XCTAssertEqual(map.restHint(for: .convert), "⌘ tools · ⌃ actions")
+        XCTAssertEqual(map.restHint(for: .actions), "⇧ convert · ⌘ tools")
+        // Convert on Control (an older setting) takes it from Actions.
+        let clash = WheelKeyMap(convert: "control", tools: "command", actions: "control")
+        XCTAssertEqual(clash.key(for: .convert), "control")
+        XCTAssertNil(clash.key(for: .actions))
+        XCTAssertNotNil(clash.conflict(for: .actions, wanted: "control"))
+        XCTAssertEqual(clash.restHint(for: .convert), "⌘ tools")
+        let off = WheelKeyMap(convert: "shift", tools: "off", actions: "off")
+        XCTAssertNil(off.restHint(for: .convert))
+        XCTAssertNil(off.conflict(for: .tools, wanted: "off"))
     }
 
     func testMixedImagesAndPDFsOfferCombine() {

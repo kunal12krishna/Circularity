@@ -138,7 +138,19 @@ final class PanelModel: ObservableObject {
 
     func quickLook(_ item: HistoryItem) { QuickLook.shared.show(item.outputs.map { URL(fileURLWithPath: $0) }) }
     func convertAgain(_ item: HistoryItem) { item.primaryOutput.map { host?.panelOpenWheel(files: [$0]) } }
-    func undo(_ item: HistoryItem) { history.undo(item.id) }
+    func undo(_ item: HistoryItem) {
+        if let said = history.undo(item.id) { notice = "Undone: \(said)" }
+    }
+
+    /// What Undo will do for this row.
+    static func undoHelp(_ item: HistoryItem) -> String {
+        switch item.kind {
+        case "move": "Undo: move it back"
+        case "copy": "Undo: move the copy to the Trash"
+        case "zip": "Undo: move the zip to the Trash"
+        default: item.trashed?.isEmpty == false ? "Undo: result to the Trash, original back" : "Undo: move the result to the Trash"
+        }
+    }
     func open(_ item: HistoryItem) { item.primaryOutput.map { _ = NSWorkspace.shared.open($0) } }
 
     func copy(_ item: HistoryItem) {

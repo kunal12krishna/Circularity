@@ -35,6 +35,9 @@ final class WheelController {
     private var menu = WheelMenu(ring: Array(repeating: nil, count: 6), fan: [], notice: nil)
     private var files = DraggedFiles()
     private var mode = Mode.drag
+    private(set) var kind = WheelKind.convert
+    /// Click mode: wheel keys already down, so only a new press switches.
+    private var clickKeysDown: Set<WheelKind> = []
     private var state = WheelVisualState()
     private var moreTimer: DispatchWorkItem?
     private var outsideClickMonitor: Any?
@@ -42,9 +45,14 @@ final class WheelController {
     private var lastDragPoint: CGPoint?
     private(set) var isVisible = false
     private let loupe = BeforeAfterLoupe()
+    /// ⇧ CONVERT ⌘ TOOLS ⌃ ACTIONS above the wheel.
+    private let keyGuide = KeyGuideLayer()
     /// Breathing, the orbiting dots, the twirl and sparks (Wheel Studio looks).
     private let effects = WheelEffects()
     private var contentsScale: CGFloat = 2
+    /// The GIF preview's frames for the video on the wheel (made on first hover).
+    private var previewFrames: [CGImage]?
+    private var previewTask: Task<Void, Never>?
     /// Bumped by every show(), so a delayed hide meant for an earlier wheel
     /// never closes a newer one.
     private var generation = 0
@@ -61,11 +69,15 @@ final class WheelController {
 
     // MARK: Show / hide
 
-    func show(_ files: DraggedFiles, at screenPoint: CGPoint, mode: Mode) {
+    func show(_ files: DraggedFiles, at screenPoint: CGPoint, mode: Mode, kind: WheelKind = .convert) {
         moreTimer?.cancel()
         generation += 1
         self.files = files
         self.mode = mode
+        self.kind = kind
+        previewTask?.cancel()
+        previewFrames = nil
+        clickKeysDown = GestureController.keyMap(settings).kinds(down: GestureController.names(NSEvent.modifierFlags))
         finishing = false
         lastDragPoint = nil
         state = WheelVisualState()
@@ -79,12 +91,7 @@ final class WheelController {
         let look = Appearance.wheelStyle(settings, layout: kind)
         Motion.speed = settings.value(SettingsKeys.animationSpeed)
 
-        menu = SlotProvider.menu(for: files.types, canWrite: { FormatSupport.current.canWrite($0) },
-                                 usage: settings.value(SettingsKeys.wheelUsage),
-                                 smartOrdering: settings.value(SettingsKeys.smartOrdering),
-                                 presets: Preset.decodeList(settings.value(SettingsKeys.presetsJSON)),
-                                 formatOrder: SlotProvider.imageFormatOrder(settings.value(SettingsKeys.imageFormatOrder)),
-                                 slots: SlotProvider.parseSlots(settings.value(SettingsKeys.imageSlots)))
+        menu = buildMenu(self.kind)
 
         var center = screenPoint
         if mode == .click, let visible = screen?.visibleFrame {
@@ -103,6 +110,7 @@ final class WheelController {
         requestThumbnail(size: geometry.orbDiameter * geometry.scale, scale: contentsScale)
         requestEstimates()
 
+        configureKeyGuide(look: look, center: center, screen: screen?.visibleFrame)
         guard let panel, let host else { return }
         let size = geometry.size
         panel.setFrame(CGRect(x: center.x - size / 2, y: center.y - size / 2, width: size, height: size), display: false)
@@ -136,6 +144,93 @@ final class WheelController {
         NSAccessibility.post(element: host, notification: .layoutChanged)
     }
 
+    /// The buttons for one wheel, with the centre's at-rest hint for reaching the others.
+    private func buildMenu(_ kind: WheelKind) -> WheelMenu {
+        var menu: WheelMenu = switch kind {
+        case .convert:
+            SlotProvider.menu(for: files.types, canWrite: { FormatSupport.current.canWrite($0) },
+                              usage: settings.value(SettingsKeys.wheelUsage),
+                              smartOrdering: settings.value(SettingsKeys.smartOrdering),
+                              presets: Preset.decodeList(settings.value(SettingsKeys.presetsJSON)),
+                              formatOrder: SlotProvider.imageFormatOrder(settings.value(SettingsKeys.imageFormatOrder)),
+                              slots: SlotProvider.parseSlots(settings.value(SettingsKeys.imageSlots)))
+        case .tools:
+            SlotProvider.toolsMenu(for: files.types)
+        case .actions:
+            SlotProvider.actionsMenu(count: files.count)
+        }
+        menu.kind = kind
+        let keys = GestureController.keyMap(settings)
+        // With the key guide showing, the centre doesn't need to repeat it.
+        menu.restHint = settings.value(SettingsKeys.keyGuide) ? nil : keys.restHint(for: kind)
+        // Nothing to convert (a folder, say): point at the wheel that can help.
+        if kind != .actions, menu.notice != nil, let key = keys.key(for: .actions) {
+            menu.notice?.detail = "\(WheelKeyMap.symbol(key)) for actions: AirDrop, Copy…"
+        }
+        return menu
+    }
+
+    /// The keycaps above the wheel, in this wheel's look; below it when the
+    /// fan opens upwards or the top of the screen is too close.
+    private func configureKeyGuide(look: WheelStyle, center: CGPoint, screen: CGRect?) {
+        guard settings.value(SettingsKeys.keyGuide) else {
+            keyGuide.isHidden = true
+            return
+        }
+        keyGuide.configure(keys: GestureController.keyMap(settings), current: kind, style: look, scale: geometry.scale,
+                           contentsScale: contentsScale)
+        // The wheel as drawn (a hovered button pops a little further: leave room for it).
+        let radius = renderer.map { KeyGuideLayer.reach(of: effects.root, renderer: $0, geometry: geometry) } ?? geometry.outerExtent
+        let room = screen.map { $0.maxY - (center.y + radius) } ?? .infinity
+        let below = state.fanFlipped || room < 48 * geometry.scale
+        let mid = geometry.size / 2
+        keyGuide.place(center: CGPoint(x: mid, y: mid), radius: radius, below: below, canvas: geometry.size)
+    }
+
+    /// For tests: which wheel the key guide lights, or nil when it's hidden.
+    var keyGuideLit: WheelKind? { keyGuide.isHidden ? nil : keyGuide.lit }
+
+    /// Another wheel for the same files, in place: Tools, Actions or Convert.
+    func switchTo(_ newKind: WheelKind) {
+        guard isVisible, !finishing, newKind != kind, let renderer else { return }
+        moreTimer?.cancel()
+        moreTimer = nil
+        loupe.hide()
+        kind = newKind
+        menu = buildMenu(newKind)
+        let layout = WheelLayoutKind(rawValue: rendererKey) ?? .halo
+        let look = Appearance.wheelStyle(settings, layout: layout)
+        let keepCursor = state.cursor
+        state = WheelVisualState()
+        state.cursor = keepCursor
+        if let panel, let visible = (panel.screen ?? NSScreen.main)?.visibleFrame {
+            let center = CGPoint(x: panel.frame.midX, y: panel.frame.midY)
+            state.fanFlipped = geometry.fanNeedsFlip(center: center, visibleFrame: visible, count: menu.fan.count)
+        }
+        renderer.configure(menu: menu, orb: orbContent(clickMode: mode == .click), style: look, geometry: geometry,
+                           contentsScale: contentsScale)
+        renderer.apply(state, animated: false)
+        keyGuide.select(newKind, animated: true)
+        requestThumbnail(size: geometry.orbDiameter * geometry.scale, scale: contentsScale)
+        requestEstimates()
+        if !Motion.reduceMotion { renderer.popIn() }
+        WheelSounds.play(.open, pack: settings.value(SettingsKeys.soundPack))
+        if settings.value(SettingsKeys.haptics) { NSHapticFeedbackManager.defaultPerformer.perform(.levelChange, performanceTime: .now) }
+        // In a drag, the pointer is already somewhere on the new wheel.
+        if mode == .drag, let lastDragPoint { dragPointer(at: lastDragPoint) }
+        Log.wheel.notice("Switched to the \(newKind.rawValue, privacy: .public) wheel")
+        if let host { NSAccessibility.post(element: host, notification: .layoutChanged) }
+    }
+
+    /// Click mode: modifier keys from the wheel's own key window.
+    func modifiersChanged(_ flags: NSEvent.ModifierFlags) {
+        guard isVisible, mode == .click else { return }
+        let down = GestureController.keyMap(settings).kinds(down: GestureController.names(flags))
+        let pressed = down.subtracting(clickKeysDown)
+        clickKeysDown = down
+        if let next = WheelKind.allCases.first(where: pressed.contains) { switchTo(next) }
+    }
+
     /// Mouse up after a drag: hide unless a drop is already animating out.
     func hideUnlessFinishing() {
         guard !finishing else { return }
@@ -147,6 +242,8 @@ final class WheelController {
         isVisible = false
         moreTimer?.cancel()
         loupe.reset()
+        previewTask?.cancel()
+        renderer?.playThumbnail(nil)
         removeOutsideClickMonitor()
         let duration = animated ? 0.12 : 0
         NSAnimationContext.runAnimationGroup({ ctx in
@@ -235,6 +332,7 @@ final class WheelController {
         layerView.layer = CALayer()
         layerView.wantsLayer = true
         layerView.layer?.addSublayer(effects.root)
+        layerView.layer?.addSublayer(keyGuide.layer)
         host.addSubview(glass)
         host.addSubview(layerView)
         panel.contentView = host
@@ -293,8 +391,59 @@ final class WheelController {
         }
     }
 
+    /// Video and audio: what each format and Compress would roughly come to.
+    private func requestMediaEstimates(_ url: URL) {
+        Task { [weak self] in
+            guard let estimate = await MediaSupport.estimate(url) else { return }
+            guard let self, self.isVisible, self.files.urls.first == url else { return }
+            func hinted(_ slot: WheelSlot) -> WheelSlot {
+                var slot = slot
+                switch slot.action {
+                case let .convert(f) where f.isVideo:
+                    if let bytes = estimate.formats[f] { slot.hint = "\(SizeEstimator.describe(bytes)), in seconds" }
+                case let .convert(f):
+                    if let bytes = estimate.formats[f] { slot.hint = SizeEstimator.describe(bytes) }
+                case .compress:
+                    if let bytes = estimate.compress[.balanced] { slot.hint = "\(SizeEstimator.describe(bytes)) at Balanced" }
+                default: break
+                }
+                return slot
+            }
+            self.menu.ring = self.menu.ring.map { $0.map(hinted) }
+            self.menu.fan = self.menu.fan.map(hinted)
+            self.renderer?.updateHints(self.menu)
+        }
+    }
+
+    /// Hovering GIF on a video plays a little preview in the centre.
+    private func updateGIFPreview() {
+        let hoversGIF = menu.slot(for: state.hover)?.action == .convert(.gif)
+        guard hoversGIF, files.urls.count == 1, let url = files.urls.first,
+              SlotProvider.kind(of: DraggedFiles.type(of: url)) == .video else {
+            renderer?.playThumbnail(nil)
+            return
+        }
+        if let previewFrames {
+            renderer?.playThumbnail(previewFrames)
+            return
+        }
+        guard previewTask == nil else { return }
+        let size = geometry.orbDiameter * geometry.scale * contentsScale
+        previewTask = Task { [weak self] in
+            let frames = await MediaSupport.previewFrames(url, count: 16, maxPixel: size)
+            guard let self, self.isVisible, self.files.urls.first == url else { return }
+            self.previewFrames = frames
+            if self.menu.slot(for: self.state.hover)?.action == .convert(.gif) { self.renderer?.playThumbnail(frames) }
+        }
+    }
+
     /// "about 2.9 MB" for each format slot, computed off the main thread.
     private func requestEstimates() {
+        if files.urls.count == 1, let url = files.urls.first,
+           [.video, .audio].contains(SlotProvider.kind(of: DraggedFiles.type(of: url))) {
+            requestMediaEstimates(url)
+            return
+        }
         guard files.urls.count == 1, let url = files.urls.first,
               DraggedFiles.type(of: url).conforms(to: .image) else { return }
         let formats = (menu.ring.compactMap { $0 } + menu.fan).compactMap { slot -> OutputFormat? in
@@ -426,7 +575,10 @@ final class WheelController {
         let changedTarget = next.hover != state.hover
         state = next
         renderer?.apply(state, animated: true)
-        if changedTarget { updateLoupe() }
+        if changedTarget {
+            updateLoupe()
+            updateGIFPreview()
+        }
         if changedTarget, newTarget != .none, settings.value(SettingsKeys.haptics) {
             NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
         }

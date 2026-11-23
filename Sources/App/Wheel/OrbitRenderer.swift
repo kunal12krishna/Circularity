@@ -167,8 +167,8 @@ final class OrbitRenderer: WheelRenderer {
             b.icon.contents = image
             b.icon.bounds = CGRect(x: 0, y: 0, width: CGFloat(image.width) / contentsScale, height: CGFloat(image.height) / contentsScale)
         }
-        b.label.set(look.label(slot.label), font: look.labelFont(12 * s * look.labelScale, look.weight), color: restInk,
-                    kern: look.tracking * 12 * s * look.labelScale, maxWidth: d - 8 * s, minScale: 0.7)
+        b.label.setFitting([look.label(slot.label), look.label(slot.monoLabel)], font: look.labelFont(12 * s * look.labelScale, look.weight),
+                           color: restInk, kern: look.tracking * 12 * s * look.labelScale, maxWidth: d - 8 * s, minScale: 0.7)
         // Column: tint disc 32, gap 5, label (or the label alone with captions off).
         b.tint.isHidden = !look.captions
         b.icon.isHidden = !look.captions
@@ -183,8 +183,9 @@ final class OrbitRenderer: WheelRenderer {
     private func styleButton(_ i: Int, hot: Bool, animated: Bool) {
         guard let slot = menu.ring[i] else { return }
         let b = buttons[i], s = geometry.scale
-        b.label.set(look.label(slot.label), font: look.labelFont(12 * s * look.labelScale, look.weight), color: hot ? hotInk : restInk,
-                    kern: look.tracking * 12 * s * look.labelScale, maxWidth: geometry.buttonDiameter * s - 8 * s, minScale: 0.7)
+        b.label.setFitting([look.label(slot.label), look.label(slot.monoLabel)], font: look.labelFont(12 * s * look.labelScale, look.weight),
+                           color: hot ? hotInk : restInk, kern: look.tracking * 12 * s * look.labelScale,
+                           maxWidth: geometry.buttonDiameter * s - 8 * s, minScale: 0.7)
         let glow = look.glowAmount(halo: false), outline = look.fillStyle == "outline"
         transact(0.14, animated: animated) {
             let rest = look.restFill(slot: slot, index: i) ?? (look.discColor?.copy(alpha: 0.88) ?? palette.button)
@@ -229,7 +230,7 @@ final class OrbitRenderer: WheelRenderer {
 
     private func setPillLabel(_ p: Pill, slot: WheelSlot, hot: Bool) {
         let size = 12 * geometry.scale * look.labelScale
-        let text = slot.category == .tool ? "\(slot.label)…" : slot.label
+        let text = slot.action.opensDialog ? "\(slot.label)…" : slot.label
         p.label.set(look.label(text), font: look.labelFont(size, look.weight), color: hot ? hotInk : restInk, kern: look.tracking * size)
     }
 
@@ -328,6 +329,18 @@ final class OrbitRenderer: WheelRenderer {
         transact(0.15, animated: true) { cards[2].contents = image ?? samplePicture(size: 46 * geometry.scale, scale: contentsScale) }
     }
 
+    /// The GIF preview: frames played in the centre while GIF is hovered; nil stops it.
+    func playThumbnail(_ frames: [CGImage]?) {
+        cards[2].removeAnimation(forKey: "play")
+        guard let frames, frames.count > 1, !Motion.reduceMotion else { return }
+        let play = CAKeyframeAnimation(keyPath: "contents")
+        play.values = frames
+        play.calculationMode = .discrete
+        play.duration = Double(frames.count) / 8
+        play.repeatCount = .infinity
+        cards[2].add(play, forKey: "play")
+    }
+
     // MARK: State
 
     func apply(_ newState: WheelVisualState, animated: Bool) {
@@ -385,10 +398,12 @@ final class OrbitRenderer: WheelRenderer {
             (title, detail) = ("Cancel", "nothing is changed")
         } else if let notice = menu.notice {
             (title, detail) = (notice.big, notice.detail)
+        } else if menu.kind != .convert, newState.hover == .none {
+            (title, detail) = (menu.kind.title, menu.restHint ?? content.detail)
         } else {
             (title, detail) = (content.title, content.detail)
         }
-        orbTitle.set(title, font: look.labelFont(12 * s * look.labelScale, .bold), color: ink, maxWidth: geometry.orbDiameter * s * 0.8, minScale: 0.75)
+        orbTitle.setFitting([title], font: look.labelFont(12 * s * look.labelScale, .bold), color: ink, maxWidth: geometry.orbDiameter * s * 0.8, minScale: 0.75)
         orbDetail.set(detail, font: WheelFont.rounded(11 * s * look.labelScale, .regular), color: palette.secondary,
                       maxWidth: geometry.orbDiameter * s * 0.8, minScale: 0.75)
         transact(0.12, animated: animate) { orbDisc.strokeColor = cancelHot ? .hex(0xD9443A) : palette.buttonBorder }

@@ -73,15 +73,25 @@ final class GestureController {
 
     private var now: TimeInterval { ProcessInfo.processInfo.systemUptime }
 
-    private var triggerFlag: NSEvent.ModifierFlags {
-        switch settings.value(SettingsKeys.triggerKey) {
-        case "option": .option
-        case "control": .control
-        default: .shift
-        }
+    /// Re-read at every press, so Settings changes apply to the next drag.
+    private var keyMap = WheelKeyMap(convert: "shift", tools: "command", actions: "control")
+
+    static func keyMap(_ settings: SettingsStore) -> WheelKeyMap {
+        WheelKeyMap(convert: settings.value(SettingsKeys.triggerKey), tools: settings.value(SettingsKeys.toolsKey),
+                    actions: settings.value(SettingsKeys.actionsKey))
     }
 
-    private var triggerIsDown: Bool { NSEvent.modifierFlags.contains(triggerFlag) }
+    /// Modifier names that are down in `flags`.
+    static func names(_ flags: NSEvent.ModifierFlags) -> Set<String> {
+        var down: Set<String> = []
+        if flags.contains(.shift) { down.insert("shift") }
+        if flags.contains(.option) { down.insert("option") }
+        if flags.contains(.control) { down.insert("control") }
+        if flags.contains(.command) { down.insert("command") }
+        return down
+    }
+
+    private var keysDown: Set<WheelKind> { keyMap.kinds(down: Self.names(NSEvent.modifierFlags)) }
 
     private func handleMouse(_ type: NSEvent.EventType) {
         let location = NSEvent.mouseLocation
@@ -91,7 +101,7 @@ final class GestureController {
             pressChangeCount = NSPasteboard(name: .drag).changeCount
             checkedChangeCount = pressChangeCount
             report = DragReport()
-            send(.mouseDown(location, triggerDown: triggerIsDown, time: now))
+            send(.press(location, keys: keysDown, time: now))
         case .leftMouseDragged:
             report.draggedEvents += 1
             send(.mouseMoved(location, time: now))
@@ -104,6 +114,7 @@ final class GestureController {
     }
 
     private func refreshConfig() {
+        keyMap = Self.keyMap(settings)
         var config = GestureConfig()
         config.triggerMode = TriggerMode(rawValue: settings.value(SettingsKeys.triggerMode)) ?? .tap
         config.triggerDelay = Double(settings.value(SettingsKeys.triggerDelayMs)) / 1000
@@ -142,12 +153,12 @@ final class GestureController {
         send(.mouseMoved(location, time: t))
         if wheel.isVisible { wheel.trackDrag(screenPoint: location) }
         checkPasteboard()
-        send(.triggerChanged(isDown: triggerIsDown, time: t))
+        send(.keysChanged(keysDown, time: t))
         send(.tick(time: t))
     }
 
     private func wheelDismissed() {
-        send(.wheelDismissed(triggerDown: triggerIsDown, time: now))
+        send(.dismissed(keys: keysDown, time: now))
     }
 
     // MARK: Effects
@@ -166,12 +177,14 @@ final class GestureController {
                 Log.gesture.notice("Drag ended: \(self.report.draggedEvents, privacy: .public) global drag events, \(self.report.samples, privacy: .public) samples, wheel \(self.report.opened?.rawValue ?? "not opened", privacy: .public)")
                 onDragReport?(report)
             }
-        case let .showWheel(point, reason):
+        case let .showWheel(point, reason, kind):
             let files = DraggedFiles.read(NSPasteboard(name: .drag))
             report.opened = reason
             report.items = files.count
-            Log.gesture.notice("Opening wheel by \(reason.rawValue, privacy: .public) with \(files.count, privacy: .public) item(s)")
-            wheel.show(files, at: point, mode: .drag)
+            Log.gesture.notice("Opening the \(kind.rawValue, privacy: .public) wheel by \(reason.rawValue, privacy: .public) with \(files.count, privacy: .public) item(s)")
+            wheel.show(files, at: point, mode: .drag, kind: kind)
+        case let .switchWheel(kind):
+            wheel.switchTo(kind)
         case .hideWheel:
             // Mouse up: let a real drop arrive, else choose from the pointer.
             wheel.dragEnded(screenPoint: NSEvent.mouseLocation)

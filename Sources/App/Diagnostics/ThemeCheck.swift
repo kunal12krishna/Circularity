@@ -64,6 +64,8 @@ enum ThemeCheck {
                 try RenderPreviews.renderTheme(store, fanOpen: true, to: render.deletingPathExtension().appendingPathExtension("fan.png"))
             } catch { return "couldn't render: \(error)" }
         }
+        let cuts = RenderPreviews.labelCuts(store)
+        if !cuts.isEmpty { return "words cut to fit (\(layout.rawValue)): \(cuts.joined(separator: ", "))" }
         if Appearance.accentRGB(store).hexString != RGB(hexString: store.value(SettingsKeys.accentHex))?.hexString { return "the accent didn't reach the wheel" }
         return nil
     }

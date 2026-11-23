@@ -30,12 +30,13 @@ The gesture leads: conversion happens mid-drag, at the pointer, wherever the fil
 ## Capabilities and Constraints
 
 - Images: PNG, JPG, HEIC, AVIF, TIFF, GIF, BMP (WebP where macOS can write it); compress (quality or target size), resize, crop, cut out (macOS 14+), combine into one PDF. PDFs: pages to images, text out, compress, resize, crop, combine. Documents: Markdown, HTML, RTF, Word and plain text to PDF and to each other.
-- Not yet: video and audio (planned for a later version). Do not present them as available.
+- Video and audio with AVFoundation only (no FFmpeg): reads what macOS plays; writes MP4, MOV, M4V, GIF, M4A, WAV, AIFF, FLAC. Never claim WebM, MKV, MP3 or OGG output.
 - Native Swift only, no web views in the app. Not sandboxed (it writes next to originals), hardened runtime, ad-hoc signed until a Developer ID release, so the first launch needs Open Anyway / right-click Open.
 - Performance budget is a requirement: idle with no timers or polling, under 25 MB resident and ~0% CPU; the wheel is Core Animation only and everything heavy is created lazily.
 - The Wheel Studio may only offer looks the app really draws (38 appearance settings shared with Settings → Appearance). A Studio wheel must paste into the app intact; `Circularity --check-themes Tests/Fixtures/studio-themes.json` verifies it.
 - The six wheel buttons never move while the wheel is open; motion (breathing, the orbiting ring, the twirl, sparks) is decorative and off with Reduce Motion.
-- Current version: 0.2.0. Free; MIT licence.
+- Three wheels, one key each (⇧ Convert, ⌘ Tools, ⌃ Actions by default), with a key guide above the wheel. Tools: Make it fit (email/WhatsApp/Discord limits), Text from pictures and scans (on-device Vision), searchable PDF, PDF password and pages, trim, speed, compress. Actions: AirDrop, Copy, Zip, Copy path, Stash, Mail, Terminal, Move/Copy to. A result card with Undo, closed by Esc.
+- Current version: 0.4.0. Free; MIT licence.
 
 ## Brand Commitments
 

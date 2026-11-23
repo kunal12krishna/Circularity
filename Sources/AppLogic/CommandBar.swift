@@ -48,6 +48,7 @@ nonisolated enum CommandParser {
     static let formatWords: [String: OutputFormat] = [
         "png": .png, "jpg": .jpg, "jpeg": .jpg, "webp": .webp, "heic": .heic, "avif": .avif, "tif": .tiff, "tiff": .tiff,
         "gif": .gif, "bmp": .bmp, "pdf": .pdf, "txt": .txt, "text": .txt, "html": .html, "docx": .docx,
+        "mp4": .mp4, "mov": .mov, "m4v": .m4v, "m4a": .m4a, "aac": .m4a, "wav": .wav, "aiff": .aiff, "aif": .aiff, "flac": .flac,
     ]
 
     /// Exact intents typed into the bar, best first.
@@ -112,6 +113,10 @@ nonisolated struct HistoryItem: Codable, Equatable, Identifiable, Sendable {
     var bytesOut: Int64
     var label: String      // "HEIC → JPG", "Compress"
     var format: String     // output extension, for the stats breakdown
+    /// Originals that "Move the original to the Trash" sent there: original path → path in the Trash. Undo puts them back.
+    var trashed: [String: String]? = nil
+    /// nil: a conversion. "move" / "copy" / "zip": an Actions-wheel file action (Undo reverses it).
+    var kind: String? = nil
 
     var primaryOutput: URL? { outputs.first.map { URL(fileURLWithPath: $0) } }
     var name: String { primaryOutput?.lastPathComponent ?? "—" }

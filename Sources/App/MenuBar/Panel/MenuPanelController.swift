@@ -112,19 +112,23 @@ final class MenuPanelController {
         resize = nil
         model.dropMode = false
         model.dropTargeted = false
+        let finish: @MainActor () -> Void = { [weak self] in
+            guard panel.isVisible || panel.contentView != nil else { return }
+            panel.orderOut(nil)
+            panel.contentView = nil
+            guard let self, self.panel === panel else { return }
+            self.panel = nil
+            self.hosting = nil // the SwiftUI tree is released on close
+            MemoryFootprint.relieve()
+        }
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = animated ? 0.12 : 0
             panel.animator().alphaValue = 0
-        }, completionHandler: { [weak self] in
-            MainActor.assumeIsolated {
-                panel.orderOut(nil)
-                panel.contentView = nil
-                guard let self, self.panel === panel else { return }
-                self.panel = nil
-                self.hosting = nil // the SwiftUI tree is released on close
-                MemoryFootprint.relieve()
-            }
+        }, completionHandler: {
+            MainActor.assumeIsolated { finish() }
         })
+        // Animations pause while the screen is locked or asleep: close anyway.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { MainActor.assumeIsolated { finish() } }
         onOpenChange?(false)
     }
 

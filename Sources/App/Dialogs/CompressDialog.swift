@@ -11,6 +11,8 @@ struct CompressDialog: View {
     let files: [URL]
     let isPDF: Bool
     let isOffice: Bool
+    /// Video (true) or audio (false); nil for pictures, PDFs and Office files.
+    let media: Bool?
     let accent: Color
     let onRun: (CircularityEngine.Operation, Preset?) -> Void
     let onCancel: () -> Void
@@ -18,11 +20,12 @@ struct CompressDialog: View {
     private let totalBytes: Int64
     private let outputFormat: OutputFormat
 
-    init(files: [URL], isPDF: Bool, isOffice: Bool = false, accent: Color,
+    init(files: [URL], isPDF: Bool, isOffice: Bool = false, media: Bool? = nil, accent: Color,
          onRun: @escaping (CircularityEngine.Operation, Preset?) -> Void, onCancel: @escaping () -> Void) {
         self.files = files
         self.isPDF = isPDF
         self.isOffice = isOffice
+        self.media = media
         self.accent = accent
         self.onRun = onRun
         self.onCancel = onCancel
@@ -40,7 +43,8 @@ struct CompressDialog: View {
     @State private var estimateTask: Task<Void, Never>?
 
     private var subtitle: String {
-        let what = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(isOffice ? "files" : isPDF ? "PDFs" : "images")"
+        let noun = media.map { $0 ? "videos" : "audio files" } ?? (isOffice ? "files" : isPDF ? "PDFs" : "images")
+        let what = files.count == 1 ? files[0].lastPathComponent : "\(files.count) \(noun)"
         return "\(what) · \(Bytes.text(totalBytes))"
     }
     private var targetBytes: Int64? {
@@ -50,9 +54,9 @@ struct CompressDialog: View {
 
     var body: some View {
         DialogFrame(title: "Compress", subtitle: subtitle, accent: accent, primaryTitle: "Compress",
-                    primaryEnabled: isPDF || isOffice || mode == .quality || targetBytes != nil,
-                    addButton: isOffice ? nil : $addButton, onPrimary: run, onCancel: onCancel) {
-            if isOffice { levelOptions(office: true) } else if isPDF { levelOptions(office: false) } else { imageOptions }
+                    primaryEnabled: isPDF || isOffice || media != nil || mode == .quality || targetBytes != nil,
+                    addButton: isOffice || media != nil ? nil : $addButton, onPrimary: run, onCancel: onCancel) {
+            if let media { mediaOptions(video: media) } else if isOffice { levelOptions(office: true) } else if isPDF { levelOptions(office: false) } else { imageOptions }
         }
         .onAppear(perform: refreshEstimate)
         .onDisappear { estimateTask?.cancel() }
@@ -123,6 +127,41 @@ struct CompressDialog: View {
         }
     }
 
+    private func mediaOptions(video: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(PDFCompression.allCases, id: \.self) { option in
+                Button { level = option } label: {
+                    HStack(spacing: 12) {
+                        Text(option.rawValue.uppercased()).font(Halo.mono(13)).frame(width: 96, alignment: .leading)
+                        Text(Self.describeMedia(option, video: video)).font(Halo.rounded(12))
+                            .foregroundStyle(level == option ? Halo.background : Halo.secondary)
+                        Spacer()
+                    }
+                    .foregroundStyle(level == option ? Halo.background : Halo.text)
+                    .padding(.horizontal, 14).frame(height: 44)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(level == option ? accent : Halo.control))
+                    .shadow(color: level == option ? accent.opacity(0.4) : .clear, radius: 8)
+                }
+                .buttonStyle(.plain)
+            }
+            Text(video
+                 ? "Re-encoded as HEVC (H.265), which every Apple device and modern browser plays. HDR stays HDR. If it can't get smaller, the original is kept."
+                 : "Saved as M4A (AAC). If it can't get smaller, the original is kept.")
+                .font(Halo.rounded(11)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    static func describeMedia(_ level: PDFCompression, video: Bool) -> String {
+        switch (level, video) {
+        case (.light, true): "same size, barely visible"
+        case (.balanced, true): "up to 1080p, good for sharing"
+        case (.strong, true): "up to 720p, smallest"
+        case (.light, false): "192 kbps, near the original"
+        case (.balanced, false): "128 kbps, good for sharing"
+        case (.strong, false): "80 kbps, smallest, for voice"
+        }
+    }
+
     static func describe(_ level: PDFCompression) -> String {
         switch level {
         case .light: "barely visible, 200 dpi images"
@@ -146,7 +185,7 @@ struct CompressDialog: View {
     }
 
     private func refreshEstimate() {
-        guard !isPDF, !isOffice, mode == .quality, let url = files.first else { return }
+        guard !isPDF, !isOffice, media == nil, mode == .quality, let url = files.first else { return }
         estimateTask?.cancel()
         let q = quality / 100, format = outputFormat
         let original = Int64((try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
@@ -169,6 +208,10 @@ struct CompressDialog: View {
     private func run() {
         let operation: CircularityEngine.Operation
         let preset: Preset.Action
+        if media != nil {
+            onRun(.compressMedia(level), nil)
+            return
+        }
         if isOffice {
             onRun(.compressOffice(level), nil)
             return

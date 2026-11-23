@@ -30,6 +30,8 @@ protocol WheelRenderer: AnyObject {
     var allowsTilt: Bool { get set }
     func configure(menu: WheelMenu, orb: OrbContent, style: WheelStyle, geometry: WheelGeometry, contentsScale: CGFloat)
     func setThumbnail(_ image: CGImage?)
+    /// A moving preview in the centre (video → GIF); nil stops it.
+    func playThumbnail(_ frames: [CGImage]?)
     /// Same buttons, new detail lines (live size estimates).
     func updateHints(_ menu: WheelMenu)
     func apply(_ state: WheelVisualState, animated: Bool)
@@ -45,8 +47,11 @@ struct OrbText: Equatable {
     var cancelHot: Bool
 
     static func make(menu: WheelMenu, state: WheelVisualState, clickMode: Bool) -> OrbText {
-        let cancel = OrbText(kicker: clickMode ? "CLICK HERE TO" : "DROP HERE TO", big: "Cancel",
-                             detail: "nothing is changed", cancelHot: false)
+        let here = clickMode ? "CLICK HERE TO" : "DROP HERE TO"
+        // At rest: the keys for the other wheels, unless the key guide above shows them.
+        let rest = OrbText(kicker: here, big: "Cancel",
+                           detail: menu.restHint ?? "nothing is changed", cancelHot: false)
+        let cancel = OrbText(kicker: here, big: "Cancel", detail: "nothing is changed", cancelHot: false)
         switch state.hover {
         case let .segment(i):
             if let s = menu.ring[i] { return OrbText(kicker: s.kicker, big: s.big, detail: s.hint, cancelHot: false) }
@@ -65,7 +70,7 @@ struct OrbText: Equatable {
             return OrbText(kicker: more.kicker, big: more.big, detail: more.hint, cancelHot: false)
         }
         if let n = menu.notice { return OrbText(kicker: n.kicker, big: n.big, detail: n.detail, cancelHot: false) }
-        return cancel
+        return rest
     }
 }
 

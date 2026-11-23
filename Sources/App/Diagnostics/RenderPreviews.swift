@@ -250,6 +250,11 @@ enum RenderPreviews {
             ("dialog-resize-image", AnyView(ResizeDialog(files: [photo], isPDF: false, accent: accent, onRun: none, onCancel: {}))),
             ("dialog-resize-pdf", AnyView(ResizeDialog(files: [pdf], isPDF: true, accent: accent, onRun: none, onCancel: {}))),
             ("dialog-crop-image", AnyView(CropDialog(files: [photo], isPDF: false, accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-fit", AnyView(FitDialog(files: [photo, pdf], accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-lock", AnyView(PasswordDialog(files: [pdf], unlock: false, accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-unlock", AnyView(PasswordDialog(files: [pdf], unlock: true, accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-speed", AnyView(SpeedDialog(files: [photo], accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-pages", AnyView(PagesDialog(file: pdf, accent: accent, onRun: none, onCancel: {}))),
         ]
         for (name, view) in views {
             let host = NSHostingView(rootView: view)
@@ -333,10 +338,74 @@ enum RenderPreviews {
             try renderWheel(kind: .ring, types: types, count: types.count, accent: 0xFF8A00, backdrop: 0x1F2228,
                             state: state, to: directory.appendingPathComponent("wheel-ring-\(name)@2x.png"))
         }
+        // Video and audio, and the Tools and Actions wheels (the default Halo look).
+        let wheels: [(String, WheelKind, [UTType], String, WheelVisualState)] = [
+            ("video-rest", .convert, [.mpeg4Movie], "IMG_4410.MOV", WheelVisualState()),
+            ("video-hover-gif", .convert, [.mpeg4Movie], "IMG_4410.MOV", WheelVisualState(hover: .segment(2))),
+            ("video-more-fan", .convert, [.mpeg4Movie], "IMG_4410.MOV", WheelVisualState(hover: .fanChip(0), fanOpen: true)),
+            ("audio-rest", .convert, [.mp3], "Voice memo.mp3", WheelVisualState(hover: .segment(0))),
+            ("tools-photo", .tools, [.heic], "IMG_2041.HEIC", WheelVisualState()),
+            ("tools-video-trim", .tools, [.mpeg4Movie], "IMG_4410.MOV", WheelVisualState(hover: .segment(0))),
+            ("tools-folder", .tools, [.folder], "Invoices", WheelVisualState()),
+            ("convert-folder", .convert, [.folder], "Invoices", WheelVisualState()),
+            ("actions-rest", .actions, [.folder], "Invoices", WheelVisualState()),
+            ("actions-airdrop", .actions, [.heic], "IMG_2041.HEIC", WheelVisualState(hover: .segment(0))),
+            ("actions-more-fan", .actions, [.heic], "IMG_2041.HEIC", WheelVisualState(hover: .fanChip(0), fanOpen: true)),
+        ]
+        // Every layout × every wheel, at rest and with More open, with the key guide.
+        let matrix: [(String, WheelKind, [UTType], String)] = [
+            ("convert-photo", .convert, [.heic], "IMG_2041.HEIC"), ("convert-video", .convert, [.mpeg4Movie], "IMG_4410.MOV"),
+            ("tools-photo", .tools, [.heic], "IMG_2041.HEIC"), ("tools-pdf", .tools, [.pdf], "Report.pdf"),
+            ("tools-video", .tools, [.mpeg4Movie], "IMG_4410.MOV"), ("actions", .actions, [.folder], "Invoices"),
+        ]
+        for layout in [WheelLayoutKind.halo, .ring, .orbit] {
+            for (name, wheel, types, file) in matrix {
+                for (state, stateName) in [(WheelVisualState(), "rest"), (WheelVisualState(hover: .fanChip(0), fanOpen: true), "fan")] {
+                    try renderWheel(kind: layout, types: types, count: 1, accent: layout == .halo ? 0xFF4FA0 : 0xFF8A00,
+                                    backdrop: layout == .orbit ? 0xE9E5DF : 0x0D0F14, state: state, fileName: file, wheel: wheel, guide: true,
+                                    to: directory.appendingPathComponent("matrix-\(layout.rawValue)-\(name)-\(stateName)@2x.png"))
+                }
+            }
+        }
+        // README: the hero animation's frames and the three wheels side by side (Halo, the default look).
+        let readme = directory.appendingPathComponent("readme", isDirectory: true)
+        try FileManager.default.createDirectory(at: readme, withIntermediateDirectories: true)
+        let frames: [(WheelKind, [UTType], String, WheelVisualState)] = [
+            (.convert, [.heic], "IMG_2041.HEIC", WheelVisualState()),
+            (.convert, [.heic], "IMG_2041.HEIC", WheelVisualState(hover: .segment(1))),
+            (.convert, [.heic], "IMG_2041.HEIC", WheelVisualState(hover: .fanChip(2), fanOpen: true)),
+            (.tools, [.heic], "IMG_2041.HEIC", WheelVisualState()),
+            (.tools, [.heic], "IMG_2041.HEIC", WheelVisualState(hover: .segment(1))),
+            (.tools, [.heic], "IMG_2041.HEIC", WheelVisualState(hover: .segment(2))),
+            (.actions, [.heic], "IMG_2041.HEIC", WheelVisualState()),
+            (.actions, [.heic], "IMG_2041.HEIC", WheelVisualState(hover: .segment(0))),
+            (.convert, [.mpeg4Movie], "Holiday.MOV", WheelVisualState(hover: .segment(2))),
+        ]
+        for (i, (wheel, types, file, state)) in frames.enumerated() {
+            try renderWheel(kind: .halo, types: types, count: 1, accent: 0xFF4FA0, backdrop: 0x0D0F14, state: state, fileName: file,
+                            wheel: wheel, guide: true, to: readme.appendingPathComponent(String(format: "hero-%02d.png", i)))
+        }
+        for (wheel, types, file) in [(WheelKind.convert, [UTType.heic], "IMG_2041.HEIC"), (.tools, [.pdf], "Lease.pdf"),
+                                     (.actions, [.folder], "Invoices")] {
+            try renderWheel(kind: .halo, types: types, count: 1, accent: 0xFF4FA0, backdrop: 0x0D0F14, state: WheelVisualState(),
+                            fileName: file, wheel: wheel, guide: true, to: readme.appendingPathComponent("trio-\(wheel.rawValue).png"))
+        }
+        for (layout, accent, backdrop) in [(WheelLayoutKind.ring, UInt32(0xFF8A00), UInt32(0x1F2228)), (.orbit, 0xFF8A00, 0xE9E5DF)] {
+            try renderWheel(kind: layout, types: [.mpeg4Movie], count: 1, accent: accent, backdrop: backdrop, state: WheelVisualState(hover: .segment(2)),
+                            fileName: "Holiday.MOV", wheel: .tools, guide: true, to: readme.appendingPathComponent("layout-\(layout.rawValue).png"))
+        }
+        for (name, wheel, types, file, state) in wheels {
+            for kind in [WheelLayoutKind.halo, .orbit] where kind == .halo || name.hasSuffix("rest") {
+                try renderWheel(kind: kind, types: types, count: 1, accent: kind == .halo ? 0xFF4FA0 : 0xFF8A00,
+                                backdrop: kind == .orbit ? 0xE9E5DF : 0x0D0F14, state: state, fileName: file, wheel: wheel,
+                                to: directory.appendingPathComponent("wheel-\(kind.rawValue)-\(name)@2x.png"))
+            }
+        }
     }
 
     private static func renderWheel(kind: WheelLayoutKind, types: [UTType], count: Int, accent: UInt32, backdrop: UInt32,
                                     state: WheelVisualState, fileName: String = "IMG_2041.HEIC", pop: CGFloat = 1,
+                                    wheel: WheelKind = .convert, guide: Bool = false,
                                     tweak: ((inout WheelStyle) -> Void)? = nil, to url: URL) throws {
         let renderer: WheelRenderer = switch kind {
         case .ring: SectorRenderer(style: .ring)
@@ -344,7 +413,15 @@ enum RenderPreviews {
         case .orbit: OrbitRenderer()
         }
         renderer.allowsTilt = false // render(in:) skips 3D transforms
-        let menu = SlotProvider.menu(for: types, canWrite: { FormatSupport.current.canWrite($0) })
+        var menu: WheelMenu = switch wheel {
+        case .convert: SlotProvider.menu(for: types, canWrite: { FormatSupport.current.canWrite($0) })
+        case .tools: SlotProvider.toolsMenu(for: types)
+        case .actions: SlotProvider.actionsMenu(count: count)
+        }
+        let keys = WheelKeyMap(convert: "shift", tools: "command", actions: "control")
+        menu.kind = wheel
+        menu.restHint = guide ? nil : keys.restHint(for: wheel)
+        if wheel != .actions, menu.notice != nil { menu.notice?.detail = "⌃ for actions: AirDrop, Copy…" }
         let single = count == 1
         let content = OrbContent(fileLine: single ? "\(fileName) · 3.2 MB" : "\(count) images · 8.7 MB",
                                  title: single ? fileName : "\(count) images",
@@ -361,6 +438,19 @@ enum RenderPreviews {
             effects.configure(style: look, geometry: geometry, bounds: CGRect(x: 0, y: 0, width: geometry.size, height: geometry.size), contentsScale: 2)
             renderer.layer.frame = effects.root.bounds
         }
+        // The key guide, drawn as the app draws it.
+        let keyGuide = KeyGuideLayer()
+        if guide {
+            CATransaction.begin(); CATransaction.setDisableActions(true)
+            renderer.apply(WheelVisualState(), animated: false)
+            CATransaction.commit()
+            let drawn = KeyGuideLayer.reach(of: effects?.root ?? renderer.layer, renderer: renderer, geometry: geometry)
+            keyGuide.configure(keys: keys, current: wheel, style: look, scale: geometry.scale, contentsScale: 2)
+            (effects?.root ?? renderer.layer).addSublayer(keyGuide.layer)
+            keyGuide.place(center: CGPoint(x: geometry.size / 2, y: geometry.size / 2), radius: drawn,
+                           below: state.fanFlipped, canvas: geometry.size)
+        }
+        defer { keyGuide.layer.removeFromSuperlayer() }
         var s = state
         if case .segment = s.hover {
             let o = WheelGeometry.offset(radius: geometry.contentRadius(hovered: true), angle: 60)
@@ -420,6 +510,38 @@ extension RenderPreviews {
     /// JPG lit, on `backdrop`), dots included. `--check-themes <file> <dir>`
     /// uses it to put each Wheel Studio export next to the Studio's own picture.
     /// `fanOpen`: the More fan open with its second chip lit, instead of a lit ring button.
+    /// Every wheel (Convert, Tools, Actions on photos, PDFs, video, audio) in
+    /// this theme's look, every button at rest and hovered and the More fan:
+    /// the words that didn't fit and had to be cut. Should always be empty.
+    static func labelCuts(_ settings: SettingsStore) -> [String] {
+        let kind = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .halo
+        let renderer: WheelRenderer = switch kind {
+        case .ring: SectorRenderer(style: .ring)
+        case .halo: SectorRenderer(style: .halo)
+        case .orbit: OrbitRenderer()
+        }
+        renderer.allowsTilt = false
+        let geometry = Appearance.geometry(settings, layout: kind), look = Appearance.wheelStyle(settings, layout: kind)
+        let content = OrbContent(fileLine: "a.heic", title: "a.heic", detail: "1 MB", count: 1, thumbnail: nil, clickMode: false)
+        let all: (OutputFormat) -> Bool = { _ in true }
+        let menus: [WheelMenu] = [
+            SlotProvider.menu(for: [.heic], canWrite: all), SlotProvider.menu(for: [.mpeg4Movie], canWrite: all),
+            SlotProvider.menu(for: [.mp3], canWrite: all), SlotProvider.menu(for: [.pdf], canWrite: all),
+            SlotProvider.toolsMenu(for: [.heic], cutout: true), SlotProvider.toolsMenu(for: [.pdf]),
+            SlotProvider.toolsMenu(for: [.mpeg4Movie]), SlotProvider.actionsMenu(count: 1),
+        ]
+        TextFit.cuts = []
+        CATransaction.begin(); CATransaction.setDisableActions(true)
+        for menu in menus {
+            renderer.configure(menu: menu, orb: content, style: look, geometry: geometry, contentsScale: 1)
+            var states = [WheelVisualState()] + (0..<6).map { WheelVisualState(hover: .segment($0)) }
+            states += menu.fan.indices.map { WheelVisualState(hover: .fanChip($0), fanOpen: true) }
+            for state in states { renderer.apply(state, animated: false) }
+        }
+        CATransaction.commit()
+        return Array(Set(TextFit.cuts.filter { !$0.hasPrefix("a.heic") })).sorted()
+    }
+
     static func renderTheme(_ settings: SettingsStore, backdrop: UInt32 = 0x1F2228, fanOpen: Bool = false, to url: URL) throws {
         let kind = WheelLayoutKind(rawValue: settings.value(SettingsKeys.wheelLayout)) ?? .halo
         let renderer: WheelRenderer = switch kind {
@@ -441,6 +563,16 @@ extension RenderPreviews {
         state.fanOpen = fanOpen
         let o = WheelGeometry.offset(radius: geometry.contentRadius(hovered: true), angle: 60)
         state.cursor = CGPoint(x: o.x + 20, y: o.y + 20)
+        // The key guide in this theme's look, placed as the app places it (measured at rest).
+        CATransaction.begin(); CATransaction.setDisableActions(true)
+        renderer.apply(WheelVisualState(), animated: false)
+        CATransaction.commit()
+        let drawn = KeyGuideLayer.reach(of: effects.root, renderer: renderer, geometry: geometry)
+        let keyGuide = KeyGuideLayer()
+        keyGuide.configure(keys: GestureController.keyMap(settings), current: .convert, style: look, scale: geometry.scale, contentsScale: 2)
+        effects.root.addSublayer(keyGuide.layer)
+        keyGuide.place(center: CGPoint(x: geometry.size / 2, y: geometry.size / 2), radius: drawn, below: false,
+                       canvas: geometry.size)
         CATransaction.begin(); CATransaction.setDisableActions(true)
         renderer.apply(state, animated: false)
         CATransaction.commit()

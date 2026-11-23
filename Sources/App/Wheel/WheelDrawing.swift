@@ -47,9 +47,34 @@ func makeLabel() -> CATextLayer {
     return label
 }
 
+/// Words the wheel had to shorten (for --check-themes: a label should never be cut).
+enum TextFit {
+    static var cuts: [String] = []
+}
+
 extension CATextLayer {
     /// Sets the text. `maxWidth` shrinks the font (down to `minScale`) to fit,
     /// or, with `wraps`, breaks it onto centred lines of that width.
+    /// The first of `candidates` that fits `maxWidth` at `minScale` or larger
+    /// ("Compress", then "SQZ"), so a big Studio label size never cuts a word
+    /// in the middle. If none fits, the text may shrink further (to `floor`)
+    /// before the last one is shortened. An empty candidate means "leave it out".
+    func setFitting(_ candidates: [String], font: NSFont, color: CGColor, kern: CGFloat = 0, maxWidth: CGFloat,
+                    minScale: CGFloat = 0.7, floor: CGFloat = 0.5) {
+        func fits(_ text: String, at scale: CGFloat) -> Bool {
+            guard !text.isEmpty else { return true }
+            let smaller = NSFont(descriptor: font.fontDescriptor, size: font.pointSize * scale) ?? font
+            return CATextLayer.attributed(text, font: smaller, color: color, kern: kern * scale).size().width <= maxWidth
+        }
+        if let pick = candidates.first(where: { fits($0, at: minScale) }) {
+            set(pick, font: font, color: color, kern: kern, maxWidth: maxWidth, minScale: minScale)
+        } else if let pick = candidates.first(where: { fits($0, at: floor) }) {
+            set(pick, font: font, color: color, kern: kern, maxWidth: maxWidth, minScale: floor)
+        } else {
+            set(candidates.last ?? "", font: font, color: color, kern: kern, maxWidth: maxWidth, minScale: floor)
+        }
+    }
+
     func set(_ text: String, font: NSFont, color: CGColor, kern: CGFloat = 0,
              maxWidth: CGFloat? = nil, minScale: CGFloat = 0.75, wraps: Bool = false) {
         var font = font
@@ -64,12 +89,21 @@ extension CATextLayer {
         }
         isWrapped = false
         if let maxWidth, attributed.size().width > maxWidth {
-            let factor = max(minScale, maxWidth / attributed.size().width)
-            font = NSFont(descriptor: font.fontDescriptor, size: font.pointSize * factor) ?? font
+            // Glyph widths don't scale exactly with the size: aim a little under,
+            // and nudge smaller (still within minScale) if rounding leaves it wide.
+            let base = font
+            var factor = max(minScale, maxWidth / attributed.size().width * 0.98)
+            font = NSFont(descriptor: base.fontDescriptor, size: base.pointSize * factor) ?? base
             attributed = CATextLayer.attributed(text, font: font, color: color, kern: kern * factor)
+            while attributed.size().width > maxWidth, factor > minScale {
+                factor = max(minScale, factor * 0.96)
+                font = NSFont(descriptor: base.fontDescriptor, size: base.pointSize * factor) ?? base
+                attributed = CATextLayer.attributed(text, font: font, color: color, kern: kern * factor)
+            }
             // Still too wide at the smallest size: shorten in the middle, so a
             // long file name keeps its start, its extension and the size.
             if attributed.size().width > maxWidth {
+                TextFit.cuts.append("\(text) [w\(Int(maxWidth)) f\(Int(font.pointSize))]")
                 let fitted = CATextLayer.middleTruncated(text, toFit: maxWidth) { candidate in
                     CATextLayer.attributed(candidate, font: font, color: color, kern: kern * factor).size().width
                 }

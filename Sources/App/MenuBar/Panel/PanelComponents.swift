@@ -470,8 +470,8 @@ struct RecentRow: View {
                 HStack(spacing: 2) {
                     rowButton("folder", "Show in Finder") { model.reveal(item) }
                     rowButton("eye", "Quick Look") { model.quickLook(item) }
-                    rowButton("arrow.triangle.2.circlepath", "Convert again as…") { model.convertAgain(item) }
-                    rowButton("arrow.uturn.backward", "Undo: move result to Trash") { model.undo(item) }
+                    if item.kind == nil { rowButton("arrow.triangle.2.circlepath", "Convert again as…") { model.convertAgain(item) } }
+                    rowButton("arrow.uturn.backward", PanelModel.undoHelp(item)) { model.undo(item) }
                 }
             } else {
                 Text(PanelModel.when(item.date)).font(PanelTokens.rounded(11)).foregroundStyle(palette.tertiary)
@@ -487,12 +487,12 @@ struct RecentRow: View {
             Button("Open") { model.open(item) }
             Button("Show in Finder") { model.reveal(item) }
             Button("Quick Look") { model.quickLook(item) }
-            Button("Convert Again As…") { model.convertAgain(item) }
+            if item.kind == nil { Button("Convert Again As…") { model.convertAgain(item) } }
             Divider()
             Button("Copy") { model.copy(item) }
             Button("Copy Path") { model.copyPath(item) }
             Divider()
-            Button("Undo (Move Result to Trash)") { model.undo(item) }
+            Button(PanelModel.undoHelp(item)) { model.undo(item) }
             Button("Remove from History") { model.history.remove(item.id) }
         }
         .accessibilityElement(children: .combine)

@@ -1,4 +1,5 @@
 import AppKit
+import CoreText
 import CircularityEngine
 
 /// `--drag-test` level 1 (PLAN.md §3.9): shows the real wheel panel and calls
@@ -291,7 +292,54 @@ enum DragTest {
            let png = rep.representation(using: .png, properties: [:]) {
             try? png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("shelf-message.png"))
         }
+        check(shelf.holdsEscape, "the result card holds Esc while it's on screen")
         shelf.hide()
+        check(!shelf.holdsEscape && !HotkeyCenter.shared.isRegistered(id: 40), "…and lets go of Esc the moment it goes")
+
+        // The result card for a real result: savings, Undo, snapshot.
+        let smaller = file.deletingLastPathComponent().appendingPathComponent("IMG_2041 card.heic")
+        try? FileManager.default.copyItem(at: file, to: smaller)
+        shelf.show([smaller], accent: .systemPink, bytesIn: Int64((try? smaller.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) * 3,
+                   undoable: true)
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        check(shelf.isShowing && shelf.holdsEscape, "a result shows on the card, Esc ready")
+        if let dir = ProcessInfo.processInfo.environment["CIRCULARITY_SHELF_PNG"], let rep = shelf.snapshot(),
+           let png = rep.representation(using: .png, properties: [:]) {
+            try? png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("shelf-result.png"))
+        }
+        shelf.hide()
+
+        // The Stash collects across actions and doesn't hold Esc until the pointer is on it.
+        let performer = FileActionPerformer(shelf: shelf, accent: { .systemPink })
+        performer.perform(.stash, files: [file])
+        performer.perform(.stash, files: [smaller, file])
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        check(performer.stash.stashed.map(\.lastPathComponent) == ["IMG_2041.heic", "IMG_2041 card.heic"],
+              "the Stash collects, once each (\(performer.stash.stashed.map(\.lastPathComponent)))")
+        check(!performer.stash.holdsEscape, "the Stash leaves Esc alone until the pointer is on it")
+        if let dir = ProcessInfo.processInfo.environment["CIRCULARITY_SHELF_PNG"], let rep = performer.stash.snapshot(),
+           let png = rep.representation(using: .png, properties: [:]) {
+            try? png.write(to: URL(fileURLWithPath: dir).appendingPathComponent("shelf-stash.png"))
+        }
+        performer.stash.hide()
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        check(performer.stash.stashed.isEmpty, "a closed Stash is empty next time")
+
+        // Zip, for real (macOS's ditto): one item and several.
+        let zipOne = file.deletingLastPathComponent().appendingPathComponent("one.zip")
+        let zipMany = file.deletingLastPathComponent().appendingPathComponent("many.zip")
+        let zipped = (try? FileActionPerformer.makeZip([file], to: zipOne)) != nil
+            && (try? FileActionPerformer.makeZip([file, smaller], to: zipMany)) != nil
+        let listing = { (url: URL) -> String in
+            let p = Process(); p.executableURL = URL(fileURLWithPath: "/usr/bin/zipinfo"); p.arguments = ["-1", url.path]
+            let out = Pipe(); p.standardOutput = out; try? p.run(); p.waitUntilExit()
+            return String(data: out.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) ?? ""
+        }
+        check(zipped && listing(zipOne).split(separator: "\n") == ["IMG_2041.heic"]
+              && Set(listing(zipMany).split(separator: "\n")) == ["IMG_2041.heic", "IMG_2041 card.heic"],
+              "Zip: one file, and several side by side at the root")
+        check(FileActionPerformer.zipName([file]) == "IMG_2041.heic.zip" && FileActionPerformer.zipName([file, smaller]) == "Archive.zip",
+              "Zip names follow Finder")
 
         let presenter = WindowPresenter()
         let settingsModel = SettingsModel(store: settings)
@@ -397,10 +445,98 @@ enum DragTest {
         try? await Task.sleep(nanoseconds: 300_000_000)
         check(finished?.action == .convert(.jpg), "click mode: clicking JPG chooses JPG (got \(finished?.label ?? "nothing"))")
 
+        // Text from a picture, through JobCenter exactly as the Text button runs it.
+        do {
+            let sign = file.deletingLastPathComponent().appendingPathComponent("Sign.png")
+            let ctx = CGContext(data: nil, width: 2400, height: 900, bitsPerComponent: 8, bytesPerRow: 0,
+                                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+            ctx.setFillColor(.white); ctx.fill(CGRect(x: 0, y: 0, width: 2400, height: 900))
+            let line = CTLineCreateWithAttributedString(NSAttributedString(string: "Meeting moved to Thursday 4 pm",
+                attributes: [.font: NSFont.boldSystemFont(ofSize: 110), .foregroundColor: NSColor.black]))
+            ctx.textPosition = CGPoint(x: 80, y: 400); CTLineDraw(line, ctx)
+            if let image = ctx.makeImage(), let png = NSBitmapImageRep(cgImage: image).representation(using: .png, properties: [:]) {
+                try? png.write(to: sign)
+            }
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("Circularity-Text-test-\(UUID().uuidString)", isDirectory: true)
+            try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+            var policy = OutputPolicy(destination: .folder(folder))
+            policy.fallbackFolder = folder
+            var text: String?
+            var failed: String?
+            let textJobs = JobCenter(settings: settings, history: HistoryStore(file: "dragtest-history.json"), stats: StatsStore(file: "dragtest-stats.json"))
+            let started = Date()
+            textJobs.run(.recognizeText, files: [sign], label: "copyText", policy: policy, interactive: false, record: false) { result in
+                switch result {
+                case let .success(r): text = r.outputs.first.flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
+                case let .failure(e): failed = e.localizedDescription
+                }
+            }
+            for _ in 0..<300 where text == nil && failed == nil { try? await Task.sleep(nanoseconds: 100_000_000) }
+            check(text?.contains("Thursday") == true,
+                  String(format: "Text: read in %.1f s (%@)", Date().timeIntervalSince(started), text ?? failed ?? "timed out after 30 s"))
+            // Cancel must stop it at once, even mid-recognition.
+            text = nil; failed = nil
+            textJobs.run(.recognizeText, files: [sign], label: "copyText", policy: policy, interactive: false, record: false) { result in
+                if case let .failure(e) = result { failed = "\(type(of: e))" } else { text = "finished" }
+            }
+            try? await Task.sleep(nanoseconds: 30_000_000)
+            textJobs.cancelAll()
+            for _ in 0..<50 where text == nil && failed == nil { try? await Task.sleep(nanoseconds: 100_000_000) }
+            check(failed == "CancellationError" || text == "finished", "Text: Cancel stops it (\(failed ?? text ?? "still running after 5 s"))")
+            check(textJobs.active.isEmpty, "Text: nothing left running after Cancel")
+            try? FileManager.default.removeItem(at: folder)
+        }
+
+        // 7. Three wheels: open Tools, switch to Actions mid-drag, drop on Copy path.
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        finished = nil
+        wheel.show(DraggedFiles(urls: [file]), at: center, mode: .drag, kind: .tools)
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        check(wheel.kind == .tools, "the Tools key opens the Tools wheel")
+        check(wheel.keyGuideLit == .tools, "the key guide lights Tools")
+        wheel.dragPointer(at: segment(1))
+        wheel.switchTo(.actions)
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        check(wheel.kind == .actions && wheel.isVisible, "another wheel's key switches in place")
+        check(wheel.keyGuideLit == .actions, "the key guide above the wheel lights Actions (\(String(describing: wheel.keyGuideLit)))")
+        _ = wheel.performDrop(info, at: segment(4))
+        check(finished?.action == .file(.copyPath), "Actions: drop on Path chooses Copy path (got \(finished?.label ?? "nothing"))")
+        check(FileActionPerformer.paths([file, folderOf(file)]) == "\(file.path)\n\(folderOf(file).path)", "Copy path: one full path per line")
+        check(FileActionPerformer.folders([file, folderOf(file)]) == [folderOf(file).standardizedFileURL],
+              "Terminal opens the file's folder once, even with the folder too")
+        let taken: Set<String> = [folderOf(file).appendingPathComponent("IMG_2041.heic").path, folderOf(file).appendingPathComponent("IMG_2041 2.heic").path]
+        check(FileActionPerformer.freeDestination(for: file, in: folderOf(file), exists: taken.contains).lastPathComponent == "IMG_2041 3.heic",
+              "Move/Copy to a folder never overwrites (IMG_2041 3.heic)")
+        try? await Task.sleep(nanoseconds: 400_000_000)
+
+        // Click mode: a wheel key switches too.
+        finished = nil
+        wheel.show(DraggedFiles(urls: [file]), at: center, mode: .click)
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        wheel.modifiersChanged(.control)
+        check(wheel.kind == .actions, "click mode: ⌃ switches to Actions")
+        wheel.modifiersChanged([])
+        wheel.modifiersChanged(.command)
+        check(wheel.kind == .tools, "click mode: ⌘ switches to Tools")
+        wheel.cancelFromKeyboard()
+        try? await Task.sleep(nanoseconds: 400_000_000)
+
+        // A folder: Convert says what to do; Actions works.
+        let folder = file.deletingLastPathComponent()
+        wheel.show(DraggedFiles(urls: [folder]), at: center, mode: .drag)
+        try? await Task.sleep(nanoseconds: 300_000_000)
+        wheel.switchTo(.actions)
+        finished = nil
+        _ = wheel.performDrop(SimulatedDrag(file: folder), at: segment(0))
+        check(finished?.action == .file(.airDrop) && finished?.files == [folder], "a folder can be AirDropped from the Actions wheel")
+        try? await Task.sleep(nanoseconds: 400_000_000)
+
         try? FileManager.default.removeItem(at: file.deletingLastPathComponent())
         defaults.removePersistentDomain(forName: "\(AppIdentity.bundleID).dragtest")
         return failures == 0
     }
+
+    private static func folderOf(_ url: URL) -> URL { url.deletingLastPathComponent() }
 
     private static func writeSampleHEIC() -> URL? {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("\(AppIdentity.name)-DragTest-\(UUID().uuidString)")

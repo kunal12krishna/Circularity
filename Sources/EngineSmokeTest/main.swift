@@ -1,4 +1,5 @@
 import AppKit
+import AVFoundation
 import CircularityEngine
 import CoreText
 import Foundation
@@ -121,6 +122,117 @@ func peakRSSMB() -> Double {
     var usage = rusage()
     getrusage(RUSAGE_SELF, &usage)
     return Double(usage.ru_maxrss) / 1_048_576
+}
+
+// MARK: Media fixtures (AVFoundation only: a picture track, a tone, then one file)
+
+/// A moving pattern with grain (so compression has something to do), H.264, no sound.
+func writeSilentVideo(_ url: URL, size: CGSize, seconds: Double, fps: Int32 = 30, transform: CGAffineTransform = .identity) async throws {
+    let writer = try AVAssetWriter(outputURL: url, fileType: .mov)
+    let input = AVAssetWriterInput(mediaType: .video, outputSettings: [
+        AVVideoCodecKey: AVVideoCodecType.h264, AVVideoWidthKey: Int(size.width), AVVideoHeightKey: Int(size.height),
+        AVVideoCompressionPropertiesKey: [AVVideoAverageBitRateKey: Int(size.width * size.height * 6)],
+    ])
+    input.transform = transform
+    input.expectsMediaDataInRealTime = false
+    let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: input, sourcePixelBufferAttributes: [
+        kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+        kCVPixelBufferWidthKey as String: Int(size.width), kCVPixelBufferHeightKey as String: Int(size.height),
+    ])
+    writer.add(input)
+    writer.startWriting()
+    writer.startSession(atSourceTime: .zero)
+    let frames = Int(seconds * Double(fps))
+    var state: UInt64 = 3
+    for f in 0..<frames {
+        while !input.isReadyForMoreMediaData { try await Task.sleep(nanoseconds: 2_000_000) }
+        var buffer: CVPixelBuffer?
+        CVPixelBufferPoolCreatePixelBuffer(nil, adaptor.pixelBufferPool!, &buffer)
+        guard let buffer else { throw JobError.encodeFailed("fixture frame") }
+        CVPixelBufferLockBaseAddress(buffer, [])
+        let w = Int(size.width), h = Int(size.height), row = CVPixelBufferGetBytesPerRow(buffer)
+        let base = CVPixelBufferGetBaseAddress(buffer)!.assumingMemoryBound(to: UInt8.self)
+        for y in 0..<h {
+            for x in 0..<w {
+                state = state &* 6364136223846793005 &+ 1442695040888963407
+                let grain = UInt8(truncatingIfNeeded: state >> 58)
+                let p = base + y * row + x * 4
+                p[0] = UInt8(truncatingIfNeeded: x * 255 / w) &+ grain
+                p[1] = UInt8(truncatingIfNeeded: (y + f * 8) % 256) &+ grain
+                p[2] = UInt8(truncatingIfNeeded: (x + f * 12) % 256)
+                p[3] = 255
+            }
+        }
+        CVPixelBufferUnlockBaseAddress(buffer, [])
+        adaptor.append(buffer, withPresentationTime: CMTime(value: CMTimeValue(f), timescale: fps))
+    }
+    input.markAsFinished()
+    await writer.finishWriting()
+    guard writer.status == .completed else { throw writer.error ?? JobError.encodeFailed("fixture video") }
+}
+
+/// A 440 Hz tone as 16-bit WAV.
+func writeTone(_ url: URL, seconds: Double, rate: Double = 44_100, channels: AVAudioChannelCount = 2) throws {
+    let settings: [String: Any] = [AVFormatIDKey: kAudioFormatLinearPCM, AVSampleRateKey: rate, AVNumberOfChannelsKey: channels,
+                                   AVLinearPCMBitDepthKey: 16, AVLinearPCMIsFloatKey: false, AVLinearPCMIsBigEndianKey: false]
+    let file = try AVAudioFile(forWriting: url, settings: settings, commonFormat: .pcmFormatFloat32, interleaved: false)
+    let frames = AVAudioFrameCount(seconds * rate)
+    let buffer = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: frames)!
+    buffer.frameLength = frames
+    for c in 0..<Int(channels) {
+        for i in 0..<Int(frames) { buffer.floatChannelData![c][i] = 0.3 * sinf(Float(i) * 2 * .pi * 440 / Float(rate)) }
+    }
+    try file.write(from: buffer)
+}
+
+/// Picture + tone in one file: `.mp4` with H.264 and AAC (as a phone or browser makes them).
+func makeClip(_ url: URL, size: CGSize, seconds: Double, transform: CGAffineTransform = .identity, in dir: URL) async throws {
+    let silent = dir.appendingPathComponent(UUID().uuidString + ".mov")
+    let tone = dir.appendingPathComponent(UUID().uuidString + ".wav")
+    try await writeSilentVideo(silent, size: size, seconds: seconds, transform: transform)
+    try writeTone(tone, seconds: seconds)
+    let composition = AVMutableComposition()
+    let video = AVURLAsset(url: silent), audio = AVURLAsset(url: tone)
+    let vt = try await video.loadTracks(withMediaType: .video)[0], at = try await audio.loadTracks(withMediaType: .audio)[0]
+    let range = CMTimeRange(start: .zero, duration: try await video.load(.duration))
+    let cv = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)!
+    try cv.insertTimeRange(range, of: vt, at: .zero)
+    cv.preferredTransform = transform
+    try composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)!
+        .insertTimeRange(CMTimeRange(start: .zero, duration: min(range.duration, try await audio.load(.duration))), of: at, at: .zero)
+    let session = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality)!
+    session.outputURL = url
+    session.outputFileType = url.pathExtension == "mov" ? .mov : .mp4
+    await session.export()
+    guard session.status == .completed else { throw session.error ?? JobError.encodeFailed("fixture clip") }
+}
+
+struct MediaInfo {
+    var duration: Double
+    var video: Int
+    var audio: Int
+    var codec: FourCharCode?
+    var size: CGSize?
+}
+
+func mediaInfo(_ url: URL) async -> MediaInfo? {
+    let asset = AVURLAsset(url: url)
+    guard let duration = try? await asset.load(.duration).seconds,
+          let v = try? await asset.loadTracks(withMediaType: .video), let a = try? await asset.loadTracks(withMediaType: .audio) else { return nil }
+    var info = MediaInfo(duration: duration, video: v.count, audio: a.count)
+    if let first = v.first, let (natural, transform, descs) = try? await first.load(.naturalSize, .preferredTransform, .formatDescriptions) {
+        let r = CGRect(origin: .zero, size: natural).applying(transform)
+        info.size = CGSize(width: abs(r.width).rounded(), height: abs(r.height).rounded())
+        info.codec = descs.first.map(CMFormatDescriptionGetMediaSubType)
+    } else if let first = a.first, let descs = try? await first.load(.formatDescriptions) {
+        info.codec = descs.first.map(CMFormatDescriptionGetMediaSubType)
+    }
+    return info
+}
+
+func gifFrames(_ url: URL) -> (count: Int, size: CGSize?) {
+    guard let source = CGImageSourceCreateWithURL(url as CFURL, nil) else { return (0, nil) }
+    return (CGImageSourceGetCount(source), pixelSize(url))
 }
 
 // MARK: Run
@@ -624,7 +736,251 @@ func runAll() async {
         }
     }
 
-    // 11. Large files (performance report)
+    // 11. Video and audio (AVFoundation; no FFmpeg)
+    do {
+        let clip = root.appendingPathComponent("clip.mp4")
+        let portrait = root.appendingPathComponent("portrait.mp4")
+        let big = root.appendingPathComponent("big.mov")
+        let tone = root.appendingPathComponent("tone.wav")
+        let tone2 = root.appendingPathComponent("tone two.wav")
+        try await makeClip(clip, size: CGSize(width: 640, height: 360), seconds: 3, in: root)
+        // Recorded sideways, shown upright (as a phone films in portrait).
+        try await makeClip(portrait, size: CGSize(width: 480, height: 272), seconds: 2,
+                           transform: CGAffineTransform(a: 0, b: 1, c: -1, d: 0, tx: 272, ty: 0), in: root)
+        try await writeSilentVideo(big, size: CGSize(width: 1920, height: 1080), seconds: 2)
+        try writeTone(tone, seconds: 4)
+        try writeTone(tone2, seconds: 2, rate: 48_000, channels: 1)
+        let base = await mediaInfo(clip)
+        check(base?.video == 1 && base?.audio == 1, "fixture clip has picture and sound")
+
+        func near(_ a: Double?, _ b: Double, _ tolerance: Double = 0.15) -> Bool { a.map { abs($0 - b) <= tolerance } ?? false }
+        for format in [OutputFormat.mov, .m4v] {
+            let out = output(await run([clip], .convert(format)))
+            let info = await out.asyncMap(mediaInfo)
+            check(out?.pathExtension == format.fileExtension && info?.video == 1 && info?.audio == 1 && near(info?.duration, 3),
+                  "MP4 → \(format.displayName): picture, sound, 3 s (\(info.map { String(format: "%.2f s", $0.duration) } ?? "-"))")
+        }
+        let toMP4 = output(await run([big], .convert(.mp4)))
+        check(await toMP4.asyncMap(mediaInfo)?.size == CGSize(width: 1920, height: 1080), "MOV → MP4 keeps 1920 × 1080")
+
+        for format in OutputFormat.audioFormats {
+            guard support.canWrite(format) else { print("SKIP  video → \(format.displayName): no encoder on this Mac"); continue }
+            let out = output(await run([clip], .convert(format)))
+            let info = await out.asyncMap(mediaInfo)
+            check(info?.video == 0 && info?.audio == 1 && near(info?.duration, 3, 0.1),
+                  "video → \(format.displayName): just the sound, 3 s")
+        }
+        let gif = output(await run([clip], .convert(.gif)))
+        let frames = gif.map(gifFrames)
+        check((frames?.count ?? 0) >= 30 && frames?.size.map { max($0.width, $0.height) <= 480 } == true,
+              "video → GIF: \(frames?.count ?? 0) frames, \(frames?.size.map { "\(Int($0.width)) × \(Int($0.height))" } ?? "-")")
+        let uprightGIF = output(await run([portrait], .convert(.gif))).flatMap(pixelSize)
+        check(uprightGIF.map { $0.height > $0.width } == true, "a portrait video makes an upright GIF")
+
+        let trimmed = output(await run([clip], .trimMedia(start: 0.5, end: 2)))
+        let trimmedInfo = await trimmed.asyncMap(mediaInfo)
+        check(trimmed?.lastPathComponent == "clip (trimmed).mp4" && near(trimmedInfo?.duration, 1.5, 0.2) && trimmedInfo?.audio == 1,
+              "trim keeps 0.5–2 s with sound: \(trimmed?.lastPathComponent ?? "-") \(trimmedInfo.map { String(format: "%.2f s", $0.duration) } ?? "-")")
+
+        let muted = output(await run([clip], .removeAudio))
+        let mutedInfo = await muted.asyncMap(mediaInfo)
+        check(mutedInfo?.video == 1 && mutedInfo?.audio == 0 && muted?.lastPathComponent == "clip (no sound).mp4",
+              "mute: picture only (\(muted?.lastPathComponent ?? "-"))")
+        switch await run([big], .removeAudio) {
+        case .success: check(false, "mute on a silent video should say there's no sound")
+        case let .failure(error): check(error.localizedDescription.contains("no sound"), "mute on a silent video: \(error.localizedDescription)")
+        }
+
+        for level in PDFCompression.allCases {
+            let start = Date()
+            let r = try? await run([big], .compressMedia(level)).get()
+            let info = await r?.outputs.first.asyncMap(mediaInfo)
+            let expected: CGFloat = level == .light ? 1080 : level == .balanced ? 1080 : 720
+            check(info?.codec == kCMVideoCodecType_HEVC && info?.size?.height == expected && (r?.bytesOut ?? .max) < (r?.bytesIn ?? 0),
+                  String(format: "compress video %@: HEVC, %@ high, %@ → %@ in %.1f s", level.rawValue,
+                         info?.size.map { "\(Int($0.height))" } ?? "-", Bytes(r?.bytesIn), Bytes(r?.bytesOut), Date().timeIntervalSince(start)))
+        }
+        let shrunkClip = try? await run([clip], .compressMedia(.balanced)).get()
+        let shrunkInfo = await shrunkClip?.outputs.first.asyncMap(mediaInfo)
+        check(shrunkClip?.outputs.isEmpty == true || (shrunkInfo?.audio == 1 && near(shrunkInfo?.duration, 3, 0.2)),
+              "compressing a clip keeps its sound and length (or keeps the original: \(shrunkClip?.notes.first ?? "written"))")
+
+        let joined = output(await run([clip, clip], .combineMedia))
+        let joinedInfo = await joined.asyncMap(mediaInfo)
+        check(near(joinedInfo?.duration, 6, 0.2) && joinedInfo?.audio == 1, "join two clips: 6 s with sound")
+        let mixed = output(await run([clip, portrait], .combineMedia))
+        let mixedInfo = await mixed.asyncMap(mediaInfo)
+        check(near(mixedInfo?.duration, 5, 0.25) && mixedInfo?.size == CGSize(width: 640, height: 360),
+              "join landscape + portrait: 5 s in the first clip's 640 × 360 frame (\(mixedInfo?.size.map { "\($0)" } ?? "-"))")
+
+        // Audio
+        for format in [OutputFormat.m4a, .aiff, .flac] {
+            guard support.canWrite(format) else { print("SKIP  WAV → \(format.displayName): no encoder on this Mac"); continue }
+            let out = output(await run([tone], .convert(format)))
+            let info = await out.asyncMap(mediaInfo)
+            check(info?.audio == 1 && near(info?.duration, 4, 0.1), "WAV → \(format.displayName): 4 s")
+        }
+        let toneTrim = output(await run([tone], .trimMedia(start: 1, end: 2.5)))
+        check(near(await toneTrim.asyncMap(mediaInfo)?.duration, 1.5, 0.05) && toneTrim?.pathExtension == "wav",
+              "trim WAV 1–2.5 s stays WAV")
+        let toneSmall = try? await run([tone], .compressMedia(.balanced)).get()
+        check(toneSmall?.outputs.first?.pathExtension == "m4a" && (toneSmall?.bytesOut ?? .max) < (toneSmall?.bytesIn ?? 0),
+              "compress WAV → smaller M4A (\(Bytes(toneSmall?.bytesIn)) → \(Bytes(toneSmall?.bytesOut)))")
+        let joinedAudio = output(await run([tone, tone2], .combineMedia))
+        let joinedAudioInfo = await joinedAudio.asyncMap(mediaInfo)
+        check(joinedAudio?.pathExtension == "wav" && near(joinedAudioInfo?.duration, 6, 0.1),
+              "join WAVs of different rates and channels: 6 s WAV")
+        let fromM4A = output(await run([output(await run([tone], .convert(.m4a)))!], .convert(.wav)))
+        check(near(await fromM4A.asyncMap(mediaInfo)?.duration, 4, 0.1), "M4A → WAV round trip: 4 s")
+
+        // Cancelling a long job leaves nothing behind
+        let before = Set((try? fm.contentsOfDirectory(atPath: root.path)) ?? [])
+        let task = Task { await run([big], .compressMedia(.light)) }
+        try? await Task.sleep(nanoseconds: 150_000_000)
+        task.cancel()
+        let cancelled = await task.value
+        let after = Set((try? fm.contentsOfDirectory(atPath: root.path)) ?? [])
+        check({ if case let .failure(e) = cancelled { return e is CancellationError }; return false }() && after == before,
+              "cancelling a video compress writes nothing")
+    } catch {
+        check(false, "media fixtures: \(error.localizedDescription)")
+    }
+
+    // SMOKE_MEDIA_EXTRA=<folder>: your own videos and songs through convert, compress and GIF (kept with SMOKE_KEEP).
+    if let extra = ProcessInfo.processInfo.environment["SMOKE_MEDIA_EXTRA"],
+       let names = try? fm.contentsOfDirectory(atPath: extra) {
+        for name in names.sorted() where !name.hasPrefix(".") {
+            let copy = root.appendingPathComponent(name)
+            try? fm.copyItem(at: URL(fileURLWithPath: extra).appendingPathComponent(name), to: copy)
+            let type = UTType(filenameExtension: copy.pathExtension) ?? .data
+            guard MediaSupport.canRead(type) else { print("EXTRA \(name): macOS can't read this (\(type.identifier))"); continue }
+            let isVideo = await mediaInfo(copy).map { $0.video > 0 } ?? false
+            let half = max(fileSize(copy) / 2, 50_000)
+            let ops: [(String, CircularityEngine.Operation)] = isVideo
+                ? [("fit half", .fitTo(bytes: half, together: false)), ("2x", .changeSpeed(2)),
+                   ("MP4", .convert(.mp4)), ("MOV", .convert(.mov)), ("M4A", .convert(.m4a)), ("GIF", .convert(.gif)),
+                   ("compress", .compressMedia(.balanced)), ("trim", .trimMedia(start: 0.2, end: 1.2)), ("mute", .removeAudio)]
+                : [("M4A", .convert(.m4a)), ("WAV", .convert(.wav)), ("FLAC", .convert(.flac)), ("compress", .compressMedia(.balanced)),
+                   ("trim", .trimMedia(start: 0.2, end: 1.2))]
+            for (label, op) in ops {
+                let started = Date()
+                let result = await run([copy], op)
+                switch result {
+                case let .success(r):
+                    let info = await r.outputs.first.asyncMap(mediaInfo)
+                    r.outputs.forEach { keep($0) }
+                    let codec = info?.codec.map { c in String((0..<4).map { Character(UnicodeScalar(UInt8((c >> (24 - $0 * 8)) & 0xFF))) }) } ?? "-"
+                    print("EXTRA \(name) \(label): \(r.outputs.first?.lastPathComponent ?? (r.notes.first ?? "nothing")) \(Bytes(r.bytesIn)) → \(Bytes(r.bytesOut)), \(codec), \(info.map { String(format: "%.2f s", $0.duration) } ?? "-"), \(info?.size.map { "\(Int($0.width))×\(Int($0.height))" } ?? "") in \(String(format: "%.1f", Date().timeIntervalSince(started))) s")
+                case let .failure(error):
+                    print("EXTRA \(name) \(label): FAILED \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    // 12a. Make it fit, Text, Searchable, Password, Pages, Speed
+    do {
+        // A picture with words on it, as a phone photo of a sign would be.
+        let words = root.appendingPathComponent("sign.png")
+        let ctx = CGContext(data: nil, width: 1400, height: 500, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.setFillColor(CGColor(srgbRed: 1, green: 1, blue: 1, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: 1400, height: 500))
+        let font = CTFontCreateWithName("Helvetica-Bold" as CFString, 72, nil)
+        for (i, text) in ["Circularity reads text", "Invoice 4821 due Friday"].enumerated() {
+            let line = CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: [.font: font, .foregroundColor: NSColor.black]))
+            ctx.textPosition = CGPoint(x: 60, y: 320 - CGFloat(i) * 150); CTLineDraw(line, ctx)
+        }
+        writeImage(ctx.makeImage()!, .png, to: words)
+        let txt = output(await run([words], .recognizeText))
+        let read = txt.flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
+        check(read.contains("Circularity reads text") && read.contains("4821"), "Text: reads the words in a picture (\(read.replacingOccurrences(of: "\n", with: " / ")))")
+
+        // A scanned PDF: the picture as a page, no text layer.
+        let scan = root.appendingPathComponent("scan.pdf")
+        _ = await run([words], .convert(.pdf))
+        try? fm.moveItem(at: root.appendingPathComponent("sign.pdf"), to: scan)
+        check(PDFDocument(url: scan)?.string?.isEmpty != false, "the scan starts with no text to find")
+        let searchable = output(await run([scan], .searchablePDF))
+        let found = searchable.flatMap { PDFDocument(url: $0)?.string } ?? ""
+        check(found.contains("Invoice 4821") && searchable?.lastPathComponent == "scan (searchable).pdf",
+              "Searchable PDF: the scan's words can be found (\(found.prefix(40)))")
+        let scanText = (try? String(contentsOf: output(await run([scan], .recognizeText))!, encoding: .utf8)) ?? ""
+        check(scanText.contains("Circularity"), "Text from a scanned PDF")
+
+        // Password
+        let doc = root.appendingPathComponent("private.pdf")
+        makePDF(doc, pages: 3)
+        let locked = output(await run([doc], .protectPDF(password: "s3cret")))
+        check(locked.flatMap { PDFDocument(url: $0) }.map { $0.isLocked && $0.unlock(withPassword: "s3cret") } == true,
+              "Lock: the copy asks for the password, and it opens with it (\(locked?.lastPathComponent ?? "-"))")
+        if let locked {
+            switch await run([locked], .unlockPDF(password: "wrong")) {
+            case .success: check(false, "a wrong password should not unlock")
+            case let .failure(e): check(e.localizedDescription == "That password doesn't open private (locked).pdf.", "wrong password: \(e.localizedDescription)")
+            }
+            let unlocked = output(await run([locked], .unlockPDF(password: "s3cret")))
+            check(unlocked.flatMap { PDFDocument(url: $0) }.map { !$0.isEncrypted && $0.pageCount == 3 } == true, "Unlock: no password, all 3 pages")
+            switch await run([locked], .compressPDF(.balanced)) {
+            case .success: check(true, "compressing a locked PDF doesn't crash")
+            case let .failure(e): check(true, "compressing a locked PDF says why: \(e.localizedDescription)")
+            }
+        }
+
+        // Pages: 3 → [3, 1 turned], page 2 left out
+        let edited = output(await run([doc], .arrangePDF([PageEdit(index: 2), PageEdit(index: 0, rotation: 90)])))
+        let editedDoc = edited.flatMap { PDFDocument(url: $0) }
+        let originalDoc = PDFDocument(url: doc)
+        check(editedDoc?.pageCount == 2 && editedDoc?.page(at: 0)?.string == originalDoc?.page(at: 2)?.string
+              && editedDoc?.page(at: 1)?.rotation == 90 && edited?.lastPathComponent == "private (edited).pdf",
+              "Pages: reordered, turned and one left out")
+
+        // Make it fit
+        let photoFit = try? await run([photo], .fitTo(bytes: 400_000, together: false)).get()
+        check((photoFit?.bytesOut ?? .max) <= 400_000 && photoFit?.outputs.first?.lastPathComponent.contains("(to send)") == true,
+              "Fit: a \(Bytes(photoFit?.bytesIn)) picture under 400 KB (\(Bytes(photoFit?.bytesOut)))")
+        let already = try? await run([words], .fitTo(bytes: 50_000_000, together: false)).get()
+        check(already?.outputs.isEmpty == true && already?.notes.first?.contains("already fits") == true, "Fit: something that already fits is left alone")
+        let big = root.appendingPathComponent("big.mov")
+        let videoFit = try? await run([big], .fitTo(bytes: 1_500_000, together: false)).get()
+        check((videoFit?.bytesOut ?? .max) <= 1_500_000 && (videoFit?.bytesOut ?? 0) >= 600_000,
+              "Fit: a \(Bytes(videoFit?.bytesIn)) video under 1.5 MB (\(Bytes(videoFit?.bytesOut)))")
+        let tone = root.appendingPathComponent("tone.wav")
+        let audioFit = try? await run([tone], .fitTo(bytes: 130_000, together: false)).get()
+        check((audioFit?.bytesOut ?? .max) <= 130_000 && audioFit?.outputs.first?.pathExtension == "m4a",
+              "Fit: WAV under 130 KB as M4A (\(Bytes(audioFit?.bytesOut)))")
+        switch await run([big], .fitTo(bytes: 5_000, together: false)) {
+        case .success: check(false, "a video can't fit in 5 KB")
+        case let .failure(e): check(e.localizedDescription.contains("can't fit"), "Fit: an impossible size says so (\(e.localizedDescription))")
+        }
+        let two = try? await run([photo, alphaPNG], .fitTo(bytes: 600_000, together: true)).get()
+        check((two?.bytesOut ?? .max) <= 600_000, "Fit together: two pictures share 600 KB (\(Bytes(two?.bytesOut)))")
+        let pdfFit = try? await run([doc12], .fitTo(bytes: fileSize(doc12) * 6 / 10, together: false)).get()
+        check(pdfFit != nil, "Fit a PDF: \(Bytes(pdfFit?.bytesIn)) → \(Bytes(pdfFit?.bytesOut)) \(pdfFit?.notes.first ?? "")")
+
+        // Speed
+        let clip = root.appendingPathComponent("clip.mp4")
+        let fast = output(await run([clip], .changeSpeed(2)))
+        let fastInfo = await fast.asyncMap(mediaInfo)
+        check(abs((fastInfo?.duration ?? 0) - 1.5) < 0.15 && fastInfo?.audio == 1 && fast?.lastPathComponent == "clip (faster).mp4",
+              "Speed 2×: 3 s → \(fastInfo.map { String(format: "%.2f s", $0.duration) } ?? "-") with sound")
+        let slow = output(await run([tone], .changeSpeed(0.5)))
+        let slowInfo = await slow.asyncMap(mediaInfo)
+        check(abs((slowInfo?.duration ?? 0) - 8) < 0.2 && slow?.pathExtension == "m4a", "Speed 0.5× on audio: 4 s → 8 s M4A")
+        let estimate = await MediaSupport.estimate(clip)
+        check((estimate?.compress[.balanced] ?? 0) > 0 && estimate?.formats[.mov] == fileSize(clip), "hover estimates for a video")
+        let frames = await MediaSupport.previewFrames(clip, count: 8, maxPixel: 120)
+        check(frames.count == 8, "GIF hover preview: 8 frames")
+    }
+
+    // 12. Split a PDF into pages
+    let splitMe = root.appendingPathComponent("split me.pdf")
+    makePDF(splitMe, pages: 3)
+    let pagesFolder = output(await run([splitMe], .splitPDF))
+    let pageFiles = pagesFolder.flatMap { try? fm.contentsOfDirectory(atPath: $0.path) }?.sorted() ?? []
+    check(pageFiles == ["split me page 1.pdf", "split me page 2.pdf", "split me page 3.pdf"],
+          "split: one PDF per page in \(pagesFolder?.lastPathComponent ?? "-") \(pageFiles)")
+
+    // 13. Large files (performance report)
     if large {
         let huge = root.appendingPathComponent("huge.png")
         writeImage(gradient(10_000, 10_000), .png, to: huge)
@@ -638,6 +994,15 @@ func runAll() async {
         let r = try? await run([doc200], .compressPDF(.balanced)).get()
         check(r != nil, String(format: "200-page PDF compress in %.1f s (%@), peak RSS %.0f MB", Date().timeIntervalSince(t2),
                                r?.outputs.isEmpty == false ? "smaller" : (r?.notes.first ?? "failed"), peakRSSMB()))
+    }
+}
+
+func Bytes(_ n: Int64?) -> String { n.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) } ?? "-" }
+
+extension Optional {
+    func asyncMap<T>(_ transform: (Wrapped) async -> T?) async -> T? {
+        guard let self else { return nil }
+        return await transform(self)
     }
 }
 

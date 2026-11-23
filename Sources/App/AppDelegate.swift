@@ -59,6 +59,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let coordinator = AppCoordinator()
         self.coordinator = coordinator
         coordinator.start()
+        #if DEBUG
+        // Testing only: CIRCULARITY_TOOL=password|editPages|fit|speed|copyText opens that tool on the files.
+        if let tool = ProcessInfo.processInfo.environment["CIRCULARITY_TOOL"], !files.isEmpty {
+            coordinator.debugChoose(tool, files: files)
+            return
+        }
+        #endif
         coordinator.receive(files, from: .launch)
     }
 
