@@ -108,14 +108,13 @@ final class SettingsMigrationTests: XCTestCase {
         super.tearDown()
     }
 
+    /// A fixed domain per test, emptied before and after: never a new name per run (the settings
+    /// daemon keeps a handle open for every domain it has seen, and thousands run it out).
     private func freshDefaults(_ name: String) -> UserDefaults {
-        let suite = "circularity.tests.\(name).\(UUID().uuidString)"
+        let suite = "circularity.tests.\(name)"
         let d = UserDefaults(suiteName: suite)!
-        addTeardownBlock {
-            UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite)
-            let file = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Preferences/\(suite).plist")
-            try? FileManager.default.removeItem(at: file)
-        }
+        d.removePersistentDomain(forName: suite)
+        addTeardownBlock { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
         return d
     }
 

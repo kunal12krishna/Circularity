@@ -12,8 +12,7 @@ import Foundation
 @MainActor
 enum ThemeCheck {
     static func run(_ file: URL, renderInto directory: URL? = nil) -> Bool {
-        sweepScratchFiles()
-        defer { sweepScratchFiles() }
+        sweepScratchFiles() // files from older builds, which used a new domain per theme
         guard let data = try? Data(contentsOf: file),
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             print("check-themes: can't read \(file.path)")
@@ -38,8 +37,9 @@ enum ThemeCheck {
     private static func check(_ json: Data?, render: URL? = nil) -> String? {
         guard let json, let theme = try? JSONSerialization.jsonObject(with: json) as? [String: Any],
               let values = theme["values"] as? [String: Any] else { return "not a theme" }
-        let suite = "\(AppIdentity.bundleID).themecheck.\(UUID().uuidString)"
+        let suite = scratchSuite
         guard let defaults = UserDefaults(suiteName: suite) else { return "no scratch defaults" }
+        defaults.removePersistentDomain(forName: suite)
         defer { discard(defaults, suite) }
         let store = SettingsStore(defaults: defaults, suiteName: suite)
         guard let result = try? store.importJSON(json, only: SettingsModel.themeKeys, wholeLook: SettingsModel.lookKeys) else { return "Paste theme refused it" }
@@ -127,12 +127,13 @@ enum ThemeCheck {
         }
     }
 
+    /// One scratch settings domain, emptied and reused for every theme. Never a new name per
+    /// theme: the settings daemon keeps a handle open for every domain it has seen, and thousands
+    /// of one-off domains run it out of handles, after which other apps can't read their settings.
+    static let scratchSuite = "\(AppIdentity.bundleID).themecheck"
+
     static func discard(_ defaults: UserDefaults, _ suite: String) {
-        defaults.removePersistentDomain(forName: suite)
-        defaults.synchronize()
-        let file = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Preferences/\(suite).plist")
-        try? FileManager.default.removeItem(at: file)
+        defaults.removePersistentDomain(forName: suite) // through the daemon; never delete its files behind its back
     }
 
     private struct Scratch {
@@ -141,8 +142,9 @@ enum ThemeCheck {
     }
 
     private static func scratch() -> Scratch {
-        let suite = "\(AppIdentity.bundleID).themecheck.\(UUID().uuidString)"
+        let suite = scratchSuite
         let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
         return Scratch(suite: suite, defaults: defaults, store: SettingsStore(defaults: defaults, suiteName: suite))
     }
 }

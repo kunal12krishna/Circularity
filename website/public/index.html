@@ -485,12 +485,24 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
 
 /* Preview modal and toast */
 .modal { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 24px; background: rgba(0,0,0,.6); }
-.modal[hidden] { display: none !important; }
+[hidden] { display: none !important; }
 .modal-box { max-width: min(900px, 100%); max-height: 86vh; overflow: auto; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; display: grid; gap: 10px; }
 :root[data-skin="glass"] .modal-box { background: #1A1C3A; }
 .modal-box img { max-height: 64vh; width: auto; margin: 0 auto; border-radius: 8px; }
 .modal-note { color: var(--muted); margin: 0; max-width: 62ch; }
 .crop-ratios { display: flex; flex-wrap: wrap; gap: 6px; }
+.crop-ratios .pill:disabled { opacity: .4; cursor: default; }
+.crop-ratios .pill[data-t] { text-transform: none; }
+.social-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; align-items: flex-end; }
+.social-tile { display: grid; gap: 6px; justify-items: center; padding: 8px; border: 0; border-radius: 10px; background: none; color: var(--fg); cursor: pointer; font: 700 13px var(--mono); }
+.social-tile canvas { display: block; border-radius: 6px; box-shadow: 0 0 0 1.5px var(--line); transition: box-shadow .15s, transform .15s; }
+.social-tile:hover canvas, .social-tile:focus-visible canvas { box-shadow: 0 0 0 3px var(--accent); transform: translateY(-2px); }
+.social-tile small { max-width: 13ch; color: var(--muted); font: 500 11px/1.3 var(--mono); text-align: center; }
+.rename-field { display: grid; gap: 6px; font: 600 12px var(--mono); color: var(--muted); }
+.rename-field input { padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--panel); color: var(--fg); font: 600 15px var(--mono); }
+.rename-field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.rename-preview { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; max-height: 180px; overflow: auto; font: 500 13px var(--mono); }
+.rename-preview li { overflow-wrap: anywhere; } .rename-preview .old { color: var(--muted); } .rename-preview .bad { color: var(--danger); }
 .crop-stage { position: relative; justify-self: center; overflow: hidden; border-radius: 8px; touch-action: none; user-select: none; -webkit-user-select: none; line-height: 0; }
 .crop-stage img { max-height: 56vh; max-width: 100%; width: auto; border-radius: 0; margin: 0; pointer-events: none; }
 .crop-box { position: absolute; border: 2px solid #fff; outline: 1px solid rgba(0,0,0,.5); box-shadow: 0 0 0 100vmax rgba(10,8,6,.55); cursor: grab; touch-action: none; }
@@ -795,7 +807,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
         <a class="btn" href="#desk">Try it below</a>
       </div>
       <p class="req">Free · macOS 13 or later · Apple silicon and Intel<span id="dmgSize"> · 4.8 MB</span></p>
-      <p class="psst livekeys" id="psst">psst: hold <kbd data-key="Shift">⇧ Shift</kbd> anywhere on this page, or press <kbd data-key="Control">⌃</kbd><kbd data-key="Alt">⌥</kbd><kbd data-key="Meta">⌘</kbd> and watch them light up. <span id="keysHint"></span></p>
+      <p class="psst livekeys" id="psst">psst: hold <kbd data-key="Shift">⇧ Shift</kbd>, <kbd data-key="Meta">⌘</kbd> or <kbd data-key="Control">⌃</kbd> anywhere on this page, move a little, and let go on one. <span id="keysHint"></span></p>
     </div>
     <figure class="hero-wheel">
       <img src="assets/wheel-halo-hero.png" width="900" height="900" fetchpriority="high"
@@ -828,7 +840,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     </div>
     </div>
     </div>
-    <p class="demo-cap">This is the real thing, in your browser: press on a picture, drag a little, tap ⇧ Shift, let go on a format.</p>
+    <p class="demo-cap">This is the real thing, in your browser: press on a picture, drag a little, tap ⇧ Shift (or ⌘ for Tools, ⌃ for Actions), let go on one.</p>
   </div>
   <div class="marquee" aria-hidden="true"><div class="track">
     <span>png · jpg · heic · avif · webp · tiff · gif · bmp</span><span><i>●</i> compress · resize · crop · cut out</span><span>pdf → images · text</span><span>markdown · html · word · excel · powerpoint → pdf</span><span><i>●</i> works in finder, mail, anywhere</span><span>shift · shake · ⌃⌥c</span>
@@ -1224,7 +1236,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
 
 <div id="wheel" aria-hidden="true"><div class="disc"></div><canvas id="wheelCanvas"></canvas></div>
 <div id="ghost"><img alt=""></div>
-<div id="hint">tap ⇧ Shift · shake · or hold still</div>
+<div id="hint">tap ⇧ ⌘ or ⌃ · shake · or hold still</div>
 <button class="shift-touch" id="shiftTouch" type="button">⇧ Shift</button>
 <div class="modal" id="modal" hidden><div class="modal-box"><div class="modal-head"><span id="modalTitle"></span><button class="copy" id="modalClose" type="button">close</button></div><div id="modalBody"></div></div></div>
 <div class="toast" id="toast" role="status"></div>
@@ -1410,7 +1422,7 @@ function renderFile(f) {
     delta = pct <= 0 ? ` <span class="down">${pct}%</span>` : ` <span class="up">+${pct}%</span>`;
   }
   el.innerHTML = `<span class="thumb">${thumb}</span><span class="fname" title="${f.name}">${middleTruncate(f.name, 30)}</span><span class="fsize">${fmtBytes(f.bytes)}${delta}</span>`;
-  el.setAttribute("aria-label", `${f.name}, ${fmtBytes(f.bytes)}. Drag it and tap Shift, or click it to open the wheel.`);
+  el.setAttribute("aria-label", `${f.name}, ${fmtBytes(f.bytes)}. Drag it and tap Shift, Command or Control, or click it to open the wheel.`);
   $("#files").insertBefore(el, $("#dropNote"));
   el.addEventListener("pointerdown", (e) => startPress(e, f, el));
   el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(f); if (f.kind !== "image") { preview(f); return; } const r = el.getBoundingClientRect(); openWheel(f, r.left + r.width / 2, r.top + r.height / 2, "click"); } });
@@ -1494,6 +1506,62 @@ const ACTIONS = {
   tiff: { label: "TIFF", mono: "TIFF", caption: "PRINT", kicker: "CONVERT TO", hint: "lossless, for print", run: async (f) => {
     const c = alphaCanvas(f); return { blob: encodeTIFF(c), name: `${base(f.name)}.tiff`, note: scaledNote(f, c), look: c }; } },
 };
+Object.assign(ACTIONS, {
+  // ⌘ Tools, as in the app (the ones a browser can't do say so).
+  fit: { label: "Make it fit", mono: "FIT", caption: "UNDER A SIZE", kicker: "MAKE IT", hint: "under a size you pick", run: (f) => fitDialog(f) },
+  social: { label: "Social", mono: "SOCIAL", caption: "1:1 TO 9:16", kicker: "CROP FOR", hint: "square, 4:5, 16:9 or 9:16", run: (f) => socialDialog(f) },
+  text: { label: "Text", mono: "TEXT", caption: "OCR", kicker: "COPY THE", hint: "in the Mac app", run: async () => { appOnly("Text from anything", "Copies the words out of a screenshot, photo or scanned PDF, with Apple's on-device Vision, in about a second. A browser can't read text from pictures on its own, so try it in the app."); return null; } },
+  gps: { label: "No GPS", mono: "NO GPS", caption: "PRIVACY", kicker: "STRIP THE", hint: "location and camera data removed", run: async (f) => {
+    const fmt = sameFormat(f); let blob; try { blob = await encodeAs(f, fmt); } catch { blob = await encodeAs(f, "png"); }
+    return { blob, name: `${base(f.name)} (no location).${blob.type === "image/jpeg" ? "jpg" : blob.type === "image/webp" ? "webp" : "png"}`, note: "location and camera data removed" }; } },
+  // ⌃ Actions: for any file.
+  copy: { label: "Copy", mono: "COPY", caption: "CLIPBOARD", kicker: "COPY THE", hint: "paste it anywhere", run: async (f) => {
+    if (f.kind !== "image" || !navigator.clipboard?.write || typeof ClipboardItem === "undefined") { toast("A browser can only copy pictures. The app copies any file, ready to paste in Finder or a chat."); return null; }
+    await navigator.clipboard.write([new ClipboardItem({ "image/png": encodeAs(f, "png") })]);
+    toast(`Copied ${f.name}. Paste it into a chat or a document.`); sfx.drop(); return null; } },
+  zip: { label: "Zip", mono: "ZIP", caption: "ARCHIVE", kicker: "ZIP IT", hint: "a clean .zip, no __MACOSX", run: async (f) => {
+    const blob = makeZip([{ name: f.name, data: new Uint8Array(await f.blob.arrayBuffer()) }]);
+    return { blob, name: `${f.name}.zip`, kind: "zip" }; } },
+  save: { label: "Save", mono: "SAVE", caption: "DOWNLOAD", kicker: "SAVE A", hint: "a copy in Downloads", run: async (f) => { downloadFile(f); return null; } },
+  path: { label: "Copy path", mono: "PATH", caption: "~/PATH", kicker: "COPY THE", hint: "where it lives, as text", run: async (f) => {
+    const path = `~/Desktop/${f.name}`; await navigator.clipboard?.writeText(path).catch(() => {}); toast(`Copied ${path}`); sfx.drop(); return null; } },
+  rename: { label: "Rename", mono: "RENAME", caption: "BATCH", kicker: "RENAME", hint: "every file here, with a pattern", run: () => renameDialog() },
+  look: { label: "Quick Look", mono: "LOOK", caption: "PREVIEW", kicker: "QUICK", hint: "a big preview", run: async (f) => { preview(f); return null; } },
+  airdrop: { label: "AirDrop", mono: "AIRDROP", caption: "SEND", kicker: "SEND BY", hint: "in the Mac app", run: async () => { toast("In the app, AirDrop opens with the file ready to send to a phone or Mac nearby."); return null; } },
+  stash: { label: "Stash", mono: "STASH", caption: "COLLECT", kicker: "ADD TO THE", hint: "in the Mac app", run: async () => { toast("In the app, the Stash collects files from different folders so you can drag them all out at once."); return null; } },
+});
+
+function appOnly(title, text) {
+  openModal(`${title} · in the app`, (body) => { const p = document.createElement("p"); p.className = "modal-note"; p.textContent = text; body.append(p); });
+}
+function downloadFile(f) {
+  const a = document.createElement("a"); a.href = f.url; a.download = f.name; document.body.append(a); a.click(); a.remove();
+  toast(`Saved a copy of ${f.name} to your downloads.`); sfx.drop();
+}
+
+// A real .zip (stored, UTF-8 names): what the app's Zip makes, minus the compression.
+const CRC_TABLE = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+function crc32(b) { let c = ~0; for (let i = 0; i < b.length; i++) c = CRC_TABLE[(c ^ b[i]) & 255] ^ (c >>> 8); return ~c >>> 0; }
+function makeZip(entries) {
+  const enc = new TextEncoder(), parts = [], central = []; let offset = 0;
+  const d = new Date(), time = (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date = ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate();
+  for (const e of entries) {
+    const name = enc.encode(e.name), crc = crc32(e.data), size = e.data.length;
+    const local = new DataView(new ArrayBuffer(30));
+    [[0, 0x04034b50, 4], [4, 20, 2], [6, 0x0800, 2], [8, 0, 2], [10, time, 2], [12, date, 2], [14, crc, 4], [18, size, 4], [22, size, 4], [26, name.length, 2], [28, 0, 2]]
+      .forEach(([o, v, n]) => n === 4 ? local.setUint32(o, v, true) : local.setUint16(o, v, true));
+    const cd = new DataView(new ArrayBuffer(46));
+    [[0, 0x02014b50, 4], [4, 20, 2], [6, 20, 2], [8, 0x0800, 2], [10, 0, 2], [12, time, 2], [14, date, 2], [16, crc, 4], [20, size, 4], [24, size, 4], [28, name.length, 2], [30, 0, 2], [32, 0, 2], [34, 0, 2], [36, 0, 2], [38, 0, 4], [42, offset, 4]]
+      .forEach(([o, v, n]) => n === 4 ? cd.setUint32(o, v, true) : cd.setUint16(o, v, true));
+    parts.push(local.buffer, name, e.data); central.push(cd.buffer, name);
+    offset += 30 + name.length + size;
+  }
+  const cdSize = central.reduce((n, b) => n + b.byteLength, 0), end = new DataView(new ArrayBuffer(22));
+  [[0, 0x06054b50, 4], [4, 0, 2], [6, 0, 2], [8, entries.length, 2], [10, entries.length, 2], [12, cdSize, 4], [16, offset, 4], [20, 0, 2]]
+    .forEach(([o, v, n]) => n === 4 ? end.setUint32(o, v, true) : end.setUint16(o, v, true));
+  return new Blob([...parts, ...central, end.buffer], { type: "application/zip" });
+}
+
 function flatten(c) { const o = makeCanvas(c.width, c.height), x = o.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, o.width, o.height); x.drawImage(c, 0, 0); return o; }
 
 // A real PDF, one picture per page, each a JPEG image object (DCTDecode).
@@ -1678,6 +1746,121 @@ async function compressUnder(f, target) {
   throw new Error(`Couldn't get under ${fmtBytes(target)}`);
 }
 
+// Make it fit: pick a limit, get the smallest change that's under it.
+function fitDialog(f) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const sizes = [[2e6, "2 MB"], [1e6, "1 MB"], [5e5, "500 KB"], [2.5e5, "250 KB"], [1e5, "100 KB"], [5e4, "50 KB"]];
+    openModal(`Make ${f.name} fit`, (body) => {
+      const fits = sizes.filter(([n]) => n < f.bytes).length;
+      body.innerHTML = `<p class="modal-note">It's ${fmtBytes(f.bytes)} now. Pick a limit and it makes the smallest change that gets under it.${fits ? "" : " It's already under all of these."}</p>
+        <div class="crop-ratios" role="group" aria-label="Limit">${sizes.map(([n, l]) => `<button class="pill" type="button" data-n="${n}"${n >= f.bytes ? " disabled" : ""}>${l}</button>`).join("")}</div>
+        <p class="modal-note">In the app: Email, WhatsApp, Discord or any size you type, for photos, PDFs, video and audio, several at once.</p>`;
+      $$("[data-n]:not(:disabled)", body).forEach((b) => b.addEventListener("click", async () => {
+        settled = true; closeModal();
+        try { const r = await compressUnder(f, Number(b.dataset.n)); r.name = `${base(f.name)} (to send).jpg`; resolve(r); } catch (err) { reject(err); }
+      }));
+      setTimeout(() => $("[data-n]:not(:disabled)", body)?.focus(), 0);
+    }, () => { if (!settled) reject(CANCELLED); });
+  });
+}
+
+// Crop for social. The app finds the subject with Apple's saliency; here, a quick guess from where the detail is.
+function subjectOf(f) {
+  const n = 48, k = n / Math.max(f.w, f.h), w = Math.max(3, Math.round(f.w * k)), h = Math.max(3, Math.round(f.h * k));
+  const c = makeCanvas(w, h), x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(f.img, 0, 0, w, h);
+  let d; try { d = x.getImageData(0, 0, w, h).data; } catch { return { x: .5, y: .5 }; }
+  const L = (i) => d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11; let sx = 0, sy = 0, sum = 0;
+  for (let yy = 1; yy < h - 1; yy++) for (let xx = 1; xx < w - 1; xx++) {
+    const i = (yy * w + xx) * 4, g = Math.abs(L(i + 4) - L(i - 4)) + Math.abs(L(i + w * 4) - L(i - w * 4));
+    sx += g * xx; sy += g * yy; sum += g;
+  }
+  const cx = sum ? sx / sum / (w - 1) : .5, cy = sum ? sy / sum / (h - 1) : .5;
+  return { x: .5 + (cx - .5) * .8, y: .5 + (cy - .5) * .8 };
+}
+function socialRect(f, aspect, focus) {
+  const ia = f.w / f.h; let w = 1, h = 1; if (aspect >= ia) h = ia / aspect; else w = aspect / ia;
+  return { x: Math.min(Math.max(focus.x - w / 2, 0), 1 - w), y: Math.min(Math.max(focus.y - h / 2, 0), 1 - h), w, h };
+}
+function socialDialog(f) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const SHAPES = [["1:1", 1, "square", "Instagram, profile pictures"], ["4:5", 4 / 5, "4×5", "Instagram portrait posts"], ["16:9", 16 / 9, "16×9", "YouTube, X, LinkedIn"], ["9:16", 9 / 16, "story", "Stories, Reels, TikTok"]];
+    const focus = subjectOf(f);
+    openModal(`Crop ${f.name} for social`, (body) => {
+      body.innerHTML = `<div class="social-grid">${SHAPES.map(([r, , , use], i) => `<button class="social-tile" type="button" data-i="${i}"><canvas></canvas>${r}<small>${use}</small></button>`).join("")}</div>
+        <p class="modal-note">Each crop is as big as the picture allows, centred on the subject. Pick one. The app finds the subject with Apple's on-device saliency and can make all four at once.</p>`;
+      $$(".social-tile", body).forEach((b) => {
+        const [, aspect] = SHAPES[b.dataset.i], r = socialRect(f, aspect, focus), c = $("canvas", b), H = 120;
+        const cw = Math.round(H * aspect), dpr = Math.min(2, devicePixelRatio || 1); c.width = cw * dpr; c.height = H * dpr; c.style.width = cw + "px"; c.style.height = H + "px";
+        c.getContext("2d").drawImage(f.img, r.x * f.w, r.y * f.h, r.w * f.w, r.h * f.h, 0, 0, c.width, c.height);
+        b.addEventListener("click", async () => {
+          const [ratio, , suffix] = SHAPES[b.dataset.i];
+          const sx = Math.round(r.x * f.w), sy = Math.round(r.y * f.h), sw = Math.max(1, Math.round(r.w * f.w)), sh = Math.max(1, Math.round(r.h * f.h));
+          const k = Math.min(1, CAP / Math.max(sw, sh)), out = makeCanvas(Math.max(1, Math.round(sw * k)), Math.max(1, Math.round(sh * k))), x = out.getContext("2d");
+          x.fillStyle = "#fff"; x.fillRect(0, 0, out.width, out.height); x.imageSmoothingQuality = "high"; x.drawImage(f.img, sx, sy, sw, sh, 0, 0, out.width, out.height);
+          settled = true; closeModal();
+          try { resolve({ blob: await toBlob(out, "image/jpeg", 0.88), name: `${base(f.name)} (${suffix}).jpg`, note: `${ratio}, ${out.width} × ${out.height}` }); } catch (err) { reject(err); }
+        });
+      });
+      setTimeout(() => $(".social-tile", body)?.focus(), 0);
+    }, () => { if (!settled) reject(CANCELLED); });
+  });
+}
+
+// Batch rename every file on the desk, with a live preview, as in the app.
+function renamePlan(list, pattern) {
+  const today = new Date().toISOString().slice(0, 10), pad = String(list.length).length < 2 ? 2 : String(list.length).length;
+  const items = list.map((f, i) => {
+    const e = ext(f.name), stem = e ? base(f.name) : f.name, n = String(i + 1).padStart(pad, "0");
+    let out = pattern.replaceAll("{name}", stem).replaceAll("{n}", n).replaceAll("{date}", today);
+    if (list.length > 1 && !pattern.includes("{n}") && !pattern.includes("{name}")) out += ` ${n}`;
+    const name = e ? `${out}.${e}` : out;
+    const problem = !out.trim() ? "empty name" : /[/:]/.test(out) ? "can't contain / or :" : out.startsWith(".") ? "would be hidden" : null;
+    return { f, name, problem };
+  });
+  const seen = new Map();
+  for (const it of items) { if (it.problem) continue; const k = it.name.toLowerCase(); if (seen.has(k)) it.problem = `same name as ${seen.get(k).f.name}`; else seen.set(k, it); }
+  return items;
+}
+function renameDialog() {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const list = files.slice();
+    openModal(`Rename ${list.length} file${list.length === 1 ? "" : "s"}`, (body) => {
+      body.innerHTML = `<label class="rename-field">Pattern<input type="text" value="Trip {n}" spellcheck="false" autocomplete="off"></label>
+        <div class="crop-ratios" role="group" aria-label="Add">${["{name}", "{n}", "{date}"].map((t) => `<button class="pill" type="button" data-t="${t}">${t}</button>`).join("")}</div>
+        <ol class="rename-preview" aria-live="polite"></ol>
+        <p class="modal-note">In the app it renames the real files where they are, stops if a name would clash, and Undo puts the old names back.</p>
+        <div class="crop-actions"><button class="btn" type="button" data-act="cancel">Cancel</button><button class="btn primary" type="button" data-act="go">Rename</button></div>`;
+      const input = $("input", body), out = $(".rename-preview", body), go = $('[data-act="go"]', body);
+      let plan = [];
+      const draw = () => {
+        plan = renamePlan(list, input.value);
+        out.innerHTML = plan.map((it) => `<li><span class="old">${escapeHTML(it.f.name)}</span> → ${it.problem ? `<span class="bad">${escapeHTML(it.name)} (${it.problem})</span>` : escapeHTML(it.name)}</li>`).join("");
+        const ok = plan.length && plan.every((it) => !it.problem) && plan.some((it) => it.name !== it.f.name);
+        go.disabled = !ok; go.textContent = `Rename ${plan.length}`;
+      };
+      const apply = () => {
+        if (go.disabled) return;
+        for (const it of plan) {
+          it.f.name = it.name;
+          const el = $(`.file[data-id="${it.f.id}"]`);
+          if (el) { const n = $(".fname", el); n.textContent = middleTruncate(it.name, 30); n.title = it.name; el.setAttribute("aria-label", `${it.name}, ${fmtBytes(it.f.bytes)}. Drag it and tap Shift, Command or Control, or click it to open the wheel.`); }
+        }
+        settled = true; closeModal(); toast(`Renamed ${plan.length} file${plan.length === 1 ? "" : "s"}`); sfx.drop(); resolve(null);
+      };
+      input.addEventListener("input", draw);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); apply(); } });
+      $$("[data-t]", body).forEach((b) => b.addEventListener("click", () => { input.value += (input.value && !input.value.endsWith(" ") ? " " : "") + b.dataset.t; draw(); input.focus(); }));
+      $('[data-act="cancel"]', body).addEventListener("click", () => closeModal());
+      go.addEventListener("click", apply);
+      draw(); setTimeout(() => { input.focus(); input.select(); }, 0);
+    }, () => { if (!settled) reject(CANCELLED); });
+  });
+}
+function escapeHTML(t) { return t.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]); }
+
 async function runAction(f, key, extra) {
   const a = ACTIONS[key];
   try {
@@ -1699,6 +1882,11 @@ async function runAction(f, key, extra) {
 // Preview a file on double-click / Enter after selecting.
 function preview(f) {
   openModal(`${f.name} · ${fmtBytes(f.bytes)}${f.w ? ` · ${f.w} × ${f.h}` : ""}`, (body) => {
+    if (f.kind !== "image" && f.kind !== "pdf") {
+      const p = document.createElement("p"); p.className = "modal-note"; p.textContent = `A real ${ext(f.name).toUpperCase() || "file"}, made in your browser. In the app it lands next to the original.`;
+      const b = document.createElement("button"); b.className = "btn"; b.type = "button"; b.textContent = "Save a copy"; b.addEventListener("click", () => downloadFile(f));
+      body.append(p, b); return;
+    }
     const img = document.createElement("img"); img.src = f.kind === "pdf" ? f.preview : (f.look || f.url); img.alt = f.name; body.append(img);
     if (f.kind === "pdf") { const p = document.createElement("p"); p.className = "modal-note"; p.textContent = `A real ${f.pages > 1 ? `${f.pages}-page` : "one-page"} PDF, made in your browser. The app saves it next to the original.`; body.append(p); }
   });
@@ -1722,9 +1910,15 @@ $("#modal").addEventListener("click", (e) => { if (e.target.id === "modal") clos
 // ---------- The wheel ----------
 const wheelEl = $("#wheel"), wc = $("#wheelCanvas"), wx = wc.getContext("2d"), disc = $(".disc", wheelEl);
 const G = { size: 540, rin: 62, rout: 150, bulge: 10, orb: 54, span: 58, fanR: 206, chipW: 70, chipH: 30, step: 23, ring: 360 };
-const W = { open: false, mode: "drag", file: null, cx: 0, cy: 0, scale: 1, ring: [], fan: [], hover: { t: "none" }, fanOpen: false, flipped: false, fanTimer: 0, est: {} };
+const W = { kind: "convert", guide: [], open: false, mode: "drag", file: null, cx: 0, cy: 0, scale: 1, ring: [], fan: [], hover: { t: "none" }, fanOpen: false, flipped: false, fanTimer: 0, est: {} };
 
-function menuFor(f) {
+// One key per wheel, as in the app: ⇧ Convert, ⌘ Tools, ⌃ Actions.
+const WHEEL_KEYS = { Shift: "convert", Meta: "tools", Control: "actions" };
+const GUIDE = [["convert", "⇧", "CONVERT"], ["tools", "⌘", "TOOLS"], ["actions", "⌃", "ACTIONS"]];
+function kindAllowed(f, kind) { return kind === "actions" || f.kind === "image"; }
+function menuFor(f, kind = "convert") {
+  if (kind === "tools") return { ring: ["fit", "social", "sqz", "more", "size", "crop"], fan: ["text", "gps", "combine", "cut"] };
+  if (kind === "actions") return { ring: ["copy", "zip", "save", "more", "path", "rename"], fan: ["look", "airdrop", "stash"] };
   const src = sameFormat(f);
   const formats = ["png", "jpg", "webp", "pdf"].filter((k) => k !== src).slice(0, 3);
   const rest = ["png", "jpg", "webp", "pdf"].filter((k) => k !== src && !formats.includes(k));
@@ -1732,10 +1926,10 @@ function menuFor(f) {
   return { ring: [...formats, "more", "sqz", "size"], fan: [...rest, "tiff", "gif", "bmp", "combine", "cut", "crop"] };
 }
 
-function openWheel(f, x, y, mode) {
+function openWheel(f, x, y, mode, kind = "convert") {
   if (W.open) return;
-  const m = menuFor(f);
-  W.file = f; W.mode = mode; W.ring = m.ring; W.fan = m.fan; W.hover = { t: "none" }; W.fanOpen = false; W.est = {};
+  const m = menuFor(f, kind);
+  W.file = f; W.mode = mode; W.kind = kind; W.ring = m.ring; W.fan = m.fan; W.hover = { t: "none" }; W.fanOpen = false; W.est = {};
   ACTIONS.more.hint = `${m.fan.length} more options`;
   const pics = files.filter((x) => x.kind === "image" && x.img).length;
   ACTIONS.combine.hint = pics > 1 ? `${pics} pictures, one PDF` : "a one-page PDF";
@@ -1756,10 +1950,19 @@ function openWheel(f, x, y, mode) {
   W.open = true;
   wheelEl.classList.toggle("click", mode === "click");
   drawWheel();
-  if (mode === "click") announce(`Wheel open for ${f.name}. Arrow keys choose, Return converts, Escape cancels.`);
+  if (mode === "click") announce(`${kind === "convert" ? "Convert" : kind === "tools" ? "Tools" : "Actions"} wheel open for ${f.name}. Arrow keys choose, Return runs, Shift, Command or Control switch wheels, Escape cancels.`);
   requestAnimationFrame(() => wheelEl.classList.add("open"));
   $("#hint").style.display = "none"; $("#shiftTouch").classList.remove("show");
   sfx.open();
+}
+function switchWheel(kind) {
+  if (!W.open || kind === W.kind || !kindAllowed(W.file, kind)) return;
+  const m = menuFor(W.file, kind);
+  W.kind = kind; W.ring = m.ring; W.fan = m.fan; W.fanOpen = false; W.hover = { t: "none" }; clearTimeout(W.fanTimer);
+  ACTIONS.more.hint = `${m.fan.length} more options`;
+  sfx.tick();
+  if (W.mode === "click") announce(`${kind === "convert" ? "Convert" : kind === "tools" ? "Tools" : "Actions"} wheel`);
+  if (D.active) setHover(hitTest(D.x, D.y)); else drawWheel();
 }
 function closeWheel() {
   W.open = false; clearTimeout(W.fanTimer);
@@ -1768,6 +1971,7 @@ function closeWheel() {
 
 function hitTest(px, py) {
   const s = W.scale, dx = (px - W.cx) / s, dy = (py - W.cy) / s, dist = Math.hypot(dx, dy);
+  if (W.mode === "click") for (const g of W.guide) if (dx >= g.x && dx <= g.x + g.w && dy >= g.y && dy <= g.y + g.h) return { t: "guide", kind: g.kind };
   if (W.fanOpen) {
     for (let k = 0; k < W.fan.length; k++) { const c = chipCenter(k); if (Math.abs(dx - c.x) <= G.chipW / 2 + 6 && Math.abs(dy - c.y) <= G.chipH / 2 + 6) return { t: "chip", k }; }
   }
@@ -1783,7 +1987,7 @@ function chipCenter(k) {
   const a = (mid + (k - (n - 1) / 2) * G.step) * Math.PI / 180;
   return { x: Math.sin(a) * G.fanR, y: -Math.cos(a) * G.fanR };
 }
-function same(a, b) { return a.t === b.t && a.i === b.i && a.k === b.k; }
+function same(a, b) { return a.t === b.t && a.i === b.i && a.k === b.k && a.kind === b.kind; }
 
 function setHover(h) {
   if (same(h, W.hover)) return;
@@ -1795,7 +1999,7 @@ function setHover(h) {
   if (h.t !== "none") sfx.tick();
   const key = keyFor(h);
   if (key && ACTIONS[key].run && !(key in W.est)) estimate(key);
-  if (W.mode === "click") announce(h.t === "centre" ? "Cancel" : key ? `${ACTIONS[key].label}: ${ACTIONS[key].hint}` : "");
+  if (W.mode === "click") announce(h.t === "centre" ? "Cancel" : h.t === "guide" ? `Switch to ${h.kind}` : key ? `${ACTIONS[key].label}: ${ACTIONS[key].hint}` : "");
   drawWheel();
 }
 function keyFor(h) { return h.t === "seg" ? W.ring[h.i] : h.t === "chip" ? W.fan[h.k] : null; }
@@ -1824,7 +2028,9 @@ function orbText() {
   if (h.t === "centre") return { k: W.mode === "click" ? "CLICK HERE TO" : "DROP HERE TO", big: "Cancel", d: "nothing is changed", cancel: true };
   const key = keyFor(h);
   if (key) { const a = ACTIONS[key]; const est = W.est[key]; return { k: a.kicker, big: a.mono === "•••" ? "More" : a.mono, d: est ? `about ${fmtBytes(est)}` : a.hint }; }
-  return { k: "CIRCULARITY", big: sameFormat(f).toUpperCase(), d: `${middleTruncate(f.name, 26)} · ${fmtBytes(f.bytes)}` };
+  if (h.t === "guide") { const g = GUIDE.find(([k]) => k === h.kind); return { k: "CLICK TO SWITCH TO", big: g[2], d: `or press ${g[1]} while dragging` }; }
+  const big = W.kind === "convert" ? sameFormat(f).toUpperCase() : (ext(f.name) || "file").toUpperCase();
+  return { k: W.kind === "convert" ? "⇧ CONVERT" : W.kind === "tools" ? "⌘ TOOLS" : "⌃ ACTIONS", big, d: `${middleTruncate(f.name, 26)} · ${fmtBytes(f.bytes)}` };
 }
 
 function sector(ctx, cx, cy, rin, rout, a0, a1) {
@@ -1842,9 +2048,36 @@ function drawWheel() {
     accent: css("--accent"), onAccent: css("--on-accent"), fg: css("--fg"), muted: css("--muted"),
     mono: css("--mono") || "monospace", display: css("--display") || "sans-serif",
   };
-  if (skin === "pixel") return drawPixelWheel(ctx, c, style);
-  if (skin === "ascii") return drawAsciiWheel(ctx, c, style);
-  drawSmoothWheel(ctx, c, style);
+  if (skin === "pixel") drawPixelWheel(ctx, c, style);
+  else if (skin === "ascii") drawAsciiWheel(ctx, c, style);
+  else drawSmoothWheel(ctx, c, style);
+  ctx.setTransform(dpr * W.scale, 0, 0, dpr * W.scale, 0, 0);
+  drawGuide(ctx, c, style);
+}
+
+// The key guide, floating above the wheel as in the app: which key opens which wheel, the open one lit.
+// In click mode the keycaps are buttons too (touch screens have no ⌘).
+function drawGuide(ctx, c, style) {
+  ctx.save();
+  ctx.font = `700 11px ${style.mono}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  const h = 26, gap = 6, pad = 11, square = ["pixel", "ascii", "win95", "news"].includes(skin);
+  const widths = GUIDE.map(([, k, l]) => Math.ceil(ctx.measureText(`${k} ${l}`).width) + pad * 2);
+  const total = widths.reduce((a, b) => a + b, 0) + gap * (GUIDE.length - 1);
+  const y = W.flipped ? c + G.rout + G.bulge + 24 : c - G.rout - G.bulge - 24 - h;
+  let x = c - total / 2; W.guide = [];
+  GUIDE.forEach(([kind, k, l], i) => {
+    const on = W.kind === kind, hot = W.hover.t === "guide" && W.hover.kind === kind, col = segColors(0, on, style);
+    ctx.globalAlpha = kindAllowed(W.file, kind) ? 1 : .35;
+    roundRect(ctx, x, y, widths[i], h, square ? 0 : skin === "aqua" ? 13 : 7);
+    if (Array.isArray(col.fill)) { const g = ctx.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, col.fill[0]); g.addColorStop(.5, col.fill[1]); g.addColorStop(1, col.fill[2]); ctx.fillStyle = g; } else ctx.fillStyle = col.fill;
+    if (on) { ctx.shadowColor = style.accent; ctx.shadowBlur = 14; }
+    ctx.fill(); ctx.shadowColor = "transparent";
+    ctx.strokeStyle = hot ? style.accent : (col.stroke || "rgba(255,255,255,.16)"); ctx.lineWidth = hot ? 2 : 1; ctx.stroke();
+    ctx.fillStyle = col.text; ctx.fillText(`${k} ${l}`, x + widths[i] / 2, y + h / 2 + 1);
+    W.guide.push({ kind, x: x - c, y: y - c, w: widths[i], h });
+    x += widths[i] + gap;
+  });
+  ctx.restore();
 }
 
 function segColors(i, hot, style) {
@@ -2075,7 +2308,7 @@ document.addEventListener("pointercancel", (e) => { if (D.active && e.pointerId 
 function endPress(x, y) {
   clearTimeout(D.stillTimer);
   const f = D.f, wasDrag = D.moved;
-  if (f.kind !== "image") { cleanupDrag(); closeWheel(); preview(f); if (wasDrag) toast("The Mac app converts PDFs and documents too. This demo converts pictures."); return; }
+  if (f.kind !== "image" && !W.open) { cleanupDrag(); closeWheel(); preview(f); if (wasDrag) toast("Tap ⌃ while dragging for its Actions. The Mac app converts PDFs and documents too."); return; }
   if (!wasDrag) { cleanupDrag(); openWheel(f, x, y, "click"); return; } // a click opens the wheel at the file
   if (W.open) {
     const h = hitTest(x, y), key = keyFor(h);
@@ -2083,7 +2316,7 @@ function endPress(x, y) {
     cleanupDrag(key && key !== "more");
     closeWheel();
     if (key && key !== "more") runAction(f, key); else sfx.cancel();
-  } else { cleanupDrag(); toast("Tip: tap Shift, shake, or hold still while dragging"); }
+  } else { cleanupDrag(); toast("Tip: while dragging, tap ⇧ Shift, ⌘ or ⌃ (or shake, or hold still)"); }
 }
 function flyGhostTo(x, y) { ghost.classList.add("fly"); ghost.style.transform = "translate(-50%, -50%) scale(.2)"; }
 function cleanupDrag(keepGhost) {
@@ -2095,13 +2328,22 @@ function cleanupDrag(keepGhost) {
 wheelEl.addEventListener("click", (e) => {
   if (W.mode !== "click") return;
   const h = hitTest(e.clientX, e.clientY), key = keyFor(h);
+  if (h.t === "guide") { switchWheel(h.kind); return; }
   if (key === "more") { W.fanOpen = true; drawWheel(); return; }
   const f = W.file; closeWheel();
   if (key) runAction(f, key); else sfx.cancel();
 });
 document.addEventListener("pointerdown", (e) => { if (W.open && W.mode === "click" && !wheelEl.contains(e.target)) { const h = hitTest(e.clientX, e.clientY); if (h.t === "none") { closeWheel(); sfx.cancel(); } } }, true);
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Shift" && D.active && D.moved && !W.open && D.f.kind === "image") { openWheel(D.f, D.x, D.y, "drag"); return; }
+  const kind = WHEEL_KEYS[e.key];
+  if (kind && !e.repeat) {
+    if (W.open) { switchWheel(kind); return; }
+    if (D.active && D.moved) {
+      if (kindAllowed(D.f, kind)) openWheel(D.f, D.x, D.y, "drag", kind);
+      else toast("Here, only ⌃ Actions works on this one. The Mac app converts PDFs, documents, video and audio too.");
+      return;
+    }
+  }
   if (e.key === "Escape") { if (!$("#modal").hidden) { closeModal(); return; } if (W.open) { closeWheel(); cleanupDrag(); sfx.cancel(); } }
   if (W.open && W.mode === "click" && (e.key === "ArrowRight" || e.key === "ArrowLeft")) {
     const i = W.hover.t === "seg" ? W.hover.i : -1; setHover({ t: "seg", i: ((i + (e.key === "ArrowRight" ? 1 : 5)) % 6 + 6) % 6 }); e.preventDefault();
@@ -2586,7 +2828,15 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
 (() => {
   if (!matchMedia("(pointer: fine)").matches) { $("#psst").innerHTML = "psst: on a Mac it opens around your pointer. try the demo below."; return; }
   const buddy = $("#buddy"), mini = $("#mini"), segs = $$("#mini .seg"), core = $("#miniCore");
-  let x = -100, y = -100, bx = -100, by = -100, raf = 0, open = false, hot = null, anchor = null, seen = false, jokes = 0;
+  let x = -100, y = -100, bx = -100, by = -100, raf = 0, open = false, hot = null, anchor = null, seen = false, jokes = 0, openKey = null;
+  const C = ["--s-png", "--s-jpg", "--s-webp", "--s-pdf", "--s-avif", "--s-tiff"];
+  const SETS = {
+    Shift: { name: "convert", segs: ["PNG", "JPG", "WEBP", "PDF", "AVIF", "TIFF"], say: (s) => `make it<br>.${s.toLowerCase()}` },
+    Meta: { name: "tools", segs: ["FIT", "TEXT", "SOCIAL", "SQZ", "CROP", "SIZE"], say: (s) => ({ FIT: "make it<br>fit", TEXT: "copy the<br>text", SOCIAL: "crop for<br>social", SQZ: "make it<br>smaller", CROP: "crop<br>it", SIZE: "resize<br>it" })[s] },
+    Control: { name: "actions", segs: ["COPY", "ZIP", "SEND", "RENAME", "STASH", "PATH"], say: (s) => ({ COPY: "copy<br>it", ZIP: "zip<br>it", SEND: "airdrop<br>it", RENAME: "rename<br>it", STASH: "stash<br>it", PATH: "copy the<br>path" })[s] },
+  };
+  const idle = () => `${{ Shift: "⇧ convert", Meta: "⌘ tools", Control: "⌃ actions" }[openKey] || ""}<br>let go<br>on one`;
+  const fill = (key) => segs.forEach((el, i) => { const t = SETS[key].segs[i]; el.dataset.fmt = t; el.textContent = t; el.style.setProperty("--c", `var(${C[i]})`); });
   const typing = () => document.activeElement?.closest?.("input, textarea, select, [contenteditable]");
   const loop = () => {
     raf = 0; bx += (x - bx) * 0.2; by += (y - by) * 0.2;
@@ -2598,7 +2848,7 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     if (Math.hypot(dx, dy) > 38) { let deg = Math.atan2(dx, -dy) * 180 / Math.PI; if (deg < 0) deg += 360; next = segs[Math.floor((deg + 30) / 60) % 6]; }
     if (next === hot) return;
     hot?.classList.remove("hot"); hot = next; hot?.classList.add("hot");
-    core.innerHTML = hot ? `make it<br>.${hot.dataset.fmt.toLowerCase()}` : "let go<br>on one";
+    core.innerHTML = hot ? SETS[openKey].say(hot.dataset.fmt) : idle();
     if (hot) sfx.tick();
   };
   addEventListener("pointermove", (e) => {
@@ -2609,9 +2859,11 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     if (!raf && !reduceMotion) raf = requestAnimationFrame(loop);
   }, { passive: true });
   addEventListener("keydown", (e) => {
-    if (open && e.key !== "Shift") { close(false); return; } // part of a shortcut such as ⌘⇧4
-    if (e.key !== "Shift" || e.repeat || open || e.metaKey || e.ctrlKey || e.altKey || typing() || D.active || W.open || x < 0) return;
-    open = true; anchor = { x, y };
+    if (open && e.key !== openKey) { close(false); return; } // part of a shortcut such as ⌘⇧4 or ⌘C
+    if (!SETS[e.key] || e.repeat || open || typing() || D.active || W.open || x < 0) return;
+    const held = { Shift: e.shiftKey, Meta: e.metaKey, Control: e.ctrlKey, Alt: e.altKey };
+    if (Object.entries(held).some(([k, v]) => v && k !== e.key)) return; // only that one key
+    open = true; anchor = { x, y }; openKey = e.key; fill(openKey); core.innerHTML = idle();
     mini.style.left = x + "px"; mini.style.top = y + "px"; mini.classList.add("open"); buddy.classList.remove("on");
     sfx.open(); pick();
   });
@@ -2626,12 +2878,16 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
         document.body.append(sp); setTimeout(() => sp.remove(), 800);
       }
       const fmt = hot.dataset.fmt.toLowerCase();
-      const lines = [`this page is now a .${fmt}. (it isn't. your files can be, though.)`, `converted this page to .${fmt}. kidding. try a real file below.`, `.${fmt}! that's the gesture. in the app it works on any file.`];
+      const lines = openKey === "Shift"
+        ? [`this page is now a .${fmt}. (it isn't. your files can be, though.)`, `converted this page to .${fmt}. kidding. try a real file below.`, `.${fmt}! that's the gesture. in the app it works on any file.`]
+        : openKey === "Meta"
+          ? [`⌘ ${fmt}: that's the Tools wheel. drag a picture below and tap ⌘ to really do it.`, `${fmt}, on this whole page? bold. try a file below instead.`]
+          : [`⌃ ${fmt}: that's the Actions wheel. it works on any file, even folders.`, `${fmt}! drag a file below and tap ⌃ to do it for real.`];
       toast(lines[jokes++ % lines.length]); sfx.drop();
     } else sfx.cancel();
-    hot?.classList.remove("hot"); hot = null; core.innerHTML = "let go<br>on one";
+    hot?.classList.remove("hot"); hot = null; openKey = null;
   }
-  addEventListener("keyup", (e) => { if (e.key === "Shift") close(true); });
+  addEventListener("keyup", (e) => { if (open && e.key === openKey) close(true); });
   addEventListener("blur", () => close(false));
 })();
 
@@ -2658,7 +2914,7 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
   const set = (key, down) => { for (const k of caps) if (k.dataset.key === key) k.classList.toggle("down", down); };
   document.addEventListener("keydown", (e) => {
     set(e.key, true);
-    if (!used && caps.some((k) => k.dataset.key === e.key) && $("#keysHint")) { used = true; $("#keysHint").textContent = "now try it on a file below: drag, then tap ⇧ Shift"; }
+    if (!used && caps.some((k) => k.dataset.key === e.key) && $("#keysHint")) { used = true; $("#keysHint").textContent = "now try it on a file below: drag it, then tap ⇧, ⌘ or ⌃"; }
   });
   document.addEventListener("keyup", (e) => set(e.key, false));
   addEventListener("blur", () => caps.forEach((k) => k.classList.remove("down")));
@@ -2881,6 +3137,8 @@ systemDark.addEventListener?.("change", (e) => { if (!SKINS.includes(store.get("
   for (const [name, draw] of samples) { const c = draw(); const blob = await toBlob(c, "image/png"); const f = await addFile({ name, blob }); if (f && !selected) select(f); }
 })();
 document.fonts?.ready.then(() => { drawWheel(); });
+// For the site's automated checks only (?test): reach the demo's state.
+if (/[?&]test\b/.test(location.search)) window.__demo = { W, G, D, files, keyFor, runAction, closeWheel };
 })();
 </script>
 </body>
