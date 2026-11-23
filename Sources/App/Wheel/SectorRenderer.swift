@@ -252,8 +252,8 @@ final class SectorRenderer: WheelRenderer {
                                          height: CGFloat(image.height) / contentsScale)
             }
         } else {
-            seg.label.set(slot.monoLabel, font: WheelFont.mono(15 * s * ls, look.weight), color: fg,
-                          kern: 1.2 * s + look.tracking * 15 * s * ls, maxWidth: 80 * s, minScale: 0.7)
+            seg.label.setFitting([slot.monoLabel], font: WheelFont.mono(15 * s * ls, look.weight), color: fg,
+                                 kern: 1.2 * s + look.tracking * 15 * s * ls, maxWidth: 80 * s, minScale: 0.7, floor: 0.5)
             let caption: CGColor = hot ? hotCaptionColor : tokens.captionRest
             // A caption that can't fit is left out rather than cut.
             seg.caption.setFitting([slot.caption, ""], font: WheelFont.rounded(10 * s * ls, .semibold), color: caption,
@@ -300,7 +300,7 @@ final class SectorRenderer: WheelRenderer {
         let size = tokens.chipFont.pointSize * s * look.labelScale
         let font = style == .ring ? look.labelFont(size, look.weight) : WheelFont.mono(size, look.weight)
         c.label.setFitting(style == .ring ? [text, look.label(slot.monoLabel)] : [text], font: font, color: hot ? tokens.fgHot : tokens.fgRest,
-                           kern: tokens.chipKern * s + look.tracking * size, maxWidth: c.group.bounds.width - 6 * s, minScale: 0.6)
+                           kern: tokens.chipKern * s + look.tracking * size, maxWidth: c.group.bounds.width - 6 * s, minScale: 0.6, wrap: true)
         c.label.position = CGPoint(x: c.group.bounds.midX, y: c.group.bounds.midY)
         let outline = look.fillStyle == "outline" && !hot
         let bright = look.brightFills && hot

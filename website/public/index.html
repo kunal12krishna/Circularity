@@ -614,6 +614,31 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
 .stage[data-step="3"] .st-file.result { opacity: 1; transform: scale(1); }
 @keyframes dragmove { 0%, 8% { left: 18%; top: 26%; } 62%, 100% { left: 58%; top: 56%; } }
 
+/* Three wheels: keycaps that switch the real wheel (press the key too) */
+.wk { display: grid; grid-template-columns: minmax(0, .95fr) minmax(0, 1.05fr); gap: clamp(20px, 4vw, 56px); align-items: center; }
+.wk-side { display: grid; gap: 22px; align-content: start; }
+.wk-keys { display: grid; gap: 10px; }
+.wk-key { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; align-items: center; text-align: left; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); color: var(--fg); cursor: pointer; font: inherit; transition: border-color .2s ease-out, background-color .2s ease-out, transform .25s cubic-bezier(.2,.8,.2,1); }
+.wk-key kbd { font-size: 21px; min-width: 52px; text-align: center; padding: 7px 10px; transition: background-color .2s ease-out, color .2s ease-out, transform .2s cubic-bezier(.2,.8,.2,1); }
+.wk-key b { display: block; font-family: var(--display); font-weight: var(--display-weight); font-size: 20px; letter-spacing: -.02em; }
+.wk-key small { display: block; color: var(--muted); font-size: 14px; margin-top: 2px; }
+.wk-key:hover { border-color: color-mix(in srgb, var(--fg) 30%, transparent); }
+.wk-key[aria-selected="true"] { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--panel)); }
+.wk-key[aria-selected="true"] kbd { background: var(--accent); color: var(--on-accent); border-color: color-mix(in srgb, var(--fg) 45%, var(--accent)); }
+.wk-key.pressed kbd { transform: translateY(2px); }
+.wk-key:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.wk-copy { display: grid; gap: 12px; }
+.wk-copy h3 { font-size: clamp(22px, 2.4vw, 30px); font-weight: var(--display-weight); letter-spacing: var(--display-track); }
+.wk-copy p { color: var(--muted); font-size: 17px; max-width: 52ch; }
+.wk-note { color: var(--muted); font-size: 14px; }
+.wk-plate img { transition: opacity .2s ease-out, filter .2s ease-out; }
+.wk-plate.swap img { opacity: 0; filter: blur(8px); }
+.ex-panel .plate.tall { max-width: 420px; justify-self: center; width: 100%; }
+.cards-pair { display: grid; gap: 14px; justify-items: center; }
+.cards-pair .plate { max-width: 440px; width: 100%; }
+@media (max-width: 820px) { .wk { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .wk-key, .wk-key kbd, .wk-plate img { transition: none; } }
+
 /* Feature explorer: tabs that switch real product shots */
 .explorer { display: grid; gap: 22px; }
 .ex-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -764,7 +789,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     <div class="hero-copy">
       <a class="announce" href="#changelog"><span class="tag">New in 0.4</span> Video &amp; audio, three wheels, Make it fit, text from screenshots →</a>
       <h1 id="heroTitle">Convert files<br><span class="hl">mid-drag.</span></h1>
-      <p class="lede">Drag a picture, PDF or document, tap Shift, and let go on a format. The new file lands next to the original. Nothing opens, nothing is uploaded.</p>
+      <p class="lede">Drag any file and tap a key: <kbd>⇧</kbd> to convert it, <kbd>⌘</kbd> for tools, <kbd>⌃</kbd> for actions. Pictures, PDFs, documents, video and audio. The new file lands next to the original. Nothing opens, nothing is uploaded.</p>
       <div class="cta-row">
         <a class="btn primary dl" href="#install">Download for Mac</a>
         <a class="btn" href="#desk">Try it below</a>
@@ -845,6 +870,28 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     </div>
   </section>
 
+  <section class="wrap" id="wheels" aria-labelledby="wheelsTitle">
+    <h2 class="sec-title" id="wheelsTitle">Three keys.<br><span class="hl">Three wheels.</span></h2>
+    <p class="sec-sub">Tap one while you drag. Tap another and the wheel switches in place; keycaps above it always show which is which. Try it here: press ⇧, ⌘ or ⌃.</p>
+    <div class="wk">
+      <div class="wk-side">
+        <div class="wk-keys" role="tablist" aria-label="The three wheels">
+          <button class="wk-key" type="button" role="tab" id="wk-t-convert" data-wheel="convert" aria-selected="true" aria-controls="wk-panel"><kbd>⇧</kbd><span><b>Convert</b><small>Shift · the format you need</small></span></button>
+          <button class="wk-key" type="button" role="tab" id="wk-t-tools" data-wheel="tools" aria-selected="false" aria-controls="wk-panel" tabindex="-1"><kbd>⌘</kbd><span><b>Tools</b><small>Command · change the file itself</small></span></button>
+          <button class="wk-key" type="button" role="tab" id="wk-t-actions" data-wheel="actions" aria-selected="false" aria-controls="wk-panel" tabindex="-1"><kbd>⌃</kbd><span><b>Actions</b><small>Control · do something with it</small></span></button>
+        </div>
+        <div class="wk-copy" id="wk-panel" role="tabpanel" aria-labelledby="wk-t-convert">
+          <h3 id="wkTitle">The format you need, at your pointer.</h3>
+          <p id="wkLine">Pictures, PDFs, documents, video and audio, each with the formats that make sense for it. Hover a button and the centre tells you how big the result will be.</p>
+          <ul class="chip-row" id="wkChips"><li>JPG</li><li>PNG</li><li>HEIC</li><li>AVIF</li><li>PDF</li><li>DOCX</li><li>MP4</li><li>MOV</li><li>GIF</li><li>M4A</li><li>WAV</li><li>FLAC</li></ul>
+        </div>
+        <p class="wk-note">Every key can be changed, or turned off, in Settings → Gesture.</p>
+      </div>
+      <figure class="plate wk-plate" id="wkPlate"><img id="wkImg" src="assets/wheel-convert.jpg" width="820" height="820" loading="lazy"
+        alt="The Convert wheel with keycaps above it: Convert lit, Tools and Actions beside it; PNG, JPG, AVIF, Compress, Resize and More around a photo"></figure>
+    </div>
+  </section>
+
   <section class="morph" id="orbit" aria-labelledby="orbitTitle">
     <div class="morph-pin" id="morphPin">
       <div class="morph-intro" id="morphIntro">
@@ -852,8 +899,8 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
         <p class="morph-hint">scroll ↓</p>
       </div>
       <div class="morph-copy" id="morphCopy">
-        <h3>Twenty ways out</h3>
-        <p>Images, PDFs and documents, plus Compress, Resize, Crop, Combine and Cut out. Hover or tap a card to flip it.</p>
+        <h3>Thirty ways out</h3>
+        <p>Images, PDFs, documents, video and audio, plus Make it fit, Text, Trim, Lock, Zip, Compress, Crop and Cut out. Hover or tap a card to flip it.</p>
       </div>
       <ul class="morph-cards" id="morphCards" aria-label="Formats and tools"></ul>
     </div>
@@ -866,8 +913,8 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     <div class="grid4">
       <div class="card">
         <div class="keys"><kbd>drag</kbd><span>+</span><kbd class="press">⇧ Shift</kbd></div>
-        <h3>Tap Shift</h3>
-        <p>While dragging from Finder, the desktop or any app. Option or Control work too.</p>
+        <h3>Tap a key</h3>
+        <p>While dragging from Finder, the desktop or any app: Shift for Convert, ⌘ for Tools, ⌃ for Actions.</p>
       </div>
       <div class="card">
         <div class="shake-pad" id="shakePad" tabindex="0" role="group" aria-label="Shake pad: wiggle the pointer here, or press the left and right arrow keys quickly"><span id="shakeText" aria-live="polite">shake your pointer here ↔</span><div class="meter" id="shakeMeter"></div></div>
@@ -893,16 +940,38 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     <div class="explorer" id="explorer">
       <div class="ex-tabs" role="tablist" aria-label="Features">
         <button class="ex-tab" role="tab" type="button" id="ex-t0" aria-controls="ex-p0" aria-selected="true">The wheel<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t6" aria-controls="ex-p6" aria-selected="false" tabindex="-1">Make it fit<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t7" aria-controls="ex-p7" aria-selected="false" tabindex="-1">Video &amp; audio<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t8" aria-controls="ex-p8" aria-selected="false" tabindex="-1">Text &amp; PDFs<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t1" aria-controls="ex-p1" aria-selected="false" tabindex="-1">More<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t2" aria-controls="ex-p2" aria-selected="false" tabindex="-1">Cut out<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t9" aria-controls="ex-p9" aria-selected="false" tabindex="-1">Result card<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t3" aria-controls="ex-p3" aria-selected="false" tabindex="-1">Menu bar panel<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t4" aria-controls="ex-p4" aria-selected="false" tabindex="-1">Settings<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t5" aria-controls="ex-p5" aria-selected="false" tabindex="-1">Three looks<span class="bar"></span></button>
       </div>
       <div class="ex-panel" role="tabpanel" id="ex-p0" aria-labelledby="ex-t0">
         <div class="ex-copy"><h3>Six buttons around your pointer.</h3><p>The formats that fit what you're holding, plus Compress and Resize. Hover one and the centre tells you the size you'll get.</p>
-          <ul class="chip-row"><li>PNG</li><li>JPG</li><li>HEIC</li><li>AVIF</li><li>WebP</li><li>TIFF</li><li>GIF</li><li>BMP</li><li>PDF</li><li>TXT</li><li>DOCX</li><li>HTML</li><li>XLSX → PDF</li><li>PPTX → PDF</li></ul></div>
+          <ul class="chip-row"><li>PNG</li><li>JPG</li><li>HEIC</li><li>AVIF</li><li>WebP</li><li>TIFF</li><li>GIF</li><li>BMP</li><li>PDF</li><li>TXT</li><li>DOCX</li><li>HTML</li><li>XLSX → PDF</li><li>PPTX → PDF</li><li>MP4</li><li>MOV</li><li>GIF</li><li>M4A</li><li>WAV</li><li>FLAC</li></ul></div>
         <figure class="plate tilt"><img src="assets/wheel-halo.jpg" alt="The Halo wheel with JPG highlighted: the centre reads Convert to JPG, small, best for photos" width="820" height="820" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p6" aria-labelledby="ex-t6" hidden>
+        <div class="ex-copy"><h3>Will it send? Make it fit.</h3><p>Pick where it's going: Email, WhatsApp, Discord, a web form or any size. Circularity finds the smallest change that gets under it, quality first and size only if it must. Several files can share one limit.</p>
+          <ul class="chip-row"><li>Email 25 MB</li><li>WhatsApp 16 MB</li><li>Discord 10 MB</li><li>Web form 5 MB</li><li>any size</li></ul></div>
+        <figure class="plate tilt tall"><img src="assets/dialog-fit.jpg" alt="The Make it fit window: Email 25 MB selected, then WhatsApp, Discord, Web form and Strict, with the files sharing the limit" width="920" height="1144" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p7" aria-labelledby="ex-t7" hidden>
+        <div class="ex-copy"><h3>Video and audio, built in.</h3><p>MOV to MP4 in seconds, video to GIF, the sound as M4A, WAV or FLAC. Trim with QuickTime's own handles, compress to HEVC with HDR kept, change the speed, mute, or join clips. Hover GIF and a preview plays in the centre.</p>
+          <ul class="chip-row"><li>MP4</li><li>MOV</li><li>M4V</li><li>GIF</li><li>M4A</li><li>WAV</li><li>AIFF</li><li>FLAC</li><li>Trim</li><li>Speed</li><li>Mute</li><li>Join</li></ul></div>
+        <figure class="plate tilt"><img src="assets/wheel-video.jpg" alt="The Convert wheel for a video: MOV, M4V and GIF on the ring, GIF lit and the centre reading Convert to GIF, a looping GIF, 480 px" width="820" height="820" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p8" aria-labelledby="ex-t8" hidden>
+        <div class="ex-copy"><h3>Text from anything. PDFs your way.</h3><p>Copy the words out of a screenshot, a photo or a scan in about a second, on your Mac. Make scans searchable, lock a PDF with a password, reorder, turn or remove its pages, or split it into one PDF per page.</p>
+          <ul class="chip-row"><li>Text</li><li>OCR</li><li>Lock</li><li>Unlock</li><li>Pages</li><li>Split</li></ul></div>
+        <div class="shots-2">
+          <figure class="plate tilt" style="margin:0"><img src="assets/wheel-text.jpg" alt="The Tools wheel with Text lit: the centre reads Copy the text, the words, even from a photo or scan" width="820" height="820" loading="lazy"></figure>
+          <figure class="plate tilt" style="margin:0"><img src="assets/dialog-pages.jpg" alt="The Pages window: page thumbnails with turn and remove buttons, and Reverse, Turn all and Reset" width="920" height="1150" loading="lazy"></figure>
+        </div>
       </div>
       <div class="ex-panel" role="tabpanel" id="ex-p1" aria-labelledby="ex-t1" hidden>
         <div class="ex-copy"><h3>Rest on More for the rest.</h3><p>Crop, Cut out, one PDF from many pictures or one per picture, and the formats that didn't fit on the ring. Buttons you save from Resize or Compress show up here too.</p></div>
@@ -911,6 +980,14 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
       <div class="ex-panel" role="tabpanel" id="ex-p2" aria-labelledby="ex-t2" hidden>
         <div class="ex-copy"><h3>Cut out the background.</h3><p>Apple's on-device subject lifting keeps the subject and makes everything else transparent, saved as a PNG. Nothing leaves your Mac. Needs macOS 14 or later.</p></div>
         <figure class="plate tilt"><img src="assets/cutout.jpg" alt="Before and after: an orange mug on a table, then the same mug on a transparent background" width="1500" height="570" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p9" aria-labelledby="ex-t9" hidden>
+        <div class="ex-copy"><h3>Every result, one click from undone.</h3><p>The result floats by your pointer: drag it into Mail, see how much smaller it got, or Undo it, and an original sent to the Trash comes back. Esc closes the card. The Stash collects files from anywhere so you can drag them out together.</p>
+          <ul class="chip-row"><li>Undo</li><li>Esc</li><li>−62%</li><li>Stash</li><li>Zip</li><li>AirDrop</li></ul></div>
+        <div class="cards-pair">
+          <figure class="plate" style="margin:0"><img src="assets/card-result.png" alt="The result card: IMG_2041 card.heic, 67% smaller, with Copy, Show and Undo" width="600" height="224" loading="lazy"></figure>
+          <figure class="plate" style="margin:0"><img src="assets/card-stash.png" alt="The Stash: two files collected, drop more here, drag all out, with Copy, Show and Clear" width="600" height="224" loading="lazy"></figure>
+        </div>
       </div>
       <div class="ex-panel" role="tabpanel" id="ex-p3" aria-labelledby="ex-t3" hidden>
         <div class="ex-copy"><h3>A panel in the menu bar.</h3><p>Drop files on a preset, type commands like <span class="mono">50kb</span> or <span class="mono">1920w</span> after ⌘K, and find every result in Recent. Dark, light, or three layouts.</p>
@@ -950,7 +1027,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     </div>
     <div class="grid3 feel" role="list">
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">01</span><h3>Quiet by default</h3><p>Update checks stay off unless you turn them on, and the app sleeps until you drag a file. No account, no sign-in.</p></div>
-      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">02</span><h3>Drop shelf</h3><p>The result floats next to your pointer. Drag it straight into Mail, Slack or a chat, or copy it with one click.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">02</span><h3>The result card</h3><p>The result floats by your pointer: drag it into Mail, see how much smaller it got, or Undo it. Esc closes it.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">03</span><h3>Before and after</h3><p>Hover JPG, HEIC or Compress and a magnifier shows a piece of your picture, half as it is and half as it will be.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">04</span><h3>Your own buttons</h3><p>Choose what sits in each of the six spots on the wheel. Everything else waits under More.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">05</span><h3>Milestones</h3><p>Your first conversion, 1 GB saved, 10,000 files. A small celebration in the menu bar each time.</p></div>
@@ -2376,7 +2453,11 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     ["XLSX", "doc", "--s-tiff", "Excel to PDF, or smaller"], ["PPTX", "doc", "--s-heic", "slides to PDF, or smaller"],
     ["COMPRESS", "tool", "--accent", "to a quality or a size: < 2 MB"], ["RESIZE", "tool", "--accent", "1920w, A4, Letter or a scale"],
     ["CROP", "tool", "--accent", "trim pictures and PDF pages"], ["COMBINE", "tool", "--accent", "many files into one PDF"],
-    ["CUT OUT", "tool", "--accent", "lift the subject off its background"], ["PAGES", "tool", "--accent", "PDF pages to images"],
+    ["CUT OUT", "tool", "--accent", "lift the subject off its background"], ["PAGES", "tool", "--accent", "reorder, turn or remove PDF pages"],
+    ["MP4", "media", "--s-heic", "MOV to MP4 in seconds"], ["GIF", "media", "--s-jpg", "a looping GIF from any video"],
+    ["M4A", "media", "--s-png", "just the sound, small"], ["FIT", "tool", "--accent", "under 25 MB for email, 16 MB for WhatsApp"],
+    ["TEXT", "tool", "--accent", "the words in a screenshot or scan"], ["TRIM", "tool", "--accent", "keep just the part you want"],
+    ["LOCK", "tool", "--accent", "a PDF with a password"], ["ZIP", "action", "--blue", "clean archives, no __MACOSX"],
   ];
   const N = CARDS.length, rnd = (a) => (Math.random() - 0.5) * a;
   const cards = CARDS.map(([name, kind, color, what]) => {
@@ -2608,6 +2689,68 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
   steps.forEach((st) => io.observe(st));
 })();
 
+// ---------- Three wheels: keycaps (and the real keys) switch the wheel ----------
+(() => {
+  const sec = document.getElementById("wheels");
+  if (!sec) return;
+  const keys = [...sec.querySelectorAll(".wk-key")], panel = document.getElementById("wk-panel"), plate = document.getElementById("wkPlate"), img = document.getElementById("wkImg");
+  const title = document.getElementById("wkTitle"), line = document.getElementById("wkLine"), chips = document.getElementById("wkChips");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const W = {
+    convert: { img: "assets/wheel-convert.jpg", alt: "The Convert wheel with keycaps above it, Convert lit: PNG, JPG, AVIF, Compress, Resize and More around a photo",
+      title: "The format you need, at your pointer.",
+      line: "Pictures, PDFs, documents, video and audio, each with the formats that make sense for it. Hover a button and the centre tells you how big the result will be.",
+      chips: ["JPG", "PNG", "HEIC", "AVIF", "PDF", "DOCX", "MP4", "MOV", "GIF", "M4A", "WAV", "FLAC"] },
+    tools: { img: "assets/wheel-tools.jpg", alt: "The Tools wheel for a PDF, Tools lit: Compress, Fit, Text, Pages, Lock and More",
+      title: "Change the file itself.",
+      line: "Make it fit an email or WhatsApp, copy the text out of a screenshot, compress, crop or resize, trim a video or change its speed, lock a PDF or reorder its pages.",
+      chips: ["Make it fit", "Text", "OCR", "Compress", "Crop", "Resize", "Trim", "Speed", "Mute", "Pages", "Lock", "Split", "No GPS", "Cut out"] },
+    actions: { img: "assets/wheel-actions.jpg", alt: "The Actions wheel for a folder, Actions lit: AirDrop, Copy, Zip, Path, Stash and More",
+      title: "Do something with it.",
+      line: "For any file or folder, even ones nothing can convert: send it, copy it, zip it, collect it in the Stash, or open its folder in Terminal.",
+      chips: ["AirDrop", "Copy", "Zip", "Copy path", "Stash", "Mail", "Terminal", "Move to", "Copy to", "Quick Look"] },
+  };
+  Object.values(W).forEach((w) => { const i = new Image(); i.src = w.img; }); // switch without a blank frame
+  let current = "convert", swapTimer = 0;
+  function select(name, focus) {
+    if (!W[name]) return;
+    keys.forEach((k) => {
+      const on = k.dataset.wheel === name;
+      k.setAttribute("aria-selected", String(on)); k.tabIndex = on ? 0 : -1;
+      if (on) { panel.setAttribute("aria-labelledby", k.id); if (focus) k.focus(); }
+    });
+    if (name === current) return;
+    current = name;
+    const w = W[name];
+    title.textContent = w.title; line.textContent = w.line;
+    chips.innerHTML = w.chips.map((c) => `<li>${c}</li>`).join("");
+    if (reduce) { img.src = w.img; img.alt = w.alt; return; }
+    clearTimeout(swapTimer);
+    plate.classList.add("swap");
+    swapTimer = setTimeout(() => { img.src = w.img; img.alt = w.alt; plate.classList.remove("swap"); }, 170);
+  }
+  keys.forEach((k, i) => {
+    k.addEventListener("click", () => select(k.dataset.wheel));
+    k.addEventListener("keydown", (e) => {
+      const d = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+      if (d) { e.preventDefault(); select(keys[(i + d + keys.length) % keys.length].dataset.wheel, true); }
+    });
+  });
+  // The real keys, only while this section is on screen (the hero and the demo use them too).
+  let visible = false;
+  new IntersectionObserver((es) => { visible = es[0].isIntersecting; }, { threshold: 0.35 }).observe(sec);
+  const byKey = { Shift: "convert", Meta: "tools", Control: "actions" };
+  addEventListener("keydown", (e) => {
+    const name = byKey[e.key];
+    if (!visible || !name || e.repeat || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "")) return;
+    select(name);
+    const k = keys.find((x) => x.dataset.wheel === name);
+    k?.classList.add("pressed");
+  });
+  addEventListener("keyup", (e) => { const name = byKey[e.key]; if (name) keys.find((x) => x.dataset.wheel === name)?.classList.remove("pressed"); });
+  addEventListener("blur", () => keys.forEach((k) => k.classList.remove("pressed")));
+})();
+
 // ---------- Feature explorer: tabs that play by themselves ----------
 (() => {
   const root = $("#explorer"), tabs = $$(".ex-tab", root), panels = $$(".ex-panel", root);
@@ -2651,6 +2794,10 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
       line: "Markdown, HTML, Word, Excel and PowerPoint, printed with proper margins." },
     { tab: "Product photos", icon: "PNG", from: ["Mug.png", "2.1 MB"], via: ["drag", "⇧", "More", "Cut out"], to: ["Mug (cut out).png", "transparent background"],
       line: "Ready for a listing or a slide, cut out on your Mac." },
+    { tab: "A video for WhatsApp", icon: "MOV", from: ["Beach day.MOV", "84 MB"], via: ["drag", "⌘", "Fit", "WhatsApp"], to: ["Beach day (to send).mov", "15.2 MB"],
+      line: "The smallest change that gets under the limit, so it sends the first time." },
+    { tab: "Text in a screenshot", icon: "PNG", from: ["Boarding pass.png", "1.2 MB"], via: ["drag", "⌘", "Text"], to: ["on your clipboard", "3 lines, in a second"],
+      line: "Paste the words anywhere. Read on your Mac, nothing uploaded." },
     { tab: "A whole folder", icon: "DIR", from: ["Screenshots", "folder"], via: ["Watch folder", "JPG"], to: ["each new screenshot.jpg", "a second later"],
       line: "Turn it on once and new files convert themselves." },
   ];

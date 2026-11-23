@@ -59,8 +59,9 @@ extension CATextLayer {
     /// ("Compress", then "SQZ"), so a big Studio label size never cuts a word
     /// in the middle. If none fits, the text may shrink further (to `floor`)
     /// before the last one is shortened. An empty candidate means "leave it out".
+    /// `wrap`: a two-word label that still doesn't fit goes onto two lines ("COPY / TO") before anything is cut.
     func setFitting(_ candidates: [String], font: NSFont, color: CGColor, kern: CGFloat = 0, maxWidth: CGFloat,
-                    minScale: CGFloat = 0.7, floor: CGFloat = 0.5) {
+                    minScale: CGFloat = 0.7, floor: CGFloat = 0.5, wrap: Bool = false) {
         func fits(_ text: String, at scale: CGFloat) -> Bool {
             guard !text.isEmpty else { return true }
             let smaller = NSFont(descriptor: font.fontDescriptor, size: font.pointSize * scale) ?? font
@@ -70,6 +71,10 @@ extension CATextLayer {
             set(pick, font: font, color: color, kern: kern, maxWidth: maxWidth, minScale: minScale)
         } else if let pick = candidates.first(where: { fits($0, at: floor) }) {
             set(pick, font: font, color: color, kern: kern, maxWidth: maxWidth, minScale: floor)
+        } else if wrap, let last = candidates.last, last.contains(" "),
+                  last.split(separator: " ").allSatisfy({ fits(String($0), at: floor) }) {
+            let small = NSFont(descriptor: font.fontDescriptor, size: font.pointSize * floor) ?? font
+            set(last.replacingOccurrences(of: " ", with: "\n"), font: small, color: color, kern: kern * floor)
         } else {
             set(candidates.last ?? "", font: font, color: color, kern: kern, maxWidth: maxWidth, minScale: floor)
         }

@@ -1,0 +1,20 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "geist",
+        "createdAt": "2026-11-23T11:19:27.115Z",
+        "reason": "Site-wide brand typeface: website/index.html and studio.html both set --display/--body to Geist (established before this session)"
+      },
+      {
+        "rule": "overused-font",
+        "value": "geist mono",
+        "createdAt": "2026-11-23T11:19:27.153Z",
+        "reason": "Site-wide brand mono: website/index.html and studio.html both use Geist Mono for --mono (established before this session)"
+      }
+    ]
+  }
+}

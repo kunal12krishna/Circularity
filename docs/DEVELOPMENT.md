@@ -46,6 +46,10 @@ runs everything below in one go.
   random rolls and the ends of every range) pastes in intact, and pasting one over another leaves
   nothing of the old look behind, and no word on any wheel (Convert, Tools, Actions) is ever cut to
   fit. With a folder, each wheel is also rendered at rest and with More open.
+  The file is made by the live Studio page: `node scripts/studio-exports.mjs "$PWD/website/studio.html" <out.json>`
+  drives it in headless Chrome and exports every preset, every knob at both ends, the worst-case text
+  settings, random rolls and share links, and checks that the app's JSON round-trips through the
+  Studio's Import box. Run it again whenever the Studio changes.
 - `--render-previews <folder>`: renders the wheels, panel, settings and dialogs to PNGs.
 - `--perf-report [file.md]`: measures the app's performance budgets on this Mac.
 
