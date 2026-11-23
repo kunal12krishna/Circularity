@@ -13,18 +13,28 @@ cd "$(dirname "$0")/.."
 # address in UPDATE_FEED_URL and the DMG at DOWNLOAD_BASE_URL.
 VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" dist/Circularity.app/Contents/Info.plist)
 DMG_NAME="Circularity-$VERSION.dmg"
-BASE="${DOWNLOAD_BASE_URL:-https://example.com/downloads}"
+# GitHub Releases: each version's DMG is uploaded as Circularity.dmg under its tag.
+BASE="${DOWNLOAD_BASE_URL:-https://github.com/kunal12krishna/Circularity/releases/download/v$VERSION}"
+URL="${BASE%/}/Circularity.dmg"
+# The SHA-256 and its Ed25519 signature let the app install the update in place (docs/UPDATES.md).
+SIG=""
+if [ -f "$HOME/.config/circularity/update-signing-key" ]; then
+    SIG=$(swift scripts/sign-update.swift "dist/$DMG_NAME")
+else
+    echo "release.sh: no update key (swift scripts/update-key.swift makes one), so the feed can't offer an in-place install."
+fi
 # python3 escapes quotes, backslashes and newlines in the notes.
-VERSION="$VERSION" URL="${BASE%/}/$DMG_NAME" NOTES="${RELEASE_NOTES:-}" python3 -c '
+VERSION="$VERSION" URL="$URL" NOTES="${RELEASE_NOTES:-}" SIG="$SIG" python3 -c '
 import json, os
 feed = {"version": os.environ["VERSION"], "url": os.environ["URL"], "notes": os.environ["NOTES"], "minimumSystem": "13.0"}
+if os.environ["SIG"]:
+    feed["sha256"], feed["signature"] = os.environ["SIG"].split()
 open("dist/appcast.json", "w").write(json.dumps(feed, indent=2) + "\n")'
-echo "==> dist/appcast.json (download address: ${BASE%/}/$DMG_NAME)"
+echo "==> dist/appcast.json (download address: $URL${SIG:+, signed})"
 # A copy with a fixed name, so a website can always link to the newest one
 # (GitHub: …/releases/latest/download/Circularity.dmg).
 cp "dist/$DMG_NAME" dist/Circularity.dmg
 echo "==> dist/Circularity.dmg (same file, fixed name for website links)"
-[ -n "${DOWNLOAD_BASE_URL:-}" ] || echo "    Set DOWNLOAD_BASE_URL to where the DMG will live before publishing appcast.json."
 
 echo
 if [ -z "${DEVELOPER_ID_APP:-}" ] || [ -z "${NOTARY_PROFILE:-}" ]; then

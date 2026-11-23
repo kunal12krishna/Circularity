@@ -112,6 +112,8 @@ public enum Operation: Sendable, Equatable {
     case arrangePDF([PageEdit])
     /// Video or audio played faster (> 1) or slower (< 1); voices keep their pitch.
     case changeSpeed(Double)
+    /// A picture cropped to a social shape around what draws the eye (on-device saliency).
+    case smartCrop(SmartCrop.Shape)
 
     public var kind: OperationKind {
         switch self {
@@ -134,6 +136,13 @@ public enum Operation: Sendable, Equatable {
         case .unlockPDF: .unlocked
         case .arrangePDF: .arranged
         case let .changeSpeed(rate): rate >= 1 ? .faster : .slower
+        case let .smartCrop(shape):
+            switch shape {
+            case .square: .square
+            case .portrait: .portrait
+            case .wide: .wide
+            case .story: .story
+            }
         }
     }
 }

@@ -281,4 +281,7 @@ nonisolated struct UpdateFeed: Codable, Equatable, Sendable {
     var url: String
     var notes: String?
     var minimumSystem: String?
+    /// SHA-256 of the DMG, and its Ed25519 signature (hex): needed to install in place.
+    var sha256: String?
+    var signature: String?
 }

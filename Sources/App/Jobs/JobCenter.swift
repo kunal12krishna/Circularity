@@ -167,6 +167,7 @@ final class JobCenter: ObservableObject {
             case .arranged: "Pages edited"
             case .faster: "Faster"
             case .slower: "Slower"
+            case .square, .portrait, .wide, .story: "Cropped for social"
             }
             history.add(HistoryItem(id: UUID().uuidString, date: Date(), inputs: outcome.inputs.map(\.path),
                                     outputs: outcome.outputs.map(\.path), bytesIn: outcome.bytesIn, bytesOut: outcome.bytesOut,
@@ -199,6 +200,7 @@ final class JobCenter: ObservableObject {
         case .unlockPDF: "Unlocked"
         case .arrangePDF: "Pages"
         case let .changeSpeed(rate): "\(SpeedDialog.label(rate))"
+        case let .smartCrop(shape): shape.ratio
         }
         return "\(name) → \(target)"
     }
@@ -248,7 +250,7 @@ final class JobCenter: ObservableObject {
     static func outputGroup(_ operation: CircularityEngine.Operation) -> OutputGroup {
         switch operation {
         case let .convert(f): f == .pdf ? .pdfs : (f.imageTypeIdentifier != nil ? .images : (f.isMedia ? .media : .documents))
-        case .pdfPages, .resize, .compressImage, .cropImage, .removeBackground: .images
+        case .pdfPages, .resize, .compressImage, .cropImage, .removeBackground, .smartCrop: .images
         case .combinePDF, .resizePDF, .compressPDF, .cropPDF, .splitPDF: .pdfs
         case .extractText, .compressOffice: .documents
         case .trimMedia, .compressMedia, .removeAudio, .combineMedia, .changeSpeed: .media
@@ -320,7 +322,7 @@ final class JobCenter: ObservableObject {
         case .mute: .removeAudio
         case .combineMedia: .combineMedia
         case .searchable: .searchablePDF
-        case .compress, .resize, .crop, .more, .trim, .stripLocation, .file, .fit, .copyText, .password, .editPages, .speed: nil
+        case .compress, .resize, .crop, .more, .trim, .stripLocation, .file, .fit, .copyText, .password, .editPages, .speed, .social: nil
         }
     }
 

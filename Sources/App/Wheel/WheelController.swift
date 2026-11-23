@@ -22,6 +22,8 @@ final class WheelController {
     var onFinished: ((WheelChoice) -> Void)?
     /// The wheel appeared (the tutorial follows along).
     var onShown: (() -> Void)?
+    /// Another wheel's key switched it in place.
+    var onSwitched: ((WheelKind) -> Void)?
 
     private let settings: SettingsStore
     private var panel: WheelPanel?
@@ -219,6 +221,7 @@ final class WheelController {
         // In a drag, the pointer is already somewhere on the new wheel.
         if mode == .drag, let lastDragPoint { dragPointer(at: lastDragPoint) }
         Log.wheel.notice("Switched to the \(newKind.rawValue, privacy: .public) wheel")
+        onSwitched?(newKind)
         if let host { NSAccessibility.post(element: host, notification: .layoutChanged) }
     }
 

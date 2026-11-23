@@ -33,6 +33,8 @@ fi
 # Old links to /Circularity.dmg on the site follow the download (Cloudflare Pages reads _redirects).
 rm -f website/public/_redirects
 case "$URL" in https://*) printf '/Circularity.dmg %s 302\n' "$URL" > website/public/_redirects ;; esac
+# The update feed (scripts/release.sh writes it, signed): the app's UPDATE_FEED_URL points here.
+if [ -f dist/appcast.json ]; then cp dist/appcast.json website/public/appcast.json; fi
 find website/public -name .DS_Store -delete
 
 SIZE=""

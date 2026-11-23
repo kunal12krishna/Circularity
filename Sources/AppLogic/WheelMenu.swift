@@ -29,7 +29,7 @@ nonisolated enum WheelKind: String, Sendable, CaseIterable, Hashable {
 /// Things done with files as they are (the Actions wheel). They work on
 /// anything: folders, mixed selections, files nothing can convert.
 nonisolated enum FileAction: String, Sendable, Hashable, CaseIterable {
-    case airDrop, copy, zip, copyPath, stash, mail, terminal, moveTo, copyTo, quickLook, reveal
+    case airDrop, copy, zip, copyPath, stash, mail, rename, terminal, moveTo, copyTo, quickLook, reveal
 }
 
 /// What a wheel button does. Milestone (d) maps these onto engine jobs.
@@ -52,13 +52,15 @@ nonisolated enum WheelAction: Sendable, Hashable {
     /// Make it fit (a size limit), Text (copy the words), Searchable PDF,
     /// a PDF password (add or remove), Pages (reorder, turn, remove), Speed.
     case fit, copyText, searchable, password, editPages, speed
+    /// Smart crop for social (1:1, 4:5, 16:9, 9:16 around the subject).
+    case social
     /// The Actions wheel.
     case file(FileAction)
 
     /// Opens a window first (Orbit marks these with "…").
     var opensDialog: Bool {
         switch self {
-        case .compress, .resize, .crop, .trim, .fit, .password, .editPages, .speed, .file(.moveTo), .file(.copyTo): true
+        case .compress, .resize, .crop, .trim, .fit, .password, .editPages, .speed, .social, .file(.moveTo), .file(.copyTo), .file(.rename): true
         default: false
         }
     }
@@ -88,6 +90,7 @@ nonisolated enum WheelAction: Sendable, Hashable {
         case .password: "password"
         case .editPages: "editPages"
         case .speed: "speed"
+        case .social: "social"
         }
     }
 }
@@ -341,7 +344,7 @@ nonisolated enum SlotProvider {
         var tools: [WheelSlot] = []
         if !kinds.isEmpty, kinds.allSatisfy({ $0 == .image }) {
             tools = [compressSlot(count: count, pdf: false), fitSlot(count: count), copyTextSlot(count: count),
-                     cropSlot(count: count), resizeSlot(count: count, pdf: false)]
+                     socialSlot(count: count), cropSlot(count: count), resizeSlot(count: count, pdf: false)]
             if cutout { tools.append(cutoutSlot(count: count)) }
             tools.append(count > 1 ? combine(count: count) : formatSlot(.pdf, count: count))
             tools.append(searchableSlot(count: count, scan: true))
@@ -414,6 +417,12 @@ nonisolated enum SlotProvider {
                   verb: "Edit pages…")
     }
 
+    static func socialSlot(count: Int) -> WheelSlot {
+        WheelSlot(action: .social, category: .tool, label: "Social", monoLabel: "SOCIAL", caption: "1:1 · 9:16",
+                  symbol: "rectangle.portrait.on.rectangle.portrait", kicker: "CROP FOR", big: "Social", hint: "1:1, 4:5, 16:9, 9:16, subject kept",
+                  verb: "Crop for social…")
+    }
+
     static func speedSlot(count: Int) -> WheelSlot {
         WheelSlot(action: .speed, category: .tool, label: "Speed", monoLabel: "SPEED", caption: "FASTER",
                   symbol: "gauge.with.dots.needle.67percent", kicker: "CHANGE THE", big: "Speed", hint: "0.25× to 4×, voices keep their pitch",
@@ -437,7 +446,7 @@ nonisolated enum SlotProvider {
     /// The same for every selection, folders included. Ring: send, copy, zip,
     /// More, path, stash; More: Mail, Terminal, Move to…, Copy to…, Look, Finder.
     static func actionsMenu(count: Int) -> WheelMenu {
-        let fan: [WheelSlot] = [.mail, .terminal, .moveTo, .copyTo, .quickLook, .reveal].map { actionSlot($0, count: count) }
+        let fan: [WheelSlot] = [.mail, .rename, .terminal, .moveTo, .copyTo, .quickLook, .reveal].map { actionSlot($0, count: count) }
         let ring: [WheelSlot?] = [actionSlot(.airDrop, count: count), actionSlot(.copy, count: count),
                                   actionSlot(.zip, count: count), moreSlot(fanCount: fan.count),
                                   actionSlot(.copyPath, count: count), actionSlot(.stash, count: count)]
@@ -458,6 +467,8 @@ nonisolated enum SlotProvider {
             case .stash: ("Stash", "STASH", "COLLECT", "tray.and.arrow.down", "ADD TO THE", "Stash",
                           "collect files, drag them out together", "Add to the Stash")
             case .mail: ("Mail", "MAIL", "ATTACH", "envelope", "ATTACH TO", "Email", "a new message with \(them) attached", "Email")
+            case .rename: ("Rename", "NAME", "BATCH", "character.cursor.ibeam", "RENAME", count > 1 ? "\(count) files" : "It",
+                           "a pattern, or find and replace", "Rename…")
             case .terminal: ("Shell", "TERM", "TERMINAL", "terminal", "OPEN IN", "Terminal", "a new window in this folder", "Open in Terminal")
             case .moveTo: ("Move to", "MOVE TO", "FOLDER", "folder", "MOVE TO", "Folder…", "choose where \(them) go", "Move to…")
             case .copyTo: ("Copy to", "COPY TO", "FOLDER", "folder.badge.plus", "COPY TO", "Folder…", "the original stays", "Copy to…")

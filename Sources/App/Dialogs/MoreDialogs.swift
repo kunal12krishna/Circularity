@@ -370,3 +370,185 @@ struct PagesDialog: View {
         }
     }
 }
+
+// MARK: - Crop for social
+
+/// 1:1, 4:5, 16:9 and 9:16 around what draws the eye, previewed on the real picture.
+struct SocialCropDialog: View {
+    let files: [URL]
+    let accent: Color
+    let onRun: ([SmartCrop.Shape]) -> Void
+    let onCancel: () -> Void
+
+    @State private var chosen: Set<SmartCrop.Shape> = [.square]
+    @State private var crops: [SmartCrop.Shape: NSImage] = [:]
+
+    var body: some View {
+        DialogFrame(title: "Crop for social", subtitle: files.count == 1 ? files[0].lastPathComponent : "\(files.count) pictures",
+                    accent: accent, primaryTitle: chosen.count > 1 ? "Make \(chosen.count) crops" : "Crop", primaryEnabled: !chosen.isEmpty,
+                    onPrimary: { onRun(SmartCrop.Shape.allCases.filter(chosen.contains)) }, onCancel: onCancel) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .bottom, spacing: 10) {
+                    ForEach(SmartCrop.Shape.allCases, id: \.self) { shape in tile(shape) }
+                }
+                Text("Each frame is as big as the picture allows and follows what draws the eye, found on your Mac. Pick one or several; a new file is made for each.")
+                    .font(Halo.rounded(11)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .task {
+            guard let url = files.first else { return }
+            let result = await Task.detached(priority: .userInitiated) { UncheckedSendable(SmartCrop.preview(url)) }.value.value
+            guard let result else { return }
+            var made: [SmartCrop.Shape: NSImage] = [:]
+            for (shape, r) in result.crops {
+                let w = CGFloat(result.image.width), h = CGFloat(result.image.height)
+                if let cg = result.image.cropping(to: CGRect(x: r.minX * w, y: r.minY * h, width: r.width * w, height: r.height * h)) {
+                    made[shape] = NSImage(cgImage: cg, size: .zero)
+                }
+            }
+            crops = made
+        }
+    }
+
+    private func tile(_ shape: SmartCrop.Shape) -> some View {
+        let on = chosen.contains(shape)
+        let height: CGFloat = 120, width = min(96, height * CGFloat(shape.aspect))
+        let frameH = width / CGFloat(shape.aspect)
+        return Button {
+            if on { chosen.remove(shape) } else { chosen.insert(shape) }
+        } label: {
+            VStack(spacing: 6) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6).fill(Halo.control)
+                    if let image = crops[shape] {
+                        Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
+                            .frame(width: width, height: frameH).clipped()
+                    } else {
+                        ProgressView().controlSize(.small)
+                    }
+                }
+                .frame(width: width, height: frameH)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(RoundedRectangle(cornerRadius: 6).stroke(on ? accent : Halo.hairline, lineWidth: on ? 2.5 : 1))
+                Text(shape.ratio).font(Halo.mono(13, .heavy)).foregroundStyle(on ? accent : Halo.text)
+                Text(shape.use).font(Halo.rounded(11)).foregroundStyle(Halo.secondary).multilineTextAlignment(.center)
+                    .frame(width: 96).fixedSize(horizontal: false, vertical: true)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(shape.ratio), \(shape.use)")
+        .accessibilityAddTraits(on ? .isSelected : [])
+    }
+}
+
+// MARK: - Rename
+
+/// Batch rename with a live preview; nothing is renamed if any name would clash.
+struct RenameDialog: View {
+    enum Kind: String { case pattern, replace }
+
+    let files: [URL]
+    let accent: Color
+    let onRename: ([(URL, String)]) -> Void
+    let onCancel: () -> Void
+    private let dates: [Date]
+    private let taken: Set<String>
+
+    init(files: [URL], accent: Color, onRename: @escaping ([(URL, String)]) -> Void, onCancel: @escaping () -> Void) {
+        self.files = files
+        self.accent = accent
+        self.onRename = onRename
+        self.onCancel = onCancel
+        dates = files.map { (try? $0.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date() }
+        let folders = Set(files.map { $0.deletingLastPathComponent() })
+        taken = Set(folders.flatMap { (try? FileManager.default.contentsOfDirectory(atPath: $0.path)) ?? [] })
+    }
+
+    @State private var kind = Kind.pattern
+    @State private var pattern = "{name} {n}"
+    @State private var startText = "1"
+    @State private var digits = 2
+    @State private var find = ""
+    @State private var replaceWith = ""
+    @State private var ignoreCase = true
+
+    private var mode: RenamePlanner.Mode {
+        kind == .pattern ? .pattern(pattern, start: Int(startText) ?? 1, digits: digits)
+            : .replace(find: find, with: replaceWith, ignoreCase: ignoreCase)
+    }
+    private var items: [RenamePlanner.Item] {
+        RenamePlanner.plan(zip(files, dates).map { (name: $0.0.lastPathComponent, date: $0.1) }, mode: mode, taken: taken)
+    }
+
+    var body: some View {
+        let items = items
+        let ready = RenamePlanner.canApply(items)
+        DialogFrame(title: "Rename", subtitle: files.count == 1 ? files[0].lastPathComponent : "\(files.count) items",
+                    accent: accent, primaryTitle: files.count > 1 ? "Rename \(files.count)" : "Rename", primaryEnabled: ready,
+                    onPrimary: { if ready { onRename(zip(files, items).map { ($0.0, $0.1.new) }) } }, onCancel: onCancel) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 6) {
+                    Chip(title: "PATTERN", selected: kind == .pattern, accent: accent) { kind = .pattern }
+                    Chip(title: "FIND & REPLACE", selected: kind == .replace, accent: accent) { kind = .replace }
+                }
+                if kind == .pattern {
+                    field("Pattern", $pattern)
+                    HStack(spacing: 8) {
+                        Text("ADD").font(Halo.mono(11, .semibold)).foregroundStyle(Halo.secondary)
+                        ForEach(["{name}", "{n}", "{date}"], id: \.self) { token in
+                            Chip(title: token, accent: accent) { pattern += (pattern.isEmpty || pattern.hasSuffix(" ") ? "" : " ") + token }
+                                .fixedSize()
+                        }
+                        Spacer()
+                    }
+                    HStack(spacing: 8) {
+                        Text("NUMBERS FROM").font(Halo.mono(11, .semibold)).foregroundStyle(Halo.secondary)
+                        TextField("", text: $startText).textFieldStyle(.plain).font(Halo.mono(13)).foregroundStyle(Halo.text)
+                            .frame(width: 34).padding(.horizontal, 6).frame(height: 28).background(RoundedRectangle(cornerRadius: 7).fill(Halo.control))
+                            .accessibilityLabel("Start numbering from")
+                        ForEach([1, 2, 3], id: \.self) { d in
+                            Chip(title: String(repeating: "0", count: d - 1) + "1", selected: digits == d, accent: accent) { digits = d }
+                                .fixedSize()
+                        }
+                        Spacer()
+                    }
+                } else {
+                    field("Find", $find)
+                    field("Replace with", $replaceWith)
+                    Toggle(isOn: $ignoreCase) { Text("Ignore upper and lower case").font(Halo.rounded(12)).foregroundStyle(Halo.text) }
+                        .toggleStyle(.checkbox)
+                }
+                SectionLabel(text: "Preview")
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 5) {
+                        ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                            HStack(spacing: 6) {
+                                Text(item.old).foregroundStyle(Halo.secondary).lineLimit(1).truncationMode(.middle)
+                                Text("→").foregroundStyle(Halo.secondary)
+                                Text(item.new).foregroundStyle(item.problem == nil ? Halo.text : Color(hex: 0xFF6B6B)).lineLimit(1).truncationMode(.middle)
+                                if let problem = item.problem { Text(problem).foregroundStyle(Color(hex: 0xFF6B6B)).lineLimit(1) }
+                            }
+                            .font(Halo.mono(11.5))
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(height: min(160, CGFloat(items.count) * 19 + 8))
+                Text("Renamed where they are. Undo from the menu bar panel puts the old names back.")
+                    .font(Halo.rounded(11)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private func field(_ label: String, _ text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            SectionLabel(text: label)
+            TextField("", text: text).textFieldStyle(.plain).font(Halo.mono(14)).foregroundStyle(Halo.text)
+                .padding(.horizontal, 10).frame(height: 34)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Halo.control))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Halo.hairline))
+                .accessibilityLabel(label)
+        }
+    }
+}

@@ -7,12 +7,14 @@ SWIFT_STRICT_CONCURRENCY = complete
 
 // Universal binary (arm64 + x86_64). Debug builds only the active arch.
 ARCHS = arm64 x86_64
-MARKETING_VERSION = 0.4.1
-CURRENT_PROJECT_VERSION = 7
+MARKETING_VERSION = 0.5.0
+CURRENT_PROJECT_VERSION = 8
 
 // Where the opt-in update check looks for appcast.json (https only). Empty = no
 // update checks in this build. See docs/UPDATES.md.
-UPDATE_FEED_URL =
+UPDATE_FEED_URL = https:/$()/circularity.pages.dev/appcast.json
+// Ed25519 public key that every update must be signed with (scripts/update-key.swift prints it).
+UPDATE_PUBLIC_KEY = 2f10757ed1201aa0f00a1bd763b16f074f7d9b5aad87e685fa53393d320caee9
 
 // Ad-hoc signing with hardened runtime (see PLAN.md §0 and BRIEF.md decision 2).
 CODE_SIGN_STYLE = Manual

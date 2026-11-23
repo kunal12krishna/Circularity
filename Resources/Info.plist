@@ -28,6 +28,8 @@
 	<string>$(APP_NAME)</string>
 	<key>CircularityUpdateFeedURL</key>
 	<string>$(UPDATE_FEED_URL)</string>
+	<key>CircularityUpdatePublicKey</key>
+	<string>$(UPDATE_PUBLIC_KEY)</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.utilities</string>
 	<key>LSMinimumSystemVersion</key>

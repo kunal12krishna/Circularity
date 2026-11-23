@@ -137,6 +137,7 @@ enum SettingsValidation {
     /// State that lives outside our defaults (the Finder service, onboarding).
     /// Network use is only ever switched on by the user on this Mac, never by a file.
     static let notImported: Set<String> = [SettingsKeys.serviceShortcutInstalled.name, SettingsKeys.onboardingCompleted.name,
+                                           SettingsKeys.lastSeenVersion.name,
                                            SettingsKeys.schemaVersionKey, SettingsKeys.milestones.name,
                                            SettingsKeys.updatesLastCheck.name, SettingsKeys.updatesAutomatic.name]
 

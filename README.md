@@ -54,8 +54,8 @@ There are **three wheels**, one per key, and keycaps above the wheel always show
 | Key | Wheel | For |
 | :-: | --- | --- |
 | **⇧ Shift** | **Convert** | Formats: JPG, PNG, HEIC, AVIF, PDF, MP4, MOV, GIF, M4A, WAV, FLAC… |
-| **⌘ Command** | **Tools** | Compress, **Make it fit**, **Text from anything**, Crop, Resize, Trim, Speed, Pages, Lock… |
-| **⌃ Control** | **Actions** | AirDrop, Copy, Zip, Copy path, **Stash**, Mail, Terminal, Move to… *(works on folders too)* |
+| **⌘ Command** | **Tools** | Compress, **Make it fit**, **Text from anything**, **Crop for social**, Resize, Trim, Speed, Pages, Lock… |
+| **⌃ Control** | **Actions** | AirDrop, Copy, Zip, Copy path, **Stash**, **Rename**, Mail, Terminal, Move to… *(works on folders too)* |
 
 Tap another key while the wheel is open and it switches in place. Every key can be changed or
 turned off in Settings.
@@ -87,6 +87,11 @@ attachments. Photos come out as JPG (PNG if they're see-through), so they open o
 your clipboard. **OCR** makes a scanned PDF searchable and selectable. It all runs on Apple's
 on-device text recognition, in the languages your Mac uses.
 
+### 📐 Crop for social
+One tap gives you **1:1, 4:5, 16:9 and 9:16**, each as big as the picture allows and framed around
+the subject. Apple's on-device saliency finds what draws the eye, so the person or the product stays
+in the shot. Pick one shape or all four; you see each crop before you make it.
+
 ### 🎬 Video and audio
 MOV ↔ MP4 ↔ M4V in seconds (no re-encoding when the codecs allow it), **video → GIF**, the sound
 alone as M4A / WAV / AIFF / FLAC, **Trim** with the same handles as QuickTime, **Compress** to HEVC
@@ -114,7 +119,9 @@ DOCX, DOC, RTF, ODT, XLSX, XLS, ODS, CSV, PPTX, PPT and ODP → PDF with nothing
 ### ⚡ Actions, for any file or folder
 AirDrop, Copy (pastes as a file in Finder and as a picture in chats), **Zip** (clean archives,
 no `__MACOSX` clutter), Copy path, **Stash** (collect files from different folders, then drag them all
-out at once), Mail, open in Terminal, Move to…, Copy to…, Quick Look, Show in Finder.
+out at once), **Rename** (a pattern like `Trip {n}` or `{date} {name}`, or find and replace, with a live
+preview, and nothing touched if a name would clash), Mail, open in Terminal, Move to…, Copy to…,
+Quick Look, Show in Finder.
 
 <p align="center">
   <img src="docs/media/card-result.png" width="300" alt="The result card: the new file, how much smaller it got, Copy, Show and Undo">
@@ -159,7 +166,9 @@ click *Copy for the app*, paste it into Settings → Appearance.
 - Needs **no special permission**: no Accessibility, no Input Monitoring, no Screen Recording.
 - Converts with Apple's own frameworks (ImageIO, PDFKit, AVFoundation, Vision, WebKit,
   `textutil`, Quick Look's Office engine). No bundled FFmpeg, nothing downloaded.
-- Goes online for one thing only, the **update check**, which is **off unless you turn it on**.
+- Goes online for one thing only, **updates**, which are **off unless you turn them on**. Then it
+  checks once a day and installs in one click, and only an update signed with Circularity's release
+  key will install ([how](docs/UPDATES.md)).
 - Idles at 0.02 % CPU and sleeps until you drag a file.
 
 ## ⬇︎ Install
@@ -173,7 +182,8 @@ This build isn't signed with an Apple Developer ID yet, so macOS asks once:
   Open Anyway → Open**.
 - **macOS 13 and 14:** right-click Circularity in Applications → **Open** → **Open**.
 
-It lives in the menu bar. A short welcome shows you the gesture, with a practice picture.
+It lives in the menu bar. A short welcome and a hands-on tutorial teach the three wheels with a
+practice picture, and from 0.5 on it can keep itself up to date.
 
 ## FAQ
 
@@ -188,6 +198,13 @@ and a half-finished file is never left behind.
 <summary><b>Will ⌘ or ⇧ interfere with normal Finder drags?</b></summary>
 No. A key you're already holding when the drag starts (Finder's ⌘-drag to move, say) is ignored until
 you let go and tap it again. You can change every key, add a delay, or exclude apps.
+</details>
+
+<details>
+<summary><b>How do I get new versions?</b></summary>
+Turn on <b>Settings → General → Updates</b> (or "Keep it up to date" in the welcome). Circularity checks
+once a day, and <b>Install and relaunch</b> updates it in place. Every update is checked against a
+signature before anything is replaced. Or download the newest DMG here any time.
 </details>
 
 <details>

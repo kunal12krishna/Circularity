@@ -774,7 +774,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
       <span class="sticker" style="--c:var(--s-avif);left:80%;top:3%;--r:-3deg;--d:-5s">AVIF</span>
     </div>
     <div class="hero-copy">
-      <a class="announce" href="#changelog"><span class="tag">New in 0.4</span> Video &amp; audio, three wheels, Make it fit, text from screenshots →</a>
+      <a class="announce" href="#changelog"><span class="tag">New in 0.5</span> Crop for social, batch rename, one-click updates →</a>
       <h1 id="heroTitle">Convert files<br><span class="hl">mid-drag.</span></h1>
       <p class="lede">Drag any file and tap a key: <kbd>⇧</kbd> to convert it, <kbd>⌘</kbd> for tools, <kbd>⌃</kbd> for actions. Pictures, PDFs, documents, video and audio. The new file lands next to the original. Nothing opens, nothing is uploaded.</p>
       <div class="cta-row">
@@ -886,8 +886,8 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
         <p class="morph-hint">scroll ↓</p>
       </div>
       <div class="morph-copy" id="morphCopy">
-        <h3>Thirty ways out</h3>
-        <p>Images, PDFs, documents, video and audio, plus Make it fit, Text, Trim, Lock, Zip, Compress, Crop and Cut out. Hover or tap a card to flip it.</p>
+        <h3>Thirty-two ways out</h3>
+        <p>Images, PDFs, documents, video and audio, plus Make it fit, Text, Social, Trim, Lock, Zip, Rename and Cut out. Hover or tap a card to flip it.</p>
       </div>
       <ul class="morph-cards" id="morphCards" aria-label="Formats and tools"></ul>
     </div>
@@ -930,6 +930,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
         <button class="ex-tab" role="tab" type="button" id="ex-t6" aria-controls="ex-p6" aria-selected="false" tabindex="-1">Make it fit<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t7" aria-controls="ex-p7" aria-selected="false" tabindex="-1">Video &amp; audio<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t8" aria-controls="ex-p8" aria-selected="false" tabindex="-1">Text &amp; PDFs<span class="bar"></span></button>
+        <button class="ex-tab" role="tab" type="button" id="ex-t10" aria-controls="ex-p10" aria-selected="false" tabindex="-1">Crop for social<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t1" aria-controls="ex-p1" aria-selected="false" tabindex="-1">More<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t2" aria-controls="ex-p2" aria-selected="false" tabindex="-1">Cut out<span class="bar"></span></button>
         <button class="ex-tab" role="tab" type="button" id="ex-t9" aria-controls="ex-p9" aria-selected="false" tabindex="-1">Result card<span class="bar"></span></button>
@@ -967,6 +968,11 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
       <div class="ex-panel" role="tabpanel" id="ex-p2" aria-labelledby="ex-t2" hidden>
         <div class="ex-copy"><h3>Cut out the background.</h3><p>Apple's on-device subject lifting keeps the subject and makes everything else transparent, saved as a PNG. Nothing leaves your Mac. Needs macOS 14 or later.</p></div>
         <figure class="plate tilt"><img src="assets/cutout.jpg" alt="Before and after: an orange mug on a table, then the same mug on a transparent background" width="1500" height="570" loading="lazy"></figure>
+      </div>
+      <div class="ex-panel" role="tabpanel" id="ex-p10" aria-labelledby="ex-t10" hidden>
+        <div class="ex-copy"><h3>Every shape, the subject kept in.</h3><p>One tap gives you 1:1, 4:5, 16:9 and 9:16, each as big as the picture allows and framed around what draws the eye, found on your Mac. See every crop before you make it; pick one or all four.</p>
+          <ul class="chip-row"><li>1:1 Instagram</li><li>4:5 portrait</li><li>16:9 YouTube, X</li><li>9:16 Stories, Reels</li></ul></div>
+        <figure class="plate tilt"><img src="assets/dialog-social.jpg" alt="The Crop for social window: the same photo cropped 1:1, 4:5, 16:9 and 9:16, each with the sun and mountains kept in frame" width="920" height="766" loading="lazy"></figure>
       </div>
       <div class="ex-panel" role="tabpanel" id="ex-p9" aria-labelledby="ex-t9" hidden>
         <div class="ex-copy"><h3>Every result, one click from undone.</h3><p>The result floats by your pointer: drag it into Mail, see how much smaller it got, or Undo it, and an original sent to the Trash comes back. Esc closes the card. The Stash collects files from anywhere so you can drag them out together.</p>
@@ -1013,7 +1019,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
       <h2>Small things that feel big</h2>
     </div>
     <div class="grid3 feel" role="list">
-      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">01</span><h3>Quiet by default</h3><p>Update checks stay off unless you turn them on, and the app sleeps until you drag a file. No account, no sign-in.</p></div>
+      <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">01</span><h3>Quiet, and up to date</h3><p>Updates stay off unless you turn them on; then it checks once a day and installs in one click, signed. It sleeps until you drag a file. No account.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">02</span><h3>The result card</h3><p>The result floats by your pointer: drag it into Mail, see how much smaller it got, or Undo it. Esc closes it.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">03</span><h3>Before and after</h3><p>Hover JPG, HEIC or Compress and a magnifier shows a piece of your picture, half as it is and half as it will be.</p></div>
       <div class="card" role="listitem" tabindex="0"><span class="feel-n" aria-hidden="true">04</span><h3>Your own buttons</h3><p>Choose what sits in each of the six spots on the wheel. Everything else waits under More.</p></div>
@@ -1108,6 +1114,15 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     <p class="sec-sub">What changed, and when.</p>
     <div class="win"><div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span>changelog.txt</span><span></span></div><div class="win-body">
     <article class="release" style="border-top:0">
+      <div class="rel-meta"><b>0.5.0</b><time datetime="2026-11-23">23 November 2026</time></div>
+      <ul>
+        <li>Crop for social: 1:1, 4:5, 16:9 and 9:16 in one go, framed around the subject by on-device saliency, with a preview of each crop.</li>
+        <li>Batch rename on the Actions wheel: a pattern like Trip {n} or {date} {name}, or find and replace, with a live preview. Nothing is renamed if a name would clash, and Undo puts the old names back.</li>
+        <li>One-click updates: turn them on and Circularity checks once a day and installs in place. Only an update signed with Circularity's release key installs.</li>
+        <li>The welcome and tutorial teach all three wheels, and a What's new window shows up once after each update.</li>
+      </ul>
+    </article>
+    <article class="release">
       <div class="rel-meta"><b>0.4.1</b><time datetime="2026-11-23">23 November 2026</time></div>
       <ul>
         <li>Wheel Studio themes with big labels or wide letter spacing never cut a word: labels shrink, switch to their short form, or break onto two lines.</li>
@@ -1180,7 +1195,7 @@ footer a { color: var(--fg); text-underline-offset: 3px; }
     <svg class="glyph" style="color:var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 3 A9 9 0 0 1 20.5 9"/><path d="M20.8 13.5 A9 9 0 0 1 12 21"/><path d="M8.5 20.3 A9 9 0 0 1 3.4 9.5"/></svg>
     <h2 id="getTitle">Drag. Tap. Done.</h2>
     <p>Free for macOS 13 or later, on Apple silicon and Intel. Open the disk image and drag Circularity to Applications.</p>
-    <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.4.1</a>
+    <a class="btn primary dl" id="downloadBtn" href="#install">Download Circularity 0.5.0</a>
     <p id="downloadNote" role="status"></p>
     <p style="font-size:14px">The first time, macOS asks before opening it, because this early build isn't signed with an Apple Developer ID yet. On macOS 15 and later, open it once, then go to System Settings → Privacy &amp; Security → Open Anyway. On macOS 13 and 14, right-click the app and choose Open.</p>
   </section>
@@ -2451,6 +2466,7 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
     ["M4A", "media", "--s-png", "just the sound, small"], ["FIT", "tool", "--accent", "under 25 MB for email, 16 MB for WhatsApp"],
     ["TEXT", "tool", "--accent", "the words in a screenshot or scan"], ["TRIM", "tool", "--accent", "keep just the part you want"],
     ["LOCK", "tool", "--accent", "a PDF with a password"], ["ZIP", "action", "--blue", "clean archives, no __MACOSX"],
+    ["SOCIAL", "tool", "--accent", "1:1 to 9:16, the subject kept in"], ["RENAME", "action", "--blue", "Trip {n}, {date}, find and replace"],
   ];
   const N = CARDS.length, rnd = (a) => (Math.random() - 0.5) * a;
   const cards = CARDS.map(([name, kind, color, what]) => {
@@ -2696,12 +2712,12 @@ const kgridRedraw = () => dispatchEvent(new Event("resize"));
       chips: ["JPG", "PNG", "HEIC", "AVIF", "PDF", "DOCX", "MP4", "MOV", "GIF", "M4A", "WAV", "FLAC"] },
     tools: { img: "assets/wheel-tools.jpg", alt: "The Tools wheel for a PDF, Tools lit: Compress, Fit, Text, Pages, Lock and More",
       title: "Change the file itself.",
-      line: "Make it fit an email or WhatsApp, copy the text out of a screenshot, compress, crop or resize, trim a video or change its speed, lock a PDF or reorder its pages.",
-      chips: ["Make it fit", "Text", "OCR", "Compress", "Crop", "Resize", "Trim", "Speed", "Mute", "Pages", "Lock", "Split", "No GPS", "Cut out"] },
+      line: "Make it fit an email or WhatsApp, copy the text out of a screenshot, crop for Instagram or Stories around the subject, trim a video or change its speed, lock a PDF or reorder its pages.",
+      chips: ["Make it fit", "Text", "Social 1:1 → 9:16", "OCR", "Compress", "Crop", "Resize", "Trim", "Speed", "Mute", "Pages", "Lock", "Split", "No GPS", "Cut out"] },
     actions: { img: "assets/wheel-actions.jpg", alt: "The Actions wheel for a folder, Actions lit: AirDrop, Copy, Zip, Path, Stash and More",
       title: "Do something with it.",
-      line: "For any file or folder, even ones nothing can convert: send it, copy it, zip it, collect it in the Stash, or open its folder in Terminal.",
-      chips: ["AirDrop", "Copy", "Zip", "Copy path", "Stash", "Mail", "Terminal", "Move to", "Copy to", "Quick Look"] },
+      line: "For any file or folder, even ones nothing can convert: send it, copy it, zip it, rename a whole batch, collect it in the Stash, or open its folder in Terminal.",
+      chips: ["AirDrop", "Copy", "Zip", "Copy path", "Stash", "Rename", "Mail", "Terminal", "Move to", "Copy to", "Quick Look"] },
   };
   Object.values(W).forEach((w) => { const i = new Image(); i.src = w.img; }); // switch without a blank frame
   let current = "convert", swapTimer = 0;

@@ -18,11 +18,13 @@ final class OnboardingModel: ObservableObject {
     @Published var launchAtLogin: Bool
     @Published var notifications: Bool
     @Published var finderShortcut = ServiceShortcut.isInstalled
+    @Published var updates: Bool
     private let finderShortcutAtStart = ServiceShortcut.isInstalled
 
     init(settings: SettingsStore) {
         self.settings = settings
         notifications = settings.value(SettingsKeys.notifyEnabled)
+        updates = settings.value(SettingsKeys.updatesAutomatic)
         // First run: suggest on. Shown again later: show what is true now.
         launchAtLogin = settings.value(SettingsKeys.onboardingCompleted) ? (LoginItem.isEnabled || LoginItem.needsApproval) : true
     }
@@ -41,6 +43,12 @@ final class OnboardingModel: ObservableObject {
             self?.notifications = granted
             self?.settings.set(granted, for: SettingsKeys.notifyEnabled)
         }
+    }
+
+    /// Off unless chosen: checking is the app's only network use.
+    func setUpdates(_ on: Bool) {
+        updates = on
+        settings.set(on, for: SettingsKeys.updatesAutomatic)
     }
 
     func setFinderShortcut(_ on: Bool) {
@@ -88,7 +96,7 @@ struct OnboardingView: View {
             }
         }
         .padding(28)
-        .frame(width: 560, height: 470)
+        .frame(width: 560, height: 520)
         .background(Halo.background)
         .animation(.easeOut(duration: 0.2), value: model.step)
     }
@@ -100,8 +108,8 @@ struct OnboardingView: View {
             Text("Convert files without opening anything.").font(Halo.rounded(17, .semibold)).foregroundStyle(Halo.text)
             VStack(alignment: .leading, spacing: 12) {
                 stepLine("1", "Start dragging a file — from Finder, the desktop, anywhere.", a)
-                stepLine("2", "Tap Shift (or shake the pointer). A wheel of formats appears.", a)
-                stepLine("3", "Let go on a format. The new file appears next to the original.", a)
+                stepLine("2", "Tap a key: ⇧ for formats, ⌘ for tools like Make it fit and Text, ⌃ for actions like AirDrop and Zip.", a)
+                stepLine("3", "Let go on a button. The new file appears next to the original.", a)
             }
             Text("The icon in the menu bar opens a panel with presets, recent results and ⌘K.")
                 .font(Halo.rounded(12)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
@@ -134,6 +142,9 @@ struct OnboardingView: View {
                 ToggleRow(title: "⌃⌥C converts the Finder selection",
                           detail: "Select files in Finder and press ⌃⌥C. Finder picks it up after it restarts.",
                           isOn: Binding(get: { model.finderShortcut }, set: { model.setFinderShortcut($0) }), accent: a)
+                ToggleRow(title: "Keep it up to date",
+                          detail: "Checks once a day and updates in one click. The only time it goes online; nothing about you is sent.",
+                          isOn: Binding(get: { model.updates }, set: { model.setUpdates($0) }), accent: a)
             }
             .padding(16)
             .background(RoundedRectangle(cornerRadius: 12).fill(Halo.card))
@@ -161,12 +172,14 @@ struct OnboardingView: View {
 /// Follows what the user actually does: a real drag, the real wheel, a real
 /// conversion of a practice picture (never their own files).
 final class TutorialModel: ObservableObject {
-    enum Step: Int, CaseIterable { case drag, choose, done, more, finished }
+    enum Step: Int, CaseIterable { case drag, choose, done, wheels, finished }
 
     weak var host: OnboardingHost?
     let settings: SettingsStore
     @Published var step = Step.drag
     @Published var resultLine = ""
+    /// The wheels seen during the "three wheels" step.
+    @Published var seen: Set<WheelKind> = []
     let practice: URL?
 
     init(settings: SettingsStore) {
@@ -191,6 +204,21 @@ final class TutorialModel: ObservableObject {
 
     func wheelShown() {
         if step == .drag { step = .choose }
+        if step == .wheels { seen.insert(.convert) }
+    }
+
+    func wheelSwitched(_ kind: WheelKind) {
+        if step == .wheels { seen.insert(kind) }
+    }
+
+    /// Any button let go on with the practice picture during the "three wheels" step finishes it.
+    func chose(_ action: WheelAction, files: [URL]) {
+        guard step == .wheels, let practice, files.contains(where: { $0.standardizedFileURL == practice.standardizedFileURL }) else { return }
+        if case .file = action { step = .finished } else if seen.count >= 2 { step = .finished }
+    }
+
+    func keyName(_ kind: WheelKind) -> String? {
+        GestureController.keyMap(settings).key(for: kind).map(WheelKeyMap.symbol)
     }
 
     /// A job finished; only results made from the practice picture count.
@@ -198,7 +226,7 @@ final class TutorialModel: ObservableObject {
         guard let practice, result.outcomes.contains(where: { $0.inputs.contains { $0.standardizedFileURL == practice.standardizedFileURL } }),
               let output = result.outputs.first else { return }
         resultLine = "\(output.lastPathComponent) · \(Bytes.text(result.bytesOut))"
-        if step == .choose || step == .drag { step = .done } else if step == .more { step = .finished }
+        if step == .choose || step == .drag { step = .done } else if step == .wheels { step = .finished }
     }
 }
 
@@ -217,7 +245,7 @@ struct TutorialView: View {
                 if let url = model.practice, let image = NSImage(contentsOf: url) {
                     Image(nsImage: image).resizable().aspectRatio(contentMode: .fill)
                         .frame(width: 120, height: 120).clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(a.opacity(model.step == .drag || model.step == .more ? 0.9 : 0.2), lineWidth: 2))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(a.opacity(model.step == .drag || model.step == .wheels ? 0.9 : 0.2), lineWidth: 2))
                         .shadow(color: a.opacity(model.step == .drag ? 0.5 : 0), radius: 12)
                         .onDrag { NSItemProvider(contentsOf: url) ?? NSItemProvider() }
                         .help("Drag this picture")
@@ -226,6 +254,20 @@ struct TutorialView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(title).font(Halo.mono(20, .heavy)).tracking(0.8).foregroundStyle(a).fixedSize(horizontal: false, vertical: true)
                     Text(detail).font(Halo.rounded(13)).foregroundStyle(Halo.text).fixedSize(horizontal: false, vertical: true)
+                    if model.step == .wheels {
+                        HStack(spacing: 6) {
+                            ForEach(WheelKind.allCases, id: \.self) { kind in
+                                if let key = model.keyName(kind) {
+                                    let on = model.seen.contains(kind)
+                                    Text("\(key) \(kind.title)\(on ? " ✓" : "")").font(Halo.mono(11, .bold))
+                                        .foregroundStyle(on ? a.readableText : Halo.text)
+                                        .padding(.horizontal, 8).frame(height: 24)
+                                        .background(Capsule().fill(on ? a : Halo.control))
+                                }
+                            }
+                        }
+                        .animation(.easeOut(duration: 0.15), value: model.seen)
+                    }
                     if !model.resultLine.isEmpty && (model.step == .done || model.step == .finished) {
                         Text(model.resultLine).font(Halo.mono(12, .bold)).foregroundStyle(Halo.secondary)
                     }
@@ -239,7 +281,7 @@ struct TutorialView: View {
                 Spacer()
                 switch model.step {
                 case .done:
-                    HaloButton(title: "Next: More", primary: true, accent: a) { model.step = .more }
+                    HaloButton(title: "Next: three wheels", primary: true, accent: a) { model.step = .wheels }
                 case .finished:
                     HaloButton(title: "Show the file", accent: a) {
                         if let dir = model.practice?.deletingLastPathComponent() { NSWorkspace.shared.open(dir) }
@@ -247,8 +289,8 @@ struct TutorialView: View {
                     HaloButton(title: "Finish", primary: true, accent: a) { model.host?.tutorialClose() }
                         .keyboardShortcut(.defaultAction)
                 default:
-                    HaloButton(title: model.step == .more ? "Skip" : "Close", accent: a) {
-                        if model.step == .more { model.step = .finished } else { model.host?.tutorialClose() }
+                    HaloButton(title: model.step == .wheels ? "Skip" : "Close", accent: a) {
+                        if model.step == .wheels { model.step = .finished } else { model.host?.tutorialClose() }
                     }
                 }
             }
@@ -264,7 +306,7 @@ struct TutorialView: View {
         case .drag: "Drag the picture"
         case .choose: "Now choose a format"
         case .done: "Done!"
-        case .more: "Try More"
+        case .wheels: "Three wheels"
         case .finished: "That's it"
         }
     }
@@ -275,8 +317,70 @@ struct TutorialView: View {
         case .drag: return "Press on the picture and start dragging — keep the button down — then tap \(key). The wheel opens around the pointer."
         case .choose: return "Still holding the button, move onto JPG and let go. Letting go in the middle cancels."
         case .done: return "A JPG was made next to the practice picture. Your own files work the same way, from anywhere."
-        case .more: return "Drag the picture again, tap \(key), and rest on ••• MORE. More formats fan out — let go on one, like TIFF."
-        case .finished: return "You're set. The menu bar icon has the panel; Settings has themes, presets and shortcuts. The practice files are in a temporary folder and clear themselves."
+        case .wheels:
+            let tools = model.keyName(.tools), actions = model.keyName(.actions)
+            let keys = [tools.map { "\($0) for Tools" }, actions.map { "\($0) for Actions" }].compactMap { $0 }.joined(separator: ", then ")
+            return keys.isEmpty
+                ? "Drag the picture again, tap \(key), and rest on ••• MORE: more formats fan out. Let go on one, like TIFF."
+                : "Drag the picture again and tap \(key). Still dragging, tap \(keys): the wheel switches in place. Let go on any button; Path just copies where the picture is."
+        case .finished: return "You're set. Each wheel has more under ••• MORE. The menu bar icon has the panel; Settings has themes, keys and shortcuts. The practice files are in a temporary folder and clear themselves."
         }
+    }
+}
+
+// MARK: - What's new
+
+enum WhatsNew {
+    /// "0.5.2" → "0.5": a new minor version shows What's new once; patches don't.
+    static func minor(_ version: String) -> String { version.split(separator: ".").prefix(2).joined(separator: ".") }
+
+    static func shouldShow(lastSeen: String, current: String) -> Bool {
+        !lastSeen.isEmpty ? minor(current) != lastSeen && VersionCompare.isNewer(minor(current), than: lastSeen) : true
+    }
+}
+
+struct WhatsNewView: View {
+    let version: String
+    let accent: Color
+    let onTry: () -> Void
+    let onClose: () -> Void
+
+    private let items: [(String, String, String)] = [
+        ("⇧ ⌘ ⌃", "Three wheels", "Shift converts, ⌘ opens Tools, ⌃ opens Actions. Keycaps above the wheel show which is which; tap another key and it switches."),
+        ("FIT", "Make it fit", "Email, WhatsApp, Discord or any size: the smallest change that gets under the limit."),
+        ("TEXT", "Text from anything", "Copy the words out of a screenshot, photo or scan, in about a second, on your Mac."),
+        ("1:1", "Crop for social", "1:1, 4:5, 16:9 and 9:16 around the subject, in one go."),
+        ("MP4", "Video and audio", "MOV ↔ MP4, GIF, the sound as M4A or FLAC, Trim, Speed, Compress, Join."),
+        ("⌃", "Actions", "AirDrop, Copy, Zip, Stash, Rename, Mail, Terminal… for any file or folder. And Undo for all of it."),
+    ]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("WHAT'S NEW IN \(WhatsNew.minor(version))").font(Halo.mono(24, .heavy)).tracking(1.2).foregroundStyle(accent)
+                Text("Circularity got three wheels and a lot more inside them.").font(Halo.rounded(14, .semibold)).foregroundStyle(Halo.text)
+            }
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(items, id: \.1) { badge, title, line in
+                    HStack(alignment: .top, spacing: 12) {
+                        Text(badge).font(Halo.mono(11, .heavy)).foregroundStyle(accent.readableText)
+                            .frame(width: 54, height: 24).background(RoundedRectangle(cornerRadius: 6).fill(accent))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(title).font(Halo.rounded(14, .bold)).foregroundStyle(Halo.text)
+                            Text(line).font(Halo.rounded(12)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+            HStack {
+                Spacer()
+                HaloButton(title: "Later", accent: accent, action: onClose)
+                HaloButton(title: "Try the three wheels", primary: true, accent: accent, action: onTry).keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(28)
+        .frame(width: 560, height: 520)
+        .background(Halo.background)
     }
 }

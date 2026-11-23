@@ -972,6 +972,33 @@ func runAll() async {
         check(frames.count == 8, "GIF hover preview: 8 frames")
     }
 
+    // 12b. Crop for social: the subject (a bright disc on the right of a wide photo) stays in every shape
+    do {
+        let wide = root.appendingPathComponent("beach.png")
+        let ctx = CGContext(data: nil, width: 3000, height: 1500, bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                            bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+        ctx.setFillColor(CGColor(srgbRed: 0.55, green: 0.7, blue: 0.85, alpha: 1)); ctx.fill(CGRect(x: 0, y: 0, width: 3000, height: 1500))
+        ctx.setFillColor(CGColor(srgbRed: 1, green: 0.2, blue: 0.5, alpha: 1)); ctx.fillEllipse(in: CGRect(x: 2300, y: 500, width: 500, height: 500))
+        writeImage(ctx.makeImage()!, .png, to: wide)
+        for shape in SmartCrop.Shape.allCases {
+            let r = try? await run([wide], .smartCrop(shape)).get()
+            let out = r?.outputs.first
+            let size = out.flatMap(pixelSize) ?? .zero
+            // The disc is pink: its centre (2550, 750 in the original) must be in the crop, so the crop has pink in it.
+            let pinkFound: Bool = {
+                guard let out, let src = CGImageSourceCreateWithURL(out as CFURL, nil), let img = CGImageSourceCreateImageAtIndex(src, 0, nil) else { return false }
+                let c = CGContext(data: nil, width: 64, height: 64, bitsPerComponent: 8, bytesPerRow: 256, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                                  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+                c.draw(img, in: CGRect(x: 0, y: 0, width: 64, height: 64))
+                let p = c.data!.assumingMemoryBound(to: UInt8.self)
+                return (0..<(64 * 64)).contains { p[$0 * 4] > 220 && p[$0 * 4 + 1] < 120 }
+            }()
+            let aspect = size.height > 0 ? Double(size.width / size.height) : 0
+            check(abs(aspect - shape.aspect) < 0.01 && pinkFound && out?.lastPathComponent.contains("(") == true,
+                  "Social \(shape.ratio): \(Int(size.width))×\(Int(size.height)), subject kept (\(out?.lastPathComponent ?? "-"))")
+        }
+    }
+
     // 12. Split a PDF into pages
     let splitMe = root.appendingPathComponent("split me.pdf")
     makePDF(splitMe, pages: 3)

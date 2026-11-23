@@ -10,12 +10,18 @@ final class UpdateChecker: ObservableObject {
     }
 
     @Published private(set) var status = Status.idle
+    /// Installs a signed update in place (UpdateInstaller).
+    let installer = UpdateInstaller()
     private let settings: SettingsStore
     var onAvailable: ((UpdateFeed, _ automatic: Bool) -> Void)?
 
     init(settings: SettingsStore) { self.settings = settings }
 
     static var feedURL: URL? {
+        #if DEBUG
+        // Testing only: a local feed (http://127.0.0.1…) for the in-place install.
+        if let s = ProcessInfo.processInfo.environment["CIRCULARITY_UPDATE_FEED"], let url = URL(string: s) { return url }
+        #endif
         guard let s = Bundle.main.object(forInfoDictionaryKey: "CircularityUpdateFeedURL") as? String,
               !s.trimmingCharacters(in: .whitespaces).isEmpty, let url = URL(string: s), url.scheme == "https" else { return nil }
         return url

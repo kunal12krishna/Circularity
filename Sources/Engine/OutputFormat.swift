@@ -49,6 +49,7 @@ public enum OperationKind: String, Sendable, CaseIterable, Codable {
     case convert, resize, compress, crop, combine, pdfToImages, extractText, renderDocument, cutout
     case trim, mute, split
     case fit, searchable, locked, unlocked, arranged, faster, slower
+    case square, portrait, wide, story
 
     /// The suffix added to the output name: `photo (resized).jpg`.
     /// A plain format change keeps the original name: `photo.png`.
@@ -70,6 +71,10 @@ public enum OperationKind: String, Sendable, CaseIterable, Codable {
         case .arranged: "edited"
         case .faster: "faster"
         case .slower: "slower"
+        case .square: "square"
+        case .portrait: "4×5"
+        case .wide: "16×9"
+        case .story: "story"
         case .convert, .extractText, .renderDocument: nil
         }
     }

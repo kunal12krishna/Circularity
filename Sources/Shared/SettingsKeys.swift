@@ -37,6 +37,8 @@ nonisolated enum SettingsKeys {
     static let showInMenuBar = SettingsKey("general.showInMenuBar", true)
     static let launchAtLogin = SettingsKey("general.launchAtLogin", true)
     static let onboardingCompleted = SettingsKey("general.onboardingCompleted", false)
+    /// The version whose "What's new" was seen (major.minor), so it shows once per update.
+    static let lastSeenVersion = SettingsKey("general.lastSeenVersion", "")
     static let hotkeyPanel = SettingsKey("general.hotkey.panel", "49:6144")         // keyCode:carbonModifiers (⌃⌥Space); "" = off
     static let hotkeyClipboard = SettingsKey("general.hotkey.clipboard", "9:6144")  // ⌃⌥V
 
@@ -168,7 +170,7 @@ nonisolated enum SettingsKeys {
     static let finderSelectionViaAutomation = SettingsKey("gesture.finderSelectionViaAutomation", false, reserved: true)
 
     static let all: [AnySettingsKey] = [
-        paused.erased, showInMenuBar.erased, launchAtLogin.erased, onboardingCompleted.erased, hotkeyPanel.erased, hotkeyClipboard.erased,
+        paused.erased, showInMenuBar.erased, launchAtLogin.erased, onboardingCompleted.erased, lastSeenVersion.erased, hotkeyPanel.erased, hotkeyClipboard.erased,
         triggerKey.erased, toolsKey.erased, actionsKey.erased, keyGuide.erased, triggerMode.erased, triggerDelayMs.erased, shakeEnabled.erased, shakeSensitivity.erased,
         skipFullScreen.erased, serviceShortcutInstalled.erased, excludedApps.erased,
         wheelLayout.erased, moreHoverDelayMs.erased, smartOrdering.erased, haptics.erased, beforeAfter.erased, soundPack.erased,

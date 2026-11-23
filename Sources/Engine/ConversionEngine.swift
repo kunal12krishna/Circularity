@@ -388,6 +388,16 @@ public final class ConversionEngine: Sendable {
             try await MediaBackend.changeSpeed(input, rate: rate, video: isVideo, format: format, output: out, progress: mediaProgress)
             return try await finish(out, format: format)
 
+        case let .smartCrop(shape):
+            guard isImage else { throw JobError.unsupported("cropping \(input.lastPathComponent) for social") }
+            let image = try ImageInput.open(input)
+            let rect = try SmartCrop.rect(for: image, shape: shape)
+            progress(0.4, "")
+            let format = sameFormat(type)
+            let out = staging.scratch(format.fileExtension)
+            try ImageBackend.crop(image, rect: rect, format: format, policy: policy, output: out)
+            return try await finish(out, format: format)
+
         case .combinePDF, .combineMedia:
             throw JobError.unsupported("combining one file")
         }

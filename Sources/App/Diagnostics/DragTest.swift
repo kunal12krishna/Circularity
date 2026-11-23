@@ -341,6 +341,26 @@ enum DragTest {
         check(FileActionPerformer.zipName([file]) == "IMG_2041.heic.zip" && FileActionPerformer.zipName([file, smaller]) == "Archive.zip",
               "Zip names follow Finder")
 
+        // Rename for real: a swap (a ↔ b) and a new name, recorded so Undo puts them back.
+        let renameDir = file.deletingLastPathComponent().appendingPathComponent("rename", isDirectory: true)
+        try? FileManager.default.createDirectory(at: renameDir, withIntermediateDirectories: true)
+        for (name, text) in [("a.txt", "A"), ("b.txt", "B"), ("c.txt", "C")] {
+            try? text.write(to: renameDir.appendingPathComponent(name), atomically: true, encoding: .utf8)
+        }
+        let history = HistoryStore(file: "dragtest-rename-history.json")
+        history.clear()
+        let renamer = FileActionPerformer(shelf: shelf, accent: { .systemPink })
+        renamer.record = { history.add($0) }
+        renamer.rename([(renameDir.appendingPathComponent("a.txt"), "b.txt"), (renameDir.appendingPathComponent("b.txt"), "a.txt"),
+                        (renameDir.appendingPathComponent("c.txt"), "Trip 03.txt")])
+        let read = { (name: String) in (try? String(contentsOf: renameDir.appendingPathComponent(name), encoding: .utf8)) ?? "-" }
+        check(read("b.txt") == "A" && read("a.txt") == "B" && read("Trip 03.txt") == "C", "Rename: a swap and a new name, contents intact")
+        check(history.items.first?.kind == "move" && history.items.first?.outputs.count == 3, "Rename is recorded for Undo")
+        if let id = history.items.first?.id { history.undo(id) }
+        check(read("a.txt") == "A" && read("b.txt") == "B" && read("c.txt") == "C", "Undo puts the old names back")
+        history.clear()
+        try? FileManager.default.removeItem(at: renameDir)
+
         let presenter = WindowPresenter()
         let settingsModel = SettingsModel(store: settings)
         presenter.show("settings", title: "Settings", size: CGSize(width: 880, height: 680)) { SettingsView(model: settingsModel) }

@@ -76,6 +76,7 @@ final class AppCoordinator: PanelHost {
             NSWorkspace.shared.recycle(outputs) { _, _ in }
             return nil
         }
+        wheel.onSwitched = { [weak self] kind in self?.tutorial?.wheelSwitched(kind) }
         shelf.onTurnOff = { [weak self] in
             guard let self else { return }
             settings.set(false, for: SettingsKeys.afterShelf)
@@ -150,18 +151,34 @@ final class AppCoordinator: PanelHost {
         if settings.value(SettingsKeys.devHUD) { settingsSetDevHUD(true) }
         updates.onAvailable = { [weak self] feed, automatic in
             guard let self else { return }
-            panelModel.notice = "Version \(feed.version) is available. Settings → General → Updates."
+            panelModel.notice = UpdateInstaller.canInstall(feed)
+                ? "Version \(feed.version) is available. Settings → General → Install and relaunch."
+                : "Version \(feed.version) is available. Settings → General → Updates."
+            #if DEBUG
+            // Testing only: install straight away from a local feed.
+            if ProcessInfo.processInfo.environment["CIRCULARITY_AUTO_INSTALL"] == "1" {
+                updates.installer.install(feed, allowInsecureURL: true)
+                return
+            }
+            #endif
             if automatic, settings.value(SettingsKeys.notifyEnabled) {
                 Notifier.shared.post(title: "\(AppIdentity.name) \(feed.version) is available", body: feed.notes ?? "Open Settings → General to download it.",
                                      outputs: [], sound: false)
             }
         }
         updates.checkIfDue()
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["CIRCULARITY_UPDATE_FEED"] != nil { updates.check() }
+        #endif
         // Text from pictures: macOS prepares its accurate reader once (about a
         // minute, in the background); until then Text uses the instant fast reader.
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) { TextReader.prepare() }
         if !settings.value(SettingsKeys.onboardingCompleted) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { [weak self] in self?.settingsShowOnboarding() }
+        } else if WhatsNew.shouldShow(lastSeen: settings.value(SettingsKeys.lastSeenVersion), current: UpdateChecker.currentVersion) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in self?.showWhatsNew() }
+        } else {
+            settings.set(WhatsNew.minor(UpdateChecker.currentVersion), for: SettingsKeys.lastSeenVersion)
         }
 
         Log.app.notice("\(AppIdentity.name, privacy: .public) started (pid \(ProcessInfo.processInfo.processIdentifier, privacy: .public))")
@@ -222,9 +239,10 @@ final class AppCoordinator: PanelHost {
     private func handle(_ choice: WheelChoice) {
         gesture.wheelFinished()
         guard let action = choice.action else { return }
+        tutorial?.chose(action, files: choice.files)
         if !choice.files.isEmpty { recentFiles = choice.files }
         switch action {
-        case .compress, .resize, .crop, .trim, .fit, .password, .editPages, .speed:
+        case .compress, .resize, .crop, .trim, .fit, .password, .editPages, .speed, .social, .file(.rename):
             openDialog(action, files: choice.files)
         case .copyText:
             copyText(choice.files)
@@ -393,6 +411,19 @@ final class AppCoordinator: PanelHost {
             dialogs.present(PagesDialog(file: file, accent: accent, onRun: run, onCancel: cancel), title: "Pages")
         case .speed:
             dialogs.present(SpeedDialog(files: files, accent: accent, onRun: run, onCancel: cancel), title: "Speed")
+        case .social:
+            let pictures = files.filter { DraggedFiles.type(of: $0).conforms(to: .image) }
+            guard !pictures.isEmpty else { return }
+            dialogs.present(SocialCropDialog(files: pictures, accent: accent, onRun: { [weak self] shapes in
+                guard let self else { return }
+                dialogs.close()
+                for shape in shapes { jobs.run(.smartCrop(shape), files: pictures, label: "social.\(shape.rawValue)") }
+            }, onCancel: cancel), title: "Crop for social")
+        case .file(.rename):
+            dialogs.present(RenameDialog(files: files, accent: accent, onRename: { [weak self] pairs in
+                self?.dialogs.close()
+                self?.fileActions.rename(pairs)
+            }, onCancel: cancel), title: "Rename")
         case .trim:
             guard let file = files.first, let media else { return }
             trimWindow.show(file, isVideo: media) { [weak self] start, end in
@@ -423,6 +454,8 @@ final class AppCoordinator: PanelHost {
         case "copyText": .copyText
         case "searchable": .searchable
         case "trim": .trim
+        case "social": .social
+        case "rename": .file(.rename)
         default: nil
         }
         guard let action else { return }
@@ -535,7 +568,7 @@ extension AppCoordinator: SettingsHost {
     func settingsShowOnboarding() {
         let model = OnboardingModel(settings: settings)
         model.host = self
-        windows.show("welcome", title: "Welcome", size: CGSize(width: 560, height: 470)) { OnboardingView(model: model) }
+        windows.show("welcome", title: "Welcome", size: CGSize(width: 560, height: 520)) { OnboardingView(model: model) }
     }
 
     func settingsShowTutorial() {
@@ -593,6 +626,7 @@ extension AppCoordinator: SettingsHost {
 extension AppCoordinator: OnboardingHost {
     func onboardingFinished(launchAtLogin: Bool, finderShortcutTurnedOn: Bool, startTutorial: Bool) {
         settings.set(true, for: SettingsKeys.onboardingCompleted)
+        settings.set(WhatsNew.minor(UpdateChecker.currentVersion), for: SettingsKeys.lastSeenVersion)
         settings.set(launchAtLogin, for: SettingsKeys.launchAtLogin)
         if launchAtLogin != (LoginItem.isEnabled || LoginItem.needsApproval) { LoginItem.set(launchAtLogin) }
         if finderShortcutTurnedOn { ServiceShortcut.offerFinderRelaunch() }
@@ -601,6 +635,19 @@ extension AppCoordinator: OnboardingHost {
     }
 
     func onboardingPracticeWheel() { settingsPracticeWheel() }
+
+    /// Once per new version (0.4 → 0.5, not 0.5.0 → 0.5.1): what's new, with a way to try it.
+    func showWhatsNew() {
+        settings.set(WhatsNew.minor(UpdateChecker.currentVersion), for: SettingsKeys.lastSeenVersion)
+        let accent = Color(nsColor: Appearance.accentNS(settings))
+        windows.show("whatsnew", title: "What's new", size: CGSize(width: 560, height: 520)) {
+            WhatsNewView(version: UpdateChecker.currentVersion, accent: accent, onTry: { [weak self] in
+                self?.windows.close("whatsnew")
+                self?.settingsShowTutorial()
+                self?.tutorial?.step = .wheels
+            }, onClose: { [weak self] in self?.windows.close("whatsnew") })
+        }
+    }
 
     func tutorialClose() {
         windows.close("tutorial")

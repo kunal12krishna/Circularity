@@ -12,6 +12,8 @@ import Foundation
 @MainActor
 enum ThemeCheck {
     static func run(_ file: URL, renderInto directory: URL? = nil) -> Bool {
+        sweepScratchFiles()
+        defer { sweepScratchFiles() }
         guard let data = try? Data(contentsOf: file),
               let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             print("check-themes: can't read \(file.path)")
@@ -116,6 +118,15 @@ enum ThemeCheck {
 
     /// Empties a scratch settings store and deletes its file: emptying alone
     /// leaves ~/Library/Preferences/<suite>.plist behind, one per wheel checked.
+    /// macOS's settings daemon can write a scratch suite's file back after it was
+    /// deleted, so every leftover from this run and earlier ones is swept up too.
+    static func sweepScratchFiles(prefix: String = "\(AppIdentity.bundleID).themecheck.") {
+        let folder = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Preferences", isDirectory: true)
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [] where name.hasPrefix(prefix) && name.hasSuffix(".plist") {
+            try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))
+        }
+    }
+
     static func discard(_ defaults: UserDefaults, _ suite: String) {
         defaults.removePersistentDomain(forName: suite)
         defaults.synchronize()

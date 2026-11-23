@@ -191,8 +191,8 @@ final class SlotProviderTests: XCTestCase {
     func testToolsWheelPerKind() {
         let image = SlotProvider.toolsMenu(for: [.jpeg], cutout: true)
         XCTAssertEqual(image.kind, .tools)
-        XCTAssertEqual(image.ring.map { $0?.action }, [.compress, .fit, .copyText, .more, .crop, .resize])
-        XCTAssertEqual(image.fan.map(\.action), [.cutout, .convert(.pdf), .searchable, .stripLocation])
+        XCTAssertEqual(image.ring.map { $0?.action }, [.compress, .fit, .copyText, .more, .social, .crop])
+        XCTAssertEqual(image.fan.map(\.action), [.resize, .cutout, .convert(.pdf), .searchable, .stripLocation])
         let pdf = SlotProvider.toolsMenu(for: [.pdf])
         XCTAssertEqual(pdf.ring.map { $0?.action }, [.compress, .fit, .copyText, .more, .editPages, .password])
         XCTAssertEqual(pdf.fan.map(\.action), [.searchable, .splitPDF, .resize, .crop])
@@ -233,6 +233,40 @@ final class SlotProviderTests: XCTestCase {
         XCTAssertTrue(SlotProvider.toolsMenu(for: [.heic, .folder]).isEmpty, "a folder can't be made to fit")
     }
 
+    func testRenamePatternsAndClashes() {
+        let d = Date(timeIntervalSince1970: 1_795_400_000) // 2026-11-23
+        let files = [("IMG_1.HEIC", d), ("IMG_2.HEIC", d), ("notes", d)].map { (name: $0.0, date: $0.1) }
+        let numbered = RenamePlanner.plan(files, mode: .pattern("Trip {n}", start: 1, digits: 2), taken: [])
+        XCTAssertEqual(numbered.map(\.new), ["Trip 01.HEIC", "Trip 02.HEIC", "Trip 03"])
+        XCTAssertTrue(RenamePlanner.canApply(numbered))
+        let dated = RenamePlanner.plan(files, mode: .pattern("{date} {name}", start: 1, digits: 1), taken: [])
+        XCTAssertEqual(dated[0].new, "2026-11-23 IMG_1.HEIC")
+        let fixed = RenamePlanner.plan(files, mode: .pattern("Photo", start: 1, digits: 1), taken: [])
+        XCTAssertEqual(fixed.map(\.new), ["Photo 1.HEIC", "Photo 2.HEIC", "Photo 3"], "one name for several files gets numbered")
+        let replaced = RenamePlanner.plan(files, mode: .replace(find: "img", with: "Beach", ignoreCase: true), taken: [])
+        XCTAssertEqual(replaced[1].new, "Beach_2.HEIC")
+        XCTAssertEqual(replaced[2].new, "notes")
+        let clash = RenamePlanner.plan(files, mode: .pattern("Same", start: 1, digits: 1), taken: ["Same 2.HEIC"])
+        XCTAssertEqual(clash[1].problem, "already in the folder")
+        XCTAssertFalse(RenamePlanner.canApply(clash))
+        let bad = RenamePlanner.plan(files, mode: .pattern("a/b {n}", start: 1, digits: 1), taken: [])
+        XCTAssertNotNil(bad[0].problem)
+        let swap = RenamePlanner.plan([(name: "a.txt", date: d), (name: "b.txt", date: d)],
+                                      mode: .replace(find: "a", with: "b", ignoreCase: false), taken: ["a.txt", "b.txt"])
+        XCTAssertEqual(swap[1].problem, "same name as a.txt")
+    }
+
+    func testSmartCropKeepsTheSubject() {
+        // A subject on the right of a wide photo: the square moves right, as big as it can be.
+        let r = SmartCrop.rect(size: CGSize(width: 4000, height: 2000), aspect: 1, focus: CGRect(x: 0.8, y: 0.4, width: 0.1, height: 0.2))
+        XCTAssertEqual(r.width, 0.5, accuracy: 0.001)
+        XCTAssertEqual(r.height, 1, accuracy: 0.001)
+        XCTAssertEqual(r.maxX, 1, accuracy: 0.001, "stays inside the picture")
+        let story = SmartCrop.rect(size: CGSize(width: 4000, height: 3000), aspect: 9.0 / 16, focus: CGRect(x: 0.1, y: 0.5, width: 0, height: 0))
+        XCTAssertEqual(story.minX, 0, accuracy: 0.001)
+        XCTAssertEqual(story.width * 4000 / (story.height * 3000), 9.0 / 16, accuracy: 0.001)
+    }
+
     func testToolsWheelHasNothingForAFolder() {
         let menu = SlotProvider.toolsMenu(for: [.folder])
         XCTAssertTrue(menu.isEmpty)
@@ -251,7 +285,7 @@ final class SlotProviderTests: XCTestCase {
         let menu = SlotProvider.actionsMenu(count: 2)
         XCTAssertEqual(menu.kind, .actions)
         XCTAssertEqual(menu.ring.map { $0?.action }, [.file(.airDrop), .file(.copy), .file(.zip), .more, .file(.copyPath), .file(.stash)])
-        XCTAssertEqual(menu.fan.map(\.action), [.file(.mail), .file(.terminal), .file(.moveTo), .file(.copyTo), .file(.quickLook), .file(.reveal)])
+        XCTAssertEqual(menu.fan.map(\.action), [.file(.mail), .file(.rename), .file(.terminal), .file(.moveTo), .file(.copyTo), .file(.quickLook), .file(.reveal)])
         XCTAssertEqual(menu.ring[4]?.hint, "one path per line")
         XCTAssertEqual(menu.ring[2]?.hint, "one .zip with all 2")
     }

@@ -99,10 +99,23 @@ final class HotkeySpecTests: XCTestCase {
 }
 
 final class SettingsMigrationTests: XCTestCase {
+    /// The settings daemon can write a scratch file back after it was deleted: sweep earlier runs' leftovers too.
+    override class func tearDown() {
+        let folder = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Preferences", isDirectory: true)
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: folder.path)) ?? [] where name.hasPrefix("circularity.tests.") {
+            try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))
+        }
+        super.tearDown()
+    }
+
     private func freshDefaults(_ name: String) -> UserDefaults {
         let suite = "circularity.tests.\(name).\(UUID().uuidString)"
         let d = UserDefaults(suiteName: suite)!
-        addTeardownBlock { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
+        addTeardownBlock {
+            UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite)
+            let file = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Preferences/\(suite).plist")
+            try? FileManager.default.removeItem(at: file)
+        }
         return d
     }
 

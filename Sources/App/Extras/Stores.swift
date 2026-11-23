@@ -51,9 +51,21 @@ final class HistoryStore: ObservableObject {
         let fm = FileManager.default
         var message = "The result is in the Trash."
         if item.kind == "move" {
+            // Two steps, through temporary names, so a rename that swapped names (a ↔ b) swaps back.
+            // A name is free if nothing is there, or if what's there is itself being moved back.
+            let moving = Set(item.outputs)
+            var parked: [(temp: String, input: String)] = []
+            for (output, input) in zip(item.outputs, item.inputs) where fm.fileExists(atPath: output)
+                && (!fm.fileExists(atPath: input) || moving.contains(input)) {
+                let temp = (output as NSString).deletingLastPathComponent + "/.circularity-undo-\(UUID().uuidString)"
+                if (try? fm.moveItem(atPath: output, toPath: temp)) != nil { parked.append((temp, input)) }
+            }
             var back = 0
-            for (output, input) in zip(item.outputs, item.inputs) where !fm.fileExists(atPath: input) {
-                if (try? fm.moveItem(atPath: output, toPath: input)) != nil { back += 1 }
+            for p in parked {
+                if !fm.fileExists(atPath: p.input), (try? fm.moveItem(atPath: p.temp, toPath: p.input)) != nil { back += 1 }
+                else if let original = zip(item.inputs, item.outputs).first(where: { $0.0 == p.input })?.1 {
+                    try? fm.moveItem(atPath: p.temp, toPath: original) // couldn't go back: leave it where it was
+                }
             }
             message = back == 1 ? "It's back where it was." : "\(back) items are back where they were."
         } else {

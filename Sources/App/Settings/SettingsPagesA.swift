@@ -51,7 +51,7 @@ struct GeneralPage: View {
                           }), accent: a)
             }
             if let updates = model.host?.settingsUpdates {
-                UpdatesCard(model: model, updates: updates)
+                UpdatesCard(model: model, updates: updates, installer: updates.installer)
             }
             SettingsCard(title: "Help") {
                 HStack(spacing: 8) {
@@ -159,10 +159,11 @@ struct GesturePage: View {
 struct UpdatesCard: View {
     @ObservedObject var model: SettingsModel
     @ObservedObject var updates: UpdateChecker
+    @ObservedObject var installer: UpdateInstaller
 
     var body: some View {
         let a = model.accent
-        SettingsCard(title: "Updates", footer: "Checking for updates is the only time \(AppIdentity.name) uses the network. It asks one small file which version is newest and sends nothing about you or your files.") {
+        SettingsCard(title: "Updates", footer: "Checking for updates is the only time \(AppIdentity.name) uses the network. It asks one small file which version is newest and sends nothing about you or your files. An update is installed only if its signature proves it came from \(AppIdentity.name).") {
             ToggleRow(title: "Check for updates automatically", detail: "About once a day, when the app starts or the panel opens.",
                       isOn: model.binding(SettingsKeys.updatesAutomatic), accent: a)
                 .disabled(UpdateChecker.feedURL == nil)
@@ -170,7 +171,14 @@ struct UpdatesCard: View {
                 Text(statusText).font(Halo.rounded(12)).foregroundStyle(Halo.secondary).fixedSize(horizontal: false, vertical: true)
                 Spacer()
                 if case let .available(feed) = updates.status {
-                    HaloButton(title: "Download \(feed.version)", primary: true, accent: a) { UpdateChecker.download(feed) }
+                    if UpdateInstaller.canInstall(feed), UpdateInstaller.targetIsWritable {
+                        HaloButton(title: installing ? "Installing…" : "Install \(feed.version) and relaunch", primary: true, accent: a) {
+                            updates.installer.install(feed)
+                        }
+                        .disabled(installing)
+                    } else {
+                        HaloButton(title: "Download \(feed.version)", primary: true, accent: a) { UpdateChecker.download(feed) }
+                    }
                 }
                 HaloButton(title: updates.status == .checking ? "Checking…" : "Check now", accent: a) { updates.check() }
                     .disabled(UpdateChecker.feedURL == nil || updates.status == .checking)
@@ -178,7 +186,21 @@ struct UpdatesCard: View {
         }
     }
 
+    private var installing: Bool {
+        switch installer.state {
+        case .downloading, .checking, .ready: true
+        default: false
+        }
+    }
+
     private var statusText: String {
+        switch installer.state {
+        case .downloading: return "Downloading the update…"
+        case .checking: return "Checking the download is genuine…"
+        case .ready: return "Relaunching into the new version…"
+        case let .failed(message): return message
+        case .idle: break
+        }
         if UpdateChecker.feedURL == nil { return "Version \(UpdateChecker.currentVersion). This build has no update address, so it can't check." }
         switch updates.status {
         case .idle: return "Version \(UpdateChecker.currentVersion)."

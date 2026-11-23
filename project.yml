@@ -52,6 +52,7 @@ targets:
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CircularityUpdateFeedURL: $(UPDATE_FEED_URL)
+        CircularityUpdatePublicKey: $(UPDATE_PUBLIC_KEY)
         CFBundleIconName: AppIcon
         LSApplicationCategoryType: public.app-category.utilities
         LSMinimumSystemVersion: $(MACOSX_DEPLOYMENT_TARGET)

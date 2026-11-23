@@ -255,6 +255,9 @@ enum RenderPreviews {
             ("dialog-unlock", AnyView(PasswordDialog(files: [pdf], unlock: true, accent: accent, onRun: none, onCancel: {}))),
             ("dialog-speed", AnyView(SpeedDialog(files: [photo], accent: accent, onRun: none, onCancel: {}))),
             ("dialog-pages", AnyView(PagesDialog(file: pdf, accent: accent, onRun: none, onCancel: {}))),
+            ("dialog-social", AnyView(SocialCropDialog(files: [photo], accent: accent, onRun: { _ in }, onCancel: {}))),
+            ("dialog-rename", AnyView(RenameDialog(files: [photo, pdf], accent: accent, onRename: { _ in }, onCancel: {}))),
+            ("whats-new", AnyView(WhatsNewView(version: "0.5.0", accent: accent, onTry: {}, onClose: {}))),
         ]
         for (name, view) in views {
             let host = NSHostingView(rootView: view)

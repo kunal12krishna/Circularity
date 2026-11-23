@@ -62,6 +62,8 @@ final class FileActionPerformer {
             QuickLook.shared.show(files)
         case .reveal:
             NSWorkspace.shared.activateFileViewerSelecting(files)
+        case .rename:
+            break // a dialog first: AppCoordinator opens RenameDialog, which calls rename(_:)
         }
     }
 
@@ -176,6 +178,43 @@ final class FileActionPerformer {
         var total: Int64 = 0
         while let item = items?.nextObject() as? URL { total += Int64((try? item.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0) }
         return total
+    }
+
+    // MARK: Rename
+
+    /// Renames in place, in two steps (through temporary names) so swaps like
+    /// a → b, b → a work; if anything fails, every file gets its old name back.
+    func rename(_ pairs: [(URL, String)]) {
+        let fm = FileManager.default
+        let changes = pairs.filter { $0.0.lastPathComponent != $0.1 }
+        guard !changes.isEmpty else { return }
+        var parked: [(from: URL, temp: URL, to: URL)] = []
+        do {
+            for (url, name) in changes {
+                let temp = url.deletingLastPathComponent().appendingPathComponent(".circularity-rename-\(UUID().uuidString)")
+                try fm.moveItem(at: url, to: temp)
+                parked.append((url, temp, url.deletingLastPathComponent().appendingPathComponent(name)))
+            }
+            var done: [(URL, URL)] = []
+            for p in parked {
+                do {
+                    try fm.moveItem(at: p.temp, to: p.to)
+                    done.append((p.from, p.to))
+                } catch {
+                    for (from, to) in done { try? fm.moveItem(at: to, to: from) }
+                    for q in parked where fm.fileExists(atPath: q.temp.path) { try? fm.moveItem(at: q.temp, to: q.from) }
+                    throw error
+                }
+            }
+            record?(HistoryItem(id: UUID().uuidString, date: Date(), inputs: done.map { $0.0.path }, outputs: done.map { $0.1.path },
+                                bytesIn: 0, bytesOut: 0, label: done.count == 1 ? "Renamed" : "Renamed \(done.count) items", format: "", kind: "move"))
+            Log.app.notice("Renamed \(done.count, privacy: .public) item(s)")
+            say(done.count == 1 ? "Renamed" : "Renamed \(done.count) items",
+                done.count == 1 ? done[0].1.lastPathComponent : "Undo from the menu bar panel puts the old names back.", original: done.first?.1)
+        } catch {
+            for q in parked where fm.fileExists(atPath: q.temp.path) { try? fm.moveItem(at: q.temp, to: q.from) }
+            say("Couldn't rename", error.localizedDescription)
+        }
     }
 
     // MARK: Terminal
